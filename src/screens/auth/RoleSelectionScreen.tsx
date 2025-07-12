@@ -7,15 +7,16 @@ import {
   SafeAreaView,
   Dimensions,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
+import type { RootStackParamList } from '../../types';
 
 type UserRole = 'customer' | 'worker';
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-interface RoleSelectionScreenProps {
-  navigation: any;
-}
-
-export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({ navigation }) => {
+export const RoleSelectionScreen: React.FC = () => {
+  const navigation = useNavigation<NavigationProp>();
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
 
   const handleRoleSelect = (role: UserRole) => {
@@ -24,9 +25,14 @@ export const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({ naviga
 
   const handleContinue = () => {
     if (selectedRole) {
-      // Здесь в будущем будет переход к основным экранам
       console.log('Selected role:', selectedRole);
-      // navigation.navigate('MainApp', { userRole: selectedRole });
+
+      if (selectedRole === 'customer') {
+        navigation.navigate('CustomerTabs');
+      } else if (selectedRole === 'worker') {
+        // TODO: Добавить навигацию к экранам исполнителя
+        console.log('Worker screens will be added next');
+      }
     }
   };
 
