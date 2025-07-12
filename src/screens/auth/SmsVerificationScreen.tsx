@@ -10,10 +10,14 @@ import {
   Alert,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
+import type { RootStackParamList } from '../../types';
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export function SmsVerificationScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
   const route = useRoute();
   const { phone } = route.params as { phone: string };
 
@@ -71,7 +75,7 @@ export function SmsVerificationScreen() {
       // Временно используем код 123456 для тестирования
       if (smsCode === '123456') {
         // Переходим к экрану выбора роли
-        navigation.navigate('RoleSelection' as never);
+        navigation.navigate('RoleSelection');
       } else {
         Alert.alert('Ошибка', 'Неверный код подтверждения');
         setCode(['', '', '', '', '', '']);
@@ -229,7 +233,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: theme.fonts.sizes.xl,
-    color: theme.colors.text,
+    color: theme.colors.text.primary,
   },
   titleSection: {
     marginBottom: theme.spacing.xxxl,

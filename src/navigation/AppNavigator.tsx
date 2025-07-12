@@ -5,7 +5,7 @@ import { RootStackParamList } from '../types';
 
 // Импортируем экраны
 import { SplashScreen } from '../screens/shared/SplashScreen';
-import { AuthScreen, RegistrationScreen, SmsVerificationScreen } from '../screens/auth';
+import { AuthScreen, RegistrationScreen, SmsVerificationScreen, RoleSelectionScreen } from '../screens/auth';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -33,6 +33,10 @@ export function AppNavigator() {
         <Stack.Screen
           name="SmsVerification"
           component={SmsVerificationScreen}
+        />
+        <Stack.Screen
+          name="RoleSelection"
+          component={RoleSelectionScreen}
         />
       </Stack.Navigator>
     </NavigationContainer>
