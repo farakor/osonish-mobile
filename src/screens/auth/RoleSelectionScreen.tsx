@@ -30,8 +30,7 @@ export const RoleSelectionScreen: React.FC = () => {
       if (selectedRole === 'customer') {
         navigation.navigate('CustomerTabs');
       } else if (selectedRole === 'worker') {
-        // TODO: Добавить навигацию к экранам исполнителя
-        console.log('Worker screens will be added next');
+        navigation.navigate('WorkerTabs');
       }
     }
   };
