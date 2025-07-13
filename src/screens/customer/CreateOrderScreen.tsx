@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  Platform,
 } from 'react-native';
 import { theme } from '../../constants';
 
@@ -16,13 +17,62 @@ export const CreateOrderScreen: React.FC = () => {
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
   const [budget, setBudget] = useState('');
-  const [deadline, setDeadline] = useState('');
+  const [workersCount, setWorkersCount] = useState('1');
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Показываем только 6 категорий
   const categories = [
-    'Уборка дома', 'Ремонт техники', 'Доставка', 'Репетиторство',
-    'Красота', 'Фотография', 'Строительство', 'IT услуги'
+    'Уборка дома',
+    'Ремонт техники',
+    'Доставка',
+    'Репетиторство',
+    'Красота',
+    'Строительство'
   ];
+
+  const handleDatePress = () => {
+    // Для простоты используем Alert для выбора даты
+    // В реальном приложении здесь будет DatePicker
+    Alert.alert(
+      'Выбор даты',
+      'Выберите дату выполнения заказа:',
+      [
+        { text: 'Сегодня', onPress: () => setSelectedDate(new Date()) },
+        {
+          text: 'Завтра', onPress: () => {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            setSelectedDate(tomorrow);
+          }
+        },
+        {
+          text: 'Через 3 дня', onPress: () => {
+            const threeDays = new Date();
+            threeDays.setDate(threeDays.getDate() + 3);
+            setSelectedDate(threeDays);
+          }
+        },
+        {
+          text: 'Через неделю', onPress: () => {
+            const oneWeek = new Date();
+            oneWeek.setDate(oneWeek.getDate() + 7);
+            setSelectedDate(oneWeek);
+          }
+        },
+        { text: 'Отмена', style: 'cancel' },
+      ]
+    );
+  };
+
+  const formatDate = (date: Date | null) => {
+    if (!date) return 'Выберите дату';
+    return date.toLocaleDateString('ru-RU', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
 
   const handleSubmit = async () => {
     if (!title.trim() || !description.trim() || !category || !budget.trim()) {
@@ -40,7 +90,8 @@ export const CreateOrderScreen: React.FC = () => {
       setDescription('');
       setCategory('');
       setBudget('');
-      setDeadline('');
+      setWorkersCount('1');
+      setSelectedDate(null);
     } catch (error) {
       Alert.alert('Ошибка', 'Не удалось создать заказ. Попробуйте еще раз.');
     } finally {
@@ -74,27 +125,25 @@ export const CreateOrderScreen: React.FC = () => {
           {/* Category */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Категория *</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={styles.categoriesRow}>
-                {categories.map((cat, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[
-                      styles.categoryChip,
-                      category === cat && styles.categoryChipSelected
-                    ]}
-                    onPress={() => setCategory(cat)}
-                  >
-                    <Text style={[
-                      styles.categoryChipText,
-                      category === cat && styles.categoryChipTextSelected
-                    ]}>
-                      {cat}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
+            <View style={styles.categoriesGrid}>
+              {categories.map((cat, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.categoryChip,
+                    category === cat && styles.categoryChipSelected
+                  ]}
+                  onPress={() => setCategory(cat)}
+                >
+                  <Text style={[
+                    styles.categoryChipText,
+                    category === cat && styles.categoryChipTextSelected
+                  ]}>
+                    {cat}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
 
           {/* Description */}
@@ -125,16 +174,57 @@ export const CreateOrderScreen: React.FC = () => {
             />
           </View>
 
-          {/* Deadline */}
+          {/* Workers Count */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Срок выполнения</Text>
-            <TextInput
-              style={styles.input}
-              value={deadline}
-              onChangeText={setDeadline}
-              placeholder="Например: до завтра, в течение недели"
-              placeholderTextColor={theme.colors.text.secondary}
-            />
+            <Text style={styles.label}>Количество работников *</Text>
+            <View style={styles.workersCountContainer}>
+              <TouchableOpacity
+                style={styles.workersCountButton}
+                onPress={() => {
+                  const count = Math.max(1, parseInt(workersCount) - 1);
+                  setWorkersCount(count.toString());
+                }}
+              >
+                <Text style={styles.workersCountButtonText}>−</Text>
+              </TouchableOpacity>
+              <TextInput
+                style={styles.workersCountInput}
+                value={workersCount}
+                onChangeText={(text) => {
+                  const num = parseInt(text) || 1;
+                  if (num >= 1 && num <= 20) {
+                    setWorkersCount(text);
+                  }
+                }}
+                keyboardType="numeric"
+                textAlign="center"
+              />
+              <TouchableOpacity
+                style={styles.workersCountButton}
+                onPress={() => {
+                  const count = Math.min(20, parseInt(workersCount) + 1);
+                  setWorkersCount(count.toString());
+                }}
+              >
+                <Text style={styles.workersCountButtonText}>+</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Date */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Дата выполнения</Text>
+            <TouchableOpacity
+              style={styles.dateButton}
+              onPress={handleDatePress}
+            >
+              <Text style={[
+                styles.dateButtonText,
+                !selectedDate && styles.dateButtonPlaceholder
+              ]}>
+                📅  {formatDate(selectedDate)}
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {/* Submit Button */}
@@ -204,8 +294,9 @@ const styles = StyleSheet.create({
     height: 100,
     paddingTop: theme.spacing.md,
   },
-  categoriesRow: {
+  categoriesGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: theme.spacing.sm,
   },
   categoryChip: {
@@ -215,6 +306,8 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.full,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
+    minWidth: '48%',
+    alignItems: 'center',
   },
   categoryChipSelected: {
     backgroundColor: theme.colors.primary,
@@ -226,6 +319,51 @@ const styles = StyleSheet.create({
   },
   categoryChipTextSelected: {
     color: theme.colors.white,
+  },
+  workersCountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: theme.spacing.sm,
+  },
+  workersCountButton: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.sm,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  workersCountButtonText: {
+    color: theme.colors.white,
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.bold,
+  },
+  workersCountInput: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.primary,
+    minWidth: 100,
+    textAlign: 'center',
+  },
+  dateButton: {
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
+    alignItems: 'center',
+  },
+  dateButtonText: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.primary,
+  },
+  dateButtonPlaceholder: {
+    color: theme.colors.text.secondary,
   },
   submitButton: {
     backgroundColor: theme.colors.primary,
