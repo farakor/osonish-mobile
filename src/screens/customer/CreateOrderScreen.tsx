@@ -9,10 +9,27 @@ import {
   TextInput,
   Alert,
   Platform,
+  Image,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { theme } from '../../constants';
 import CalendarDateIcon from '../../../assets/calendar-date.svg';
+import * as ImagePicker from 'expo-image-picker';
+import { VideoView, useVideoPlayer } from 'expo-video';
+import ImageIcon from '../../../assets/image-03.svg';
+
+// Отдельный компонент для превью видео
+const VideoPreview: React.FC<{ uri: string }> = ({ uri }) => {
+  const player = useVideoPlayer(uri);
+  return (
+    <VideoView
+      player={player}
+      style={styles.mediaImage}
+      contentFit="cover"
+      nativeControls={false}
+    />
+  );
+};
 
 export const CreateOrderScreen: React.FC = () => {
   const [title, setTitle] = useState('');
@@ -23,6 +40,13 @@ export const CreateOrderScreen: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [mediaFiles, setMediaFiles] = useState<Array<{ uri: string; type: 'image' | 'video'; name: string; size: number }>>([]);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+
+  // УДАЛЕНО: // Создаём массив videoPlayers для всех mediaFiles (только для видео)
+  // const videoPlayers = mediaFiles.map(file =>
+  //   file.type === 'video' ? useVideoPlayer(file.uri) : null
+  // );
 
   // Показываем только 6 категорий
   const categories = [
@@ -66,6 +90,89 @@ export const CreateOrderScreen: React.FC = () => {
     // Форматируем с пробелами
     return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   }
+
+  // Функция выбора фото/видео с логами и проверкой разрешений
+  const pickMedia = async () => {
+    setMediaError(null);
+    if (mediaFiles.length >= 5) {
+      setMediaError('Можно загрузить максимум 5 файлов');
+      return;
+    }
+    Alert.alert(
+      'Добавить фото или видео',
+      'Выберите источник',
+      [
+        {
+          text: 'Снять фото/видео',
+          onPress: async () => {
+            const { status } = await ImagePicker.requestCameraPermissionsAsync();
+            if (status !== 'granted') {
+              Alert.alert('Нет доступа к камере');
+              return;
+            }
+            let result = await ImagePicker.launchCameraAsync({
+              mediaTypes: ['images', 'videos'],
+              quality: 0.8,
+            });
+            handleMediaResult(result);
+          },
+        },
+        {
+          text: 'Выбрать из галереи',
+          onPress: async () => {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+              Alert.alert('Нет доступа к фото/видео');
+              return;
+            }
+            let result = await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ['images', 'videos'],
+              allowsMultipleSelection: true,
+              selectionLimit: 5 - mediaFiles.length,
+              quality: 0.8,
+            });
+            handleMediaResult(result);
+          },
+        },
+        { text: 'Отмена', style: 'cancel' },
+      ]
+    );
+  };
+
+  // Универсальная обработка результата выбора/съёмки
+  const handleMediaResult = (result: any) => {
+    // Логируем результат выбора
+    console.log('ImagePicker result:', result);
+    if (result.assets) {
+      result.assets.forEach((asset: any) => console.log('asset:', asset));
+    }
+    if (!result.canceled) {
+      let newFiles = result.assets
+        .filter((asset: any) => {
+          if (asset.fileSize && asset.fileSize > 20 * 1024 * 1024) {
+            setMediaError('Файл превышает 20 МБ: ' + (asset.fileName || asset.uri));
+            return false;
+          }
+          if (!['image', 'video'].includes(asset.type ?? '')) {
+            setMediaError('Можно загружать только фото и видео');
+            return false;
+          }
+          return true;
+        })
+        .map((asset: any) => ({
+          uri: asset.uri,
+          type: (asset.type ?? 'file') as 'image' | 'video',
+          name: asset.fileName || asset.uri.split('/').pop() || 'file',
+          size: asset.fileSize || 0,
+        }));
+      setMediaFiles((prev) => [...prev, ...newFiles].slice(0, 5));
+    }
+  };
+
+  // Удаление файла
+  const removeMedia = (index: number) => {
+    setMediaFiles(files => files.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = async () => {
     if (!title.trim() || !description.trim() || !category || !budget.trim() || !selectedDate) {
@@ -221,6 +328,32 @@ export const CreateOrderScreen: React.FC = () => {
                 </Text>
               </View>
             </TouchableOpacity>
+          </View>
+
+          {/* Media Picker */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Фото и видео</Text>
+            <View style={styles.mediaList}>
+              {mediaFiles.map((file, idx) => (
+                <View key={file.uri} style={styles.mediaItem}>
+                  {file.type === 'image' ? (
+                    <Image source={{ uri: file.uri }} style={styles.mediaImage} resizeMode="cover" />
+                  ) : (
+                    <VideoPreview uri={file.uri} />
+                  )}
+                  <TouchableOpacity style={styles.removeMediaBtn} onPress={() => removeMedia(idx)}>
+                    <Text style={styles.removeMediaText}>×</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+              {mediaFiles.length < 5 && (
+                <TouchableOpacity style={styles.addMediaBtn} onPress={pickMedia}>
+                  <ImageIcon width={28} height={28} />
+                  <Text style={styles.addMediaText}>Добавить</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            {mediaError && <Text style={styles.mediaError}>{mediaError}</Text>}
           </View>
 
           {/* Note */}
@@ -462,5 +595,99 @@ const styles = StyleSheet.create({
   required: {
     color: theme.colors.error,
     fontWeight: theme.typography.fontWeight.bold,
+  },
+  mediaList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.sm,
+  },
+  mediaItem: {
+    position: 'relative',
+    width: 80,
+    height: 80,
+    borderRadius: theme.borderRadius.md,
+    overflow: 'hidden',
+    marginRight: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mediaImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: theme.borderRadius.md,
+  },
+  mediaVideoWrapper: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  playIconOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.15)',
+  },
+  playIcon: {
+    color: theme.colors.white,
+    fontSize: 28,
+    fontWeight: 'bold',
+    textShadowColor: '#000',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  removeMediaBtn: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
+  },
+  removeMediaText: {
+    color: theme.colors.white,
+    fontSize: 18,
+    fontWeight: 'bold',
+    lineHeight: 20,
+  },
+  addMediaBtn: {
+    width: 80,
+    height: 80,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  addMediaText: {
+    color: theme.colors.primary,
+    fontSize: 12,
+    marginTop: 4,
+  },
+  mediaError: {
+    color: theme.colors.error || 'red',
+    fontSize: 12,
+    marginTop: 4,
   },
 }); 
