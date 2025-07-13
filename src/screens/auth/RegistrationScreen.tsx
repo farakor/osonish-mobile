@@ -16,37 +16,24 @@ import { theme } from '../../constants';
 
 export function RegistrationScreen() {
   const navigation = useNavigation();
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('+998');
   const [isLoading, setIsLoading] = useState(false);
 
-  const formatPhoneNumber = (text: string) => {
-    // Убираем все символы кроме цифр
-    const cleaned = text.replace(/\D/g, '');
-
-    // Форматируем как +998 (XX) XXX-XX-XX
-    if (cleaned.length >= 12) {
-      const formatted = `+${cleaned.slice(0, 3)} (${cleaned.slice(3, 5)}) ${cleaned.slice(5, 8)}-${cleaned.slice(8, 10)}-${cleaned.slice(10, 12)}`;
-      return formatted;
-    } else if (cleaned.length >= 8) {
-      const formatted = `+${cleaned.slice(0, 3)} (${cleaned.slice(3, 5)}) ${cleaned.slice(5, 8)}-${cleaned.slice(8)}`;
-      return formatted;
-    } else if (cleaned.length >= 5) {
-      const formatted = `+${cleaned.slice(0, 3)} (${cleaned.slice(3, 5)}) ${cleaned.slice(5)}`;
-      return formatted;
-    } else if (cleaned.length >= 3) {
-      const formatted = `+${cleaned.slice(0, 3)} (${cleaned.slice(3)}`;
-      return formatted;
-    } else {
-      return `+${cleaned}`;
-    }
-  };
-
   const handlePhoneChange = (text: string) => {
-    const formatted = formatPhoneNumber(text);
-    setPhoneNumber(formatted);
+    // Если пользователь удаляет до '+998' или меньше, всегда оставлять только '+998'
+    if (!text || text.length <= 4 || !text.startsWith('+998')) {
+      setPhoneNumber('+998');
+      return;
+    }
+    // Оставляем только цифры после +998
+    let digits = text.slice(4).replace(/\D/g, '');
+    // Ограничиваем длину (9 цифр после +998)
+    digits = digits.slice(0, 9);
+    setPhoneNumber('+998' + digits);
   };
 
   const validatePhoneNumber = () => {
+    // +998 и 9 цифр
     const cleaned = phoneNumber.replace(/\D/g, '');
     return cleaned.length === 12 && cleaned.startsWith('998');
   };
@@ -107,7 +94,7 @@ export function RegistrationScreen() {
               value={phoneNumber}
               onChangeText={handlePhoneChange}
               placeholder="+998 (XX) XXX-XX-XX"
-              placeholderTextColor={theme.colors.textSecondary}
+              placeholderTextColor={theme.colors.text.secondary}
               keyboardType="phone-pad"
               maxLength={20}
               autoFocus
@@ -167,7 +154,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: theme.fonts.sizes.xl,
-    color: theme.colors.text,
+    color: theme.colors.text.primary,
   },
   titleSection: {
     marginBottom: theme.spacing.xxxl,
@@ -175,12 +162,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: theme.fonts.sizes.xxl,
     fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.text,
+    color: theme.colors.text.primary,
     marginBottom: theme.spacing.md,
   },
   subtitle: {
     fontSize: theme.fonts.sizes.md,
-    color: theme.colors.textSecondary,
+    color: theme.colors.text.secondary,
     lineHeight: 24,
   },
   inputSection: {
@@ -189,7 +176,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.medium,
-    color: theme.colors.text,
+    color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
   },
   phoneInput: {
@@ -199,12 +186,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: theme.spacing.md,
     fontSize: theme.fonts.sizes.lg,
-    color: theme.colors.text,
+    color: theme.colors.text.primary,
     backgroundColor: theme.colors.background,
   },
   inputHint: {
     fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.textSecondary,
+    color: theme.colors.text.secondary,
     marginTop: theme.spacing.sm,
   },
   continueButton: {
@@ -232,6 +219,6 @@ const styles = StyleSheet.create({
     color: theme.colors.background,
   },
   continueButtonTextDisabled: {
-    color: theme.colors.textSecondary,
+    color: theme.colors.text.secondary,
   },
 }); 

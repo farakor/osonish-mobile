@@ -11,6 +11,8 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
 import type { RootStackParamList } from '../../types';
+import WorkerIcon from '../../../assets/engineer-worker.svg';
+import UserIcon from '../../../assets/user-03.svg';
 
 type UserRole = 'customer' | 'worker';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -39,14 +41,12 @@ export const RoleSelectionScreen: React.FC = () => {
     role,
     title,
     description,
-    icon,
     isSelected,
     onPress
   }: {
     role: UserRole;
     title: string;
     description: string;
-    icon: string;
     isSelected: boolean;
     onPress: () => void;
   }) => (
@@ -59,7 +59,11 @@ export const RoleSelectionScreen: React.FC = () => {
       activeOpacity={0.8}
     >
       <View style={styles.iconContainer}>
-        <Text style={styles.icon}>{icon}</Text>
+        {role === 'worker' ? (
+          <WorkerIcon width={32} height={32} fill={isSelected ? theme.colors.primary : '#666666'} />
+        ) : (
+          <UserIcon width={32} height={32} stroke={isSelected ? theme.colors.primary : '#666666'} />
+        )}
       </View>
       <Text style={[
         styles.roleTitle,
@@ -96,7 +100,6 @@ export const RoleSelectionScreen: React.FC = () => {
             role="customer"
             title="Я заказчик"
             description="Ищу исполнителей для моих задач и проектов"
-            icon="👤"
             isSelected={selectedRole === 'customer'}
             onPress={() => handleRoleSelect('customer')}
           />
@@ -105,7 +108,6 @@ export const RoleSelectionScreen: React.FC = () => {
             role="worker"
             title="Я исполнитель"
             description="Ищу работу и готов выполнять различные задачи"
-            icon="🔨"
             isSelected={selectedRole === 'worker'}
             onPress={() => handleRoleSelect('worker')}
           />

@@ -64,31 +64,23 @@ export const CustomerHomeScreen: React.FC = () => {
 
   const getStatusColor = (status: Order['status']) => {
     switch (status) {
-      case 'active':
-        return theme.colors.primary;
       case 'in_progress':
         return '#F39C12';
-      case 'completed':
-        return theme.colors.success;
-      case 'cancelled':
-        return theme.colors.error;
+      case 'active':
+        return theme.colors.primary;
       default:
-        return theme.colors.text.secondary;
+        return 'transparent';
     }
   };
 
   const getStatusText = (status: Order['status']) => {
     switch (status) {
-      case 'active':
-        return 'Активный';
       case 'in_progress':
         return 'В работе';
-      case 'completed':
-        return 'Завершен';
-      case 'cancelled':
-        return 'Отменен';
+      case 'active':
+        return 'Активный';
       default:
-        return status;
+        return '';
     }
   };
 

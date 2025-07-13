@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
+import OsonishLogo from '../../../assets/oson-ish-logo-white.svg';
 
 export function SplashScreen() {
   const navigation = useNavigation();
@@ -22,8 +23,7 @@ export function SplashScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={theme.colors.primary} />
       <View style={styles.content}>
-        <Text style={styles.title}>Osonish</Text>
-        <Text style={styles.subtitle}>Marketplace for jobs</Text>
+        <OsonishLogo width={180} height={150} style={{ marginBottom: 24 }} />
       </View>
     </View>
   );

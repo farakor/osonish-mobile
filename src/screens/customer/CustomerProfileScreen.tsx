@@ -26,14 +26,6 @@ export const CustomerProfileScreen: React.FC = () => {
     Alert.alert('Уведомления', 'Настройки уведомлений');
   };
 
-  const handlePaymentMethods = () => {
-    Alert.alert('Способы оплаты', 'Управление картами и кошельками');
-  };
-
-  const handleOrderHistory = () => {
-    Alert.alert('История заказов', 'Все ваши заказы');
-  };
-
   const handleSupport = () => {
     Alert.alert('Поддержка', 'Свяжитесь с нами: +998 90 123 45 67');
   };
@@ -57,8 +49,6 @@ export const CustomerProfileScreen: React.FC = () => {
   const profileOptions: ProfileOption[] = [
     { id: '1', title: 'Редактировать профиль', icon: '✏️', action: handleEditProfile },
     { id: '2', title: 'Уведомления', icon: '🔔', action: handleNotifications },
-    { id: '3', title: 'Способы оплаты', icon: '💳', action: handlePaymentMethods },
-    { id: '4', title: 'История заказов', icon: '📋', action: handleOrderHistory },
     { id: '5', title: 'Поддержка', icon: '💬', action: handleSupport },
   ];
 

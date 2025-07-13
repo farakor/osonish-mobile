@@ -42,6 +42,7 @@ export const CreateOrderScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [mediaFiles, setMediaFiles] = useState<Array<{ uri: string; type: 'image' | 'video'; name: string; size: number }>>([]);
   const [mediaError, setMediaError] = useState<string | null>(null);
+  const [location, setLocation] = useState('');
 
   // УДАЛЕНО: // Создаём массив videoPlayers для всех mediaFiles (только для видео)
   // const videoPlayers = mediaFiles.map(file =>
@@ -175,8 +176,8 @@ export const CreateOrderScreen: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!title.trim() || !description.trim() || !category || !budget.trim() || !selectedDate) {
-      Alert.alert('Ошибка', 'Заполните все обязательные поля, включая дату выполнения');
+    if (!title.trim() || !description.trim() || !category || !budget.trim() || !selectedDate || !location.trim()) {
+      Alert.alert('Ошибка', 'Заполните все обязательные поля, включая местоположение и дату выполнения');
       return;
     }
 
@@ -192,6 +193,7 @@ export const CreateOrderScreen: React.FC = () => {
       setBudget('');
       setWorkersCount('1');
       setSelectedDate(null);
+      setLocation('');
     } catch (error) {
       Alert.alert('Ошибка', 'Не удалось создать заказ. Попробуйте еще раз.');
     } finally {
@@ -258,6 +260,18 @@ export const CreateOrderScreen: React.FC = () => {
               multiline
               numberOfLines={4}
               textAlignVertical="top"
+            />
+          </View>
+
+          {/* Location */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Местоположение <Text style={styles.required}>*</Text></Text>
+            <TextInput
+              style={styles.input}
+              value={location}
+              onChangeText={setLocation}
+              placeholder="Например: Ташкент, Юнусабад"
+              placeholderTextColor={theme.colors.text.secondary}
             />
           </View>
 

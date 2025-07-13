@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, StatusBar, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
+import OsonishLogo from '../../../assets/oson-ish-logo.svg';
 
 export function AuthScreen() {
   const navigation = useNavigation();
@@ -13,8 +14,7 @@ export function AuthScreen() {
       <View style={styles.content}>
         {/* Logo Section */}
         <View style={styles.logoSection}>
-          <Text style={styles.logoText}>Osonish</Text>
-          <Text style={styles.tagline}>Найди работу или найди исполнителя</Text>
+          <OsonishLogo width={160} height={130} style={{ marginBottom: 16 }} />
         </View>
 
         {/* Welcome Section */}
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   },
   tagline: {
     fontSize: theme.fonts.sizes.md,
-    color: theme.colors.textSecondary,
+    color: theme.colors.text.secondary,
     textAlign: 'center',
   },
   welcomeSection: {
@@ -93,13 +93,13 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     fontSize: theme.fonts.sizes.xxl,
     fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.text,
+    color: theme.colors.text.primary,
     marginBottom: theme.spacing.md,
     textAlign: 'center',
   },
   welcomeSubtitle: {
     fontSize: theme.fonts.sizes.md,
-    color: theme.colors.textSecondary,
+    color: theme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 24,
   },
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.medium,
-    color: theme.colors.text,
+    color: theme.colors.text.primary,
   },
   footer: {
     alignItems: 'center',
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.textSecondary,
+    color: theme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 20,
   },
