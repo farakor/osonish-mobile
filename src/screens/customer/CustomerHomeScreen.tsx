@@ -9,6 +9,9 @@ import {
   FlatList,
 } from 'react-native';
 import { theme } from '../../constants';
+import { useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { CustomerTabParamList } from '../../types';
 
 interface Order {
   id: string;
@@ -56,6 +59,7 @@ const mockActiveOrders: Order[] = [
 
 export const CustomerHomeScreen: React.FC = () => {
   const [activeOrders] = useState<Order[]>(mockActiveOrders);
+  const navigation = useNavigation<BottomTabNavigationProp<CustomerTabParamList>>();
 
   const getStatusColor = (status: Order['status']) => {
     switch (status) {
@@ -93,8 +97,7 @@ export const CustomerHomeScreen: React.FC = () => {
   };
 
   const handleCreateOrder = () => {
-    console.log('Create order pressed');
-    // TODO: Навигация к экрану создания заказа
+    navigation.navigate('CreateOrder');
   };
 
   const renderOrderCard = ({ item }: { item: Order }) => (
