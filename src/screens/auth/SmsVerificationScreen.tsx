@@ -29,6 +29,13 @@ export function SmsVerificationScreen() {
   const inputRefs = useRef<TextInput[]>([]);
 
   useEffect(() => {
+    // Автоматически фокусируем первый инпут при открытии экрана
+    setTimeout(() => {
+      inputRefs.current[0]?.focus();
+    }, 300); // небольшая задержка для корректной работы на Android
+  }, []);
+
+  useEffect(() => {
     const interval = setInterval(() => {
       setTimer((prev) => {
         if (prev <= 1) {
@@ -242,13 +249,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: theme.fonts.sizes.xxl,
     fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.text,
+    color: theme.colors.text.primary,
     marginBottom: theme.spacing.md,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: theme.fonts.sizes.md,
-    color: theme.colors.textSecondary,
+    color: theme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 24,
   },
@@ -274,7 +281,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     fontSize: theme.fonts.sizes.xl,
     fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.text,
+    color: theme.colors.text.primary,
     backgroundColor: theme.colors.background,
     marginHorizontal: 4,
   },
@@ -284,7 +291,7 @@ const styles = StyleSheet.create({
   },
   codeHint: {
     fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.textSecondary,
+    color: theme.colors.text.secondary,
     textAlign: 'center',
   },
   resendSection: {
@@ -298,7 +305,7 @@ const styles = StyleSheet.create({
   },
   timerText: {
     fontSize: theme.fonts.sizes.md,
-    color: theme.colors.textSecondary,
+    color: theme.colors.text.secondary,
   },
   loadingSection: {
     alignItems: 'center',
@@ -315,7 +322,7 @@ const styles = StyleSheet.create({
   },
   helpText: {
     fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.textSecondary,
+    color: theme.colors.text.secondary,
     textAlign: 'center',
   },
   helpLink: {
