@@ -26,12 +26,12 @@ export const CreateOrderScreen: React.FC = () => {
 
   // Показываем только 6 категорий
   const categories = [
-    'Уборка дома',
-    'Ремонт техники',
-    'Доставка',
-    'Репетиторство',
-    'Красота',
-    'Строительство'
+    { label: 'Стройка', emoji: '🏗️' },
+    { label: 'Уборка', emoji: '🧹' },
+    { label: 'Сад', emoji: '🌳' },
+    { label: 'Общепит', emoji: '🍽️' },
+    { label: 'Переезд', emoji: '🚚' },
+    { label: 'Прочее', emoji: '✨' },
   ];
 
   const handleDateChange = (event: any, date?: Date) => {
@@ -124,15 +124,15 @@ export const CreateOrderScreen: React.FC = () => {
                   key={index}
                   style={[
                     styles.categoryChip,
-                    category === cat && styles.categoryChipSelected
+                    category === cat.label && styles.categoryChipSelected
                   ]}
-                  onPress={() => setCategory(cat)}
+                  onPress={() => setCategory(cat.label)}
                 >
                   <Text style={[
                     styles.categoryChipText,
-                    category === cat && styles.categoryChipTextSelected
+                    category === cat.label && styles.categoryChipTextSelected
                   ]}>
-                    {cat}
+                    {cat.emoji} {cat.label}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -156,7 +156,7 @@ export const CreateOrderScreen: React.FC = () => {
 
           {/* Budget */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Бюджет (сум) <Text style={styles.required}>*</Text></Text>
+            <Text style={styles.label}>Сумма за одного работника <Text style={styles.required}>*</Text></Text>
             <TextInput
               style={styles.input}
               value={formatBudgetInput(budget)}
@@ -224,9 +224,6 @@ export const CreateOrderScreen: React.FC = () => {
           </View>
 
           {/* Note */}
-          <Text style={styles.note}>
-            <Text style={styles.required}>*</Text> - обязательные поля
-          </Text>
         </View>
       </ScrollView>
 
