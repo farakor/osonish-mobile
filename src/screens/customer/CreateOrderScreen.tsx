@@ -93,7 +93,7 @@ export const CreateOrderScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Создать заказ</Text>
@@ -219,7 +219,16 @@ export const CreateOrderScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Submit Button */}
+          {/* Note */}
+          <Text style={styles.note}>
+            * - обязательные поля
+          </Text>
+        </View>
+      </ScrollView>
+
+      {/* Fixed Submit Button */}
+      {!showDatePicker && (
+        <View style={styles.fixedButtonContainer}>
           <TouchableOpacity
             style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
             onPress={handleSubmit}
@@ -229,12 +238,8 @@ export const CreateOrderScreen: React.FC = () => {
               {isLoading ? 'Создаем заказ...' : 'Опубликовать заказ'}
             </Text>
           </TouchableOpacity>
-
-          <Text style={styles.note}>
-            * - обязательные поля
-          </Text>
         </View>
-      </ScrollView>
+      )}
 
       {/* Date Picker */}
       {showDatePicker && (
@@ -431,5 +436,26 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
     fontSize: theme.typography.fontSize.sm,
     fontWeight: theme.typography.fontWeight.semiBold,
+  },
+  scrollContent: {
+    paddingBottom: 120, // чтобы не перекрывать полями кнопку
+  },
+  fixedButtonContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: theme.colors.background,
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.lg + 8,
+    paddingTop: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 8,
+    zIndex: 10,
   },
 }); 
