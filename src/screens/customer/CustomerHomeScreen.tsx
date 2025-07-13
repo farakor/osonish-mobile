@@ -12,6 +12,8 @@ import { theme } from '../../constants';
 import { useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CustomerTabParamList } from '../../types';
+import FilePlusIcon from '../../../assets/file-plus-03.svg';
+import FilePlusIcon2 from '../../../assets/file-plus-03_2.svg';
 
 interface Order {
   id: string;
@@ -172,7 +174,7 @@ export const CustomerHomeScreen: React.FC = () => {
           onPress={handleCreateOrder}
           activeOpacity={0.8}
         >
-          <Text style={styles.quickCreateIcon}>➕</Text>
+          <FilePlusIcon2 width={24} height={24} style={{ marginRight: theme.spacing.sm }} fill="none" stroke={theme.colors.white} />
           <Text style={styles.quickCreateText}>Создать новый заказ</Text>
         </TouchableOpacity>
       )}
@@ -216,6 +218,7 @@ const styles = StyleSheet.create({
   quickCreateButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center', // центрируем иконку и текст
     backgroundColor: theme.colors.primary,
     marginHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
