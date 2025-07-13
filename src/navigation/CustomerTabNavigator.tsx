@@ -1,16 +1,17 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text } from 'react-native';
 import { theme } from '../constants';
 import type { CustomerTabParamList } from '../types';
-
-// Импортируем экраны покупателя
 import {
   CustomerHomeScreen,
   CreateOrderScreen,
   MyOrdersScreen,
   CustomerProfileScreen
 } from '../screens/customer';
+import HomeIcon from '../../assets/home-02.svg';
+import CreateOrderIcon from '../../assets/file-plus-03.svg';
+import MyOrdersIcon from '../../assets/file-02.svg';
+import ProfileIcon from '../../assets/user-01.svg';
 
 const Tab = createBottomTabNavigator<CustomerTabParamList>();
 
@@ -22,16 +23,26 @@ export function CustomerTabNavigator() {
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.text.secondary,
         tabBarStyle: {
-          backgroundColor: theme.colors.surface,
-          borderTopWidth: 1,
-          borderTopColor: theme.colors.border,
-          paddingVertical: theme.spacing.xs,
-          height: 60,
+          backgroundColor: '#fff',
+          borderTopWidth: 0,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.06,
+          shadowRadius: 8,
+          elevation: 8,
+          paddingTop: theme.spacing.sm, // уменьшен верхний паддинг
+          paddingBottom: theme.spacing.xxl, // увеличен нижний паддинг
+          height: 99, // уменьшена высота меню на 10% (было 110)
+          justifyContent: 'center', // центрирование по вертикали
         },
         tabBarLabelStyle: {
-          fontSize: theme.typography.fontSize.xs,
-          fontWeight: theme.typography.fontWeight.medium,
-          marginBottom: theme.spacing.xs,
+          fontSize: theme.typography.fontSize.sm, // уменьшен размер шрифта
+          fontWeight: theme.typography.fontWeight.medium, // обычный вес
+          marginBottom: 0, // убираем отступ снизу
+          marginTop: theme.spacing.xs, // добавляем отступ сверху
+        },
+        tabBarIconStyle: {
+          marginBottom: 0, // убираем отступ снизу у иконки
         },
       }}
     >
@@ -40,8 +51,13 @@ export function CustomerTabNavigator() {
         component={CustomerHomeScreen}
         options={{
           tabBarLabel: 'Главная',
-          tabBarIcon: ({ color, size }) => (
-            <Text style={{ color, fontSize: size - 4 }}>🏠</Text>
+          tabBarIcon: ({ color, size, focused }) => (
+            <HomeIcon
+              width={25}
+              height={25}
+              fill={focused ? `${color}1F` : `${theme.colors.text.secondary}1F`}
+              stroke={focused ? color : theme.colors.text.secondary}
+            />
           ),
         }}
       />
@@ -50,8 +66,13 @@ export function CustomerTabNavigator() {
         component={CreateOrderScreen}
         options={{
           tabBarLabel: 'Создать заказ',
-          tabBarIcon: ({ color, size }) => (
-            <Text style={{ color, fontSize: size - 4 }}>➕</Text>
+          tabBarIcon: ({ color, size, focused }) => (
+            <CreateOrderIcon
+              width={25}
+              height={25}
+              fill={focused ? `${color}1F` : `${theme.colors.text.secondary}1F`}
+              stroke={focused ? color : theme.colors.text.secondary}
+            />
           ),
         }}
       />
@@ -60,8 +81,13 @@ export function CustomerTabNavigator() {
         component={MyOrdersScreen}
         options={{
           tabBarLabel: 'Мои заказы',
-          tabBarIcon: ({ color, size }) => (
-            <Text style={{ color, fontSize: size - 4 }}>📋</Text>
+          tabBarIcon: ({ color, size, focused }) => (
+            <MyOrdersIcon
+              width={25}
+              height={25}
+              fill={focused ? `${color}1F` : `${theme.colors.text.secondary}1F`}
+              stroke={focused ? color : theme.colors.text.secondary}
+            />
           ),
         }}
       />
@@ -70,8 +96,13 @@ export function CustomerTabNavigator() {
         component={CustomerProfileScreen}
         options={{
           tabBarLabel: 'Профиль',
-          tabBarIcon: ({ color, size }) => (
-            <Text style={{ color, fontSize: size - 4 }}>👤</Text>
+          tabBarIcon: ({ color, size, focused }) => (
+            <ProfileIcon
+              width={25}
+              height={25}
+              fill={focused ? `${color}1F` : `${theme.colors.text.secondary}1F`}
+              stroke={focused ? color : theme.colors.text.secondary}
+            />
           ),
         }}
       />
