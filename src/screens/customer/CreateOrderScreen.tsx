@@ -67,8 +67,8 @@ export const CreateOrderScreen: React.FC = () => {
   }
 
   const handleSubmit = async () => {
-    if (!title.trim() || !description.trim() || !category || !budget.trim()) {
-      Alert.alert('Ошибка', 'Заполните все обязательные поля');
+    if (!title.trim() || !description.trim() || !category || !budget.trim() || !selectedDate) {
+      Alert.alert('Ошибка', 'Заполните все обязательные поля, включая дату выполнения');
       return;
     }
 
@@ -104,7 +104,7 @@ export const CreateOrderScreen: React.FC = () => {
         <View style={styles.form}>
           {/* Title */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Название заказа *</Text>
+            <Text style={styles.label}>Название заказа <Text style={styles.required}>*</Text></Text>
             <TextInput
               style={styles.input}
               value={title}
@@ -116,7 +116,7 @@ export const CreateOrderScreen: React.FC = () => {
 
           {/* Category */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Категория *</Text>
+            <Text style={styles.label}>Категория <Text style={styles.required}>*</Text></Text>
             <View style={styles.categoriesGrid}>
               {categories.map((cat, index) => (
                 <TouchableOpacity
@@ -140,7 +140,7 @@ export const CreateOrderScreen: React.FC = () => {
 
           {/* Description */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Описание *</Text>
+            <Text style={styles.label}>Описание <Text style={styles.required}>*</Text></Text>
             <TextInput
               style={[styles.input, styles.textArea]}
               value={description}
@@ -155,7 +155,7 @@ export const CreateOrderScreen: React.FC = () => {
 
           {/* Budget */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Бюджет (сум) *</Text>
+            <Text style={styles.label}>Бюджет (сум) <Text style={styles.required}>*</Text></Text>
             <TextInput
               style={styles.input}
               value={formatBudgetInput(budget)}
@@ -168,7 +168,7 @@ export const CreateOrderScreen: React.FC = () => {
 
           {/* Workers Count */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Количество работников *</Text>
+            <Text style={styles.label}>Количество работников <Text style={styles.required}>*</Text></Text>
             <View style={styles.workersCountContainer}>
               <TouchableOpacity
                 style={styles.workersCountButton}
@@ -205,7 +205,7 @@ export const CreateOrderScreen: React.FC = () => {
 
           {/* Date */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Дата выполнения</Text>
+            <Text style={styles.label}>Дата выполнения <Text style={styles.required}>*</Text></Text>
             <TouchableOpacity
               style={styles.dateButton}
               onPress={showDatePickerHandler}
@@ -221,7 +221,7 @@ export const CreateOrderScreen: React.FC = () => {
 
           {/* Note */}
           <Text style={styles.note}>
-            * - обязательные поля
+            <Text style={styles.required}>*</Text> - обязательные поля
           </Text>
         </View>
       </ScrollView>
@@ -457,5 +457,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 8,
     zIndex: 10,
+  },
+  required: {
+    color: theme.colors.error,
+    fontWeight: theme.typography.fontWeight.bold,
   },
 }); 
