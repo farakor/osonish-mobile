@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,88 +6,189 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
+  FlatList,
 } from 'react-native';
 import { theme } from '../../constants';
 
-interface ServiceCategory {
+interface Order {
   id: string;
   title: string;
-  icon: string;
-  color: string;
+  category: string;
+  budget: string;
+  status: 'active' | 'in_progress' | 'completed' | 'cancelled';
+  createdAt: string;
+  applicantsCount: number;
+  description: string;
+  location: string;
+  serviceDate: string;
 }
 
-const serviceCategories: ServiceCategory[] = [
-  { id: '1', title: 'Уборка дома', icon: '🧹', color: '#FF6B6B' },
-  { id: '2', title: 'Ремонт техники', icon: '🔧', color: '#4ECDC4' },
-  { id: '3', title: 'Доставка', icon: '🚚', color: '#45B7D1' },
-  { id: '4', title: 'Репетиторство', icon: '📚', color: '#96CEB4' },
-  { id: '5', title: 'Красота', icon: '💄', color: '#FFEAA7' },
-  { id: '6', title: 'Фотография', icon: '📸', color: '#DDA0DD' },
-  { id: '7', title: 'Строительство', icon: '🏗️', color: '#F39C12' },
-  { id: '8', title: 'IT услуги', icon: '💻', color: '#6C5CE7' },
+// Mock data - активные заказы пользователя
+const mockActiveOrders: Order[] = [
+  {
+    id: '1',
+    title: 'Уборка 2-комнатной квартиры',
+    category: 'Уборка дома',
+    budget: '150,000',
+    status: 'active',
+    createdAt: '2 часа назад',
+    applicantsCount: 5,
+    description: 'Нужна генеральная уборка квартиры. Включая мытье окон.',
+    location: 'Ташкент, Юнусабад',
+    serviceDate: '2024-01-20',
+  },
+  {
+    id: '2',
+    title: 'Ремонт стиральной машины',
+    category: 'Ремонт техники',
+    budget: '200,000',
+    status: 'in_progress',
+    createdAt: '1 день назад',
+    applicantsCount: 3,
+    description: 'Стиральная машина Samsung не включается.',
+    location: 'Ташкент, Мирзо-Улугбек',
+    serviceDate: '2024-01-18',
+  },
 ];
 
+// Для демонстрации пустого состояния используйте:
+// const mockActiveOrders: Order[] = [];
+
 export const CustomerHomeScreen: React.FC = () => {
-  const handleCategoryPress = (category: ServiceCategory) => {
-    console.log('Selected category:', category.title);
-    // TODO: Навигация к списку исполнителей в категории
+  const [activeOrders] = useState<Order[]>(mockActiveOrders);
+
+  const getStatusColor = (status: Order['status']) => {
+    switch (status) {
+      case 'active':
+        return theme.colors.primary;
+      case 'in_progress':
+        return '#F39C12';
+      case 'completed':
+        return theme.colors.success;
+      case 'cancelled':
+        return theme.colors.error;
+      default:
+        return theme.colors.text.secondary;
+    }
   };
 
-  const CategoryCard = ({ category }: { category: ServiceCategory }) => (
+  const getStatusText = (status: Order['status']) => {
+    switch (status) {
+      case 'active':
+        return 'Активный';
+      case 'in_progress':
+        return 'В работе';
+      case 'completed':
+        return 'Завершен';
+      case 'cancelled':
+        return 'Отменен';
+      default:
+        return status;
+    }
+  };
+
+  const handleOrderPress = (orderId: string) => {
+    console.log('Order pressed:', orderId);
+    // TODO: Навигация к деталям заказа
+  };
+
+  const handleCreateOrder = () => {
+    console.log('Create order pressed');
+    // TODO: Навигация к экрану создания заказа
+  };
+
+  const renderOrderCard = ({ item }: { item: Order }) => (
     <TouchableOpacity
-      style={[styles.categoryCard, { backgroundColor: category.color }]}
-      onPress={() => handleCategoryPress(category)}
+      style={styles.orderCard}
+      onPress={() => handleOrderPress(item.id)}
       activeOpacity={0.8}
     >
-      <Text style={styles.categoryIcon}>{category.icon}</Text>
-      <Text style={styles.categoryTitle}>{category.title}</Text>
+      <View style={styles.orderHeader}>
+        <Text style={styles.orderTitle}>{item.title}</Text>
+        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+          <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
+        </View>
+      </View>
+
+      <Text style={styles.orderCategory}>{item.category}</Text>
+      <Text style={styles.orderDescription} numberOfLines={2}>{item.description}</Text>
+
+      <View style={styles.orderDetails}>
+        <View style={styles.orderDetail}>
+          <Text style={styles.orderDetailLabel}>📍 Местоположение:</Text>
+          <Text style={styles.orderDetailValue}>{item.location}</Text>
+        </View>
+        <View style={styles.orderDetail}>
+          <Text style={styles.orderDetailLabel}>💰 Бюджет:</Text>
+          <Text style={styles.orderDetailValue}>{item.budget} сум</Text>
+        </View>
+        <View style={styles.orderDetail}>
+          <Text style={styles.orderDetailLabel}>📝 Откликов:</Text>
+          <Text style={styles.orderDetailValue}>{item.applicantsCount}</Text>
+        </View>
+      </View>
+
+      <Text style={styles.orderTime}>Создан {item.createdAt}</Text>
     </TouchableOpacity>
+  );
+
+  const renderEmptyState = () => (
+    <View style={styles.emptyState}>
+      <Text style={styles.emptyStateIcon}>📋</Text>
+      <Text style={styles.emptyStateTitle}>У вас пока нет активных заказов</Text>
+      <Text style={styles.emptyStateDescription}>
+        Создайте свой первый заказ, чтобы найти надежного исполнителя
+      </Text>
+      <TouchableOpacity
+        style={styles.createOrderButton}
+        onPress={handleCreateOrder}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.createOrderButtonText}>➕ Создать заказ</Text>
+      </TouchableOpacity>
+    </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.greeting}>Добро пожаловать!</Text>
-          <Text style={styles.subtitle}>Выберите нужную услугу</Text>
-        </View>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.greeting}>Мои заказы</Text>
+        <Text style={styles.subtitle}>
+          {activeOrders.length > 0
+            ? `У вас ${activeOrders.length} активных заказа`
+            : 'Создайте свой первый заказ'
+          }
+        </Text>
+      </View>
 
-        {/* Search Bar */}
-        <TouchableOpacity style={styles.searchBar} activeOpacity={0.7}>
-          <Text style={styles.searchIcon}>🔍</Text>
-          <Text style={styles.searchPlaceholder}>Поиск услуг...</Text>
+      {/* Quick Create Button */}
+      {activeOrders.length > 0 && (
+        <TouchableOpacity
+          style={styles.quickCreateButton}
+          onPress={handleCreateOrder}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.quickCreateIcon}>➕</Text>
+          <Text style={styles.quickCreateText}>Создать новый заказ</Text>
         </TouchableOpacity>
+      )}
 
-        {/* Categories Grid */}
-        <View style={styles.categoriesSection}>
-          <Text style={styles.sectionTitle}>Популярные категории</Text>
-          <View style={styles.categoriesGrid}>
-            {serviceCategories.map((category) => (
-              <CategoryCard key={category.id} category={category} />
-            ))}
-          </View>
-        </View>
-
-        {/* Quick Actions */}
-        <View style={styles.quickActions}>
-          <Text style={styles.sectionTitle}>Быстрые действия</Text>
-          <TouchableOpacity style={styles.quickActionButton} activeOpacity={0.8}>
-            <Text style={styles.quickActionIcon}>⚡</Text>
-            <View style={styles.quickActionText}>
-              <Text style={styles.quickActionTitle}>Срочный заказ</Text>
-              <Text style={styles.quickActionSubtitle}>Нужно выполнить сегодня</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+      {/* Orders List or Empty State */}
+      {activeOrders.length > 0 ? (
+        <FlatList
+          data={activeOrders}
+          renderItem={renderOrderCard}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.ordersList}
+          showsVerticalScrollIndicator={false}
+        />
+      ) : (
+        renderEmptyState()
+      )}
     </SafeAreaView>
   );
 };
-
-const { width } = Dimensions.get('window');
-const cardWidth = (width - theme.spacing.lg * 3) / 2;
 
 const styles = StyleSheet.create({
   container: {
@@ -109,49 +210,15 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.md,
     color: theme.colors.text.secondary,
   },
-  searchBar: {
+  quickCreateButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.primary,
     marginHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
-    paddingHorizontal: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  searchIcon: {
-    fontSize: 18,
-    marginRight: theme.spacing.sm,
-  },
-  searchPlaceholder: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
-  },
-  categoriesSection: {
     paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
-  },
-  sectionTitle: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semiBold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
-  },
-  categoriesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  categoryCard: {
-    width: cardWidth,
-    aspectRatio: 1.2,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
     shadowColor: theme.colors.shadow,
     shadowOffset: {
       width: 0,
@@ -161,44 +228,135 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  categoryIcon: {
-    fontSize: 32,
-    marginBottom: theme.spacing.sm,
+  quickCreateIcon: {
+    fontSize: 18,
+    color: theme.colors.white,
+    marginRight: theme.spacing.sm,
   },
-  categoryTitle: {
-    fontSize: theme.typography.fontSize.sm,
+  quickCreateText: {
+    fontSize: theme.typography.fontSize.md,
     fontWeight: theme.typography.fontWeight.semiBold,
     color: theme.colors.white,
-    textAlign: 'center',
   },
-  quickActions: {
+  ordersList: {
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.xl,
   },
-  quickActionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  orderCard: {
     backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.md,
     borderWidth: 1,
     borderColor: theme.colors.border,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  quickActionIcon: {
-    fontSize: 24,
-    marginRight: theme.spacing.md,
+  orderHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing.sm,
   },
-  quickActionText: {
+  orderTitle: {
     flex: 1,
-  },
-  quickActionTitle: {
     fontSize: theme.typography.fontSize.md,
     fontWeight: theme.typography.fontWeight.semiBold,
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
+    marginRight: theme.spacing.sm,
   },
-  quickActionSubtitle: {
+  statusBadge: {
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.sm,
+  },
+  statusText: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.white,
+    fontWeight: theme.typography.fontWeight.medium,
+  },
+  orderCategory: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
+    marginBottom: theme.spacing.sm,
+  },
+  orderDescription: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+    lineHeight: 20,
+    marginBottom: theme.spacing.md,
+  },
+  orderDetails: {
+    marginBottom: theme.spacing.sm,
+  },
+  orderDetail: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+  orderDetailLabel: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+  },
+  orderDetailValue: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.primary,
+    fontWeight: theme.typography.fontWeight.medium,
+  },
+  orderTime: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.secondary,
+    fontStyle: 'italic',
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
+  },
+  emptyStateIcon: {
+    fontSize: 64,
+    marginBottom: theme.spacing.lg,
+  },
+  emptyStateTitle: {
+    fontSize: theme.typography.fontSize.xl,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.md,
+    textAlign: 'center',
+  },
+  emptyStateDescription: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: theme.spacing.xl,
+  },
+  createOrderButton: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  createOrderButtonText: {
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.white,
+    textAlign: 'center',
   },
 }); 
