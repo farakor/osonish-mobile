@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { theme } from '../../constants';
+import CalendarDateIcon from '../../../assets/calendar-date.svg';
 
 export const CreateOrderScreen: React.FC = () => {
   const [title, setTitle] = useState('');
@@ -210,12 +211,15 @@ export const CreateOrderScreen: React.FC = () => {
               style={styles.dateButton}
               onPress={showDatePickerHandler}
             >
-              <Text style={[
-                styles.dateButtonText,
-                !selectedDate && styles.dateButtonPlaceholder
-              ]}>
-                📅  {formatDate(selectedDate)}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                <CalendarDateIcon width={20} height={20} style={{ marginRight: theme.spacing.sm }} fill="none" stroke={theme.colors.text.primary} />
+                <Text style={[
+                  styles.dateButtonText,
+                  !selectedDate && styles.dateButtonPlaceholder
+                ]}>
+                  {formatDate(selectedDate)}
+                </Text>
+              </View>
             </TouchableOpacity>
           </View>
 
