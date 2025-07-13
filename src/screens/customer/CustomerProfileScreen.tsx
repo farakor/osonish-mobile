@@ -9,11 +9,14 @@ import {
   Alert,
 } from 'react-native';
 import { theme } from '../../constants';
+import UserEditIcon from '../../../assets/user-edit.svg';
+import NotificationMessageIcon from '../../../assets/notification-message.svg';
+import LifeBuoyIcon from '../../../assets/life-buoy-02.svg';
 
 interface ProfileOption {
   id: string;
   title: string;
-  icon: string;
+  icon: string | React.ReactNode;
   action: () => void;
 }
 
@@ -47,9 +50,9 @@ export const CustomerProfileScreen: React.FC = () => {
   };
 
   const profileOptions: ProfileOption[] = [
-    { id: '1', title: 'Редактировать профиль', icon: '✏️', action: handleEditProfile },
-    { id: '2', title: 'Уведомления', icon: '🔔', action: handleNotifications },
-    { id: '5', title: 'Поддержка', icon: '💬', action: handleSupport },
+    { id: '1', title: 'Редактировать профиль', icon: <UserEditIcon width={20} height={20} />, action: handleEditProfile },
+    { id: '2', title: 'Уведомления', icon: <NotificationMessageIcon width={20} height={20} />, action: handleNotifications },
+    { id: '5', title: 'Поддержка', icon: <LifeBuoyIcon width={20} height={20} />, action: handleSupport },
   ];
 
   return (
@@ -84,7 +87,7 @@ export const CustomerProfileScreen: React.FC = () => {
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>6</Text>
-            <Text style={styles.statLabel}>Мес. на Osonish</Text>
+            <Text style={styles.statLabel}>мес на Oson Ish</Text>
           </View>
         </View>
 
@@ -98,7 +101,12 @@ export const CustomerProfileScreen: React.FC = () => {
               activeOpacity={0.7}
             >
               <View style={styles.optionLeft}>
-                <Text style={styles.optionIcon}>{option.icon}</Text>
+                {/* Изменено: поддержка компонента-иконки */}
+                {typeof option.icon === 'string' ? (
+                  <Text style={styles.optionIcon}>{option.icon}</Text>
+                ) : (
+                  <View style={styles.optionIcon}>{option.icon}</View>
+                )}
                 <Text style={styles.optionTitle}>{option.title}</Text>
               </View>
               <Text style={styles.optionArrow}>›</Text>
