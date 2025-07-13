@@ -10,6 +10,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { theme } from '../../constants';
 
 export const CreateOrderScreen: React.FC = () => {
@@ -19,6 +20,7 @@ export const CreateOrderScreen: React.FC = () => {
   const [budget, setBudget] = useState('');
   const [workersCount, setWorkersCount] = useState('1');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // Показываем только 6 категорий
@@ -31,38 +33,18 @@ export const CreateOrderScreen: React.FC = () => {
     'Строительство'
   ];
 
-  const handleDatePress = () => {
-    // Для простоты используем Alert для выбора даты
-    // В реальном приложении здесь будет DatePicker
-    Alert.alert(
-      'Выбор даты',
-      'Выберите дату выполнения заказа:',
-      [
-        { text: 'Сегодня', onPress: () => setSelectedDate(new Date()) },
-        {
-          text: 'Завтра', onPress: () => {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            setSelectedDate(tomorrow);
-          }
-        },
-        {
-          text: 'Через 3 дня', onPress: () => {
-            const threeDays = new Date();
-            threeDays.setDate(threeDays.getDate() + 3);
-            setSelectedDate(threeDays);
-          }
-        },
-        {
-          text: 'Через неделю', onPress: () => {
-            const oneWeek = new Date();
-            oneWeek.setDate(oneWeek.getDate() + 7);
-            setSelectedDate(oneWeek);
-          }
-        },
-        { text: 'Отмена', style: 'cancel' },
-      ]
-    );
+  const handleDateChange = (event: any, date?: Date) => {
+    // Для Android закрываем picker после выбора
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    if (date) {
+      setSelectedDate(date);
+    }
+  };
+
+  const showDatePickerHandler = () => {
+    setShowDatePicker(true);
   };
 
   const formatDate = (date: Date | null) => {
@@ -71,8 +53,18 @@ export const CreateOrderScreen: React.FC = () => {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
+      year: 'numeric',
     });
   };
+
+  // Форматирование суммы с пробелами
+  function formatBudgetInput(value: string) {
+    // Удаляем все нецифры
+    const digits = value.replace(/\D/g, '');
+    if (!digits) return '';
+    // Форматируем с пробелами
+    return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  }
 
   const handleSubmit = async () => {
     if (!title.trim() || !description.trim() || !category || !budget.trim()) {
@@ -166,9 +158,9 @@ export const CreateOrderScreen: React.FC = () => {
             <Text style={styles.label}>Бюджет (сум) *</Text>
             <TextInput
               style={styles.input}
-              value={budget}
-              onChangeText={setBudget}
-              placeholder="100000"
+              value={formatBudgetInput(budget)}
+              onChangeText={text => setBudget(formatBudgetInput(text))}
+              placeholder="100 000"
               placeholderTextColor={theme.colors.text.secondary}
               keyboardType="numeric"
             />
@@ -216,7 +208,7 @@ export const CreateOrderScreen: React.FC = () => {
             <Text style={styles.label}>Дата выполнения</Text>
             <TouchableOpacity
               style={styles.dateButton}
-              onPress={handleDatePress}
+              onPress={showDatePickerHandler}
             >
               <Text style={[
                 styles.dateButtonText,
@@ -243,6 +235,30 @@ export const CreateOrderScreen: React.FC = () => {
           </Text>
         </View>
       </ScrollView>
+
+      {/* Date Picker */}
+      {showDatePicker && (
+        <View style={styles.datePickerContainer}>
+          {Platform.OS === 'ios' && (
+            <View style={styles.datePickerHeader}>
+              <TouchableOpacity
+                style={styles.doneButton}
+                onPress={() => setShowDatePicker(false)}
+              >
+                <Text style={styles.doneButtonText}>Готово</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          <DateTimePicker
+            value={selectedDate || new Date()}
+            mode="date"
+            display={Platform.OS === 'android' ? 'calendar' : 'spinner'}
+            onChange={handleDateChange}
+            minimumDate={new Date()}
+            locale="ru-RU"
+          />
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -386,5 +402,34 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     textAlign: 'center',
     fontStyle: 'italic',
+  },
+  datePickerContainer: {
+    backgroundColor: theme.colors.white,
+    borderTopLeftRadius: theme.borderRadius.lg,
+    borderTopRightRadius: theme.borderRadius.lg,
+    paddingTop: theme.spacing.md,
+    paddingBottom: Platform.OS === 'ios' ? theme.spacing.xl : 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  datePickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.sm,
+  },
+  doneButton: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.sm,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+  },
+  doneButtonText: {
+    color: theme.colors.white,
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.semiBold,
   },
 }); 
