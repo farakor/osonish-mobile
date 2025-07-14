@@ -6,7 +6,7 @@ import { RootStackParamList } from '../types';
 // Импортируем экраны
 import { SplashScreen } from '../screens/shared/SplashScreen';
 import { AuthScreen, RegistrationScreen, SmsVerificationScreen, RoleSelectionScreen } from '../screens/auth';
-import { CustomerTabNavigator } from './CustomerTabNavigator';
+import { CustomerStackNavigator } from './CustomerStackNavigator';
 import { WorkerTabNavigator } from './WorkerTabNavigator';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -42,7 +42,7 @@ export function AppNavigator() {
         />
         <Stack.Screen
           name="CustomerTabs"
-          component={CustomerTabNavigator}
+          component={CustomerStackNavigator}
         />
         <Stack.Screen
           name="WorkerTabs"

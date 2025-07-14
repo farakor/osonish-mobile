@@ -9,6 +9,11 @@ import {
   FlatList,
 } from 'react-native';
 import { theme } from '../../constants';
+import { useNavigation } from '@react-navigation/native';
+import { CustomerStackParamList } from '../../types/navigation';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
 
 interface Order {
   id: string;
@@ -51,6 +56,7 @@ const mockOrders: Order[] = [
 ];
 
 export const MyOrdersScreen: React.FC = () => {
+  const navigation = useNavigation<NavigationProp>();
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed'>('all');
 
   const getStatusColor = (status: Order['status']) => {
@@ -92,7 +98,11 @@ export const MyOrdersScreen: React.FC = () => {
     );
 
   const renderOrder = ({ item }: { item: Order }) => (
-    <TouchableOpacity style={styles.orderCard} activeOpacity={0.8}>
+    <TouchableOpacity
+      style={styles.orderCard}
+      activeOpacity={0.8}
+      onPress={() => navigation.navigate('OrderDetails', { orderId: item.id })}
+    >
       <View style={styles.orderHeader}>
         <Text style={styles.orderTitle}>{item.title}</Text>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>

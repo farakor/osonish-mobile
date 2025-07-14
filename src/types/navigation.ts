@@ -15,6 +15,11 @@ export type AuthStackParamList = {
   SmsVerification: { phone: string };
 };
 
+export type CustomerStackParamList = {
+  CustomerTabs: undefined;
+  OrderDetails: { orderId: string };
+};
+
 export type CustomerTabParamList = {
   Home: undefined;
   CreateOrder: undefined;
