@@ -81,8 +81,8 @@ export function SmsVerificationScreen() {
 
       // Временно используем код 123456 для тестирования
       if (smsCode === '123456') {
-        // Переходим к экрану выбора роли
-        navigation.navigate('RoleSelection');
+        // Переходим к экрану заполнения профиля
+        navigation.navigate('ProfileInfo', { phone });
       } else {
         Alert.alert('Ошибка', 'Неверный код подтверждения');
         setCode(['', '', '', '', '', '']);

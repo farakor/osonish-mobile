@@ -4,6 +4,7 @@ export type RootStackParamList = {
   Auth: undefined;
   Registration: undefined;
   SmsVerification: { phone: string };
+  ProfileInfo: { phone: string };
   RoleSelection: undefined;
   CustomerTabs: undefined;
   WorkerTabs: undefined;
@@ -13,6 +14,7 @@ export type AuthStackParamList = {
   Login: undefined;
   Registration: undefined;
   SmsVerification: { phone: string };
+  ProfileInfo: { phone: string };
 };
 
 export type CustomerStackParamList = {

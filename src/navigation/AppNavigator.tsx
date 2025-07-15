@@ -5,7 +5,7 @@ import { RootStackParamList } from '../types';
 
 // Импортируем экраны
 import { SplashScreen } from '../screens/shared/SplashScreen';
-import { AuthScreen, RegistrationScreen, SmsVerificationScreen, RoleSelectionScreen } from '../screens/auth';
+import { AuthScreen, RegistrationScreen, SmsVerificationScreen, ProfileInfoScreen, RoleSelectionScreen } from '../screens/auth';
 import { CustomerStackNavigator } from './CustomerStackNavigator';
 import { WorkerTabNavigator } from './WorkerTabNavigator';
 
@@ -35,6 +35,10 @@ export function AppNavigator() {
         <Stack.Screen
           name="SmsVerification"
           component={SmsVerificationScreen}
+        />
+        <Stack.Screen
+          name="ProfileInfo"
+          component={ProfileInfoScreen}
         />
         <Stack.Screen
           name="RoleSelection"
