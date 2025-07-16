@@ -121,6 +121,10 @@ export const CustomerHomeScreen: React.FC = () => {
           <Text style={styles.orderDetailLabel}>📝 Откликов:</Text>
           <Text style={styles.orderDetailValue}>{item.applicantsCount}</Text>
         </View>
+        <View style={styles.orderDetail}>
+          <Text style={styles.orderDetailLabel}>📅 Дата:</Text>
+          <Text style={styles.orderDetailValue}>{item.serviceDate}</Text>
+        </View>
       </View>
 
       <Text style={styles.orderTime}>Создан {item.createdAt}</Text>

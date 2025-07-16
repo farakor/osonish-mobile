@@ -73,8 +73,8 @@ export function ProfileInfoScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!firstName.trim() || !lastName.trim() || !middleName.trim() || !birthDate || !privacyAccepted) {
-      Alert.alert('Ошибка', 'Заполните все поля и согласитесь с условиями');
+    if (!firstName.trim() || !lastName.trim() || !birthDate || !privacyAccepted) {
+      Alert.alert('Ошибка', 'Заполните все обязательные поля и согласитесь с условиями');
       return;
     }
 
@@ -141,7 +141,9 @@ export function ProfileInfoScreen() {
         <View style={styles.form}>
           {/* Last Name */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Фамилия</Text>
+            <Text style={styles.label}>
+              Фамилия <Text style={styles.required}>*</Text>
+            </Text>
             <TextInput
               style={styles.input}
               value={lastName}
@@ -153,7 +155,9 @@ export function ProfileInfoScreen() {
 
           {/* First Name */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Имя</Text>
+            <Text style={styles.label}>
+              Имя <Text style={styles.required}>*</Text>
+            </Text>
             <TextInput
               style={styles.input}
               value={firstName}
@@ -177,7 +181,9 @@ export function ProfileInfoScreen() {
 
           {/* Birth Date */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Дата рождения</Text>
+            <Text style={styles.label}>
+              Дата рождения <Text style={styles.required}>*</Text>
+            </Text>
             <TouchableOpacity
               style={styles.dateInput}
               onPress={() => setShowDatePicker(true)}
@@ -374,6 +380,11 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.fontWeight.semiBold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
+  },
+  required: {
+    color: 'red',
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.semiBold,
   },
   input: {
     backgroundColor: theme.colors.surface,
