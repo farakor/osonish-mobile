@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Linking,
   Alert,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
@@ -61,10 +62,11 @@ export const SupportScreen: React.FC = () => {
         {/* Logo Section */}
         <View style={styles.logoSection}>
           <View style={styles.logoContainer}>
-            <View style={styles.logoIcon}>
-              <Text style={styles.logoText}>🔧</Text>
-            </View>
-            <Text style={styles.logoTitle}>OSON ISH</Text>
+            <Image
+              source={require('../../../assets/logo-osonish-vertical.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </View>
         </View>
 
@@ -195,6 +197,11 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 32,
     color: theme.colors.white,
+  },
+  logoImage: {
+    width: 140,
+    height: 140,
+    marginBottom: theme.spacing.md,
   },
   logoTitle: {
     fontSize: theme.typography.fontSize.xl,
