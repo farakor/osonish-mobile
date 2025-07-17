@@ -14,6 +14,7 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CustomerTabParamList, CustomerStackParamList } from '../../types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import FilePlusIcon from '../../../assets/file-plus-03_2.svg';
+import { Header } from '../../components/common';
 
 interface Order {
   id: string;
@@ -149,51 +150,64 @@ export const CustomerHomeScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.greeting}>Мои заказы</Text>
-        <Text style={styles.subtitle}>
-          {activeOrders.length > 0
-            ? `У вас ${activeOrders.length} активных заказа`
-            : 'Создайте свой первый заказ'
-          }
-        </Text>
-      </View>
+    <View style={styles.container}>
+      <Header />
+      <SafeAreaView style={styles.content}>
+        {/* Content Header */}
+        <View style={styles.contentHeader}>
+          <Text style={styles.greeting}>Мои заказы</Text>
+          <Text style={styles.subtitle}>
+            {activeOrders.length > 0
+              ? `У вас ${activeOrders.length} активных заказа`
+              : 'Создайте свой первый заказ'
+            }
+          </Text>
+        </View>
 
-      {/* Quick Create Button */}
-      {activeOrders.length > 0 && (
-        <TouchableOpacity
-          style={styles.quickCreateButton}
-          onPress={handleCreateOrder}
-          activeOpacity={0.8}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-            <FilePlusIcon width={20} height={20} style={{ marginRight: theme.spacing.sm }} />
-            <Text style={styles.quickCreateText}>Создать новый заказ</Text>
-          </View>
-        </TouchableOpacity>
-      )}
+        {/* Quick Create Button */}
+        {activeOrders.length > 0 && (
+          <TouchableOpacity
+            style={styles.quickCreateButton}
+            onPress={handleCreateOrder}
+            activeOpacity={0.8}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+              <FilePlusIcon width={20} height={20} style={{ marginRight: theme.spacing.sm }} />
+              <Text style={styles.quickCreateText}>Создать новый заказ</Text>
+            </View>
+          </TouchableOpacity>
+        )}
 
-      {/* Orders List or Empty State */}
-      {activeOrders.length > 0 ? (
-        <FlatList
-          data={activeOrders}
-          renderItem={renderOrderCard}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.ordersList}
-          showsVerticalScrollIndicator={false}
-        />
-      ) : (
-        renderEmptyState()
-      )}
-    </SafeAreaView>
+        {/* Orders List or Empty State */}
+        {activeOrders.length > 0 ? (
+          <FlatList
+            data={activeOrders}
+            renderItem={renderOrderCard}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.ordersList}
+            showsVerticalScrollIndicator={false}
+          />
+        ) : (
+          renderEmptyState()
+        )}
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  content: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  contentHeader: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
     backgroundColor: theme.colors.background,
   },
   header: {

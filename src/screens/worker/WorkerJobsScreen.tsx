@@ -10,6 +10,7 @@ import {
   FlatList,
 } from 'react-native';
 import { theme } from '../../constants/theme';
+import { Header } from '../../components/common';
 
 type Job = {
   id: string;
@@ -173,40 +174,43 @@ export const WorkerJobsScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Доступные заказы</Text>
-        <Text style={styles.subtitle}>Найдите подходящую работу</Text>
-      </View>
+    <View style={styles.container}>
+      <Header />
+      <SafeAreaView style={styles.content}>
+        <View style={styles.contentHeader}>
+          <Text style={styles.title}>Доступные заказы</Text>
+          <Text style={styles.subtitle}>Найдите подходящую работу</Text>
+        </View>
 
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Поиск заказов..."
-          placeholderTextColor={theme.colors.text.secondary}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Поиск заказов..."
+            placeholderTextColor={theme.colors.text.secondary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoriesContainer}
+          contentContainerStyle={styles.categoriesContent}
+        >
+          {categories.map(renderCategoryChip)}
+        </ScrollView>
+
+        <FlatList
+          data={filteredJobs}
+          renderItem={renderJobCard}
+          keyExtractor={(item) => item.id}
+          style={styles.jobsList}
+          contentContainerStyle={styles.jobsListContent}
+          showsVerticalScrollIndicator={false}
         />
-      </View>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.categoriesContainer}
-        contentContainerStyle={styles.categoriesContent}
-      >
-        {categories.map(renderCategoryChip)}
-      </ScrollView>
-
-      <FlatList
-        data={filteredJobs}
-        renderItem={renderJobCard}
-        keyExtractor={(item) => item.id}
-        style={styles.jobsList}
-        contentContainerStyle={styles.jobsListContent}
-        showsVerticalScrollIndicator={false}
-      />
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 };
 
@@ -215,7 +219,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  header: {
+  content: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  contentHeader: {
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.lg,
     paddingBottom: theme.spacing.md,

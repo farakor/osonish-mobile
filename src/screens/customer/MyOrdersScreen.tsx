@@ -12,6 +12,7 @@ import { theme } from '../../constants';
 import { useNavigation } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Header } from '../../components/common';
 
 type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
 
@@ -148,60 +149,63 @@ export const MyOrdersScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Мои заказы</Text>
-        <Text style={styles.subtitle}>Отслеживайте свои заказы</Text>
-      </View>
-
-      {/* Tabs */}
-      <View style={styles.tabs}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'all' && styles.activeTab]}
-          onPress={() => setActiveTab('all')}
-        >
-          <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>
-            Все
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'active' && styles.activeTab]}
-          onPress={() => setActiveTab('active')}
-        >
-          <Text style={[styles.tabText, activeTab === 'active' && styles.activeTabText]}>
-            Активные
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'completed' && styles.activeTab]}
-          onPress={() => setActiveTab('completed')}
-        >
-          <Text style={[styles.tabText, activeTab === 'completed' && styles.activeTabText]}>
-            Завершенные
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Orders List */}
-      {filteredOrders.length > 0 ? (
-        <FlatList
-          data={filteredOrders}
-          renderItem={renderOrder}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.ordersList}
-          showsVerticalScrollIndicator={false}
-        />
-      ) : (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyStateIcon}>📋</Text>
-          <Text style={styles.emptyStateTitle}>Заказов пока нет</Text>
-          <Text style={styles.emptyStateText}>
-            Создайте свой первый заказ, чтобы найти исполнителя
-          </Text>
+    <View style={styles.container}>
+      <Header />
+      <SafeAreaView style={styles.content}>
+        {/* Content Header */}
+        <View style={styles.contentHeader}>
+          <Text style={styles.title}>Мои заказы</Text>
+          <Text style={styles.subtitle}>Отслеживайте свои заказы</Text>
         </View>
-      )}
-    </SafeAreaView>
+
+        {/* Tabs */}
+        <View style={styles.tabs}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'all' && styles.activeTab]}
+            onPress={() => setActiveTab('all')}
+          >
+            <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>
+              Все
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'active' && styles.activeTab]}
+            onPress={() => setActiveTab('active')}
+          >
+            <Text style={[styles.tabText, activeTab === 'active' && styles.activeTabText]}>
+              Активные
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'completed' && styles.activeTab]}
+            onPress={() => setActiveTab('completed')}
+          >
+            <Text style={[styles.tabText, activeTab === 'completed' && styles.activeTabText]}>
+              Завершенные
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Orders List */}
+        {filteredOrders.length > 0 ? (
+          <FlatList
+            data={filteredOrders}
+            renderItem={renderOrder}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.ordersList}
+            showsVerticalScrollIndicator={false}
+          />
+        ) : (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateIcon}>📋</Text>
+            <Text style={styles.emptyStateTitle}>Заказов пока нет</Text>
+            <Text style={styles.emptyStateText}>
+              Создайте свой первый заказ, чтобы найти исполнителя
+            </Text>
+          </View>
+        )}
+      </SafeAreaView>
+    </View>
   );
 };
 
@@ -210,7 +214,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  header: {
+  content: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  contentHeader: {
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.xl,
     paddingBottom: theme.spacing.lg,

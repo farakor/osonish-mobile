@@ -9,6 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { theme } from '../../constants/theme';
+import { Header } from '../../components/common';
 
 export const WorkerProfileScreen: React.FC = () => {
   const [isOnline, setIsOnline] = useState(true);
@@ -72,161 +73,168 @@ export const WorkerProfileScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Profile Header */}
-        <View style={styles.profileHeader}>
-          <View style={styles.avatarContainer}>
-            <Text style={styles.avatarText}>АР</Text>
-          </View>
-          <Text style={styles.profileName}>Алишер Рахимов</Text>
-          <Text style={styles.profileRole}>Исполнитель</Text>
+    <View style={styles.container}>
+      <Header />
+      <SafeAreaView style={styles.screenContent}>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Profile Header */}
+          <View style={styles.profileHeader}>
+            <View style={styles.avatarContainer}>
+              <Text style={styles.avatarText}>АР</Text>
+            </View>
+            <Text style={styles.profileName}>Алишер Рахимов</Text>
+            <Text style={styles.profileRole}>Исполнитель</Text>
 
-          <TouchableOpacity
-            style={[
-              styles.statusBadge,
-              { backgroundColor: isOnline ? '#34C759' : '#8E8E93' }
-            ]}
-            onPress={handleToggleOnlineStatus}
-          >
-            <Text style={styles.statusText}>
-              {isOnline ? '🟢 Онлайн' : '⚫ Офлайн'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              style={[
+                styles.statusBadge,
+                { backgroundColor: isOnline ? '#34C759' : '#8E8E93' }
+              ]}
+              onPress={handleToggleOnlineStatus}
+            >
+              <Text style={styles.statusText}>
+                {isOnline ? '🟢 Онлайн' : '⚫ Офлайн'}
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-        {/* Stats */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>23</Text>
-            <Text style={styles.statLabel}>Выполнено заказов</Text>
+          {/* Stats */}
+          <View style={styles.statsContainer}>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>23</Text>
+              <Text style={styles.statLabel}>Выполнено заказов</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>4.9</Text>
+              <Text style={styles.statLabel}>Рейтинг</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>8 мес</Text>
+              <Text style={styles.statLabel}>На платформе</Text>
+            </View>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>4.9</Text>
-            <Text style={styles.statLabel}>Рейтинг</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>8 мес</Text>
-            <Text style={styles.statLabel}>На платформе</Text>
-          </View>
-        </View>
 
-        {/* Quick Actions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Быстрые действия</Text>
-          <View style={styles.menuContainer}>
-            <MenuItem
-              icon="✏️"
-              title="Редактировать профиль"
-              subtitle="Фото, контакты, описание"
-              onPress={handleEditProfile}
-            />
-            <MenuItem
-              icon="⭐"
-              title="Мои отзывы"
-              subtitle="23 отзыва от заказчиков"
-              onPress={() => handleNavigation('Отзывы')}
-            />
-            <MenuItem
-              icon="📊"
-              title="Статистика заработка"
-              subtitle="Доходы за месяц"
-              onPress={() => handleNavigation('Статистика')}
-              showBorder={false}
-            />
+          {/* Quick Actions */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Быстрые действия</Text>
+            <View style={styles.menuContainer}>
+              <MenuItem
+                icon="✏️"
+                title="Редактировать профиль"
+                subtitle="Фото, контакты, описание"
+                onPress={handleEditProfile}
+              />
+              <MenuItem
+                icon="⭐"
+                title="Мои отзывы"
+                subtitle="23 отзыва от заказчиков"
+                onPress={() => handleNavigation('Отзывы')}
+              />
+              <MenuItem
+                icon="📊"
+                title="Статистика заработка"
+                subtitle="Доходы за месяц"
+                onPress={() => handleNavigation('Статистика')}
+                showBorder={false}
+              />
+            </View>
           </View>
-        </View>
 
-        {/* Settings */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Настройки</Text>
-          <View style={styles.menuContainer}>
-            <MenuItem
-              icon="🔔"
-              title="Уведомления"
-              subtitle="Новые заказы, сообщения"
-              onPress={() => handleNavigation('Уведомления')}
-            />
-            <MenuItem
-              icon="💳"
-              title="Способы получения оплаты"
-              subtitle="Карты, кошельки"
-              onPress={() => handleNavigation('Оплата')}
-            />
-            <MenuItem
-              icon="📍"
-              title="Радиус работы"
-              subtitle="Где вы готовы работать"
-              onPress={() => handleNavigation('Радиус работы')}
-            />
-            <MenuItem
-              icon="🏷️"
-              title="Мои тарифы"
-              subtitle="Цены на услуги"
-              onPress={() => handleNavigation('Тарифы')}
-              showBorder={false}
-            />
+          {/* Settings */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Настройки</Text>
+            <View style={styles.menuContainer}>
+              <MenuItem
+                icon="🔔"
+                title="Уведомления"
+                subtitle="Новые заказы, сообщения"
+                onPress={() => handleNavigation('Уведомления')}
+              />
+              <MenuItem
+                icon="💳"
+                title="Способы получения оплаты"
+                subtitle="Карты, кошельки"
+                onPress={() => handleNavigation('Оплата')}
+              />
+              <MenuItem
+                icon="📍"
+                title="Радиус работы"
+                subtitle="Где вы готовы работать"
+                onPress={() => handleNavigation('Радиус работы')}
+              />
+              <MenuItem
+                icon="🏷️"
+                title="Мои тарифы"
+                subtitle="Цены на услуги"
+                onPress={() => handleNavigation('Тарифы')}
+                showBorder={false}
+              />
+            </View>
           </View>
-        </View>
 
-        {/* Support & Info */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Поддержка</Text>
-          <View style={styles.menuContainer}>
-            <MenuItem
-              icon="❓"
-              title="Помощь"
-              subtitle="Часто задаваемые вопросы"
-              onPress={() => handleNavigation('Помощь')}
-            />
-            <MenuItem
-              icon="💬"
-              title="Связаться с поддержкой"
-              subtitle="Чат с операторами"
-              onPress={() => handleNavigation('Поддержка')}
-            />
-            <MenuItem
-              icon="📋"
-              title="Условия использования"
-              onPress={() => handleNavigation('Условия')}
-            />
-            <MenuItem
-              icon="🔒"
-              title="Политика конфиденциальности"
-              onPress={() => handleNavigation('Конфиденциальность')}
-              showBorder={false}
-            />
+          {/* Support & Info */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Поддержка</Text>
+            <View style={styles.menuContainer}>
+              <MenuItem
+                icon="❓"
+                title="Помощь"
+                subtitle="Часто задаваемые вопросы"
+                onPress={() => handleNavigation('Помощь')}
+              />
+              <MenuItem
+                icon="💬"
+                title="Связаться с поддержкой"
+                subtitle="Чат с операторами"
+                onPress={() => handleNavigation('Поддержка')}
+              />
+              <MenuItem
+                icon="📋"
+                title="Условия использования"
+                onPress={() => handleNavigation('Условия')}
+              />
+              <MenuItem
+                icon="🔒"
+                title="Политика конфиденциальности"
+                onPress={() => handleNavigation('Конфиденциальность')}
+                showBorder={false}
+              />
+            </View>
           </View>
-        </View>
 
-        {/* App Info & Logout */}
-        <View style={styles.section}>
-          <View style={styles.menuContainer}>
-            <MenuItem
-              icon="📱"
-              title="Версия приложения"
-              onPress={() => { }}
-              rightIcon="v1.0.0"
-            />
-            <MenuItem
-              icon="🚪"
-              title="Выйти из аккаунта"
-              onPress={handleLogout}
-              rightIcon=""
-              showBorder={false}
-            />
+          {/* App Info & Logout */}
+          <View style={styles.section}>
+            <View style={styles.menuContainer}>
+              <MenuItem
+                icon="📱"
+                title="Версия приложения"
+                onPress={() => { }}
+                rightIcon="v1.0.0"
+              />
+              <MenuItem
+                icon="🚪"
+                title="Выйти из аккаунта"
+                onPress={handleLogout}
+                rightIcon=""
+                showBorder={false}
+              />
+            </View>
           </View>
-        </View>
 
-        {/* Bottom Spacing */}
-        <View style={styles.bottomSpacing} />
-      </ScrollView>
-    </SafeAreaView>
+          {/* Bottom Spacing */}
+          <View style={styles.bottomSpacing} />
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  screenContent: {
     flex: 1,
     backgroundColor: theme.colors.background,
   },

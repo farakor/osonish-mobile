@@ -13,6 +13,7 @@ import { theme } from '../../constants';
 import UserEditIcon from '../../../assets/user-edit.svg';
 import NotificationMessageIcon from '../../../assets/notification-message.svg';
 import LifeBuoyIcon from '../../../assets/life-buoy-02.svg';
+import { Header } from '../../components/common';
 
 interface ProfileOption {
   id: string;
@@ -59,78 +60,81 @@ export const CustomerProfileScreen: React.FC = () => {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Профиль</Text>
-        </View>
-
-        {/* Profile Info */}
-        <View style={styles.profileInfo}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>ФУ</Text>
+    <View style={styles.container}>
+      <Header />
+      <SafeAreaView style={styles.content}>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Content Header */}
+          <View style={styles.contentHeader}>
+            <Text style={styles.title}>Профиль</Text>
           </View>
-          <Text style={styles.userName}>Фаррух Урипов</Text>
-          <Text style={styles.userPhone}>+998 90 123 45 67</Text>
-          <Text style={styles.userRole}>Заказчик</Text>
-        </View>
 
-        {/* Stats */}
-        <View style={styles.stats}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>12</Text>
-            <Text style={styles.statLabel}>Заказов</Text>
+          {/* Profile Info */}
+          <View style={styles.profileInfo}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>ФУ</Text>
+            </View>
+            <Text style={styles.userName}>Фаррух Урипов</Text>
+            <Text style={styles.userPhone}>+998 90 123 45 67</Text>
+            <Text style={styles.userRole}>Заказчик</Text>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>4.8</Text>
-            <Text style={styles.statLabel}>Рейтинг</Text>
+
+          {/* Stats */}
+          <View style={styles.stats}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>12</Text>
+              <Text style={styles.statLabel}>Заказов</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>4.8</Text>
+              <Text style={styles.statLabel}>Рейтинг</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>6</Text>
+              <Text style={styles.statLabel}>мес на Oson Ish</Text>
+            </View>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>6</Text>
-            <Text style={styles.statLabel}>мес на Oson Ish</Text>
+
+          {/* Profile Options */}
+          <View style={styles.profileOptions}>
+            {profileOptions.map((option) => (
+              <TouchableOpacity
+                key={option.id}
+                style={styles.optionItem}
+                onPress={option.action}
+                activeOpacity={0.7}
+              >
+                <View style={styles.optionLeft}>
+                  {/* Изменено: поддержка компонента-иконки */}
+                  {typeof option.icon === 'string' ? (
+                    <Text style={styles.optionIcon}>{option.icon}</Text>
+                  ) : (
+                    <View style={styles.optionIcon}>{option.icon}</View>
+                  )}
+                  <Text style={styles.optionTitle}>{option.title}</Text>
+                </View>
+                <Text style={styles.optionArrow}>›</Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        </View>
 
-        {/* Profile Options */}
-        <View style={styles.profileOptions}>
-          {profileOptions.map((option) => (
-            <TouchableOpacity
-              key={option.id}
-              style={styles.optionItem}
-              onPress={option.action}
-              activeOpacity={0.7}
-            >
-              <View style={styles.optionLeft}>
-                {/* Изменено: поддержка компонента-иконки */}
-                {typeof option.icon === 'string' ? (
-                  <Text style={styles.optionIcon}>{option.icon}</Text>
-                ) : (
-                  <View style={styles.optionIcon}>{option.icon}</View>
-                )}
-                <Text style={styles.optionTitle}>{option.title}</Text>
-              </View>
-              <Text style={styles.optionArrow}>›</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+          {/* Logout Button */}
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Text style={styles.logoutText}>Выйти из аккаунта</Text>
+          </TouchableOpacity>
 
-        {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutText}>Выйти из аккаунта</Text>
-        </TouchableOpacity>
-
-        {/* App Info */}
-        <View style={styles.appInfo}>
-          <Text style={styles.appVersion}>Osonish v1.0.0</Text>
-          <Text style={styles.appDescription}>
-            Marketplace для поиска исполнителей в Узбекистане
-          </Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+          {/* App Info */}
+          <View style={styles.appInfo}>
+            <Text style={styles.appVersion}>Osonish v1.0.0</Text>
+            <Text style={styles.appDescription}>
+              Marketplace для поиска исполнителей в Узбекистане
+            </Text>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 };
 
@@ -139,7 +143,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  header: {
+  content: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  contentHeader: {
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.xl,
     paddingBottom: theme.spacing.lg,

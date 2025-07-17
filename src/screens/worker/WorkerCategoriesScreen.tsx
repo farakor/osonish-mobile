@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { theme } from '../../constants/theme';
+import { Header } from '../../components/common';
 
 type ServiceCategory = {
   id: string;
@@ -180,35 +181,38 @@ export const WorkerCategoriesScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Мои категории</Text>
-        <Text style={styles.subtitle}>
-          Выберите услуги, которые вы готовы оказывать
-        </Text>
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{enabledCategories.length}</Text>
-            <Text style={styles.statLabel}>Активных категорий</Text>
-          </View>
-        </View>
-
-        <View style={styles.categoriesContainer}>
-          <Text style={styles.sectionTitle}>Все категории</Text>
-          {categories.map(renderCategoryCard)}
-        </View>
-
-        <View style={styles.bottomInfo}>
-          <Text style={styles.infoText}>
-            💡 Включите категории, в которых у вас есть опыт и навыки.
-            Это поможет заказчикам найти вас быстрее.
+    <View style={styles.container}>
+      <Header />
+      <SafeAreaView style={styles.content}>
+        <View style={styles.contentHeader}>
+          <Text style={styles.title}>Мои категории</Text>
+          <Text style={styles.subtitle}>
+            Выберите услуги, которые вы готовы оказывать
           </Text>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          <View style={styles.statsContainer}>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>{enabledCategories.length}</Text>
+              <Text style={styles.statLabel}>Активных категорий</Text>
+            </View>
+          </View>
+
+          <View style={styles.categoriesContainer}>
+            <Text style={styles.sectionTitle}>Все категории</Text>
+            {categories.map(renderCategoryCard)}
+          </View>
+
+          <View style={styles.bottomInfo}>
+            <Text style={styles.infoText}>
+              💡 Включите категории, в которых у вас есть опыт и навыки.
+              Это поможет заказчикам найти вас быстрее.
+            </Text>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 };
 
@@ -217,7 +221,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  header: {
+  content: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  contentHeader: {
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
@@ -233,7 +241,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     lineHeight: 20,
   },
-  content: {
+  scrollView: {
     flex: 1,
     paddingHorizontal: theme.spacing.lg,
   },

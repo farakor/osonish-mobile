@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, SafeAreaView, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
-import OsonishLogo from '../../../assets/oson-ish-logo.svg';
+// import OsonishLogo from '../../../assets/oson-ish-logo.svg';
 
 export function AuthScreen() {
   const navigation = useNavigation();
@@ -14,7 +14,11 @@ export function AuthScreen() {
       <View style={styles.content}>
         {/* Logo Section */}
         <View style={styles.logoSection}>
-          <OsonishLogo width={160} height={130} style={{ marginBottom: 16 }} />
+          <Image
+            source={require('../../../assets/logo-osonish-vertical.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
 
         {/* Welcome Section */}
@@ -74,6 +78,11 @@ const styles = StyleSheet.create({
   logoSection: {
     alignItems: 'center',
     marginBottom: theme.spacing.xxl,
+  },
+  logo: {
+    width: 280,
+    height: 280,
+    marginBottom: 16,
   },
   logoText: {
     fontSize: theme.fonts.sizes.xxxl,

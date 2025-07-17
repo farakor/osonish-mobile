@@ -17,6 +17,7 @@ import CalendarDateIcon from '../../../assets/calendar-date.svg';
 import * as ImagePicker from 'expo-image-picker';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import ImageIcon from '../../../assets/image-03.svg';
+import { Header } from '../../components/common';
 
 // Отдельный компонент для превью видео
 const VideoPreview: React.FC<{ uri: string }> = ({ uri }) => {
@@ -202,217 +203,220 @@ export const CreateOrderScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Создать заказ</Text>
-          <Text style={styles.subtitle}>Опишите, что вам нужно</Text>
-        </View>
-
-        {/* Form */}
-        <View style={styles.form}>
-          {/* Title */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Название заказа <Text style={styles.required}>*</Text></Text>
-            <TextInput
-              style={styles.input}
-              value={title}
-              onChangeText={setTitle}
-              placeholder="Например: Уборка квартиры"
-              placeholderTextColor={theme.colors.text.secondary}
-            />
+    <View style={styles.container}>
+      <Header />
+      <SafeAreaView style={styles.content}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          {/* Header */}
+          <View style={styles.contentHeader}>
+            <Text style={styles.title}>Создать заказ</Text>
+            <Text style={styles.subtitle}>Опишите, что вам нужно</Text>
           </View>
 
-          {/* Category */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Категория <Text style={styles.required}>*</Text></Text>
-            <View style={styles.categoriesGrid}>
-              {categories.map((cat, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.categoryChip,
-                    category === cat.label && styles.categoryChipSelected
-                  ]}
-                  onPress={() => setCategory(cat.label)}
-                >
-                  <Text style={[
-                    styles.categoryChipText,
-                    category === cat.label && styles.categoryChipTextSelected
-                  ]}>
-                    {cat.emoji} {cat.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Description */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Описание <Text style={styles.required}>*</Text></Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Подробно опишите, что нужно сделать..."
-              placeholderTextColor={theme.colors.text.secondary}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-          </View>
-
-          {/* Location */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Местоположение <Text style={styles.required}>*</Text></Text>
-            <TextInput
-              style={styles.input}
-              value={location}
-              onChangeText={setLocation}
-              placeholder="Например: Ташкент, Юнусабад"
-              placeholderTextColor={theme.colors.text.secondary}
-            />
-          </View>
-
-          {/* Budget */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Сумма за одного работника <Text style={styles.required}>*</Text></Text>
-            <TextInput
-              style={styles.input}
-              value={formatBudgetInput(budget)}
-              onChangeText={text => setBudget(formatBudgetInput(text))}
-              placeholder="100 000"
-              placeholderTextColor={theme.colors.text.secondary}
-              keyboardType="numeric"
-            />
-          </View>
-
-          {/* Workers Count */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Количество работников <Text style={styles.required}>*</Text></Text>
-            <View style={styles.workersCountContainer}>
-              <TouchableOpacity
-                style={styles.workersCountButton}
-                onPress={() => {
-                  const count = Math.max(1, parseInt(workersCount) - 1);
-                  setWorkersCount(count.toString());
-                }}
-              >
-                <Text style={styles.workersCountButtonText}>−</Text>
-              </TouchableOpacity>
+          {/* Form */}
+          <View style={styles.form}>
+            {/* Title */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Название заказа <Text style={styles.required}>*</Text></Text>
               <TextInput
-                style={styles.workersCountInput}
-                value={workersCount}
-                onChangeText={(text) => {
-                  const num = parseInt(text) || 1;
-                  if (num >= 1 && num <= 20) {
-                    setWorkersCount(text);
-                  }
-                }}
-                keyboardType="numeric"
-                textAlign="center"
+                style={styles.input}
+                value={title}
+                onChangeText={setTitle}
+                placeholder="Например: Уборка квартиры"
+                placeholderTextColor={theme.colors.text.secondary}
               />
+            </View>
+
+            {/* Category */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Категория <Text style={styles.required}>*</Text></Text>
+              <View style={styles.categoriesGrid}>
+                {categories.map((cat, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.categoryChip,
+                      category === cat.label && styles.categoryChipSelected
+                    ]}
+                    onPress={() => setCategory(cat.label)}
+                  >
+                    <Text style={[
+                      styles.categoryChipText,
+                      category === cat.label && styles.categoryChipTextSelected
+                    ]}>
+                      {cat.emoji} {cat.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Description */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Описание <Text style={styles.required}>*</Text></Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Подробно опишите, что нужно сделать..."
+                placeholderTextColor={theme.colors.text.secondary}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+            </View>
+
+            {/* Location */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Местоположение <Text style={styles.required}>*</Text></Text>
+              <TextInput
+                style={styles.input}
+                value={location}
+                onChangeText={setLocation}
+                placeholder="Например: Ташкент, Юнусабад"
+                placeholderTextColor={theme.colors.text.secondary}
+              />
+            </View>
+
+            {/* Budget */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Сумма за одного работника <Text style={styles.required}>*</Text></Text>
+              <TextInput
+                style={styles.input}
+                value={formatBudgetInput(budget)}
+                onChangeText={text => setBudget(formatBudgetInput(text))}
+                placeholder="100 000"
+                placeholderTextColor={theme.colors.text.secondary}
+                keyboardType="numeric"
+              />
+            </View>
+
+            {/* Workers Count */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Количество работников <Text style={styles.required}>*</Text></Text>
+              <View style={styles.workersCountContainer}>
+                <TouchableOpacity
+                  style={styles.workersCountButton}
+                  onPress={() => {
+                    const count = Math.max(1, parseInt(workersCount) - 1);
+                    setWorkersCount(count.toString());
+                  }}
+                >
+                  <Text style={styles.workersCountButtonText}>−</Text>
+                </TouchableOpacity>
+                <TextInput
+                  style={styles.workersCountInput}
+                  value={workersCount}
+                  onChangeText={(text) => {
+                    const num = parseInt(text) || 1;
+                    if (num >= 1 && num <= 20) {
+                      setWorkersCount(text);
+                    }
+                  }}
+                  keyboardType="numeric"
+                  textAlign="center"
+                />
+                <TouchableOpacity
+                  style={styles.workersCountButton}
+                  onPress={() => {
+                    const count = Math.min(20, parseInt(workersCount) + 1);
+                    setWorkersCount(count.toString());
+                  }}
+                >
+                  <Text style={styles.workersCountButtonText}>+</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Date */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Дата выполнения <Text style={styles.required}>*</Text></Text>
               <TouchableOpacity
-                style={styles.workersCountButton}
-                onPress={() => {
-                  const count = Math.min(20, parseInt(workersCount) + 1);
-                  setWorkersCount(count.toString());
-                }}
+                style={styles.dateButton}
+                onPress={showDatePickerHandler}
               >
-                <Text style={styles.workersCountButtonText}>+</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                  <CalendarDateIcon width={20} height={20} style={{ marginRight: theme.spacing.sm }} fill="none" stroke={theme.colors.text.primary} />
+                  <Text style={[
+                    styles.dateButtonText,
+                    !selectedDate && styles.dateButtonPlaceholder
+                  ]}>
+                    {formatDate(selectedDate)}
+                  </Text>
+                </View>
               </TouchableOpacity>
             </View>
-          </View>
 
-          {/* Date */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Дата выполнения <Text style={styles.required}>*</Text></Text>
-            <TouchableOpacity
-              style={styles.dateButton}
-              onPress={showDatePickerHandler}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                <CalendarDateIcon width={20} height={20} style={{ marginRight: theme.spacing.sm }} fill="none" stroke={theme.colors.text.primary} />
-                <Text style={[
-                  styles.dateButtonText,
-                  !selectedDate && styles.dateButtonPlaceholder
-                ]}>
-                  {formatDate(selectedDate)}
-                </Text>
+            {/* Media Picker */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Фото и видео</Text>
+              <View style={styles.mediaList}>
+                {mediaFiles.map((file, idx) => (
+                  <View key={file.uri} style={styles.mediaItem}>
+                    {file.type === 'image' ? (
+                      <Image source={{ uri: file.uri }} style={styles.mediaImage} resizeMode="cover" />
+                    ) : (
+                      <VideoPreview uri={file.uri} />
+                    )}
+                    <TouchableOpacity style={styles.removeMediaBtn} onPress={() => removeMedia(idx)}>
+                      <Text style={styles.removeMediaText}>×</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+                {mediaFiles.length < 5 && (
+                  <TouchableOpacity style={styles.addMediaBtn} onPress={pickMedia}>
+                    <ImageIcon width={28} height={28} />
+                    <Text style={styles.addMediaText}>Добавить</Text>
+                  </TouchableOpacity>
+                )}
               </View>
+              {mediaError && <Text style={styles.mediaError}>{mediaError}</Text>}
+            </View>
+
+            {/* Note */}
+          </View>
+        </ScrollView>
+
+        {/* Fixed Submit Button */}
+        {!showDatePicker && (
+          <View style={styles.fixedButtonContainer}>
+            <TouchableOpacity
+              style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
+              onPress={handleSubmit}
+              disabled={isLoading}
+            >
+              <Text style={styles.submitButtonText}>
+                {isLoading ? 'Создаем заказ...' : 'Опубликовать заказ'}
+              </Text>
             </TouchableOpacity>
           </View>
+        )}
 
-          {/* Media Picker */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Фото и видео</Text>
-            <View style={styles.mediaList}>
-              {mediaFiles.map((file, idx) => (
-                <View key={file.uri} style={styles.mediaItem}>
-                  {file.type === 'image' ? (
-                    <Image source={{ uri: file.uri }} style={styles.mediaImage} resizeMode="cover" />
-                  ) : (
-                    <VideoPreview uri={file.uri} />
-                  )}
-                  <TouchableOpacity style={styles.removeMediaBtn} onPress={() => removeMedia(idx)}>
-                    <Text style={styles.removeMediaText}>×</Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
-              {mediaFiles.length < 5 && (
-                <TouchableOpacity style={styles.addMediaBtn} onPress={pickMedia}>
-                  <ImageIcon width={28} height={28} />
-                  <Text style={styles.addMediaText}>Добавить</Text>
+        {/* Date Picker */}
+        {showDatePicker && (
+          <View style={styles.datePickerContainer}>
+            {Platform.OS === 'ios' && (
+              <View style={styles.datePickerHeader}>
+                <TouchableOpacity
+                  style={styles.doneButton}
+                  onPress={() => setShowDatePicker(false)}
+                >
+                  <Text style={styles.doneButtonText}>Готово</Text>
                 </TouchableOpacity>
-              )}
-            </View>
-            {mediaError && <Text style={styles.mediaError}>{mediaError}</Text>}
+              </View>
+            )}
+            <DateTimePicker
+              value={selectedDate || new Date()}
+              mode="date"
+              display={Platform.OS === 'android' ? 'calendar' : 'spinner'}
+              onChange={handleDateChange}
+              minimumDate={new Date()}
+              locale="ru-RU"
+            />
           </View>
-
-          {/* Note */}
-        </View>
-      </ScrollView>
-
-      {/* Fixed Submit Button */}
-      {!showDatePicker && (
-        <View style={styles.fixedButtonContainer}>
-          <TouchableOpacity
-            style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
-            onPress={handleSubmit}
-            disabled={isLoading}
-          >
-            <Text style={styles.submitButtonText}>
-              {isLoading ? 'Создаем заказ...' : 'Опубликовать заказ'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Date Picker */}
-      {showDatePicker && (
-        <View style={styles.datePickerContainer}>
-          {Platform.OS === 'ios' && (
-            <View style={styles.datePickerHeader}>
-              <TouchableOpacity
-                style={styles.doneButton}
-                onPress={() => setShowDatePicker(false)}
-              >
-                <Text style={styles.doneButtonText}>Готово</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-          <DateTimePicker
-            value={selectedDate || new Date()}
-            mode="date"
-            display={Platform.OS === 'android' ? 'calendar' : 'spinner'}
-            onChange={handleDateChange}
-            minimumDate={new Date()}
-            locale="ru-RU"
-          />
-        </View>
-      )}
-    </SafeAreaView>
+        )}
+      </SafeAreaView>
+    </View>
   );
 };
 
@@ -421,10 +425,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  header: {
+  content: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  contentHeader: {
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl,
+    paddingTop: theme.spacing.lg,
     paddingBottom: theme.spacing.lg,
+    backgroundColor: theme.colors.background,
   },
   title: {
     fontSize: theme.typography.fontSize.xxl,

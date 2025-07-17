@@ -9,6 +9,7 @@ import {
   FlatList,
 } from 'react-native';
 import { theme } from '../../constants/theme';
+import { Header } from '../../components/common';
 
 type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | 'completed' | 'in_progress';
 
@@ -249,44 +250,47 @@ export const WorkerApplicationsScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Мои заявки</Text>
-        <Text style={styles.subtitle}>
-          Отслеживайте статус ваших заявок на заказы
-        </Text>
-      </View>
+    <View style={styles.container}>
+      <Header />
+      <SafeAreaView style={styles.content}>
+        <View style={styles.contentHeader}>
+          <Text style={styles.title}>Мои заявки</Text>
+          <Text style={styles.subtitle}>
+            Отслеживайте статус ваших заявок на заказы
+          </Text>
+        </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filtersContainer}
-        contentContainerStyle={styles.filtersContent}
-      >
-        {statusFilters.map(renderStatusFilter)}
-      </ScrollView>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filtersContainer}
+          contentContainerStyle={styles.filtersContent}
+        >
+          {statusFilters.map(renderStatusFilter)}
+        </ScrollView>
 
-      <FlatList
-        data={filteredApplications}
-        renderItem={renderApplicationCard}
-        keyExtractor={(item) => item.id}
-        style={styles.applicationsList}
-        contentContainerStyle={styles.applicationsListContent}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateIcon}>📝</Text>
-            <Text style={styles.emptyStateTitle}>Нет заявок</Text>
-            <Text style={styles.emptyStateText}>
-              {selectedStatus === 'all'
-                ? 'Вы еще не подавали заявки на заказы'
-                : `Нет заявок со статусом "${statusFilters.find(f => f.key === selectedStatus)?.label}"`
-              }
-            </Text>
-          </View>
-        }
-      />
-    </SafeAreaView>
+        <FlatList
+          data={filteredApplications}
+          renderItem={renderApplicationCard}
+          keyExtractor={(item) => item.id}
+          style={styles.applicationsList}
+          contentContainerStyle={styles.applicationsListContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateIcon}>📝</Text>
+              <Text style={styles.emptyStateTitle}>Нет заявок</Text>
+              <Text style={styles.emptyStateText}>
+                {selectedStatus === 'all'
+                  ? 'Вы еще не подавали заявки на заказы'
+                  : `Нет заявок со статусом "${statusFilters.find(f => f.key === selectedStatus)?.label}"`
+                }
+              </Text>
+            </View>
+          }
+        />
+      </SafeAreaView>
+    </View>
   );
 };
 
@@ -295,7 +299,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  header: {
+  content: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  contentHeader: {
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
