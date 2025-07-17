@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, StatusBar, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
-import OsonishLogo from '../../../assets/oson-ish-logo-white.svg';
+// import OsonishLogo from '../../../assets/oson-ish-logo-white.svg';
 
 export function SplashScreen() {
   const navigation = useNavigation();
@@ -21,9 +21,13 @@ export function SplashScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={theme.colors.primary} />
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
       <View style={styles.content}>
-        <OsonishLogo width={180} height={150} style={{ marginBottom: 24 }} />
+        <Image
+          source={require('../../../assets/logo-osonish-vertical.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
       </View>
     </View>
   );
@@ -32,12 +36,17 @@ export function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   content: {
     alignItems: 'center',
+  },
+  logo: {
+    width: 340,
+    height: 340,
+    marginBottom: 24,
   },
   title: {
     fontSize: theme.fonts.sizes.xxxl,
