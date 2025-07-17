@@ -23,6 +23,9 @@ interface Order {
   status: 'active' | 'in_progress' | 'completed' | 'cancelled';
   createdAt: string;
   applicantsCount: number;
+  description: string;
+  location: string;
+  serviceDate: string;
 }
 
 const mockOrders: Order[] = [
@@ -34,6 +37,9 @@ const mockOrders: Order[] = [
     status: 'active',
     createdAt: '2 часа назад',
     applicantsCount: 5,
+    description: 'Нужна генеральная уборка квартиры. Включая мытье окон.',
+    location: 'Ташкент, Юнусабад',
+    serviceDate: '2024-01-20',
   },
   {
     id: '2',
@@ -43,6 +49,9 @@ const mockOrders: Order[] = [
     status: 'in_progress',
     createdAt: '1 день назад',
     applicantsCount: 3,
+    description: 'Стиральная машина Samsung не включается.',
+    location: 'Ташкент, Мирзо-Улугбек',
+    serviceDate: '2024-01-18',
   },
   {
     id: '3',
@@ -52,6 +61,9 @@ const mockOrders: Order[] = [
     status: 'completed',
     createdAt: '3 дня назад',
     applicantsCount: 8,
+    description: 'Необходимо доставить диван и кресло на 5 этаж.',
+    location: 'Ташкент, Чиланзар',
+    serviceDate: '2024-01-15',
   },
 ];
 
@@ -114,16 +126,24 @@ export const MyOrdersScreen: React.FC = () => {
 
       <View style={styles.orderDetails}>
         <View style={styles.orderDetail}>
-          <Text style={styles.orderDetailLabel}>Бюджет:</Text>
+          <Text style={styles.orderDetailLabel}>📍 Местоположение:</Text>
+          <Text style={styles.orderDetailValue}>{item.location}</Text>
+        </View>
+        <View style={styles.orderDetail}>
+          <Text style={styles.orderDetailLabel}>💰 Бюджет:</Text>
           <Text style={styles.orderDetailValue}>{item.budget} сум</Text>
         </View>
         <View style={styles.orderDetail}>
-          <Text style={styles.orderDetailLabel}>Откликов:</Text>
+          <Text style={styles.orderDetailLabel}>📝 Откликов:</Text>
           <Text style={styles.orderDetailValue}>{item.applicantsCount}</Text>
+        </View>
+        <View style={styles.orderDetail}>
+          <Text style={styles.orderDetailLabel}>📅 Дата:</Text>
+          <Text style={styles.orderDetailValue}>{item.serviceDate}</Text>
         </View>
       </View>
 
-      <Text style={styles.orderTime}>{item.createdAt}</Text>
+      <Text style={styles.orderTime}>Создан {item.createdAt}</Text>
     </TouchableOpacity>
   );
 
@@ -278,18 +298,17 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   orderDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     marginBottom: theme.spacing.sm,
   },
   orderDetail: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: theme.spacing.xs,
   },
   orderDetailLabel: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
-    marginRight: theme.spacing.xs,
   },
   orderDetailValue: {
     fontSize: theme.typography.fontSize.sm,

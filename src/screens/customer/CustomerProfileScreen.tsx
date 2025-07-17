@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
 import UserEditIcon from '../../../assets/user-edit.svg';
 import NotificationMessageIcon from '../../../assets/notification-message.svg';
@@ -21,16 +22,18 @@ interface ProfileOption {
 }
 
 export const CustomerProfileScreen: React.FC = () => {
+  const navigation = useNavigation();
+
   const handleEditProfile = () => {
-    Alert.alert('Редактирование профиля', 'Функция будет добавлена в следующих версиях');
+    navigation.navigate('EditProfile' as never);
   };
 
   const handleNotifications = () => {
-    Alert.alert('Уведомления', 'Настройки уведомлений');
+    navigation.navigate('Notifications' as never);
   };
 
   const handleSupport = () => {
-    Alert.alert('Поддержка', 'Свяжитесь с нами: +998 90 123 45 67');
+    navigation.navigate('Support' as never);
   };
 
   const handleLogout = () => {

@@ -18,8 +18,11 @@ export type AuthStackParamList = {
 };
 
 export type CustomerStackParamList = {
-  CustomerTabs: undefined;
+  MainTabs: undefined;
   OrderDetails: { orderId: string };
+  EditProfile: undefined;
+  Notifications: undefined;
+  Support: undefined;
 };
 
 export type CustomerTabParamList = {

@@ -11,7 +11,8 @@ import {
 import { theme } from '../../constants';
 import { useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import type { CustomerTabParamList } from '../../types';
+import type { CustomerTabParamList, CustomerStackParamList } from '../../types';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import FilePlusIcon from '../../../assets/file-plus-03_2.svg';
 
 interface Order {
@@ -60,7 +61,7 @@ const mockActiveOrders: Order[] = [
 
 export const CustomerHomeScreen: React.FC = () => {
   const [activeOrders] = useState<Order[]>(mockActiveOrders);
-  const navigation = useNavigation<BottomTabNavigationProp<CustomerTabParamList>>();
+  const navigation = useNavigation<BottomTabNavigationProp<CustomerTabParamList> & NativeStackNavigationProp<CustomerStackParamList>>();
 
   const getStatusColor = (status: Order['status']) => {
     switch (status) {
@@ -85,8 +86,7 @@ export const CustomerHomeScreen: React.FC = () => {
   };
 
   const handleOrderPress = (orderId: string) => {
-    console.log('Order pressed:', orderId);
-    // TODO: Навигация к деталям заказа
+    navigation.navigate('OrderDetails', { orderId });
   };
 
   const handleCreateOrder = () => {
