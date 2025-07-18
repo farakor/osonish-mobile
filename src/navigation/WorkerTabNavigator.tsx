@@ -1,16 +1,17 @@
 import React from 'react';
-import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { WorkerTabParamList } from '../types';
-import { theme } from '../constants/theme';
-
-// Импортируем экраны исполнителя
+import { theme } from '../constants';
+import type { WorkerTabParamList } from '../types';
 import {
   WorkerJobsScreen,
   WorkerCategoriesScreen,
   WorkerApplicationsScreen,
   WorkerProfileScreen,
 } from '../screens/worker';
+import HomeIcon from '../../assets/home-02.svg';
+import FileIcon from '../../assets/file-02.svg';
+import FilePlusIcon from '../../assets/file-plus-03.svg';
+import ProfileIcon from '../../assets/user-01.svg';
 
 const Tab = createBottomTabNavigator<WorkerTabParamList>();
 
@@ -22,17 +23,26 @@ export function WorkerTabNavigator() {
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.text.secondary,
         tabBarStyle: {
-          backgroundColor: theme.colors.surface,
-          borderTopColor: theme.colors.border,
-          borderTopWidth: 1,
-          paddingTop: 8,
-          paddingBottom: 8,
-          height: 64,
+          backgroundColor: '#fff',
+          borderTopWidth: 0,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.06,
+          shadowRadius: 8,
+          elevation: 8,
+          paddingTop: theme.spacing.sm, // уменьшен верхний паддинг
+          paddingBottom: theme.spacing.xxl, // увеличен нижний паддинг
+          height: 99, // уменьшена высота меню на 10% (было 110)
+          justifyContent: 'center', // центрирование по вертикали
         },
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
-          marginTop: 4,
+          fontSize: theme.typography.fontSize.sm, // уменьшен размер шрифта
+          fontWeight: theme.typography.fontWeight.medium, // обычный вес
+          marginBottom: 0, // убираем отступ снизу
+          marginTop: theme.spacing.xs, // добавляем отступ сверху
+        },
+        tabBarIconStyle: {
+          marginBottom: 0, // убираем отступ снизу у иконки
         },
       }}
     >
@@ -40,9 +50,14 @@ export function WorkerTabNavigator() {
         name="Jobs"
         component={WorkerJobsScreen}
         options={{
-          title: 'Заказы',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon icon="💼" color={color} />
+          tabBarLabel: 'Заказы',
+          tabBarIcon: ({ color, size, focused }) => (
+            <HomeIcon
+              width={25}
+              height={25}
+              fill={focused ? `${color}1F` : `${theme.colors.text.secondary}1F`}
+              stroke={focused ? color : theme.colors.text.secondary}
+            />
           ),
         }}
       />
@@ -50,9 +65,14 @@ export function WorkerTabNavigator() {
         name="Categories"
         component={WorkerCategoriesScreen}
         options={{
-          title: 'Категории',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon icon="📋" color={color} />
+          tabBarLabel: 'Категории',
+          tabBarIcon: ({ color, size, focused }) => (
+            <FilePlusIcon
+              width={25}
+              height={25}
+              fill={focused ? `${color}1F` : `${theme.colors.text.secondary}1F`}
+              stroke={focused ? color : theme.colors.text.secondary}
+            />
           ),
         }}
       />
@@ -60,9 +80,14 @@ export function WorkerTabNavigator() {
         name="Applications"
         component={WorkerApplicationsScreen}
         options={{
-          title: 'Заявки',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon icon="📝" color={color} />
+          tabBarLabel: 'Заявки',
+          tabBarIcon: ({ color, size, focused }) => (
+            <FileIcon
+              width={25}
+              height={25}
+              fill={focused ? `${color}1F` : `${theme.colors.text.secondary}1F`}
+              stroke={focused ? color : theme.colors.text.secondary}
+            />
           ),
         }}
       />
@@ -70,19 +95,17 @@ export function WorkerTabNavigator() {
         name="Profile"
         component={WorkerProfileScreen}
         options={{
-          title: 'Профиль',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon icon="👤" color={color} />
+          tabBarLabel: 'Профиль',
+          tabBarIcon: ({ color, size, focused }) => (
+            <ProfileIcon
+              width={25}
+              height={25}
+              fill={focused ? `${color}1F` : `${theme.colors.text.secondary}1F`}
+              stroke={focused ? color : theme.colors.text.secondary}
+            />
           ),
         }}
       />
     </Tab.Navigator>
   );
-}
-
-// Компонент иконки таба
-const TabIcon = ({ icon, color }: { icon: string; color: string }) => (
-  <Text style={{ fontSize: 20, color }}>
-    {icon}
-  </Text>
-); 
+} 

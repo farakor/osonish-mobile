@@ -10,7 +10,7 @@ import {
   FlatList,
 } from 'react-native';
 import { theme } from '../../constants/theme';
-import { Header } from '../../components/common';
+
 
 type Job = {
   id: string;
@@ -32,7 +32,7 @@ const mockJobs: Job[] = [
     id: '1',
     title: 'Уборка 3-комнатной квартиры',
     description: 'Нужна генеральная уборка квартиры 85 кв.м. Включая мытье окон, уборка всех комнат, кухни и ванной.',
-    category: 'Уборка дома',
+    category: 'Уборка',
     budget: 150000,
     deadline: '2024-01-20',
     location: 'Ташкент, Юнусабад',
@@ -59,7 +59,7 @@ const mockJobs: Job[] = [
     id: '3',
     title: 'Доставка мебели',
     description: 'Доставить диван из магазина до дома (3-й этаж). Помочь занести в квартиру.',
-    category: 'Доставка',
+    category: 'Переезд',
     budget: 100000,
     deadline: '2024-01-16',
     location: 'Ташкент, Сергели',
@@ -72,18 +72,18 @@ const mockJobs: Job[] = [
 
 export const WorkerJobsScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>('Все');
 
+  // Красивые категории с эмодзи как у заказчика
   const categories = [
-    'Все',
-    'Уборка дома',
-    'Ремонт техники',
-    'Доставка',
-    'Репетиторство',
-    'Красота',
-    'Фотография',
-    'Строительство',
-    'IT услуги',
+    { label: 'Все', emoji: '📋' },
+    { label: 'Стройка', emoji: '🏗️' },
+    { label: 'Уборка', emoji: '🧹' },
+    { label: 'Сад', emoji: '🌳' },
+    { label: 'Общепит', emoji: '🍽️' },
+    { label: 'Переезд', emoji: '🚚' },
+    { label: 'Ремонт техники', emoji: '🔧' },
+    { label: 'Прочее', emoji: '✨' },
   ];
 
   const filteredJobs = mockJobs.filter(job => {
@@ -155,27 +155,8 @@ export const WorkerJobsScreen: React.FC = () => {
     </View>
   );
 
-  const renderCategoryChip = (category: string) => (
-    <TouchableOpacity
-      key={category}
-      style={[
-        styles.categoryChip,
-        selectedCategory === category && styles.categoryChipActive
-      ]}
-      onPress={() => setSelectedCategory(category)}
-    >
-      <Text style={[
-        styles.categoryChipText,
-        selectedCategory === category && styles.categoryChipTextActive
-      ]}>
-        {category}
-      </Text>
-    </TouchableOpacity>
-  );
-
   return (
     <View style={styles.container}>
-      <Header />
       <SafeAreaView style={styles.content}>
         <View style={styles.contentHeader}>
           <Text style={styles.title}>Доступные заказы</Text>
@@ -192,14 +173,34 @@ export const WorkerJobsScreen: React.FC = () => {
           />
         </View>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.categoriesContainer}
-          contentContainerStyle={styles.categoriesContent}
-        >
-          {categories.map(renderCategoryChip)}
-        </ScrollView>
+        {/* Улучшенная карусель категорий */}
+        <View style={styles.categoriesSection}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.categoriesContainer}
+            contentContainerStyle={styles.categoriesContent}
+          >
+            {categories.map((category, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.categoryChip,
+                  selectedCategory === category.label && styles.categoryChipActive
+                ]}
+                onPress={() => setSelectedCategory(category.label)}
+              >
+                <Text style={styles.categoryEmoji}>{category.emoji}</Text>
+                <Text style={[
+                  styles.categoryChipText,
+                  selectedCategory === category.label && styles.categoryChipTextActive
+                ]}>
+                  {category.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
 
         <FlatList
           data={filteredJobs}
@@ -252,32 +253,52 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
+  categoriesSection: {
+    marginBottom: theme.spacing.lg,
+  },
   categoriesContainer: {
-    marginBottom: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
   },
   categoriesContent: {
-    paddingHorizontal: theme.spacing.lg,
-    gap: theme.spacing.sm,
+    paddingRight: theme.spacing.lg,
   },
   categoryChip: {
     backgroundColor: theme.colors.surface,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.full,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
     borderColor: theme.colors.border,
+    marginRight: theme.spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 110,
+    minHeight: 80,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   categoryChipActive: {
     backgroundColor: theme.colors.primary,
     borderColor: theme.colors.primary,
+    shadowColor: theme.colors.primary,
+    shadowOpacity: 0.2,
+  },
+  categoryEmoji: {
+    fontSize: 28,
+    marginBottom: theme.spacing.sm,
   },
   categoryChipText: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeight.medium,
+    textAlign: 'center',
   },
   categoryChipTextActive: {
     color: theme.colors.white,
+    fontWeight: theme.typography.fontWeight.semiBold,
   },
   jobsList: {
     flex: 1,
