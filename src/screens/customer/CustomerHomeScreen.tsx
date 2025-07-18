@@ -14,14 +14,14 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CustomerTabParamList, CustomerStackParamList } from '../../types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import FilePlusIcon from '../../../assets/file-plus-03_2.svg';
-import { Header } from '../../components/common';
+
 
 interface Order {
   id: string;
   title: string;
   category: string;
   budget: string;
-  status: 'active' | 'in_progress' | 'completed' | 'cancelled';
+  status: 'active' | 'completed';
   createdAt: string;
   applicantsCount: number;
   description: string;
@@ -48,7 +48,7 @@ const mockActiveOrders: Order[] = [
     title: 'Ремонт стиральной машины',
     category: 'Ремонт техники',
     budget: '200,000',
-    status: 'in_progress',
+    status: 'active',
     createdAt: '1 день назад',
     applicantsCount: 3,
     description: 'Стиральная машина Samsung не включается.',
@@ -66,8 +66,6 @@ export const CustomerHomeScreen: React.FC = () => {
 
   const getStatusColor = (status: Order['status']) => {
     switch (status) {
-      case 'in_progress':
-        return '#F39C12';
       case 'active':
         return theme.colors.primary;
       default:
@@ -77,8 +75,6 @@ export const CustomerHomeScreen: React.FC = () => {
 
   const getStatusText = (status: Order['status']) => {
     switch (status) {
-      case 'in_progress':
-        return 'В работе';
       case 'active':
         return 'Активный';
       default:
@@ -151,7 +147,6 @@ export const CustomerHomeScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Header />
       <SafeAreaView style={styles.content}>
         {/* Content Header */}
         <View style={styles.contentHeader}>

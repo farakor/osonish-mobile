@@ -9,9 +9,9 @@ import {
   FlatList,
 } from 'react-native';
 import { theme } from '../../constants/theme';
-import { Header } from '../../components/common';
 
-type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | 'completed' | 'in_progress';
+
+type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | 'completed';
 
 type Application = {
   id: string;
@@ -93,7 +93,7 @@ const mockApplications: Application[] = [
     customerName: 'ООО "Бизнес"',
     customerRating: 4.5,
     budget: 300000,
-    status: 'in_progress',
+    status: 'accepted',
     appliedAt: '2024-01-12T11:00:00Z',
     deadline: '2024-01-16',
     location: 'Ташкент, Мирабад',
@@ -108,7 +108,7 @@ export const WorkerApplicationsScreen: React.FC = () => {
     { key: 'all', label: 'Все', count: mockApplications.length },
     { key: 'pending', label: 'Ожидание', count: mockApplications.filter(a => a.status === 'pending').length },
     { key: 'accepted', label: 'Принято', count: mockApplications.filter(a => a.status === 'accepted').length },
-    { key: 'in_progress', label: 'В работе', count: mockApplications.filter(a => a.status === 'in_progress').length },
+
     { key: 'completed', label: 'Выполнено', count: mockApplications.filter(a => a.status === 'completed').length },
     { key: 'rejected', label: 'Отклонено', count: mockApplications.filter(a => a.status === 'rejected').length },
   ];
@@ -122,8 +122,7 @@ export const WorkerApplicationsScreen: React.FC = () => {
       case 'pending': return '#FF9500';
       case 'accepted': return theme.colors.primary;
       case 'rejected': return '#FF3B30';
-      case 'completed': return '#34C759';
-      case 'in_progress': return '#007AFF';
+      case 'completed': return '#6B7280';
       default: return theme.colors.text.secondary;
     }
   };
@@ -134,7 +133,6 @@ export const WorkerApplicationsScreen: React.FC = () => {
       case 'accepted': return 'Принято';
       case 'rejected': return 'Отклонено';
       case 'completed': return 'Выполнено';
-      case 'in_progress': return 'В работе';
       default: return status;
     }
   };
@@ -237,7 +235,7 @@ export const WorkerApplicationsScreen: React.FC = () => {
           </TouchableOpacity>
         )}
 
-        {item.status === 'in_progress' && (
+        {item.status === 'accepted' && (
           <TouchableOpacity
             style={styles.completeButton}
             onPress={() => handleApplicationAction(item.id, 'complete')}
@@ -251,7 +249,6 @@ export const WorkerApplicationsScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Header />
       <SafeAreaView style={styles.content}>
         <View style={styles.contentHeader}>
           <Text style={styles.title}>Мои заявки</Text>

@@ -12,7 +12,7 @@ import { theme } from '../../constants';
 import { useNavigation } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Header } from '../../components/common';
+
 
 type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
 
@@ -21,7 +21,7 @@ interface Order {
   title: string;
   category: string;
   budget: string;
-  status: 'active' | 'in_progress' | 'completed' | 'cancelled';
+  status: 'active' | 'completed';
   createdAt: string;
   applicantsCount: number;
   description: string;
@@ -47,7 +47,7 @@ const mockOrders: Order[] = [
     title: 'Ремонт стиральной машины',
     category: 'Ремонт техники',
     budget: '200,000',
-    status: 'in_progress',
+    status: 'active',
     createdAt: '1 день назад',
     applicantsCount: 3,
     description: 'Стиральная машина Samsung не включается.',
@@ -76,12 +76,8 @@ export const MyOrdersScreen: React.FC = () => {
     switch (status) {
       case 'active':
         return theme.colors.primary;
-      case 'in_progress':
-        return '#F39C12';
       case 'completed':
-        return theme.colors.success;
-      case 'cancelled':
-        return theme.colors.error;
+        return '#6B7280';
       default:
         return theme.colors.text.secondary;
     }
@@ -91,12 +87,8 @@ export const MyOrdersScreen: React.FC = () => {
     switch (status) {
       case 'active':
         return 'Активный';
-      case 'in_progress':
-        return 'В работе';
       case 'completed':
         return 'Завершен';
-      case 'cancelled':
-        return 'Отменен';
       default:
         return status;
     }
@@ -106,7 +98,7 @@ export const MyOrdersScreen: React.FC = () => {
     ? mockOrders
     : mockOrders.filter(order =>
       activeTab === 'active'
-        ? order.status === 'active' || order.status === 'in_progress'
+        ? order.status === 'active'
         : order.status === 'completed'
     );
 
@@ -150,7 +142,6 @@ export const MyOrdersScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Header />
       <SafeAreaView style={styles.content}>
         {/* Content Header */}
         <View style={styles.contentHeader}>

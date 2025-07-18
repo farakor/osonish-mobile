@@ -37,7 +37,7 @@ interface OrderData {
   workersCount: number;
   date: string;
   location: string;
-  status: 'active' | 'in_progress' | 'completed' | 'cancelled';
+  status: 'active' | 'completed';
   createdAt: string;
   applicantsCount: number;
   mediaFiles: MediaFile[];
@@ -152,12 +152,8 @@ export const OrderDetailsScreen: React.FC = () => {
     switch (status) {
       case 'active':
         return theme.colors.primary;
-      case 'in_progress':
-        return '#F39C12';
       case 'completed':
-        return theme.colors.success;
-      case 'cancelled':
-        return theme.colors.error;
+        return '#6B7280';
       default:
         return theme.colors.text.secondary;
     }
@@ -167,12 +163,8 @@ export const OrderDetailsScreen: React.FC = () => {
     switch (status) {
       case 'active':
         return 'Активный';
-      case 'in_progress':
-        return 'В работе';
       case 'completed':
         return 'Завершен';
-      case 'cancelled':
-        return 'Отменен';
       default:
         return status;
     }
