@@ -9,23 +9,40 @@ import {
   Alert,
 } from 'react-native';
 import { theme } from '../../constants/theme';
-import { Header } from '../../components/common';
+import { StatsWidget, StatItem } from '../../components/common';
+
 
 export const WorkerProfileScreen: React.FC = () => {
-  const [isOnline, setIsOnline] = useState(true);
+
+  const statsData: StatItem[] = [
+    {
+      id: 'orders',
+      icon: '✅',
+      value: '23',
+      label: 'Выполнено заказов',
+      color: '#34C759',
+    },
+    {
+      id: 'rating',
+      icon: '⭐',
+      value: '4.9',
+      label: 'Рейтинг',
+      color: '#FF9500',
+    },
+    {
+      id: 'experience',
+      icon: '🕐',
+      value: '8 мес',
+      label: 'На платформе',
+      color: theme.colors.primary,
+    },
+  ];
 
   const handleEditProfile = () => {
     Alert.alert('Редактирование профиля', 'Функция будет добавлена в следующем обновлении');
   };
 
-  const handleToggleOnlineStatus = () => {
-    setIsOnline(!isOnline);
-    Alert.alert(
-      'Статус изменен',
-      isOnline ? 'Вы переключились в офлайн режим' : 'Вы снова онлайн и готовы к работе',
-      [{ text: 'OK' }]
-    );
-  };
+
 
   const handleNavigation = (screen: string) => {
     Alert.alert(screen, 'Функция будет добавлена в следующем обновлении');
@@ -74,7 +91,6 @@ export const WorkerProfileScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Header />
       <SafeAreaView style={styles.screenContent}>
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Profile Header */}
@@ -84,35 +100,14 @@ export const WorkerProfileScreen: React.FC = () => {
             </View>
             <Text style={styles.profileName}>Алишер Рахимов</Text>
             <Text style={styles.profileRole}>Исполнитель</Text>
-
-            <TouchableOpacity
-              style={[
-                styles.statusBadge,
-                { backgroundColor: isOnline ? '#34C759' : '#8E8E93' }
-              ]}
-              onPress={handleToggleOnlineStatus}
-            >
-              <Text style={styles.statusText}>
-                {isOnline ? '🟢 Онлайн' : '⚫ Офлайн'}
-              </Text>
-            </TouchableOpacity>
           </View>
 
-          {/* Stats */}
-          <View style={styles.statsContainer}>
-            <View style={styles.statCard}>
-              <Text style={styles.statNumber}>23</Text>
-              <Text style={styles.statLabel}>Выполнено заказов</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statNumber}>4.9</Text>
-              <Text style={styles.statLabel}>Рейтинг</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statNumber}>8 мес</Text>
-              <Text style={styles.statLabel}>На платформе</Text>
-            </View>
-          </View>
+          {/* Enhanced Stats Widget */}
+          <StatsWidget
+            stats={statsData}
+            variant="cards"
+            style={{ marginBottom: theme.spacing.lg }}
+          />
 
           {/* Quick Actions */}
           <View style={styles.section}>
@@ -273,16 +268,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing.md,
   },
-  statusBadge: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.full,
-  },
-  statusText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.white,
-    fontWeight: theme.typography.fontWeight.semiBold,
-  },
+
   statsContainer: {
     flexDirection: 'row',
     paddingHorizontal: theme.spacing.lg,
