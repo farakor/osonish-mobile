@@ -105,12 +105,11 @@ export const WorkerApplicationsScreen: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus | 'all'>('all');
 
   const statusFilters = [
-    { key: 'all', label: 'Все', count: mockApplications.length },
-    { key: 'pending', label: 'Ожидание', count: mockApplications.filter(a => a.status === 'pending').length },
-    { key: 'accepted', label: 'Принято', count: mockApplications.filter(a => a.status === 'accepted').length },
-
-    { key: 'completed', label: 'Выполнено', count: mockApplications.filter(a => a.status === 'completed').length },
-    { key: 'rejected', label: 'Отклонено', count: mockApplications.filter(a => a.status === 'rejected').length },
+    { key: 'all', label: 'Все', emoji: '📋', count: mockApplications.length },
+    { key: 'pending', label: 'Ожидание', emoji: '⏳', count: mockApplications.filter(a => a.status === 'pending').length },
+    { key: 'accepted', label: 'Принято', emoji: '✅', count: mockApplications.filter(a => a.status === 'accepted').length },
+    { key: 'completed', label: 'Выполнено', emoji: '🎉', count: mockApplications.filter(a => a.status === 'completed').length },
+    { key: 'rejected', label: 'Отклонено', emoji: '❌', count: mockApplications.filter(a => a.status === 'rejected').length },
   ];
 
   const filteredApplications = mockApplications.filter(app =>
@@ -165,11 +164,18 @@ export const WorkerApplicationsScreen: React.FC = () => {
       ]}
       onPress={() => setSelectedStatus(filter.key)}
     >
+      <Text style={styles.filterEmoji}>{filter.emoji}</Text>
       <Text style={[
         styles.filterChipText,
         selectedStatus === filter.key && styles.filterChipTextActive
       ]}>
-        {filter.label} ({filter.count})
+        {filter.label}
+      </Text>
+      <Text style={[
+        styles.filterChipCount,
+        selectedStatus === filter.key && styles.filterChipCountActive
+      ]}>
+        ({filter.count})
       </Text>
     </TouchableOpacity>
   );
@@ -257,14 +263,17 @@ export const WorkerApplicationsScreen: React.FC = () => {
           </Text>
         </View>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.filtersContainer}
-          contentContainerStyle={styles.filtersContent}
-        >
-          {statusFilters.map(renderStatusFilter)}
-        </ScrollView>
+        {/* Улучшенная карусель статусов */}
+        <View style={styles.filtersSection}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.filtersContainer}
+            contentContainerStyle={styles.filtersContent}
+          >
+            {statusFilters.map(renderStatusFilter)}
+          </ScrollView>
+        </View>
 
         <FlatList
           data={filteredApplications}
@@ -316,32 +325,63 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     lineHeight: 20,
   },
+  filtersSection: {
+    marginBottom: theme.spacing.lg,
+  },
   filtersContainer: {
-    marginBottom: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
   },
   filtersContent: {
-    paddingHorizontal: theme.spacing.lg,
-    gap: theme.spacing.sm,
+    paddingRight: theme.spacing.lg,
   },
   filterChip: {
     backgroundColor: theme.colors.surface,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.full,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
     borderColor: theme.colors.border,
+    marginRight: theme.spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 110,
+    minHeight: 90,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   filterChipActive: {
     backgroundColor: theme.colors.primary,
     borderColor: theme.colors.primary,
+    shadowColor: theme.colors.primary,
+    shadowOpacity: 0.2,
+  },
+  filterEmoji: {
+    fontSize: 28,
+    marginBottom: theme.spacing.xs,
   },
   filterChipText: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeight.medium,
+    textAlign: 'center',
+    marginBottom: theme.spacing.xs,
   },
   filterChipTextActive: {
     color: theme.colors.white,
+    fontWeight: theme.typography.fontWeight.semiBold,
+  },
+  filterChipCount: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.secondary,
+    fontWeight: theme.typography.fontWeight.medium,
+    textAlign: 'center',
+  },
+  filterChipCountActive: {
+    color: theme.colors.white,
+    fontWeight: theme.typography.fontWeight.semiBold,
   },
   applicationsList: {
     flex: 1,
