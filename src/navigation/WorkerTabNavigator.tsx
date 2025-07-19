@@ -62,12 +62,12 @@ export function WorkerTabNavigator() {
         }}
       />
       <Tab.Screen
-        name="Categories"
-        component={WorkerCategoriesScreen}
+        name="Applications"
+        component={WorkerApplicationsScreen}
         options={{
-          tabBarLabel: 'Категории',
+          tabBarLabel: 'Заявки',
           tabBarIcon: ({ color, size, focused }) => (
-            <FilePlusIcon
+            <FileIcon
               width={25}
               height={25}
               fill={focused ? `${color}1F` : `${theme.colors.text.secondary}1F`}
@@ -77,12 +77,12 @@ export function WorkerTabNavigator() {
         }}
       />
       <Tab.Screen
-        name="Applications"
-        component={WorkerApplicationsScreen}
+        name="Categories"
+        component={WorkerCategoriesScreen}
         options={{
-          tabBarLabel: 'Заявки',
+          tabBarLabel: 'Мои категории',
           tabBarIcon: ({ color, size, focused }) => (
-            <FileIcon
+            <FilePlusIcon
               width={25}
               height={25}
               fill={focused ? `${color}1F` : `${theme.colors.text.secondary}1F`}
