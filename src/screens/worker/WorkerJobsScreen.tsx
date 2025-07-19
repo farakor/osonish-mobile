@@ -74,16 +74,16 @@ export const WorkerJobsScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>('Все');
 
-  // Красивые категории с эмодзи как у заказчика
+  // Красивые категории с эмодзи и счетчиками
   const categories = [
-    { label: 'Все', emoji: '📋' },
-    { label: 'Стройка', emoji: '🏗️' },
-    { label: 'Уборка', emoji: '🧹' },
-    { label: 'Сад', emoji: '🌳' },
-    { label: 'Общепит', emoji: '🍽️' },
-    { label: 'Переезд', emoji: '🚚' },
-    { label: 'Ремонт техники', emoji: '🔧' },
-    { label: 'Прочее', emoji: '✨' },
+    { label: 'Все', emoji: '📋', count: mockJobs.length },
+    { label: 'Стройка', emoji: '🏗️', count: mockJobs.filter(job => job.category === 'Стройка').length },
+    { label: 'Уборка', emoji: '🧹', count: mockJobs.filter(job => job.category === 'Уборка').length },
+    { label: 'Сад', emoji: '🌳', count: mockJobs.filter(job => job.category === 'Сад').length },
+    { label: 'Общепит', emoji: '🍽️', count: mockJobs.filter(job => job.category === 'Общепит').length },
+    { label: 'Переезд', emoji: '🚚', count: mockJobs.filter(job => job.category === 'Переезд').length },
+    { label: 'Ремонт техники', emoji: '🔧', count: mockJobs.filter(job => job.category === 'Ремонт техники').length },
+    { label: 'Прочее', emoji: '✨', count: mockJobs.filter(job => job.category === 'Прочее').length },
   ];
 
   const filteredJobs = mockJobs.filter(job => {
@@ -197,6 +197,12 @@ export const WorkerJobsScreen: React.FC = () => {
                 ]}>
                   {category.label}
                 </Text>
+                <Text style={[
+                  styles.categoryChipCount,
+                  selectedCategory === category.label && styles.categoryChipCountActive
+                ]}>
+                  ({category.count})
+                </Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -273,7 +279,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 110,
-    minHeight: 80,
+    minHeight: 95,
     shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -295,8 +301,19 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeight.medium,
     textAlign: 'center',
+    marginBottom: theme.spacing.xs,
   },
   categoryChipTextActive: {
+    color: theme.colors.white,
+    fontWeight: theme.typography.fontWeight.semiBold,
+  },
+  categoryChipCount: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.secondary,
+    fontWeight: theme.typography.fontWeight.medium,
+    textAlign: 'center',
+  },
+  categoryChipCountActive: {
     color: theme.colors.white,
     fontWeight: theme.typography.fontWeight.semiBold,
   },
