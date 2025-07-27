@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,25 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { theme } from '../../constants/theme';
+import { useNavigation } from '@react-navigation/native';
+import { theme } from '../../constants';
 import { StatsWidget, StatItem } from '../../components/common';
+import UserEditIcon from '../../../assets/user-edit.svg';
+import NotificationMessageIcon from '../../../assets/notification-message.svg';
+import LifeBuoyIcon from '../../../assets/life-buoy-02.svg';
+import FilePlusIcon from '../../../assets/file-plus-03.svg';
+
+
+interface ProfileOption {
+  id: string;
+  title: string;
+  icon: string | React.ReactNode;
+  action: () => void;
+}
 
 
 export const WorkerProfileScreen: React.FC = () => {
+  const navigation = useNavigation();
 
   const statsData: StatItem[] = [
     {
@@ -21,6 +35,7 @@ export const WorkerProfileScreen: React.FC = () => {
       value: '23',
       label: 'Заказов',
       color: theme.colors.primary,
+      onPress: () => navigation.navigate('Applications' as never),
     },
     {
       id: 'rating',
@@ -42,182 +57,102 @@ export const WorkerProfileScreen: React.FC = () => {
     Alert.alert('Редактирование профиля', 'Функция будет добавлена в следующем обновлении');
   };
 
+  const handleNotifications = () => {
+    Alert.alert('Уведомления', 'Функция будет добавлена в следующем обновлении');
+  };
 
+  const handleSupport = () => {
+    Alert.alert('Поддержка', 'Функция будет добавлена в следующем обновлении');
+  };
 
-  const handleNavigation = (screen: string) => {
-    Alert.alert(screen, 'Функция будет добавлена в следующем обновлении');
+  const handleMyCategories = () => {
+    navigation.navigate('Categories' as never);
   };
 
   const handleLogout = () => {
     Alert.alert(
-      'Выход из аккаунта',
-      'Вы уверены, что хотите выйти?',
+      'Выход',
+      'Вы действительно хотите выйти из аккаунта?',
       [
         { text: 'Отмена', style: 'cancel' },
-        { text: 'Выйти', style: 'destructive', onPress: () => console.log('Logout') }
+        {
+          text: 'Выйти', style: 'destructive', onPress: () => {
+            console.log('Logout');
+            // TODO: Навигация к экрану аутентификации
+          }
+        },
       ]
     );
   };
 
-  const MenuItem = ({
-    icon,
-    title,
-    subtitle,
-    onPress,
-    rightIcon = '›',
-    showBorder = true
-  }: {
-    icon: string;
-    title: string;
-    subtitle?: string;
-    onPress: () => void;
-    rightIcon?: string;
-    showBorder?: boolean;
-  }) => (
-    <TouchableOpacity
-      style={[styles.menuItem, !showBorder && styles.menuItemNoBorder]}
-      onPress={onPress}
-    >
-      <View style={styles.menuItemLeft}>
-        <Text style={styles.menuIcon}>{icon}</Text>
-        <View style={styles.menuItemContent}>
-          <Text style={styles.menuItemTitle}>{title}</Text>
-          {subtitle && <Text style={styles.menuItemSubtitle}>{subtitle}</Text>}
-        </View>
-      </View>
-      <Text style={styles.menuItemArrow}>{rightIcon}</Text>
-    </TouchableOpacity>
-  );
+  const profileOptions: ProfileOption[] = [
+    { id: '1', title: 'Редактировать профиль', icon: <UserEditIcon width={20} height={20} />, action: handleEditProfile },
+    { id: '2', title: 'Мои категории', icon: <FilePlusIcon width={20} height={20} />, action: handleMyCategories },
+    { id: '3', title: 'Уведомления', icon: <NotificationMessageIcon width={20} height={20} />, action: handleNotifications },
+    { id: '4', title: 'Поддержка', icon: <LifeBuoyIcon width={20} height={20} />, action: handleSupport },
+  ];
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.screenContent}>
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Profile Header */}
-          <View style={styles.profileHeader}>
-            <View style={styles.avatarContainer}>
+      <SafeAreaView style={styles.content}>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Content Header */}
+          <View style={styles.contentHeader}>
+            <Text style={styles.title}>Профиль</Text>
+          </View>
+
+          {/* Profile Info */}
+          <View style={styles.profileInfo}>
+            <View style={styles.avatar}>
               <Text style={styles.avatarText}>АР</Text>
             </View>
-            <Text style={styles.profileName}>Алишер Рахимов</Text>
-            <Text style={styles.profileRole}>Исполнитель</Text>
+            <Text style={styles.userName}>Алишер Рахимов</Text>
+            <Text style={styles.userPhone}>+998 90 123 45 67</Text>
+            <Text style={styles.userRole}>Исполнитель</Text>
           </View>
 
           {/* Enhanced Stats Widget */}
           <StatsWidget
             stats={statsData}
             variant="cards"
-            style={{ marginBottom: theme.spacing.lg }}
+            style={{ marginBottom: theme.spacing.xl }}
           />
 
-          {/* Quick Actions */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Быстрые действия</Text>
-            <View style={styles.menuContainer}>
-              <MenuItem
-                icon="✏️"
-                title="Редактировать профиль"
-                subtitle="Фото, контакты, описание"
-                onPress={handleEditProfile}
-              />
-              <MenuItem
-                icon="⭐"
-                title="Мои отзывы"
-                subtitle="23 отзыва от заказчиков"
-                onPress={() => handleNavigation('Отзывы')}
-              />
-              <MenuItem
-                icon="📊"
-                title="Статистика заработка"
-                subtitle="Доходы за месяц"
-                onPress={() => handleNavigation('Статистика')}
-                showBorder={false}
-              />
-            </View>
+          {/* Profile Options */}
+          <View style={styles.profileOptions}>
+            {profileOptions.map((option) => (
+              <TouchableOpacity
+                key={option.id}
+                style={styles.optionItem}
+                onPress={option.action}
+                activeOpacity={0.7}
+              >
+                <View style={styles.optionLeft}>
+                  {/* Изменено: поддержка компонента-иконки */}
+                  {typeof option.icon === 'string' ? (
+                    <Text style={styles.optionIcon}>{option.icon}</Text>
+                  ) : (
+                    <View style={styles.optionIcon}>{option.icon}</View>
+                  )}
+                  <Text style={styles.optionTitle}>{option.title}</Text>
+                </View>
+                <Text style={styles.optionArrow}>›</Text>
+              </TouchableOpacity>
+            ))}
           </View>
 
-          {/* Settings */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Настройки</Text>
-            <View style={styles.menuContainer}>
-              <MenuItem
-                icon="🔔"
-                title="Уведомления"
-                subtitle="Новые заказы, сообщения"
-                onPress={() => handleNavigation('Уведомления')}
-              />
-              <MenuItem
-                icon="💳"
-                title="Способы получения оплаты"
-                subtitle="Карты, кошельки"
-                onPress={() => handleNavigation('Оплата')}
-              />
-              <MenuItem
-                icon="📍"
-                title="Радиус работы"
-                subtitle="Где вы готовы работать"
-                onPress={() => handleNavigation('Радиус работы')}
-              />
-              <MenuItem
-                icon="🏷️"
-                title="Мои тарифы"
-                subtitle="Цены на услуги"
-                onPress={() => handleNavigation('Тарифы')}
-                showBorder={false}
-              />
-            </View>
-          </View>
+          {/* Logout Button */}
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Text style={styles.logoutText}>Выйти из аккаунта</Text>
+          </TouchableOpacity>
 
-          {/* Support & Info */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Поддержка</Text>
-            <View style={styles.menuContainer}>
-              <MenuItem
-                icon="❓"
-                title="Помощь"
-                subtitle="Часто задаваемые вопросы"
-                onPress={() => handleNavigation('Помощь')}
-              />
-              <MenuItem
-                icon="💬"
-                title="Связаться с поддержкой"
-                subtitle="Чат с операторами"
-                onPress={() => handleNavigation('Поддержка')}
-              />
-              <MenuItem
-                icon="📋"
-                title="Условия использования"
-                onPress={() => handleNavigation('Условия')}
-              />
-              <MenuItem
-                icon="🔒"
-                title="Политика конфиденциальности"
-                onPress={() => handleNavigation('Конфиденциальность')}
-                showBorder={false}
-              />
-            </View>
+          {/* App Info */}
+          <View style={styles.appInfo}>
+            <Text style={styles.appVersion}>Osonish v1.0.0</Text>
+            <Text style={styles.appDescription}>
+              Marketplace для поиска исполнителей в Узбекистане
+            </Text>
           </View>
-
-          {/* App Info & Logout */}
-          <View style={styles.section}>
-            <View style={styles.menuContainer}>
-              <MenuItem
-                icon="📱"
-                title="Версия приложения"
-                onPress={() => { }}
-                rightIcon="v1.0.0"
-              />
-              <MenuItem
-                icon="🚪"
-                title="Выйти из аккаунта"
-                onPress={handleLogout}
-                rightIcon=""
-                showBorder={false}
-              />
-            </View>
-          </View>
-
-          {/* Bottom Spacing */}
-          <View style={styles.bottomSpacing} />
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -229,21 +164,26 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  screenContent: {
+  content: {
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  content: {
-    flex: 1,
-  },
-  profileHeader: {
-    alignItems: 'center',
-    paddingVertical: theme.spacing.xl,
+  contentHeader: {
     paddingHorizontal: theme.spacing.lg,
-    backgroundColor: theme.colors.surface,
-    marginBottom: theme.spacing.lg,
+    paddingTop: theme.spacing.xl,
+    paddingBottom: theme.spacing.lg,
   },
-  avatarContainer: {
+  title: {
+    fontSize: theme.typography.fontSize.xxl,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.text.primary,
+  },
+  profileInfo: {
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.xl,
+  },
+  avatar: {
     width: 80,
     height: 80,
     borderRadius: 40,
@@ -253,118 +193,88 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   avatarText: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: theme.typography.fontWeight.bold,
     color: theme.colors.white,
   },
-  profileName: {
-    fontSize: theme.typography.fontSize.xl,
-    fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
-  },
-  profileRole: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.md,
-  },
-
-  statsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
-    gap: theme.spacing.md,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statNumber: {
-    fontSize: theme.typography.fontSize.xl,
-    fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.xs,
-  },
-  statLabel: {
-    fontSize: theme.typography.fontSize.xs,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
-    lineHeight: 16,
-  },
-  section: {
-    marginBottom: theme.spacing.lg,
-  },
-  sectionTitle: {
+  userName: {
     fontSize: theme.typography.fontSize.lg,
     fontWeight: theme.typography.fontWeight.semiBold,
     color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  userPhone: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing.xs,
+  },
+  userRole: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.primary,
+    backgroundColor: `${theme.colors.primary}20`,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.sm,
+  },
+  profileOptions: {
     paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.xl,
   },
-  menuContainer: {
-    backgroundColor: theme.colors.surface,
-    marginHorizontal: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  menuItem: {
+  optionItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: theme.colors.surface,
+    paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
-  menuItemNoBorder: {
-    borderBottomWidth: 0,
-  },
-  menuItemLeft: {
+  optionLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
   },
-  menuIcon: {
+  optionIcon: {
     fontSize: 20,
     marginRight: theme.spacing.md,
-    width: 24,
-    textAlign: 'center',
   },
-  menuItemContent: {
-    flex: 1,
-  },
-  menuItemTitle: {
+  optionTitle: {
     fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.medium,
     color: theme.colors.text.primary,
-    marginBottom: 2,
+    fontWeight: theme.typography.fontWeight.medium,
   },
-  menuItemSubtitle: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-  },
-  menuItemArrow: {
+  optionArrow: {
     fontSize: 18,
     color: theme.colors.text.secondary,
-    marginLeft: theme.spacing.sm,
   },
-  bottomSpacing: {
-    height: theme.spacing.xl,
+  logoutButton: {
+    backgroundColor: theme.colors.error,
+    marginHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+    marginBottom: theme.spacing.xl,
+  },
+  logoutText: {
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.semiBold,
+    color: theme.colors.white,
+  },
+  appInfo: {
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.xl,
+  },
+  appVersion: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing.xs,
+  },
+  appDescription: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
   },
 }); 
