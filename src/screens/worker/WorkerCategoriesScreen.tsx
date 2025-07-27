@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { theme } from '../../constants/theme';
-import { Header } from '../../components/common';
+
 
 type ServiceCategory = {
   id: string;
@@ -182,7 +182,6 @@ export const WorkerCategoriesScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Header />
       <SafeAreaView style={styles.content}>
         <View style={styles.contentHeader}>
           <Text style={styles.title}>Мои категории</Text>

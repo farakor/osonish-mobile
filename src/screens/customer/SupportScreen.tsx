@@ -8,10 +8,10 @@ import {
   TouchableOpacity,
   Linking,
   Alert,
-  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
+import { HeaderWithBack } from '../../components/common';
 
 export const SupportScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -47,26 +47,15 @@ export const SupportScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Поддержка</Text>
-        <View style={styles.placeholder} />
-      </View>
+      <HeaderWithBack title="Поддержка" />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         {/* Logo Section */}
         <View style={styles.logoSection}>
           <View style={styles.logoContainer}>
-            <Image
-              source={require('../../../assets/logo-osonish-vertical.png')}
-              style={styles.logoImage}
-              resizeMode="contain"
-            />
+            <View style={styles.logoPlaceholder}>
+              <Text style={styles.logoText}>LOGO</Text>
+            </View>
           </View>
         </View>
 
@@ -102,37 +91,28 @@ export const SupportScreen: React.FC = () => {
         </View>
 
         {/* Additional Info */}
-        <View style={styles.infoSection}>
+        <View style={styles.additionalInfo}>
           <View style={styles.infoCard}>
-            <Text style={styles.infoIcon}>💬</Text>
+            <Text style={styles.infoTitle}>О приложении</Text>
             <Text style={styles.infoText}>
-              Наша команда поддержки работает ежедневно и готова помочь вам с любыми вопросами по использованию приложения, заказам и оплате.
-            </Text>
-          </View>
-        </View>
-
-        {/* FAQ Section */}
-        <View style={styles.faqSection}>
-          <Text style={styles.faqTitle}>Часто задаваемые вопросы</Text>
-
-          <View style={styles.faqItem}>
-            <Text style={styles.faqQuestion}>Как оформить заказ?</Text>
-            <Text style={styles.faqAnswer}>
-              Выберите нужную услугу, заполните детали заказа и дождитесь откликов от исполнителей.
+              Oson Ish — современная платформа для поиска исполнителей и работы в Узбекистане.
+              Мы помогаем людям находить друг друга и создавать полезные связи.
             </Text>
           </View>
 
-          <View style={styles.faqItem}>
-            <Text style={styles.faqQuestion}>Как происходит оплата?</Text>
-            <Text style={styles.faqAnswer}>
-              Оплата происходит через безопасную систему после выполнения работы исполнителем.
+          <View style={styles.infoCard}>
+            <Text style={styles.infoTitle}>Часы работы поддержки</Text>
+            <Text style={styles.infoText}>
+              Понедельник - Воскресенье{'\n'}
+              09:00 - 20:00 (GMT+5)
             </Text>
           </View>
 
-          <View style={styles.faqItem}>
-            <Text style={styles.faqQuestion}>Что делать если возникли проблемы?</Text>
-            <Text style={styles.faqAnswer}>
-              Свяжитесь с нашей службой поддержки через Telegram или по телефону.
+          <View style={styles.infoCard}>
+            <Text style={styles.infoTitle}>Другие способы связи</Text>
+            <Text style={styles.infoText}>
+              Email: support@osonish.uz{'\n'}
+              Адрес: г. Ташкент, ул. Мустақиллик, 1
             </Text>
           </View>
         </View>
@@ -145,34 +125,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.lg,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backButtonText: {
-    fontSize: theme.typography.fontSize.xl,
-    color: theme.colors.text.primary,
-  },
-  headerTitle: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semiBold,
-    color: theme.colors.text.primary,
-  },
-  placeholder: {
-    width: 40,
   },
   content: {
     paddingBottom: theme.spacing.xl,
@@ -194,14 +146,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: theme.spacing.md,
   },
-  logoText: {
+  logoTextOld: {
     fontSize: 32,
     color: theme.colors.white,
   },
-  logoImage: {
+  logoPlaceholder: {
     width: 140,
     height: 140,
+    backgroundColor: '#E5E5E5',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: theme.spacing.md,
+  },
+  logoText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#888',
+    letterSpacing: 1,
   },
   logoTitle: {
     fontSize: theme.typography.fontSize.xl,
@@ -255,62 +217,33 @@ const styles = StyleSheet.create({
   supportDescription: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
   },
   supportContact: {
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.typography.fontSize.sm,
     fontWeight: theme.typography.fontWeight.medium,
     color: theme.colors.primary,
   },
-  infoSection: {
+  additionalInfo: {
     paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
   },
   infoCard: {
-    flexDirection: 'row',
-    backgroundColor: `${theme.colors.primary}08`,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: `${theme.colors.primary}20`,
-  },
-  infoIcon: {
-    fontSize: 16,
-    marginRight: theme.spacing.sm,
-    marginTop: 2,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    lineHeight: 20,
-  },
-  faqSection: {
-    paddingHorizontal: theme.spacing.lg,
-  },
-  faqTitle: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semiBold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
-  },
-  faqItem: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
-  faqQuestion: {
+  infoTitle: {
     fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontWeight: theme.typography.fontWeight.semiBold,
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
+    marginBottom: theme.spacing.sm,
   },
-  faqAnswer: {
+  infoText: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
-    lineHeight: 18,
+    lineHeight: 20,
   },
 }); 

@@ -1,8 +1,7 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, StatusBar, Image } from 'react-native';
+import { View, Text, StyleSheet, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
-// import OsonishLogo from '../../../assets/oson-ish-logo-white.svg';
 
 export function SplashScreen() {
   const navigation = useNavigation();
@@ -23,11 +22,9 @@ export function SplashScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
       <View style={styles.content}>
-        <Image
-          source={require('../../../assets/logo-osonish-vertical.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
+        <View style={styles.logoPlaceholder}>
+          <Text style={styles.logoText}>LOGO</Text>
+        </View>
       </View>
     </View>
   );
@@ -43,10 +40,20 @@ const styles = StyleSheet.create({
   content: {
     alignItems: 'center',
   },
-  logo: {
+  logoPlaceholder: {
     width: 340,
     height: 340,
+    backgroundColor: '#E5E5E5',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 24,
+  },
+  logoText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#888',
+    letterSpacing: 2,
   },
   title: {
     fontSize: theme.fonts.sizes.xxxl,

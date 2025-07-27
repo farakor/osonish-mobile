@@ -17,6 +17,7 @@ import { CustomerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import CalendarDateIcon from '../../../assets/calendar-date.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
+import { HeaderWithBack } from '../../components/common';
 
 type OrderDetailsRouteProp = RouteProp<CustomerStackParamList, 'OrderDetails'>;
 type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
@@ -232,14 +233,13 @@ export const OrderDetailsScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.backButton}>← Назад</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleDeleteOrder}>
-            <Text style={styles.deleteButton}>Удалить</Text>
-          </TouchableOpacity>
-        </View>
+        <HeaderWithBack
+          rightAction={{
+            text: 'Удалить',
+            color: theme.colors.error,
+            onPress: handleDeleteOrder,
+          }}
+        />
 
         {/* Order Title and Status */}
         <View style={styles.titleSection}>
@@ -378,30 +378,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.sm,
-  },
-  backButton: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.primary,
-    fontWeight: theme.typography.fontWeight.medium,
-  },
-  deleteButton: {
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.error,
-    fontWeight: theme.typography.fontWeight.medium,
-  },
   titleSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
+    paddingTop: theme.spacing.sm, // Добавляем небольшой отступ сверху
   },
   title: {
     flex: 1,

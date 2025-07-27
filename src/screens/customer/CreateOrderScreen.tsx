@@ -17,7 +17,7 @@ import CalendarDateIcon from '../../../assets/calendar-date.svg';
 import * as ImagePicker from 'expo-image-picker';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import ImageIcon from '../../../assets/image-03.svg';
-import { Header } from '../../components/common';
+
 
 // Отдельный компонент для превью видео
 const VideoPreview: React.FC<{ uri: string }> = ({ uri }) => {
@@ -204,7 +204,6 @@ export const CreateOrderScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Header />
       <SafeAreaView style={styles.content}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           {/* Header */}

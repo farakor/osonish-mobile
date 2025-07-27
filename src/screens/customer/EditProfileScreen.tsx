@@ -16,6 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
+import { HeaderWithBack } from '../../components/common';
 
 export const EditProfileScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -95,18 +96,10 @@ export const EditProfileScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
 
+      {/* Header */}
+      <HeaderWithBack title="Редактировать профиль" />
+
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backButtonText}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Редактировать профиль</Text>
-          <View style={styles.placeholder} />
-        </View>
 
         {/* Profile Photo Section */}
         <View style={styles.photoSection}>
@@ -257,34 +250,6 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.lg,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backButtonText: {
-    fontSize: theme.typography.fontSize.xl,
-    color: theme.colors.text.primary,
-  },
-  headerTitle: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semiBold,
-    color: theme.colors.text.primary,
-  },
-  placeholder: {
-    width: 40,
   },
   photoSection: {
     alignItems: 'center',

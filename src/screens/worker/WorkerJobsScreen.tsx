@@ -99,10 +99,10 @@ export const WorkerJobsScreen: React.FC = () => {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU', {
-      day: 'numeric',
-      month: 'short',
-    });
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}.${month}.${year}`;
   };
 
   const handleApplyToJob = (jobId: string) => {
@@ -123,19 +123,27 @@ export const WorkerJobsScreen: React.FC = () => {
         <Text style={styles.jobCategory}>{item.category}</Text>
       </View>
 
-      {/* Details in rows */}
-      <View style={styles.jobDetailsList}>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailIcon}>📍</Text>
-          <Text style={styles.detailText}>{item.location}</Text>
+      {/* Details in new layout */}
+      <View style={styles.jobDetailsLayout}>
+        <View style={styles.locationCard}>
+          <View style={styles.detailValue}>
+            <Text style={styles.detailIcon}>📍</Text>
+            <Text style={styles.detailText}>{item.location}</Text>
+          </View>
         </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailIcon}>📅</Text>
-          <Text style={styles.detailText}>до {formatDate(item.deadline)}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailIcon}>👤</Text>
-          <Text style={styles.detailText}>{item.customerName}</Text>
+        <View style={styles.bottomRow}>
+          <View style={styles.detailCard}>
+            <View style={styles.detailValue}>
+              <Text style={styles.detailIcon}>⏰</Text>
+              <Text style={styles.detailText}>{formatDate(item.deadline)}</Text>
+            </View>
+          </View>
+          <View style={styles.detailCard}>
+            <View style={styles.detailValue}>
+              <Text style={styles.detailIcon}>👤</Text>
+              <Text style={styles.detailText}>{item.customerName}</Text>
+            </View>
+          </View>
         </View>
       </View>
 
@@ -367,26 +375,41 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.sm,
     alignSelf: 'flex-start',
   },
-  jobDetailsList: {
+  jobDetailsLayout: {
     marginBottom: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
-  detailRow: {
+  locationCard: {
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border + '30',
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+  },
+  detailCard: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border + '30',
+  },
+  detailValue: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme.spacing.xs,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border + '20',
   },
   detailIcon: {
-    fontSize: 16,
-    marginRight: theme.spacing.sm,
-    width: 20,
-    textAlign: 'center',
+    fontSize: 14,
+    marginRight: theme.spacing.xs,
   },
   detailText: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.primary,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontWeight: theme.typography.fontWeight.semiBold,
     flex: 1,
   },
   jobFooter: {
@@ -404,7 +427,7 @@ const styles = StyleSheet.create({
   applyButton: {
     backgroundColor: theme.colors.primary,
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
   },
   applyButtonText: {

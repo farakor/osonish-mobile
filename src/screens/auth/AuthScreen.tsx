@@ -1,8 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar, SafeAreaView, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
-// import OsonishLogo from '../../../assets/oson-ish-logo.svg';
 
 export function AuthScreen() {
   const navigation = useNavigation();
@@ -14,11 +13,9 @@ export function AuthScreen() {
       <View style={styles.content}>
         {/* Logo Section */}
         <View style={styles.logoSection}>
-          <Image
-            source={require('../../../assets/logo-osonish-vertical.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
+          <View style={styles.logoPlaceholder}>
+            <Text style={styles.logoText}>LOGO</Text>
+          </View>
         </View>
 
         {/* Welcome Section */}
@@ -79,12 +76,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: theme.spacing.xxl,
   },
-  logo: {
+  logoPlaceholder: {
     width: 280,
     height: 280,
+    backgroundColor: '#E5E5E5',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 16,
   },
   logoText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#888',
+    letterSpacing: 2,
+  },
+  logoTextOld: {
     fontSize: theme.fonts.sizes.xxxl,
     fontWeight: theme.fonts.weights.bold,
     color: theme.colors.primary,
@@ -143,8 +150,8 @@ const styles = StyleSheet.create({
     color: theme.colors.background,
   },
   secondaryButtonText: {
-    fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.medium,
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
   },
   footer: {
