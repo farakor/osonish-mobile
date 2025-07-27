@@ -112,38 +112,48 @@ export const WorkerJobsScreen: React.FC = () => {
 
   const renderJobCard = ({ item }: { item: Job }) => (
     <View style={styles.jobCard}>
-      {item.isUrgent && (
-        <View style={styles.urgentBadge}>
-          <Text style={styles.urgentText}>🔥 СРОЧНО</Text>
-        </View>
-      )}
-
+      {/* Header with title and budget */}
       <View style={styles.jobHeader}>
-        <Text style={styles.jobTitle}>{item.title}</Text>
+        <View style={styles.jobTitleContainer}>
+          <Text style={styles.jobTitle}>{item.title}</Text>
+          {item.isUrgent && (
+            <View style={styles.urgentBadge}>
+              <Text style={styles.urgentText}>СРОЧНО</Text>
+            </View>
+          )}
+        </View>
         <Text style={styles.jobBudget}>{formatBudget(item.budget)}</Text>
       </View>
 
-      <Text style={styles.jobCategory}>{item.category}</Text>
-      <Text style={styles.jobDescription}>{item.description}</Text>
+      {/* Category */}
+      <View style={styles.categoryContainer}>
+        <Text style={styles.jobCategory}>{item.category}</Text>
+      </View>
 
-      <View style={styles.jobDetails}>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>📍 Местоположение:</Text>
-          <Text style={styles.detailValue}>{item.location}</Text>
+      {/* Details in grid */}
+      <View style={styles.jobDetailsGrid}>
+        <View style={styles.detailItem}>
+          <Text style={styles.detailIcon}>📍</Text>
+          <Text style={styles.detailText}>{item.location}</Text>
         </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>📅 Срок:</Text>
-          <Text style={styles.detailValue}>до {formatDate(item.deadline)}</Text>
+        <View style={styles.detailItem}>
+          <Text style={styles.detailIcon}>📅</Text>
+          <Text style={styles.detailText}>до {formatDate(item.deadline)}</Text>
         </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>👤 Заказчик:</Text>
-          <Text style={styles.detailValue}>{item.customerName} (⭐ {item.customerRating})</Text>
+        <View style={styles.detailItem}>
+          <Text style={styles.detailIcon}>👤</Text>
+          <Text style={styles.detailText}>{item.customerName}</Text>
+        </View>
+        <View style={styles.detailItem}>
+          <Text style={styles.detailIcon}>⭐</Text>
+          <Text style={styles.detailText}>{item.customerRating}</Text>
         </View>
       </View>
 
+      {/* Footer */}
       <View style={styles.jobFooter}>
         <Text style={styles.applicantsText}>
-          📝 {item.applicantsCount} заявок
+          {item.applicantsCount} заявок
         </Text>
         <TouchableOpacity
           style={styles.applyButton}
@@ -336,68 +346,78 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    position: 'relative',
-  },
-  urgentBadge: {
-    position: 'absolute',
-    top: theme.spacing.md,
-    right: theme.spacing.md,
-    backgroundColor: theme.colors.secondary,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.sm,
-  },
-  urgentText: {
-    fontSize: theme.typography.fontSize.xs,
-    color: theme.colors.white,
-    fontWeight: theme.typography.fontWeight.bold,
   },
   jobHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: theme.spacing.sm,
-    marginRight: 80, // Место для urgentBadge
+    marginBottom: theme.spacing.md,
+  },
+  jobTitleContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: theme.spacing.md,
   },
   jobTitle: {
     fontSize: theme.typography.fontSize.lg,
     fontWeight: theme.typography.fontWeight.semiBold,
     color: theme.colors.text.primary,
     flex: 1,
-    marginRight: theme.spacing.md,
+  },
+  urgentBadge: {
+    backgroundColor: theme.colors.secondary,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.sm,
+    marginLeft: theme.spacing.sm,
+  },
+  urgentText: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.white,
+    fontWeight: theme.typography.fontWeight.bold,
   },
   jobBudget: {
-    fontSize: theme.typography.fontSize.lg,
+    fontSize: theme.typography.fontSize.xl,
     fontWeight: theme.typography.fontWeight.bold,
     color: theme.colors.primary,
+  },
+  categoryContainer: {
+    marginBottom: theme.spacing.md,
   },
   jobCategory: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.secondary,
     fontWeight: theme.typography.fontWeight.medium,
-    marginBottom: theme.spacing.sm,
+    backgroundColor: `${theme.colors.secondary}15`,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.sm,
+    alignSelf: 'flex-start',
   },
-  jobDescription: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    lineHeight: 20,
-    marginBottom: theme.spacing.md,
-  },
-  jobDetails: {
-    marginBottom: theme.spacing.md,
-  },
-  detailRow: {
+  jobDetailsGrid: {
     flexDirection: 'row',
-    marginBottom: theme.spacing.xs,
+    flexWrap: 'wrap',
+    marginBottom: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
-  detailLabel: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    width: 120,
+  detailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.sm,
+    minWidth: '47%',
   },
-  detailValue: {
+  detailIcon: {
+    fontSize: 14,
+    marginRight: theme.spacing.xs,
+  },
+  detailText: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.primary,
+    fontWeight: theme.typography.fontWeight.medium,
     flex: 1,
   },
   jobFooter: {
