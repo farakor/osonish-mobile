@@ -123,23 +123,19 @@ export const WorkerJobsScreen: React.FC = () => {
         <Text style={styles.jobCategory}>{item.category}</Text>
       </View>
 
-      {/* Details in grid */}
-      <View style={styles.jobDetailsGrid}>
-        <View style={styles.detailItem}>
+      {/* Details in rows */}
+      <View style={styles.jobDetailsList}>
+        <View style={styles.detailRow}>
           <Text style={styles.detailIcon}>📍</Text>
           <Text style={styles.detailText}>{item.location}</Text>
         </View>
-        <View style={styles.detailItem}>
+        <View style={styles.detailRow}>
           <Text style={styles.detailIcon}>📅</Text>
           <Text style={styles.detailText}>до {formatDate(item.deadline)}</Text>
         </View>
-        <View style={styles.detailItem}>
+        <View style={styles.detailRow}>
           <Text style={styles.detailIcon}>👤</Text>
           <Text style={styles.detailText}>{item.customerName}</Text>
-        </View>
-        <View style={styles.detailItem}>
-          <Text style={styles.detailIcon}>⭐</Text>
-          <Text style={styles.detailText}>{item.customerRating}</Text>
         </View>
       </View>
 
@@ -371,26 +367,21 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.sm,
     alignSelf: 'flex-start',
   },
-  jobDetailsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  jobDetailsList: {
     marginBottom: theme.spacing.md,
-    gap: theme.spacing.sm,
   },
-  detailItem: {
+  detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.background,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.sm,
-    minWidth: '47%',
-    minHeight: 40,
-    justifyContent: 'flex-start',
+    paddingVertical: theme.spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border + '20',
   },
   detailIcon: {
-    fontSize: 14,
-    marginRight: theme.spacing.xs,
+    fontSize: 16,
+    marginRight: theme.spacing.sm,
+    width: 20,
+    textAlign: 'center',
   },
   detailText: {
     fontSize: theme.typography.fontSize.sm,
