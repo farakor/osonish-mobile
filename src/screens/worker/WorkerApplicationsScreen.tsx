@@ -218,20 +218,7 @@ export const WorkerApplicationsScreen: React.FC = () => {
             </View>
           </View>
         </View>
-        <View style={styles.bottomRow}>
-          <View style={styles.detailCard}>
-            <View style={styles.detailValue}>
-              <Text style={styles.detailIcon}>⭐</Text>
-              <Text style={styles.detailText}>{item.customerRating}</Text>
-            </View>
-          </View>
-          <View style={styles.detailCard}>
-            <View style={styles.detailValue}>
-              <Text style={styles.detailIcon}>🕐</Text>
-              <Text style={styles.detailText}>{formatDate(item.appliedAt)}</Text>
-            </View>
-          </View>
-        </View>
+
       </View>
 
 
@@ -466,6 +453,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: theme.spacing.sm,
   },
+
   detailCard: {
     flex: 1,
     backgroundColor: theme.colors.background,
