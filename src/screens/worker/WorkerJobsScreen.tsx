@@ -114,14 +114,7 @@ export const WorkerJobsScreen: React.FC = () => {
     <View style={styles.jobCard}>
       {/* Header with title and budget */}
       <View style={styles.jobHeader}>
-        <View style={styles.jobTitleContainer}>
-          <Text style={styles.jobTitle}>{item.title}</Text>
-          {item.isUrgent && (
-            <View style={styles.urgentBadge}>
-              <Text style={styles.urgentText}>СРОЧНО</Text>
-            </View>
-          )}
-        </View>
+        <Text style={styles.jobTitle}>{item.title}</Text>
         <Text style={styles.jobBudget}>{formatBudget(item.budget)}</Text>
       </View>
 
@@ -353,29 +346,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: theme.spacing.md,
   },
-  jobTitleContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: theme.spacing.md,
-  },
   jobTitle: {
     fontSize: theme.typography.fontSize.lg,
     fontWeight: theme.typography.fontWeight.semiBold,
     color: theme.colors.text.primary,
     flex: 1,
-  },
-  urgentBadge: {
-    backgroundColor: theme.colors.secondary,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.sm,
-    marginLeft: theme.spacing.sm,
-  },
-  urgentText: {
-    fontSize: theme.typography.fontSize.xs,
-    color: theme.colors.white,
-    fontWeight: theme.typography.fontWeight.bold,
+    marginRight: theme.spacing.md,
   },
   jobBudget: {
     fontSize: theme.typography.fontSize.xl,
@@ -406,9 +382,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: theme.colors.background,
     paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
+    paddingVertical: theme.spacing.sm,
     borderRadius: theme.borderRadius.sm,
     minWidth: '47%',
+    minHeight: 40,
+    justifyContent: 'flex-start',
   },
   detailIcon: {
     fontSize: 14,
