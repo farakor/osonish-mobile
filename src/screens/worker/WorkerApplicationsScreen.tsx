@@ -142,12 +142,10 @@ export const WorkerApplicationsScreen: React.FC = () => {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU', {
-      day: 'numeric',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}.${month}.${year}`;
   };
 
   const handleApplicationAction = (applicationId: string, action: string) => {
@@ -182,45 +180,61 @@ export const WorkerApplicationsScreen: React.FC = () => {
 
   const renderApplicationCard = ({ item }: { item: Application }) => (
     <View style={styles.applicationCard}>
+      {/* Header with title, budget and status */}
       <View style={styles.applicationHeader}>
         <View style={styles.applicationInfo}>
           <Text style={styles.jobTitle}>{item.jobTitle}</Text>
-          <Text style={styles.jobCategory}>{item.jobCategory}</Text>
+          <Text style={styles.jobBudget}>{formatBudget(item.budget)}</Text>
         </View>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
           <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
         </View>
       </View>
 
-      <View style={styles.applicationDetails}>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>👤 Заказчик:</Text>
-          <Text style={styles.detailValue}>
-            {item.customerName} (⭐ {item.customerRating})
-          </Text>
+      {/* Category */}
+      <View style={styles.categoryContainer}>
+        <Text style={styles.jobCategory}>{item.jobCategory}</Text>
+      </View>
+
+      {/* Details in new layout */}
+      <View style={styles.applicationDetailsLayout}>
+        <View style={styles.locationCard}>
+          <View style={styles.detailValue}>
+            <Text style={styles.detailIcon}>📍</Text>
+            <Text style={styles.detailText}>{item.location}</Text>
+          </View>
         </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>💰 Бюджет:</Text>
-          <Text style={styles.detailValue}>{formatBudget(item.budget)}</Text>
+        <View style={styles.topRow}>
+          <View style={styles.detailCard}>
+            <View style={styles.detailValue}>
+              <Text style={styles.detailIcon}>📅</Text>
+              <Text style={styles.detailText}>{formatDate(item.deadline)}</Text>
+            </View>
+          </View>
+          <View style={styles.detailCard}>
+            <View style={styles.detailValue}>
+              <Text style={styles.detailIcon}>👤</Text>
+              <Text style={styles.detailText}>{item.customerName}</Text>
+            </View>
+          </View>
         </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>📍 Место:</Text>
-          <Text style={styles.detailValue}>{item.location}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>📅 Срок:</Text>
-          <Text style={styles.detailValue}>{formatDate(item.deadline)}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>🕐 Подано:</Text>
-          <Text style={styles.detailValue}>{formatDate(item.appliedAt)}</Text>
+        <View style={styles.bottomRow}>
+          <View style={styles.detailCard}>
+            <View style={styles.detailValue}>
+              <Text style={styles.detailIcon}>⭐</Text>
+              <Text style={styles.detailText}>{item.customerRating}</Text>
+            </View>
+          </View>
+          <View style={styles.detailCard}>
+            <View style={styles.detailValue}>
+              <Text style={styles.detailIcon}>🕐</Text>
+              <Text style={styles.detailText}>{formatDate(item.appliedAt)}</Text>
+            </View>
+          </View>
         </View>
       </View>
 
-      <View style={styles.messageContainer}>
-        <Text style={styles.messageLabel}>Ваше сообщение:</Text>
-        <Text style={styles.messageText}>{item.message}</Text>
-      </View>
+
 
       <View style={styles.applicationActions}>
         {item.status === 'pending' && (
@@ -232,21 +246,12 @@ export const WorkerApplicationsScreen: React.FC = () => {
           </TouchableOpacity>
         )}
 
-        {item.status === 'accepted' && (
+        {(item.status === 'accepted' || item.status === 'completed') && (
           <TouchableOpacity
             style={styles.contactButton}
             onPress={() => handleApplicationAction(item.id, 'contact')}
           >
             <Text style={styles.contactButtonText}>Связаться с заказчиком</Text>
-          </TouchableOpacity>
-        )}
-
-        {item.status === 'accepted' && (
-          <TouchableOpacity
-            style={styles.completeButton}
-            onPress={() => handleApplicationAction(item.id, 'complete')}
-          >
-            <Text style={styles.completeButtonText}>Отметить выполненным</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -434,42 +439,56 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
     fontWeight: theme.typography.fontWeight.bold,
   },
-  applicationDetails: {
+  jobBudget: {
+    fontSize: theme.typography.fontSize.xl,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.primary,
+  },
+  categoryContainer: {
     marginBottom: theme.spacing.md,
   },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: theme.spacing.xs,
+  applicationDetailsLayout: {
+    marginBottom: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
-  detailLabel: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
+  locationCard: {
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border + '30',
+  },
+  topRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+  },
+  detailCard: {
     flex: 1,
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border + '30',
   },
   detailValue: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  detailIcon: {
+    fontSize: 14,
+    marginRight: theme.spacing.xs,
+  },
+  detailText: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.primary,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontWeight: theme.typography.fontWeight.semiBold,
     flex: 1,
-    textAlign: 'right',
   },
-  messageContainer: {
-    backgroundColor: `${theme.colors.primary}08`,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.md,
-  },
-  messageLabel: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.xs,
-  },
-  messageText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.primary,
-    lineHeight: 18,
-  },
+
   applicationActions: {
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
@@ -477,7 +496,7 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     backgroundColor: '#FF3B30',
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
     alignItems: 'center',
   },
@@ -488,22 +507,11 @@ const styles = StyleSheet.create({
   },
   contactButton: {
     backgroundColor: theme.colors.primary,
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
     alignItems: 'center',
   },
   contactButtonText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.white,
-    fontWeight: theme.typography.fontWeight.semiBold,
-  },
-  completeButton: {
-    backgroundColor: '#34C759',
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
-  },
-  completeButtonText: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.white,
     fontWeight: theme.typography.fontWeight.semiBold,
