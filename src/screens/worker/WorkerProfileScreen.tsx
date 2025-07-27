@@ -14,7 +14,6 @@ import { StatsWidget, StatItem } from '../../components/common';
 import UserEditIcon from '../../../assets/user-edit.svg';
 import NotificationMessageIcon from '../../../assets/notification-message.svg';
 import LifeBuoyIcon from '../../../assets/life-buoy-02.svg';
-import FilePlusIcon from '../../../assets/file-plus-03.svg';
 
 
 interface ProfileOption {
@@ -54,19 +53,15 @@ export const WorkerProfileScreen: React.FC = () => {
   ];
 
   const handleEditProfile = () => {
-    Alert.alert('Редактирование профиля', 'Функция будет добавлена в следующем обновлении');
+    navigation.navigate('EditProfile' as never);
   };
 
   const handleNotifications = () => {
-    Alert.alert('Уведомления', 'Функция будет добавлена в следующем обновлении');
+    navigation.navigate('Notifications' as never);
   };
 
   const handleSupport = () => {
-    Alert.alert('Поддержка', 'Функция будет добавлена в следующем обновлении');
-  };
-
-  const handleMyCategories = () => {
-    navigation.navigate('Categories' as never);
+    navigation.navigate('Support' as never);
   };
 
   const handleLogout = () => {
@@ -87,9 +82,8 @@ export const WorkerProfileScreen: React.FC = () => {
 
   const profileOptions: ProfileOption[] = [
     { id: '1', title: 'Редактировать профиль', icon: <UserEditIcon width={20} height={20} />, action: handleEditProfile },
-    { id: '2', title: 'Мои категории', icon: <FilePlusIcon width={20} height={20} />, action: handleMyCategories },
-    { id: '3', title: 'Уведомления', icon: <NotificationMessageIcon width={20} height={20} />, action: handleNotifications },
-    { id: '4', title: 'Поддержка', icon: <LifeBuoyIcon width={20} height={20} />, action: handleSupport },
+    { id: '2', title: 'Уведомления', icon: <NotificationMessageIcon width={20} height={20} />, action: handleNotifications },
+    { id: '3', title: 'Поддержка', icon: <LifeBuoyIcon width={20} height={20} />, action: handleSupport },
   ];
 
   return (

@@ -34,7 +34,6 @@ export type CustomerTabParamList = {
 
 export type WorkerTabParamList = {
   Jobs: undefined;
-  Categories: undefined;
   Applications: undefined;
   Profile: undefined;
 };

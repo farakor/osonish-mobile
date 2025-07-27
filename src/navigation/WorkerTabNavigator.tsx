@@ -4,13 +4,11 @@ import { theme } from '../constants';
 import type { WorkerTabParamList } from '../types';
 import {
   WorkerJobsScreen,
-  WorkerCategoriesScreen,
   WorkerApplicationsScreen,
   WorkerProfileScreen,
 } from '../screens/worker';
 import HomeIcon from '../../assets/home-02.svg';
 import FileIcon from '../../assets/file-02.svg';
-import FilePlusIcon from '../../assets/file-plus-03.svg';
 import ProfileIcon from '../../assets/user-01.svg';
 
 const Tab = createBottomTabNavigator<WorkerTabParamList>();

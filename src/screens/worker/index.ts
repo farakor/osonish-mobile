@@ -1,4 +1,6 @@
 export { WorkerJobsScreen } from './WorkerJobsScreen';
-export { WorkerCategoriesScreen } from './WorkerCategoriesScreen';
 export { WorkerApplicationsScreen } from './WorkerApplicationsScreen';
-export { WorkerProfileScreen } from './WorkerProfileScreen'; 
+export { WorkerProfileScreen } from './WorkerProfileScreen';
+export { EditProfileScreen } from './EditProfileScreen';
+export { NotificationsScreen } from './NotificationsScreen';
+export { SupportScreen } from './SupportScreen'; 

@@ -7,7 +7,7 @@ import { RootStackParamList } from '../types';
 import { SplashScreen } from '../screens/shared/SplashScreen';
 import { AuthScreen, RegistrationScreen, SmsVerificationScreen, ProfileInfoScreen, RoleSelectionScreen } from '../screens/auth';
 import { CustomerStackNavigator } from './CustomerStackNavigator';
-import { WorkerTabNavigator } from './WorkerTabNavigator';
+import { WorkerStackNavigator } from './WorkerStackNavigator';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -50,7 +50,7 @@ export function AppNavigator() {
         />
         <Stack.Screen
           name="WorkerTabs"
-          component={WorkerTabNavigator}
+          component={WorkerStackNavigator}
         />
       </Stack.Navigator>
     </NavigationContainer>
