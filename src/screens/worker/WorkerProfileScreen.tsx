@@ -17,23 +17,23 @@ export const WorkerProfileScreen: React.FC = () => {
   const statsData: StatItem[] = [
     {
       id: 'orders',
-      icon: '✅',
+      icon: '',
       value: '23',
-      label: 'Выполнено заказов',
+      label: 'Заказов',
       color: theme.colors.primary,
     },
     {
       id: 'rating',
-      icon: '⭐',
+      icon: '',
       value: '4.9',
       label: 'Рейтинг',
       color: theme.colors.primary,
     },
     {
       id: 'experience',
-      icon: '🕐',
-      value: '8',
-      label: 'мес на Oson Ish',
+      icon: '',
+      value: '8 мес',
+      label: 'На Oson Ish',
       color: theme.colors.primary,
     },
   ];
@@ -59,7 +59,35 @@ export const WorkerProfileScreen: React.FC = () => {
     );
   };
 
-
+  const MenuItem = ({
+    icon,
+    title,
+    subtitle,
+    onPress,
+    rightIcon = '›',
+    showBorder = true
+  }: {
+    icon: string;
+    title: string;
+    subtitle?: string;
+    onPress: () => void;
+    rightIcon?: string;
+    showBorder?: boolean;
+  }) => (
+    <TouchableOpacity
+      style={[styles.menuItem, !showBorder && styles.menuItemNoBorder]}
+      onPress={onPress}
+    >
+      <View style={styles.menuItemLeft}>
+        <Text style={styles.menuIcon}>{icon}</Text>
+        <View style={styles.menuItemContent}>
+          <Text style={styles.menuItemTitle}>{title}</Text>
+          {subtitle && <Text style={styles.menuItemSubtitle}>{subtitle}</Text>}
+        </View>
+      </View>
+      <Text style={styles.menuItemArrow}>{rightIcon}</Text>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
@@ -78,59 +106,114 @@ export const WorkerProfileScreen: React.FC = () => {
           <StatsWidget
             stats={statsData}
             variant="cards"
-            style={{ marginBottom: theme.spacing.xl }}
+            style={{ marginBottom: theme.spacing.lg }}
           />
 
-          {/* Profile Options */}
-          <View style={styles.profileOptions}>
-            <TouchableOpacity
-              style={styles.optionItem}
-              onPress={handleEditProfile}
-              activeOpacity={0.7}
-            >
-              <View style={styles.optionLeft}>
-                <Text style={styles.optionIcon}>✏️</Text>
-                <Text style={styles.optionTitle}>Редактировать профиль</Text>
-              </View>
-              <Text style={styles.optionArrow}>›</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.optionItem}
-              onPress={() => handleNavigation('Уведомления')}
-              activeOpacity={0.7}
-            >
-              <View style={styles.optionLeft}>
-                <Text style={styles.optionIcon}>🔔</Text>
-                <Text style={styles.optionTitle}>Уведомления</Text>
-              </View>
-              <Text style={styles.optionArrow}>›</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.optionItem}
-              onPress={() => handleNavigation('Поддержка')}
-              activeOpacity={0.7}
-            >
-              <View style={styles.optionLeft}>
-                <Text style={styles.optionIcon}>❓</Text>
-                <Text style={styles.optionTitle}>Поддержка</Text>
-              </View>
-              <Text style={styles.optionArrow}>›</Text>
-            </TouchableOpacity>
+          {/* Quick Actions */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Быстрые действия</Text>
+            <View style={styles.menuContainer}>
+              <MenuItem
+                icon="✏️"
+                title="Редактировать профиль"
+                subtitle="Фото, контакты, описание"
+                onPress={handleEditProfile}
+              />
+              <MenuItem
+                icon="⭐"
+                title="Мои отзывы"
+                subtitle="23 отзыва от заказчиков"
+                onPress={() => handleNavigation('Отзывы')}
+              />
+              <MenuItem
+                icon="📊"
+                title="Статистика заработка"
+                subtitle="Доходы за месяц"
+                onPress={() => handleNavigation('Статистика')}
+                showBorder={false}
+              />
+            </View>
           </View>
 
-          {/* Logout Button */}
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Text style={styles.logoutText}>Выйти из аккаунта</Text>
-          </TouchableOpacity>
+          {/* Settings */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Настройки</Text>
+            <View style={styles.menuContainer}>
+              <MenuItem
+                icon="🔔"
+                title="Уведомления"
+                subtitle="Новые заказы, сообщения"
+                onPress={() => handleNavigation('Уведомления')}
+              />
+              <MenuItem
+                icon="💳"
+                title="Способы получения оплаты"
+                subtitle="Карты, кошельки"
+                onPress={() => handleNavigation('Оплата')}
+              />
+              <MenuItem
+                icon="📍"
+                title="Радиус работы"
+                subtitle="Где вы готовы работать"
+                onPress={() => handleNavigation('Радиус работы')}
+              />
+              <MenuItem
+                icon="🏷️"
+                title="Мои тарифы"
+                subtitle="Цены на услуги"
+                onPress={() => handleNavigation('Тарифы')}
+                showBorder={false}
+              />
+            </View>
+          </View>
 
-          {/* App Info */}
-          <View style={styles.appInfo}>
-            <Text style={styles.appVersion}>Osonish v1.0.0</Text>
-            <Text style={styles.appDescription}>
-              Marketplace для поиска исполнителей в Узбекистане
-            </Text>
+          {/* Support & Info */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Поддержка</Text>
+            <View style={styles.menuContainer}>
+              <MenuItem
+                icon="❓"
+                title="Помощь"
+                subtitle="Часто задаваемые вопросы"
+                onPress={() => handleNavigation('Помощь')}
+              />
+              <MenuItem
+                icon="💬"
+                title="Связаться с поддержкой"
+                subtitle="Чат с операторами"
+                onPress={() => handleNavigation('Поддержка')}
+              />
+              <MenuItem
+                icon="📋"
+                title="Условия использования"
+                onPress={() => handleNavigation('Условия')}
+              />
+              <MenuItem
+                icon="🔒"
+                title="Политика конфиденциальности"
+                onPress={() => handleNavigation('Конфиденциальность')}
+                showBorder={false}
+              />
+            </View>
+          </View>
+
+          {/* App Info & Logout */}
+          <View style={styles.section}>
+            <View style={styles.menuContainer}>
+              <MenuItem
+                icon="📱"
+                title="Версия приложения"
+                onPress={() => { }}
+                rightIcon="v1.0.0"
+              />
+              <MenuItem
+                icon="🚪"
+                title="Выйти из аккаунта"
+                onPress={handleLogout}
+                rightIcon=""
+                showBorder={false}
+              />
+            </View>
           </View>
 
           {/* Bottom Spacing */}
@@ -218,69 +301,70 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 16,
   },
-
-  bottomSpacing: {
-    height: theme.spacing.xl,
+  section: {
+    marginBottom: theme.spacing.lg,
   },
-  profileOptions: {
+  sectionTitle: {
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semiBold,
+    color: theme.colors.text.primary,
     paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.md,
   },
-  optionItem: {
+  menuContainer: {
+    backgroundColor: theme.colors.surface,
+    marginHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: theme.colors.surface,
-    paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    marginBottom: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    paddingHorizontal: theme.spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
   },
-  optionLeft: {
+  menuItemNoBorder: {
+    borderBottomWidth: 0,
+  },
+  menuItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
-  optionIcon: {
+  menuIcon: {
     fontSize: 20,
     marginRight: theme.spacing.md,
+    width: 24,
+    textAlign: 'center',
   },
-  optionTitle: {
+  menuItemContent: {
+    flex: 1,
+  },
+  menuItemTitle: {
     fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeight.medium,
+    color: theme.colors.text.primary,
+    marginBottom: 2,
   },
-  optionArrow: {
-    fontSize: 18,
-    color: theme.colors.text.secondary,
-  },
-  logoutButton: {
-    backgroundColor: theme.colors.error,
-    marginHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
-    marginBottom: theme.spacing.xl,
-  },
-  logoutText: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semiBold,
-    color: theme.colors.white,
-  },
-  appInfo: {
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
-  },
-  appVersion: {
+  menuItemSubtitle: {
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.xs,
   },
-  appDescription: {
-    fontSize: theme.typography.fontSize.xs,
+  menuItemArrow: {
+    fontSize: 18,
     color: theme.colors.text.secondary,
-    textAlign: 'center',
+    marginLeft: theme.spacing.sm,
+  },
+  bottomSpacing: {
+    height: theme.spacing.xl,
   },
 }); 

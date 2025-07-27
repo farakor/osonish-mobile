@@ -10,10 +10,11 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
+import { StatsWidget, StatItem } from '../../components/common';
 import UserEditIcon from '../../../assets/user-edit.svg';
 import NotificationMessageIcon from '../../../assets/notification-message.svg';
 import LifeBuoyIcon from '../../../assets/life-buoy-02.svg';
-import { Header } from '../../components/common';
+
 
 interface ProfileOption {
   id: string;
@@ -24,6 +25,31 @@ interface ProfileOption {
 
 export const CustomerProfileScreen: React.FC = () => {
   const navigation = useNavigation();
+
+  const statsData: StatItem[] = [
+    {
+      id: 'orders',
+      icon: '',
+      value: '12',
+      label: 'Заказов',
+      color: theme.colors.primary,
+      onPress: () => navigation.navigate('MyOrders' as never),
+    },
+    {
+      id: 'rating',
+      icon: '',
+      value: '4.8',
+      label: 'Рейтинг',
+      color: theme.colors.primary,
+    },
+    {
+      id: 'months',
+      icon: '',
+      value: '6 мес',
+      label: 'На Oson Ish',
+      color: theme.colors.primary,
+    },
+  ];
 
   const handleEditProfile = () => {
     navigation.navigate('EditProfile' as never);
@@ -61,7 +87,6 @@ export const CustomerProfileScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Header />
       <SafeAreaView style={styles.content}>
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Content Header */}
@@ -79,23 +104,12 @@ export const CustomerProfileScreen: React.FC = () => {
             <Text style={styles.userRole}>Заказчик</Text>
           </View>
 
-          {/* Stats */}
-          <View style={styles.stats}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>12</Text>
-              <Text style={styles.statLabel}>Заказов</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>4.8</Text>
-              <Text style={styles.statLabel}>Рейтинг</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>6</Text>
-              <Text style={styles.statLabel}>мес на Oson Ish</Text>
-            </View>
-          </View>
+          {/* Enhanced Stats Widget */}
+          <StatsWidget
+            stats={statsData}
+            variant="cards"
+            style={{ marginBottom: theme.spacing.xl }}
+          />
 
           {/* Profile Options */}
           <View style={styles.profileOptions}>
