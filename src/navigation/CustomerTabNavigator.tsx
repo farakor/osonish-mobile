@@ -65,7 +65,7 @@ export function CustomerTabNavigator() {
         name="CreateOrder"
         component={CreateOrderScreen}
         options={{
-          tabBarLabel: 'Создать заказ',
+          tabBarLabel: 'Создать',
           tabBarIcon: ({ color, size, focused }) => (
             <CreateOrderIcon
               width={25}

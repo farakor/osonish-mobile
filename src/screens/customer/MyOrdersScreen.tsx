@@ -108,35 +108,48 @@ export const MyOrdersScreen: React.FC = () => {
       activeOpacity={0.8}
       onPress={() => navigation.navigate('OrderDetails', { orderId: item.id })}
     >
+      {/* Header with title and budget */}
       <View style={styles.orderHeader}>
         <Text style={styles.orderTitle}>{item.title}</Text>
+        <Text style={styles.orderBudget}>{item.budget} сум</Text>
+      </View>
+
+      {/* Category */}
+      <View style={styles.categoryContainer}>
+        <Text style={styles.orderCategory}>{item.category}</Text>
+      </View>
+
+      {/* Details in new layout */}
+      <View style={styles.orderDetailsLayout}>
+        <View style={styles.locationCard}>
+          <View style={styles.detailValue}>
+            <Text style={styles.detailIcon}>📍</Text>
+            <Text style={styles.detailText}>{item.location}</Text>
+          </View>
+        </View>
+        <View style={styles.bottomRow}>
+          <View style={styles.detailCard}>
+            <View style={styles.detailValue}>
+              <Text style={styles.detailIcon}>📅</Text>
+              <Text style={styles.detailText}>{item.serviceDate}</Text>
+            </View>
+          </View>
+          <View style={styles.detailCard}>
+            <View style={styles.detailValue}>
+              <Text style={styles.detailIcon}>📝</Text>
+              <Text style={styles.detailText}>{item.applicantsCount} заявок</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* Footer */}
+      <View style={styles.orderFooter}>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
           <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
         </View>
+        <Text style={styles.orderTime}>Создан {item.createdAt}</Text>
       </View>
-
-      <Text style={styles.orderCategory}>{item.category}</Text>
-
-      <View style={styles.orderDetails}>
-        <View style={styles.orderDetail}>
-          <Text style={styles.orderDetailLabel}>📍 Местоположение:</Text>
-          <Text style={styles.orderDetailValue}>{item.location}</Text>
-        </View>
-        <View style={styles.orderDetail}>
-          <Text style={styles.orderDetailLabel}>💰 Бюджет:</Text>
-          <Text style={styles.orderDetailValue}>{item.budget} сум</Text>
-        </View>
-        <View style={styles.orderDetail}>
-          <Text style={styles.orderDetailLabel}>📝 Откликов:</Text>
-          <Text style={styles.orderDetailValue}>{item.applicantsCount}</Text>
-        </View>
-        <View style={styles.orderDetail}>
-          <Text style={styles.orderDetailLabel}>📅 Дата:</Text>
-          <Text style={styles.orderDetailValue}>{item.serviceDate}</Text>
-        </View>
-      </View>
-
-      <Text style={styles.orderTime}>Создан {item.createdAt}</Text>
     </TouchableOpacity>
   );
 
@@ -281,6 +294,61 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     marginRight: theme.spacing.sm,
   },
+  orderBudget: {
+    fontSize: theme.typography.fontSize.xl,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.primary,
+  },
+  categoryContainer: {
+    marginBottom: theme.spacing.md,
+  },
+  orderCategory: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.secondary,
+    fontWeight: theme.typography.fontWeight.medium,
+    backgroundColor: `${theme.colors.secondary}15`,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.sm,
+    alignSelf: 'flex-start',
+  },
+  orderDetailsLayout: {
+    marginBottom: theme.spacing.md,
+    gap: theme.spacing.sm,
+  },
+  locationCard: {
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border + '30',
+  },
+  detailValue: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  detailIcon: {
+    fontSize: theme.typography.fontSize.sm,
+    marginRight: theme.spacing.xs,
+  },
+  detailText: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.primary,
+    fontWeight: theme.typography.fontWeight.semiBold,
+    flex: 1,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+  },
+  detailCard: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border + '30',
+  },
   statusBadge: {
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
@@ -291,33 +359,18 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
     fontWeight: theme.typography.fontWeight.medium,
   },
-  orderCategory: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.md,
-  },
-  orderDetails: {
-    marginBottom: theme.spacing.sm,
-  },
-  orderDetail: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.xs,
-  },
-  orderDetailLabel: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-  },
-  orderDetailValue: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.primary,
-    fontWeight: theme.typography.fontWeight.medium,
-  },
   orderTime: {
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.text.secondary,
     fontStyle: 'italic',
+  },
+  orderFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    paddingTop: theme.spacing.md,
   },
   emptyState: {
     flex: 1,
