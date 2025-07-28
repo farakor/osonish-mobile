@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,70 +7,51 @@ import {
   ScrollView,
   TouchableOpacity,
   FlatList,
+  RefreshControl,
 } from 'react-native';
 import { theme } from '../../constants';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { orderService } from '../../services/orderService';
+import { Order } from '../../types';
 
 
 type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
 
-interface Order {
-  id: string;
-  title: string;
-  category: string;
-  budget: string;
-  status: 'active' | 'completed';
-  createdAt: string;
-  applicantsCount: number;
-  description: string;
-  location: string;
-  serviceDate: string;
-}
-
-const mockOrders: Order[] = [
-  {
-    id: '1',
-    title: 'Уборка 2-комнатной квартиры',
-    category: 'Уборка дома',
-    budget: '150,000',
-    status: 'active',
-    createdAt: '2 часа назад',
-    applicantsCount: 5,
-    description: 'Нужна генеральная уборка квартиры. Включая мытье окон.',
-    location: 'Ташкент, Юнусабад',
-    serviceDate: '2024-01-20',
-  },
-  {
-    id: '2',
-    title: 'Ремонт стиральной машины',
-    category: 'Ремонт техники',
-    budget: '200,000',
-    status: 'active',
-    createdAt: '1 день назад',
-    applicantsCount: 3,
-    description: 'Стиральная машина Samsung не включается.',
-    location: 'Ташкент, Мирзо-Улугбек',
-    serviceDate: '2024-01-18',
-  },
-  {
-    id: '3',
-    title: 'Доставка мебели',
-    category: 'Доставка',
-    budget: '100,000',
-    status: 'completed',
-    createdAt: '3 дня назад',
-    applicantsCount: 8,
-    description: 'Необходимо доставить диван и кресло на 5 этаж.',
-    location: 'Ташкент, Чиланзар',
-    serviceDate: '2024-01-15',
-  },
-];
-
 export const MyOrdersScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed'>('all');
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Функция для загрузки всех заказов пользователя
+  const loadOrders = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const orders = await orderService.getUserOrders();
+      setAllOrders(orders);
+    } catch (error) {
+      console.error('Ошибка загрузки заказов:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Функция для обновления списка (pull-to-refresh)
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadOrders();
+    setRefreshing(false);
+  }, [loadOrders]);
+
+  // Загружаем заказы при первом открытии и при фокусе на экране
+  useFocusEffect(
+    useCallback(() => {
+      loadOrders();
+    }, [loadOrders])
+  );
 
   const getStatusColor = (status: Order['status']) => {
     switch (status) {
@@ -94,9 +75,39 @@ export const MyOrdersScreen: React.FC = () => {
     }
   };
 
+  // Утилитарные функции для форматирования данных
+  const formatBudget = (budget: number) => {
+    return budget.toLocaleString('ru-RU');
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const formatCreatedAt = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / 60000);
+
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} мин назад`;
+    } else if (diffInMinutes < 1440) {
+      const hours = Math.floor(diffInMinutes / 60);
+      return `${hours} ч назад`;
+    } else {
+      const days = Math.floor(diffInMinutes / 1440);
+      return `${days} дн назад`;
+    }
+  };
+
+  // Фильтрация заказов по активной вкладке
   const filteredOrders = activeTab === 'all'
-    ? mockOrders
-    : mockOrders.filter(order =>
+    ? allOrders
+    : allOrders.filter((order: Order) =>
       activeTab === 'active'
         ? order.status === 'active'
         : order.status === 'completed'
@@ -111,7 +122,7 @@ export const MyOrdersScreen: React.FC = () => {
       {/* Header with title and budget */}
       <View style={styles.orderHeader}>
         <Text style={styles.orderTitle}>{item.title}</Text>
-        <Text style={styles.orderBudget}>{item.budget} сум</Text>
+        <Text style={styles.orderBudget}>{formatBudget(item.budget)} сум</Text>
       </View>
 
       {/* Category */}
@@ -131,7 +142,7 @@ export const MyOrdersScreen: React.FC = () => {
           <View style={styles.detailCard}>
             <View style={styles.detailValue}>
               <Text style={styles.detailIcon}>📅</Text>
-              <Text style={styles.detailText}>{item.serviceDate}</Text>
+              <Text style={styles.detailText}>{formatDate(item.serviceDate)}</Text>
             </View>
           </View>
           <View style={styles.detailCard}>
@@ -148,7 +159,7 @@ export const MyOrdersScreen: React.FC = () => {
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
           <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
         </View>
-        <Text style={styles.orderTime}>Создан {item.createdAt}</Text>
+        <Text style={styles.orderTime}>Создан {formatCreatedAt(item.createdAt)}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -191,20 +202,44 @@ export const MyOrdersScreen: React.FC = () => {
         </View>
 
         {/* Orders List */}
-        {filteredOrders.length > 0 ? (
+        {isLoading && allOrders.length === 0 ? (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Загружаем ваши заказы...</Text>
+          </View>
+        ) : filteredOrders.length > 0 ? (
           <FlatList
             data={filteredOrders}
             renderItem={renderOrder}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.ordersList}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[theme.colors.primary]}
+                tintColor={theme.colors.primary}
+              />
+            }
           />
         ) : (
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateIcon}>📋</Text>
-            <Text style={styles.emptyStateTitle}>Заказов пока нет</Text>
+            <Text style={styles.emptyStateTitle}>
+              {activeTab === 'all'
+                ? 'Заказов пока нет'
+                : activeTab === 'active'
+                  ? 'Нет активных заказов'
+                  : 'Нет завершенных заказов'
+              }
+            </Text>
             <Text style={styles.emptyStateText}>
-              Создайте свой первый заказ, чтобы найти исполнителя
+              {activeTab === 'all'
+                ? 'Создайте свой первый заказ, чтобы найти исполнителя'
+                : activeTab === 'active'
+                  ? 'Все ваши заказы завершены или отменены'
+                  : 'У вас пока нет завершенных заказов'
+              }
             </Text>
           </View>
         )}
@@ -393,5 +428,16 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 22,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
+  },
+  loadingText: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
   },
 }); 
