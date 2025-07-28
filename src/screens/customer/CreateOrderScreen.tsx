@@ -17,6 +17,9 @@ import CalendarDateIcon from '../../../assets/calendar-date.svg';
 import * as ImagePicker from 'expo-image-picker';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import ImageIcon from '../../../assets/image-03.svg';
+import { orderService } from '../../services/orderService';
+import { CreateOrderRequest } from '../../types';
+import { useNavigation } from '@react-navigation/native';
 
 
 // Отдельный компонент для превью видео
@@ -44,6 +47,8 @@ export const CreateOrderScreen: React.FC = () => {
   const [mediaFiles, setMediaFiles] = useState<Array<{ uri: string; type: 'image' | 'video'; name: string; size: number }>>([]);
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [location, setLocation] = useState('');
+
+  const navigation = useNavigation();
 
   // УДАЛЕНО: // Создаём массив videoPlayers для всех mediaFiles (только для видео)
   // const videoPlayers = mediaFiles.map(file =>
@@ -184,18 +189,50 @@ export const CreateOrderScreen: React.FC = () => {
 
     setIsLoading(true);
     try {
-      // TODO: API запрос для создания заказа
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      Alert.alert('Успешно', 'Заказ создан! Исполнители скоро увидят его.');
-      // Очистка формы
-      setTitle('');
-      setDescription('');
-      setCategory('');
-      setBudget('');
-      setWorkersCount('1');
-      setSelectedDate(null);
-      setLocation('');
+      // Подготавливаем данные для создания заказа
+      const orderData: CreateOrderRequest = {
+        title: title.trim(),
+        description: description.trim(),
+        category,
+        location: location.trim(),
+        budget: parseFloat(budget.replace(/[^\d]/g, '')), // убираем форматирование и преобразуем в число
+        workersNeeded: parseInt(workersCount),
+        serviceDate: selectedDate!.toISOString(),
+        photos: mediaFiles.filter(file => file.type === 'image').map(file => file.uri),
+      };
+
+      // Создаем заказ
+      const response = await orderService.createOrder(orderData);
+
+      if (response.success) {
+        Alert.alert(
+          'Успешно!',
+          'Заказ создан! Исполнители скоро увидят его.',
+          [
+            {
+              text: 'ОК',
+              onPress: () => {
+                // Очистка формы
+                setTitle('');
+                setDescription('');
+                setCategory('');
+                setBudget('');
+                setWorkersCount('1');
+                setSelectedDate(null);
+                setLocation('');
+                setMediaFiles([]);
+
+                // Возвращаемся на главный экран
+                navigation.goBack();
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Ошибка', response.error || 'Не удалось создать заказ. Попробуйте еще раз.');
+      }
     } catch (error) {
+      console.error('Ошибка создания заказа:', error);
       Alert.alert('Ошибка', 'Не удалось создать заказ. Попробуйте еще раз.');
     } finally {
       setIsLoading(false);

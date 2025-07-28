@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import CalendarDateIcon from '../../../assets/calendar-date.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { HeaderWithBack } from '../../components/common';
+import { orderService } from '../../services/orderService';
+import { Order } from '../../types';
 
 type OrderDetailsRouteProp = RouteProp<CustomerStackParamList, 'OrderDetails'>;
 type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
@@ -29,20 +31,7 @@ interface MediaFile {
   size: number;
 }
 
-interface OrderData {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  budget: string;
-  workersCount: number;
-  date: string;
-  location: string;
-  status: 'active' | 'completed';
-  createdAt: string;
-  applicantsCount: number;
-  mediaFiles: MediaFile[];
-}
+// Используем Order из типов вместо OrderData
 
 interface Applicant {
   id: string;
@@ -67,34 +56,7 @@ const VideoPreview: React.FC<{ uri: string }> = ({ uri }) => {
   );
 };
 
-// Моковые данные заказа
-const mockOrder: OrderData = {
-  id: '1',
-  title: 'Уборка 2-комнатной квартиры',
-  description: 'Нужно сделать генеральную уборку двухкомнатной квартиры. Помыть полы, окна, пропылесосить ковры, убрать кухню и ванную комнату.',
-  category: 'Уборка',
-  budget: '150 000',
-  workersCount: 2,
-  date: '2024-01-15',
-  location: 'Ташкент, Юнусабад',
-  status: 'active',
-  createdAt: '2 часа назад',
-  applicantsCount: 5,
-  mediaFiles: [
-    {
-      uri: 'https://example.com/image1.jpg',
-      type: 'image',
-      name: 'room1.jpg',
-      size: 1024
-    },
-    {
-      uri: 'https://example.com/image2.jpg',
-      type: 'image',
-      name: 'room2.jpg',
-      size: 2048
-    }
-  ]
-};
+// Удаляем mockOrder - теперь загружаем реальные данные
 
 // Моковые данные откликов
 const mockApplicants: Applicant[] = [
@@ -146,10 +108,29 @@ export const OrderDetailsScreen: React.FC = () => {
   const { orderId } = route.params;
 
   const [showApplicants, setShowApplicants] = useState(false);
-  const [order] = useState<OrderData>(mockOrder);
+  const [order, setOrder] = useState<Order | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [applicants] = useState<Applicant[]>(mockApplicants);
 
-  const getStatusColor = (status: OrderData['status']) => {
+  // Загружаем заказ по ID
+  useEffect(() => {
+    const loadOrder = async () => {
+      try {
+        setIsLoading(true);
+        const orderData = await orderService.getOrderById(orderId);
+        setOrder(orderData);
+      } catch (error) {
+        console.error('Ошибка загрузки заказа:', error);
+        Alert.alert('Ошибка', 'Не удалось загрузить данные заказа');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadOrder();
+  }, [orderId]);
+
+  const getStatusColor = (status: Order['status']) => {
     switch (status) {
       case 'active':
         return theme.colors.primary;
@@ -160,7 +141,7 @@ export const OrderDetailsScreen: React.FC = () => {
     }
   };
 
-  const getStatusText = (status: OrderData['status']) => {
+  const getStatusText = (status: Order['status']) => {
     switch (status) {
       case 'active':
         return 'Активный';
@@ -229,6 +210,56 @@ export const OrderDetailsScreen: React.FC = () => {
     </View>
   );
 
+  // Утилитарные функции для форматирования
+  const formatBudget = (budget: number) => {
+    return budget.toLocaleString('ru-RU');
+  };
+
+  const formatCreatedAt = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / 60000);
+
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} мин назад`;
+    } else if (diffInMinutes < 1440) {
+      const hours = Math.floor(diffInMinutes / 60);
+      return `${hours} ч назад`;
+    } else {
+      const days = Math.floor(diffInMinutes / 1440);
+      return `${days} дн назад`;
+    }
+  };
+
+  // Состояния загрузки и ошибок
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <HeaderWithBack />
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Загружаем данные заказа...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!order) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <HeaderWithBack />
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Заказ не найден</Text>
+          <TouchableOpacity
+            style={styles.errorButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.errorButtonText}>Назад</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -260,19 +291,19 @@ export const OrderDetailsScreen: React.FC = () => {
 
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Бюджет:</Text>
-            <Text style={styles.infoValue}>{order.budget} сум</Text>
+            <Text style={styles.infoValue}>{formatBudget(order.budget)} сум</Text>
           </View>
 
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Работников:</Text>
-            <Text style={styles.infoValue}>{order.workersCount}</Text>
+            <Text style={styles.infoValue}>{order.workersNeeded}</Text>
           </View>
 
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Дата:</Text>
             <View style={styles.dateValue}>
               <CalendarDateIcon width={16} height={16} stroke={theme.colors.text.primary} />
-              <Text style={styles.infoValue}>{formatDate(order.date)}</Text>
+              <Text style={styles.infoValue}>{formatDate(order.serviceDate)}</Text>
             </View>
           </View>
 
@@ -283,7 +314,7 @@ export const OrderDetailsScreen: React.FC = () => {
 
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Создан:</Text>
-            <Text style={styles.infoValue}>{order.createdAt}</Text>
+            <Text style={styles.infoValue}>{formatCreatedAt(order.createdAt)}</Text>
           </View>
         </View>
 
@@ -293,18 +324,14 @@ export const OrderDetailsScreen: React.FC = () => {
           <Text style={styles.description}>{order.description}</Text>
         </View>
 
-        {/* Media Files */}
-        {order.mediaFiles.length > 0 && (
+        {/* Photos */}
+        {order.photos && order.photos.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Фото и видео</Text>
+            <Text style={styles.sectionTitle}>Фотографии</Text>
             <View style={styles.mediaGrid}>
-              {order.mediaFiles.map((file, index) => (
+              {order.photos.map((photoUri: string, index: number) => (
                 <View key={index} style={styles.mediaItem}>
-                  {file.type === 'image' ? (
-                    <Image source={{ uri: file.uri }} style={styles.mediaImage} resizeMode="cover" />
-                  ) : (
-                    <VideoPreview uri={file.uri} />
-                  )}
+                  <Image source={{ uri: photoUri }} style={styles.mediaImage} resizeMode="cover" />
                 </View>
               ))}
             </View>
@@ -598,6 +625,40 @@ const styles = StyleSheet.create({
   rejectButtonText: {
     color: theme.colors.text.primary,
     fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.medium,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
+  },
+  loadingText: {
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
+  },
+  errorText: {
+    fontSize: theme.typography.fontSize.lg,
+    color: theme.colors.text.primary,
+    textAlign: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  errorButton: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+  },
+  errorButtonText: {
+    color: theme.colors.white,
+    fontSize: theme.typography.fontSize.md,
     fontWeight: theme.typography.fontWeight.medium,
   },
 }); 
