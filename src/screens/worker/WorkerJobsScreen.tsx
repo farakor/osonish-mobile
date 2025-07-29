@@ -112,6 +112,7 @@ const WorkerJobsScreen: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>('Все');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [supabaseConnected, setSupabaseConnected] = useState(false);
 
   // Функция загрузки заказов
   const loadOrders = async (isRefresh = false) => {
@@ -138,7 +139,31 @@ const WorkerJobsScreen: React.FC = () => {
   // Загружаем заказы при первом открытии экрана
   useEffect(() => {
     loadOrders();
+
+    // Проверяем статус подключения к Supabase
+    const isSupabaseEnabled = orderService.getSupabaseStatus();
+    setSupabaseConnected(isSupabaseEnabled);
+    console.log('[WorkerJobsScreen] Supabase статус:', isSupabaseEnabled);
   }, []);
+
+  // Подписка на real-time обновления заказов
+  useEffect(() => {
+    let unsubscribe: (() => void) | null = null;
+
+    if (supabaseConnected) {
+      console.log('[WorkerJobsScreen] Настраиваем real-time обновления');
+      unsubscribe = orderService.subscribeToOrderUpdates((updatedOrders) => {
+        console.log('[WorkerJobsScreen] Получены обновленные заказы:', updatedOrders.length);
+        setOrders(updatedOrders);
+      });
+    }
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [supabaseConnected]);
 
   // Обновляем заказы при возвращении на экран
   useFocusEffect(
@@ -246,6 +271,12 @@ const WorkerJobsScreen: React.FC = () => {
           <Text style={styles.subtitle}>
             {orders.length > 0 ? `Найдено ${orders.length} заказов` : 'Новых заказов пока нет'}
           </Text>
+          {supabaseConnected && (
+            <View style={styles.onlineIndicator}>
+              <View style={styles.onlineDot} />
+              <Text style={styles.onlineText}>Синхронизация включена</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.searchContainer}>
@@ -530,6 +561,28 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 24,
+  },
+  onlineIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    backgroundColor: '#E8F5E8',
+    borderRadius: theme.borderRadius.sm,
+  },
+  onlineDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4CAF50',
+    marginRight: theme.spacing.sm,
+  },
+  onlineText: {
+    fontSize: theme.fonts.sizes.sm,
+    color: '#2E7D32',
+    fontWeight: '500',
   },
 });
 

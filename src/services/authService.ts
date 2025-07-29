@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, AuthState, LoginRequest, VerifyCodeRequest, RegisterRequest, AuthResponse } from '../types';
 import { smsService } from './smsService';
+import { supabase } from './supabaseClient';
 
 // Константы для хранения данных
 const STORAGE_KEYS = {
@@ -41,8 +42,42 @@ class AuthService {
           user: this.users.get(currentUserId) || null
         };
       }
+
+      // Синхронизируем существующих пользователей с Supabase
+      await this.syncUsersToSupabase();
     } catch (error) {
       console.error('Ошибка инициализации AuthService:', error);
+    }
+  }
+
+  /**
+   * Синхронизация локальных пользователей с Supabase
+   */
+  private async syncUsersToSupabase(): Promise<void> {
+    try {
+      if (!supabase || this.users.size === 0) {
+        return;
+      }
+
+      console.log('[AuthService] Синхронизируем существующих пользователей с Supabase...');
+
+      for (const [phone, user] of this.users) {
+        // Проверяем, существует ли пользователь в Supabase
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', user.id)
+          .single();
+
+        if (!existingUser) {
+          // Создаем пользователя в Supabase если его там нет
+          await this.createUserInSupabase(user);
+        }
+      }
+
+      console.log('[AuthService] ✅ Синхронизация пользователей завершена');
+    } catch (error) {
+      console.error('[AuthService] Ошибка синхронизации пользователей:', error);
     }
   }
 
@@ -232,9 +267,12 @@ class AuthService {
         updatedAt: new Date().toISOString()
       };
 
-      // Сохраняем пользователя
+      // Сохраняем пользователя локально
       this.users.set(formattedPhone, newUser);
       await this.saveUsers();
+
+      // Сохраняем пользователя в Supabase (если доступен)
+      await this.createUserInSupabase(newUser);
 
       // Авторизуем пользователя
       this.authState = {
@@ -251,6 +289,41 @@ class AuthService {
     } catch (error) {
       console.error('Ошибка завершения регистрации:', error);
       return { success: false, error: 'Произошла ошибка при регистрации' };
+    }
+  }
+
+  /**
+   * Создание пользователя в Supabase
+   */
+  private async createUserInSupabase(user: User): Promise<void> {
+    try {
+      if (!supabase) {
+        console.log('[AuthService] Supabase недоступен, пользователь сохранен только локально');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('users')
+        .insert({
+          id: user.id,
+          phone: user.phone,
+          first_name: user.firstName,
+          last_name: user.lastName,
+          middle_name: user.middleName,
+          birth_date: user.birthDate,
+          role: user.role,
+          profile_image: user.profileImage,
+          created_at: user.createdAt,
+          updated_at: user.updatedAt,
+        });
+
+      if (error) {
+        console.error('[AuthService] Ошибка создания пользователя в Supabase:', error);
+      } else {
+        console.log('[AuthService] ✅ Пользователь создан в Supabase:', user.firstName, user.lastName);
+      }
+    } catch (error) {
+      console.error('[AuthService] Исключение при создании пользователя в Supabase:', error);
     }
   }
 
@@ -307,6 +380,21 @@ class AuthService {
   // Очистка всех данных (для тестирования)
   async clearAllData(): Promise<void> {
     try {
+      // Очищаем пользователей в Supabase
+      if (supabase) {
+        try {
+          const { error } = await supabase.from('users').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          if (error) {
+            console.error('[AuthService] Ошибка очистки пользователей в Supabase:', error);
+          } else {
+            console.log('[AuthService] ✅ Пользователи очищены в Supabase');
+          }
+        } catch (error) {
+          console.error('[AuthService] Исключение при очистке Supabase:', error);
+        }
+      }
+
+      // Очищаем локальные данные
       this.users.clear();
       this.authState = {
         isAuthenticated: false,
@@ -318,6 +406,8 @@ class AuthService {
         STORAGE_KEYS.USERS,
         STORAGE_KEYS.CURRENT_USER_ID
       ]);
+
+      console.log('[AuthService] ✅ Локальные данные пользователей очищены');
     } catch (error) {
       console.error('Ошибка очистки данных:', error);
     }
