@@ -11,6 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
 import { StatsWidget, StatItem } from '../../components/common';
+import { authService } from '../../services/authService';
 import UserEditIcon from '../../../assets/user-edit.svg';
 import NotificationMessageIcon from '../../../assets/notification-message.svg';
 import LifeBuoyIcon from '../../../assets/life-buoy-02.svg';
@@ -64,16 +65,25 @@ export const WorkerProfileScreen: React.FC = () => {
     navigation.navigate('Support' as never);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     Alert.alert(
       'Выход',
       'Вы действительно хотите выйти из аккаунта?',
       [
         { text: 'Отмена', style: 'cancel' },
         {
-          text: 'Выйти', style: 'destructive', onPress: () => {
-            console.log('Logout');
-            // TODO: Навигация к экрану аутентификации
+          text: 'Выйти',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await authService.logout();
+              console.log('Logout successful');
+              // Переходим к экрану авторизации
+              navigation.navigate('Auth' as never);
+            } catch (error) {
+              console.error('Ошибка выхода:', error);
+              Alert.alert('Ошибка', 'Не удалось выйти из аккаунта');
+            }
           }
         },
       ]
@@ -160,55 +170,63 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    backgroundColor: theme.colors.background,
   },
   contentHeader: {
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl,
-    paddingBottom: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
+    backgroundColor: theme.colors.background,
   },
   title: {
-    fontSize: theme.typography.fontSize.xxl,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontSize: theme.fonts.sizes.xxl,
+    fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
   },
   profileInfo: {
     alignItems: 'center',
+    paddingVertical: theme.spacing.xl,
     paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
+    backgroundColor: theme.colors.surface,
+    marginHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
+    marginBottom: theme.spacing.lg,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   avatar: {
     width: 80,
     height: 80,
     borderRadius: 40,
     backgroundColor: theme.colors.primary,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: theme.spacing.md,
   },
   avatarText: {
-    fontSize: 24,
-    fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.white,
+    fontSize: theme.fonts.sizes.xl,
+    fontWeight: theme.fonts.weights.bold,
+    color: theme.colors.background,
   },
   userName: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   userPhone: {
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing.xs,
   },
   userRole: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.primary,
-    backgroundColor: `${theme.colors.primary}20`,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.sm,
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.secondary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   profileOptions: {
     paddingHorizontal: theme.spacing.lg,
@@ -219,9 +237,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: theme.colors.surface,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
     marginBottom: theme.spacing.sm,
     borderWidth: 1,
     borderColor: theme.colors.border,
@@ -229,32 +246,38 @@ const styles = StyleSheet.create({
   optionLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   optionIcon: {
-    fontSize: 20,
     marginRight: theme.spacing.md,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   optionTitle: {
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontWeight: theme.fonts.weights.medium,
   },
   optionArrow: {
-    fontSize: 18,
+    fontSize: theme.fonts.sizes.lg,
     color: theme.colors.text.secondary,
   },
   logoutButton: {
-    backgroundColor: theme.colors.error,
-    marginHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#FF6B6B',
     borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
+    paddingVertical: theme.spacing.md,
+    marginHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.xl,
+    alignItems: 'center',
   },
   logoutText: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semiBold,
-    color: theme.colors.white,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: '#FF6B6B',
   },
   appInfo: {
     alignItems: 'center',
@@ -262,12 +285,12 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.xl,
   },
   appVersion: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing.xs,
   },
   appDescription: {
-    fontSize: theme.typography.fontSize.xs,
+    fontSize: theme.fonts.sizes.xs,
     color: theme.colors.text.secondary,
     textAlign: 'center',
   },

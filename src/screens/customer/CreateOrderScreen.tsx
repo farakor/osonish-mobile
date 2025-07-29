@@ -472,13 +472,13 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   title: {
-    fontSize: theme.typography.fontSize.xxl,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontSize: theme.fonts.sizes.xxl,
+    fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   subtitle: {
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
   },
   form: {
@@ -489,8 +489,8 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   label: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
   },
@@ -501,7 +501,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.md,
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
   },
   textArea: {
@@ -528,7 +528,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
   },
   categoryChipText: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.primary,
   },
   categoryChipTextSelected: {
@@ -554,11 +554,11 @@ const styles = StyleSheet.create({
   },
   workersCountButtonText: {
     color: theme.colors.white,
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.bold,
   },
   workersCountInput: {
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
     minWidth: 100,
     textAlign: 'center',
@@ -573,7 +573,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dateButtonText: {
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
   },
   dateButtonPlaceholder: {
@@ -592,11 +592,11 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     color: theme.colors.white,
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
   },
   note: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
     textAlign: 'center',
     fontStyle: 'italic',
@@ -627,8 +627,8 @@ const styles = StyleSheet.create({
   },
   doneButtonText: {
     color: theme.colors.white,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.semiBold,
   },
   scrollContent: {
     paddingBottom: 120, // чтобы не перекрывать полями кнопку
@@ -653,7 +653,7 @@ const styles = StyleSheet.create({
   },
   required: {
     color: theme.colors.error,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontWeight: theme.fonts.weights.bold,
   },
   mediaList: {
     flexDirection: 'row',

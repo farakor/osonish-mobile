@@ -141,13 +141,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   summaryTitle: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   summaryDescription: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
   },
   mainToggle: {
@@ -186,13 +186,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   notificationTitle: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.medium,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   notificationDescription: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
     lineHeight: 18,
   },
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     flex: 1,
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
     lineHeight: 20,
   },
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: theme.colors.white,
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
   },
 }); 

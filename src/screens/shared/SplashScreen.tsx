@@ -1,30 +1,59 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, StatusBar } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
+import { authService } from '../../services/authService';
+import type { RootStackParamList } from '../../types';
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export function SplashScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
 
   useEffect(() => {
-    // Здесь будем инициализировать приложение
-    // Проверять аутентификацию, загружать данные и т.д.
+    const checkAuthAndNavigate = async () => {
+      try {
+        // Небольшая задержка для показа splash экрана
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
-    // Через 2 секунды переходим к экрану аутентификации
-    const timer = setTimeout(() => {
-      navigation.navigate('Auth' as never);
-    }, 2000);
+        // Проверяем состояние авторизации
+        const authState = authService.getAuthState();
 
-    return () => clearTimeout(timer);
+        if (authState.isAuthenticated && authState.user) {
+          // Пользователь авторизован - переходим в основное приложение
+          if (authState.user.role === 'customer') {
+            navigation.navigate('CustomerTabs');
+          } else {
+            navigation.navigate('WorkerTabs');
+          }
+        } else {
+          // Пользователь не авторизован - переходим к экрану авторизации
+          navigation.navigate('Auth');
+        }
+      } catch (error) {
+        console.error('Ошибка проверки авторизации:', error);
+        // В случае ошибки переходим к экрану авторизации
+        navigation.navigate('Auth');
+      }
+    };
+
+    checkAuthAndNavigate();
   }, [navigation]);
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
-      <View style={styles.content}>
+      {/* Logo Section */}
+      <View style={styles.logoSection}>
         <View style={styles.logoPlaceholder}>
-          <Text style={styles.logoText}>LOGO</Text>
+          <Text style={styles.logoText}>OSONISH</Text>
         </View>
+        <Text style={styles.tagline}>Платформа для поиска работы и исполнителей</Text>
+      </View>
+
+      {/* Loading indicator */}
+      <View style={styles.loadingSection}>
+        <Text style={styles.loadingText}>Загрузка...</Text>
       </View>
     </View>
   );
@@ -33,37 +62,48 @@ export function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
   },
-  content: {
+  logoSection: {
     alignItems: 'center',
+    marginBottom: theme.spacing.xxxl,
   },
   logoPlaceholder: {
-    width: 340,
-    height: 340,
-    backgroundColor: '#E5E5E5',
-    borderRadius: 12,
+    width: 120,
+    height: 120,
+    backgroundColor: theme.colors.background,
+    borderRadius: 60,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: theme.spacing.lg,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 8,
   },
   logoText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#888',
+    fontSize: theme.fonts.sizes.xl,
+    fontWeight: theme.fonts.weights.bold,
+    color: theme.colors.primary,
     letterSpacing: 2,
   },
-  title: {
-    fontSize: theme.fonts.sizes.xxxl,
-    fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.background,
-    marginBottom: theme.spacing.sm,
-  },
-  subtitle: {
+  tagline: {
     fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.regular,
+    color: theme.colors.background,
+    textAlign: 'center',
+    fontWeight: theme.fonts.weights.medium,
+    opacity: 0.9,
+  },
+  loadingSection: {
+    position: 'absolute',
+    bottom: theme.spacing.xxxl,
+  },
+  loadingText: {
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.background,
     opacity: 0.8,
   },

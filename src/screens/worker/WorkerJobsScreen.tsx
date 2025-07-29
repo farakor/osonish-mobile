@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,90 +8,27 @@ import {
   TouchableOpacity,
   TextInput,
   FlatList,
+  Alert,
+  RefreshControl,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../constants/theme';
+import { orderService } from '../../services/orderService';
+import { authService } from '../../services/authService';
+import { Order } from '../../types';
 
+// Отдельный компонент для карточки заказа
+const JobCard: React.FC<{
+  item: Order;
+  onApply: (orderId: string) => void;
+}> = ({ item, onApply }) => {
+  const [customerName, setCustomerName] = useState('Заказчик');
 
-type Job = {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  budget: number;
-  deadline: string;
-  location: string;
-  customerName: string;
-  customerRating: number;
-  applicantsCount: number;
-  createdAt: string;
-  isUrgent?: boolean;
-};
-
-const mockJobs: Job[] = [
-  {
-    id: '1',
-    title: 'Уборка 3-комнатной квартиры',
-    description: 'Нужна генеральная уборка квартиры 85 кв.м. Включая мытье окон, уборка всех комнат, кухни и ванной.',
-    category: 'Уборка',
-    budget: 150000,
-    deadline: '2024-01-20',
-    location: 'Ташкент, Юнусабад',
-    customerName: 'Азиза К.',
-    customerRating: 4.8,
-    applicantsCount: 3,
-    createdAt: '2024-01-15',
-    isUrgent: true,
-  },
-  {
-    id: '2',
-    title: 'Ремонт стиральной машины',
-    description: 'Стиральная машина Samsung не включается. Нужна диагностика и ремонт.',
-    category: 'Ремонт техники',
-    budget: 200000,
-    deadline: '2024-01-18',
-    location: 'Ташкент, Мирзо-Улугбек',
-    customerName: 'Фарход Н.',
-    customerRating: 4.9,
-    applicantsCount: 7,
-    createdAt: '2024-01-14',
-  },
-  {
-    id: '3',
-    title: 'Доставка мебели',
-    description: 'Доставить диван из магазина до дома (3-й этаж). Помочь занести в квартиру.',
-    category: 'Переезд',
-    budget: 100000,
-    deadline: '2024-01-16',
-    location: 'Ташкент, Сергели',
-    customerName: 'Мадина С.',
-    customerRating: 4.7,
-    applicantsCount: 12,
-    createdAt: '2024-01-13',
-  },
-];
-
-export const WorkerJobsScreen: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>('Все');
-
-  // Красивые категории с эмодзи и счетчиками
-  const categories = [
-    { label: 'Все', emoji: '📋', count: mockJobs.length },
-    { label: 'Стройка', emoji: '🏗️', count: mockJobs.filter(job => job.category === 'Стройка').length },
-    { label: 'Уборка', emoji: '🧹', count: mockJobs.filter(job => job.category === 'Уборка').length },
-    { label: 'Сад', emoji: '🌳', count: mockJobs.filter(job => job.category === 'Сад').length },
-    { label: 'Общепит', emoji: '🍽️', count: mockJobs.filter(job => job.category === 'Общепит').length },
-    { label: 'Переезд', emoji: '🚚', count: mockJobs.filter(job => job.category === 'Переезд').length },
-    { label: 'Ремонт техники', emoji: '🔧', count: mockJobs.filter(job => job.category === 'Ремонт техники').length },
-    { label: 'Прочее', emoji: '✨', count: mockJobs.filter(job => job.category === 'Прочее').length },
-  ];
-
-  const filteredJobs = mockJobs.filter(job => {
-    const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = !selectedCategory || selectedCategory === 'Все' || job.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const getCustomerName = async (customerId: string) => {
+    const users = authService.getAllUsers();
+    const customer = users.find(user => user.id === customerId);
+    return customer ? `${customer.firstName} ${customer.lastName.charAt(0)}.` : 'Заказчик';
+  };
 
   const formatBudget = (amount: number) => {
     return `${amount.toLocaleString()} сум`;
@@ -105,12 +42,12 @@ export const WorkerJobsScreen: React.FC = () => {
     return `${day}.${month}.${year}`;
   };
 
-  const handleApplyToJob = (jobId: string) => {
-    console.log('Applying to job:', jobId);
-    // TODO: Implement job application logic
-  };
+  // Загружаем имя заказчика
+  useEffect(() => {
+    getCustomerName(item.customerId).then(setCustomerName);
+  }, [item.customerId]);
 
-  const renderJobCard = ({ item }: { item: Job }) => (
+  return (
     <View style={styles.jobCard}>
       {/* Header with title and budget */}
       <View style={styles.jobHeader}>
@@ -122,6 +59,11 @@ export const WorkerJobsScreen: React.FC = () => {
       <View style={styles.categoryContainer}>
         <Text style={styles.jobCategory}>{item.category}</Text>
       </View>
+
+      {/* Description */}
+      <Text style={styles.jobDescription} numberOfLines={2}>
+        {item.description}
+      </Text>
 
       {/* Details in new layout */}
       <View style={styles.jobDetailsLayout}>
@@ -135,13 +77,13 @@ export const WorkerJobsScreen: React.FC = () => {
           <View style={styles.detailCard}>
             <View style={styles.detailValue}>
               <Text style={styles.detailIcon}>⏰</Text>
-              <Text style={styles.detailText}>{formatDate(item.deadline)}</Text>
+              <Text style={styles.detailText}>{formatDate(item.serviceDate)}</Text>
             </View>
           </View>
           <View style={styles.detailCard}>
             <View style={styles.detailValue}>
               <Text style={styles.detailIcon}>👤</Text>
-              <Text style={styles.detailText}>{item.customerName}</Text>
+              <Text style={styles.detailText}>{customerName}</Text>
             </View>
           </View>
         </View>
@@ -154,20 +96,156 @@ export const WorkerJobsScreen: React.FC = () => {
         </Text>
         <TouchableOpacity
           style={styles.applyButton}
-          onPress={() => handleApplyToJob(item.id)}
+          onPress={() => onApply(item.id)}
         >
           <Text style={styles.applyButtonText}>Откликнуться</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
+};
+
+const WorkerJobsScreen: React.FC = () => {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>('Все');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Функция загрузки заказов
+  const loadOrders = async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+
+      const availableOrders = await orderService.getAvailableOrders();
+      console.log(`[WorkerJobsScreen] Загружено ${availableOrders.length} доступных заказов`);
+
+      setOrders(availableOrders);
+    } catch (error) {
+      console.error('Ошибка загрузки заказов:', error);
+      Alert.alert('Ошибка', 'Не удалось загрузить заказы');
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  // Загружаем заказы при первом открытии экрана
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  // Обновляем заказы при возвращении на экран
+  useFocusEffect(
+    React.useCallback(() => {
+      loadOrders();
+    }, [])
+  );
+
+  // Фильтрация заказов
+  useEffect(() => {
+    let filtered = orders.filter(order => {
+      const matchesSearch = order.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        order.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = !selectedCategory || selectedCategory === 'Все' || order.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+
+    setFilteredOrders(filtered);
+  }, [orders, searchQuery, selectedCategory]);
+
+  // Получение категорий с счетчиками
+  const getCategories = () => {
+    const allCategories = [...new Set(orders.map(order => order.category))];
+    const categories = [
+      { label: 'Все', emoji: '📋', count: orders.length },
+      ...allCategories.map(category => ({
+        label: category,
+        emoji: getCategoryEmoji(category),
+        count: orders.filter(order => order.category === category).length
+      }))
+    ];
+    return categories;
+  };
+
+  const getCategoryEmoji = (category: string) => {
+    const emojiMap: { [key: string]: string } = {
+      'Стройка': '🏗️',
+      'Уборка': '🧹',
+      'Сад': '🌳',
+      'Общепит': '🍽️',
+      'Переезд': '🚚',
+      'Ремонт техники': '🔧',
+      'Доставка': '🚴',
+      'Красота': '💄',
+      'Обучение': '📚',
+      'Прочее': '✨'
+    };
+    return emojiMap[category] || '✨';
+  };
+
+  const handleApplyToJob = async (orderId: string) => {
+    try {
+      const authState = authService.getAuthState();
+      if (!authState.isAuthenticated || !authState.user) {
+        Alert.alert('Ошибка', 'Необходимо войти в систему');
+        return;
+      }
+
+      // Увеличиваем счетчик откликов
+      const success = await orderService.incrementOrderApplicants(orderId);
+
+      if (success) {
+        Alert.alert(
+          'Успешно!',
+          'Ваш отклик отправлен заказчику. Ожидайте ответа.',
+          [
+            {
+              text: 'ОК',
+              onPress: () => loadOrders(true) // Обновляем список
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Ошибка', 'Не удалось отправить отклик');
+      }
+    } catch (error) {
+      console.error('Ошибка отклика на заказ:', error);
+      Alert.alert('Ошибка', 'Произошла ошибка при отправке отклика');
+    }
+  };
+
+  const renderJobCard = ({ item }: { item: Order }) => {
+    return <JobCard item={item} onApply={handleApplyToJob} />;
+  };
+
+  const categories = getCategories();
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <SafeAreaView style={styles.content}>
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Загружаем заказы...</Text>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.content}>
         <View style={styles.contentHeader}>
           <Text style={styles.title}>Доступные заказы</Text>
-          <Text style={styles.subtitle}>Найдите подходящую работу</Text>
+          <Text style={styles.subtitle}>
+            {orders.length > 0 ? `Найдено ${orders.length} заказов` : 'Новых заказов пока нет'}
+          </Text>
         </View>
 
         <View style={styles.searchContainer}>
@@ -216,12 +294,30 @@ export const WorkerJobsScreen: React.FC = () => {
         </View>
 
         <FlatList
-          data={filteredJobs}
+          data={filteredOrders}
           renderItem={renderJobCard}
           keyExtractor={(item) => item.id}
           style={styles.jobsList}
           contentContainerStyle={styles.jobsListContent}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={() => loadOrders(true)}
+              colors={[theme.colors.primary]}
+            />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateIcon}>📋</Text>
+              <Text style={styles.emptyStateTitle}>Нет заказов</Text>
+              <Text style={styles.emptyStateText}>
+                {searchQuery || selectedCategory !== 'Все'
+                  ? 'По вашему запросу заказы не найдены'
+                  : 'Пока нет доступных заказов.\nПотяните вниз, чтобы обновить.'}
+              </Text>
+            </View>
+          }
         />
       </SafeAreaView>
     </View>
@@ -235,7 +331,15 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.text.secondary,
   },
   contentHeader: {
     paddingHorizontal: theme.spacing.lg,
@@ -243,13 +347,13 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.md,
   },
   title: {
-    fontSize: theme.typography.fontSize.xl,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontSize: theme.fonts.sizes.xxl,
+    fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   subtitle: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
   },
   searchContainer: {
@@ -258,86 +362,69 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: 12,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
   categoriesSection: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
   },
   categoriesContainer: {
-    paddingHorizontal: theme.spacing.lg,
+    paddingLeft: theme.spacing.lg,
   },
   categoriesContent: {
     paddingRight: theme.spacing.lg,
   },
   categoryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: theme.colors.surface,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: 20,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    marginRight: theme.spacing.sm,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    marginRight: theme.spacing.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 110,
-    minHeight: 95,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
   },
   categoryChipActive: {
     backgroundColor: theme.colors.primary,
     borderColor: theme.colors.primary,
-    shadowColor: theme.colors.primary,
-    shadowOpacity: 0.2,
   },
   categoryEmoji: {
-    fontSize: 28,
-    marginBottom: theme.spacing.sm,
+    fontSize: 16,
+    marginRight: theme.spacing.xs,
   },
   categoryChipText: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.medium,
     color: theme.colors.text.primary,
-    fontWeight: theme.typography.fontWeight.medium,
-    textAlign: 'center',
-    marginBottom: theme.spacing.xs,
+    marginRight: theme.spacing.xs,
   },
   categoryChipTextActive: {
-    color: theme.colors.white,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    color: theme.colors.background,
   },
   categoryChipCount: {
-    fontSize: theme.typography.fontSize.xs,
+    fontSize: theme.fonts.sizes.xs,
     color: theme.colors.text.secondary,
-    fontWeight: theme.typography.fontWeight.medium,
-    textAlign: 'center',
   },
   categoryChipCountActive: {
-    color: theme.colors.white,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    color: theme.colors.background,
   },
   jobsList: {
     flex: 1,
   },
   jobsListContent: {
     paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.lg,
   },
   jobCard: {
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
+    borderRadius: 16,
+    padding: theme.spacing.md,
     marginBottom: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
     shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -348,91 +435,102 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   jobTitle: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semiBold,
-    color: theme.colors.text.primary,
     flex: 1,
-    marginRight: theme.spacing.md,
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.text.primary,
+    marginRight: theme.spacing.sm,
   },
   jobBudget: {
-    fontSize: theme.typography.fontSize.xl,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.bold,
     color: theme.colors.primary,
   },
   categoryContainer: {
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   jobCategory: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.secondary,
-    fontWeight: theme.typography.fontWeight.medium,
-    backgroundColor: `${theme.colors.secondary}15`,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.sm,
-    alignSelf: 'flex-start',
+    fontWeight: theme.fonts.weights.medium,
+  },
+  jobDescription: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
+    lineHeight: 20,
+    marginBottom: theme.spacing.md,
   },
   jobDetailsLayout: {
     marginBottom: theme.spacing.md,
-    gap: theme.spacing.sm,
   },
   locationCard: {
-    backgroundColor: theme.colors.background,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border + '30',
+    marginBottom: theme.spacing.sm,
   },
   bottomRow: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
+    justifyContent: 'space-between',
   },
   detailCard: {
     flex: 1,
-    backgroundColor: theme.colors.background,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border + '30',
   },
   detailValue: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   detailIcon: {
-    fontSize: 14,
+    fontSize: 16,
     marginRight: theme.spacing.xs,
   },
   detailText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.primary,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
     flex: 1,
   },
   jobFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-    paddingTop: theme.spacing.md,
   },
   applicantsText: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
   },
   applyButton: {
     backgroundColor: theme.colors.primary,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: 8,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
   },
   applyButtonText: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.white,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.background,
   },
-}); 
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.xxxl,
+  },
+  emptyStateIcon: {
+    fontSize: 48,
+    marginBottom: theme.spacing.md,
+  },
+  emptyStateTitle: {
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.sm,
+  },
+  emptyStateText: {
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+});
+
+export { WorkerJobsScreen }; 

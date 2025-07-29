@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontSize: 32,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontWeight: theme.fonts.weights.bold,
     color: theme.colors.white,
   },
   editPhotoButton: {
@@ -300,9 +300,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
   },
   changePhotoText: {
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.primary,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontWeight: theme.fonts.weights.medium,
   },
   form: {
     paddingHorizontal: theme.spacing.lg,
@@ -312,15 +312,15 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   label: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
   },
   required: {
     color: theme.colors.error,
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
   },
   input: {
     backgroundColor: theme.colors.surface,
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.md,
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
   },
   phoneContainer: {
@@ -351,9 +351,9 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.sm,
   },
   verifiedText: {
-    fontSize: theme.typography.fontSize.xs,
+    fontSize: theme.fonts.sizes.xs,
     color: theme.colors.success,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontWeight: theme.fonts.weights.medium,
   },
   dateInput: {
     backgroundColor: theme.colors.surface,
@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.sm,
   },
   dateText: {
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
   },
   datePlaceholder: {
@@ -395,8 +395,8 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: theme.colors.white,
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
   },
   datePickerContainer: {
     position: 'absolute',
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
   },
   doneButtonText: {
     color: theme.colors.white,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.semiBold,
   },
 }); 

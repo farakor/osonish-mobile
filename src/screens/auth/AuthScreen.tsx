@@ -40,8 +40,7 @@ export function AuthScreen() {
           <TouchableOpacity
             style={[styles.button, styles.secondaryButton]}
             onPress={() => {
-              // TODO: Navigate to Login screen
-              console.log('Navigate to Login');
+              navigation.navigate('Login' as never);
             }}
           >
             <Text style={styles.secondaryButtonText}>Уже есть аккаунт? Войти</Text>

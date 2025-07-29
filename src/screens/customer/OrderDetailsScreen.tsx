@@ -415,8 +415,8 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    fontSize: theme.typography.fontSize.xl,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontSize: theme.fonts.sizes.xl,
+    fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
     marginRight: theme.spacing.md,
   },
@@ -427,8 +427,8 @@ const styles = StyleSheet.create({
   },
   statusText: {
     color: theme.colors.white,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.medium,
   },
   section: {
     backgroundColor: theme.colors.surface,
@@ -440,8 +440,8 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
   },
   sectionTitle: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.md,
   },
@@ -452,14 +452,14 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   infoLabel: {
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
     flex: 1,
   },
   infoValue: {
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontWeight: theme.fonts.weights.medium,
     flex: 1,
     textAlign: 'right',
   },
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.xs,
   },
   description: {
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
     lineHeight: 22,
   },
@@ -505,8 +505,8 @@ const styles = StyleSheet.create({
   },
   viewApplicantsText: {
     color: theme.colors.white,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.medium,
   },
   applicantPreview: {
     backgroundColor: theme.colors.background,
@@ -526,8 +526,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   applicantName: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
@@ -536,21 +536,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   applicantRating: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.primary,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontWeight: theme.fonts.weights.medium,
   },
   applicantJobs: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
     marginLeft: theme.spacing.xs,
   },
   applicantTime: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
   },
   applicantMessage: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.primary,
     lineHeight: 18,
   },
@@ -569,8 +569,8 @@ const styles = StyleSheet.create({
     borderBottomColor: theme.colors.border,
   },
   modalTitle: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
   },
   closeButton: {
@@ -581,8 +581,8 @@ const styles = StyleSheet.create({
   },
   closeButtonText: {
     color: theme.colors.white,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.medium,
   },
   applicantsList: {
     padding: theme.spacing.lg,
@@ -610,8 +610,8 @@ const styles = StyleSheet.create({
   },
   acceptButtonText: {
     color: theme.colors.white,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.medium,
   },
   rejectButton: {
     flex: 1,
@@ -624,8 +624,8 @@ const styles = StyleSheet.create({
   },
   rejectButtonText: {
     color: theme.colors.text.primary,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.medium,
   },
   loadingContainer: {
     flex: 1,
@@ -634,7 +634,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
   },
   loadingText: {
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
     textAlign: 'center',
   },
@@ -645,7 +645,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
   },
   errorText: {
-    fontSize: theme.typography.fontSize.lg,
+    fontSize: theme.fonts.sizes.lg,
     color: theme.colors.text.primary,
     textAlign: 'center',
     marginBottom: theme.spacing.lg,
@@ -658,7 +658,7 @@ const styles = StyleSheet.create({
   },
   errorButtonText: {
     color: theme.colors.white,
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.medium,
   },
 }); 

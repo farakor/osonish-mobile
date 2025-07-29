@@ -1,5 +1,52 @@
 export * from './navigation';
 
+// User Types
+export interface User {
+  id: string;
+  phone: string;
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  birthDate: string; // ISO date string
+  profileImage?: string;
+  role: 'customer' | 'worker';
+  isVerified: boolean;
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+}
+
+export interface AuthState {
+  isAuthenticated: boolean;
+  user: User | null;
+  token?: string;
+}
+
+export interface LoginRequest {
+  phone: string;
+}
+
+export interface VerifyCodeRequest {
+  phone: string;
+  code: string;
+}
+
+export interface RegisterRequest {
+  phone: string;
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  birthDate: string;
+  profileImage?: string;
+  role: 'customer' | 'worker';
+}
+
+export interface AuthResponse {
+  success: boolean;
+  user?: User;
+  token?: string;
+  error?: string;
+}
+
 // Order Types
 export interface Order {
   id: string;

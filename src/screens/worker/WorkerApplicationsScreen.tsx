@@ -307,13 +307,13 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.md,
   },
   title: {
-    fontSize: theme.typography.fontSize.xl,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontSize: theme.fonts.sizes.xl,
+    fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   subtitle: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
     lineHeight: 20,
   },
@@ -355,25 +355,25 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
   },
   filterChipText: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.primary,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontWeight: theme.fonts.weights.medium,
     textAlign: 'center',
     marginBottom: theme.spacing.xs,
   },
   filterChipTextActive: {
     color: theme.colors.white,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontWeight: theme.fonts.weights.semiBold,
   },
   filterChipCount: {
-    fontSize: theme.typography.fontSize.xs,
+    fontSize: theme.fonts.sizes.xs,
     color: theme.colors.text.secondary,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontWeight: theme.fonts.weights.medium,
     textAlign: 'center',
   },
   filterChipCountActive: {
     color: theme.colors.white,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontWeight: theme.fonts.weights.semiBold,
   },
   applicationsList: {
     flex: 1,
@@ -406,15 +406,15 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.md,
   },
   jobTitle: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   jobCategory: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.secondary,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontWeight: theme.fonts.weights.medium,
   },
   statusBadge: {
     paddingHorizontal: theme.spacing.sm,
@@ -422,13 +422,13 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.sm,
   },
   statusText: {
-    fontSize: theme.typography.fontSize.xs,
+    fontSize: theme.fonts.sizes.xs,
     color: theme.colors.white,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontWeight: theme.fonts.weights.bold,
   },
   jobBudget: {
-    fontSize: theme.typography.fontSize.xl,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontSize: theme.fonts.sizes.xl,
+    fontWeight: theme.fonts.weights.bold,
     color: theme.colors.primary,
   },
   categoryContainer: {
@@ -471,9 +471,9 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.xs,
   },
   detailText: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.primary,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontWeight: theme.fonts.weights.semiBold,
     flex: 1,
   },
 
@@ -489,9 +489,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButtonText: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.white,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontWeight: theme.fonts.weights.semiBold,
   },
   contactButton: {
     backgroundColor: theme.colors.primary,
@@ -500,9 +500,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   contactButtonText: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.white,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontWeight: theme.fonts.weights.semiBold,
   },
   emptyState: {
     alignItems: 'center',
@@ -514,13 +514,13 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   emptyStateTitle: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
   },
   emptyStateText: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 20,

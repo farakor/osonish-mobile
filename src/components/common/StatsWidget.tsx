@@ -187,13 +187,13 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
   },
   defaultStatNumber: {
-    fontSize: theme.typography.fontSize.xl,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontSize: theme.fonts.sizes.xl,
+    fontWeight: theme.fonts.weights.bold,
     color: theme.colors.primary,
     marginBottom: theme.spacing.xs,
   },
   defaultStatLabel: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 16,
@@ -240,17 +240,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   cardNumber: {
-    fontSize: theme.typography.fontSize.xxl,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontSize: theme.fonts.sizes.xxl,
+    fontWeight: theme.fonts.weights.bold,
     color: theme.colors.primary,
     textAlign: 'center',
     marginBottom: 4,
   },
   cardLabel: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
     textAlign: 'center',
-    fontWeight: theme.typography.fontWeight.medium,
+    fontWeight: theme.fonts.weights.medium,
     lineHeight: 16,
   },
 
@@ -291,15 +291,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   gradientNumber: {
-    fontSize: theme.typography.fontSize.xxl,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontSize: theme.fonts.sizes.xxl,
+    fontWeight: theme.fonts.weights.bold,
     color: theme.colors.primary,
     marginBottom: theme.spacing.xs,
   },
   gradientLabel: {
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontWeight: theme.fonts.weights.medium,
   },
   gradientArrow: {
     width: 32,
@@ -312,6 +312,6 @@ const styles = StyleSheet.create({
   gradientArrowText: {
     color: theme.colors.white,
     fontSize: 16,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontWeight: theme.fonts.weights.bold,
   },
 }); 

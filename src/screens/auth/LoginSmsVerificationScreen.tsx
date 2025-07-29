@@ -12,11 +12,12 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
+import { authService } from '../../services/authService';
 import type { RootStackParamList } from '../../types';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-export function SmsVerificationScreen() {
+export function LoginSmsVerificationScreen() {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute();
   const { phone } = route.params as { phone: string };
@@ -32,7 +33,7 @@ export function SmsVerificationScreen() {
     // Автоматически фокусируем первый инпут при открытии экрана
     setTimeout(() => {
       inputRefs.current[0]?.focus();
-    }, 300); // небольшая задержка для корректной работы на Android
+    }, 300);
   }, []);
 
   useEffect(() => {
@@ -76,15 +77,31 @@ export function SmsVerificationScreen() {
     setIsLoading(true);
 
     try {
-      const { authService } = await import('../../services/authService');
-      const result = await authService.verifyRegistrationCode({
+      const result = await authService.verifyLoginCode({
         phone: phone,
         code: smsCode
       });
 
-      if (result.success) {
-        // Переходим к экрану заполнения профиля
-        navigation.navigate('ProfileInfo', { phone });
+      if (result.success && result.user) {
+        // Успешный вход - переходим в приложение
+        if (result.user.role === 'customer') {
+          navigation.navigate('CustomerTabs');
+        } else {
+          navigation.navigate('WorkerTabs');
+        }
+      } else if (result.error === 'user_not_found') {
+        // Пользователь не найден - предлагаем регистрацию
+        Alert.alert(
+          'Пользователь не найден',
+          'Аккаунт с этим номером не найден. Хотите зарегистрироваться?',
+          [
+            { text: 'Отмена', style: 'cancel' },
+            {
+              text: 'Регистрация',
+              onPress: () => navigation.navigate('Registration')
+            }
+          ]
+        );
       } else {
         Alert.alert('Ошибка', result.error || 'Неверный код подтверждения');
         setCode(['', '', '', '', '', '']);
@@ -103,8 +120,7 @@ export function SmsVerificationScreen() {
     setCode(['', '', '', '', '', '']);
 
     try {
-      const { authService } = await import('../../services/authService');
-      const result = await authService.sendRegistrationCode(phone);
+      const result = await authService.sendLoginCode({ phone });
 
       if (result.success) {
         Alert.alert('Успешно', 'SMS код отправлен повторно');
@@ -184,7 +200,7 @@ export function SmsVerificationScreen() {
           </View>
 
           <Text style={styles.codeHint}>
-            Введите 6-значный код для подтверждения
+            Введите 6-значный код для входа в аккаунт
           </Text>
         </View>
 

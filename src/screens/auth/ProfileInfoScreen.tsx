@@ -81,8 +81,19 @@ export function ProfileInfoScreen() {
     setIsLoading(true);
 
     try {
-      // TODO: API запрос для сохранения профильной информации
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Сохраняем данные профиля во временном хранилище для использования после выбора роли
+      const profileData = {
+        phone,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        middleName: middleName?.trim(),
+        birthDate: birthDate.toISOString(),
+        profileImage
+      };
+
+      // Передаем данные в AsyncStorage для временного хранения
+      const AsyncStorage = await import('@react-native-async-storage/async-storage');
+      await AsyncStorage.default.setItem('@temp_profile_data', JSON.stringify(profileData));
 
       // Переходим к выбору роли
       navigation.navigate('RoleSelection');
@@ -283,7 +294,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backButtonText: {
-    fontSize: theme.typography.fontSize.xl,
+    fontSize: theme.fonts.sizes.xl,
     color: theme.colors.text.primary,
   },
   titleSection: {
@@ -292,8 +303,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: theme.typography.fontSize.xxl,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontSize: theme.fonts.sizes.xxl,
+    fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
     textAlign: 'center',
   },
@@ -358,13 +369,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   photoTitle: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   photoSubtitle: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
     lineHeight: 18,
   },
@@ -376,15 +387,15 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   label: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
   },
   required: {
     color: 'red',
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
   },
   input: {
     backgroundColor: theme.colors.surface,
@@ -393,7 +404,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.md,
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
   },
   dateInput: {
@@ -411,7 +422,7 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.sm,
   },
   dateText: {
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
   },
   datePlaceholder: {
@@ -446,7 +457,7 @@ const styles = StyleSheet.create({
   },
   privacyText: {
     flex: 1,
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.primary,
     lineHeight: 18,
   },
@@ -473,8 +484,8 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     color: theme.colors.white,
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
   },
   datePickerContainer: {
     position: 'absolute',
@@ -506,7 +517,7 @@ const styles = StyleSheet.create({
   },
   doneButtonText: {
     color: theme.colors.white,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.semiBold,
   },
 }); 

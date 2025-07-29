@@ -36,8 +36,8 @@ export function CustomerTabNavigator() {
           justifyContent: 'center', // центрирование по вертикали
         },
         tabBarLabelStyle: {
-          fontSize: theme.typography.fontSize.sm, // уменьшен размер шрифта
-          fontWeight: theme.typography.fontWeight.medium, // обычный вес
+          fontSize: theme.fonts.sizes.sm, // уменьшен размер шрифта
+          fontWeight: theme.fonts.weights.medium, // обычный вес
           marginBottom: 0, // убираем отступ снизу
           marginTop: theme.spacing.xs, // добавляем отступ сверху
         },

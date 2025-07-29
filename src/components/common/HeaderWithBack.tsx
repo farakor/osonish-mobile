@@ -70,17 +70,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backButtonText: {
-    fontSize: theme.typography.fontSize.xl,
+    fontSize: theme.fonts.sizes.xl,
     color: theme.colors.text.primary,
   },
   headerTitle: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
   },
   rightActionText: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.medium,
   },
   placeholder: {
     width: 40,

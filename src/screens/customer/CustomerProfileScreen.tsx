@@ -11,6 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
 import { StatsWidget, StatItem } from '../../components/common';
+import { authService } from '../../services/authService';
 import UserEditIcon from '../../../assets/user-edit.svg';
 import NotificationMessageIcon from '../../../assets/notification-message.svg';
 import LifeBuoyIcon from '../../../assets/life-buoy-02.svg';
@@ -63,16 +64,25 @@ export const CustomerProfileScreen: React.FC = () => {
     navigation.navigate('Support' as never);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     Alert.alert(
       'Выход',
       'Вы действительно хотите выйти из аккаунта?',
       [
         { text: 'Отмена', style: 'cancel' },
         {
-          text: 'Выйти', style: 'destructive', onPress: () => {
-            console.log('Logout');
-            // TODO: Навигация к экрану аутентификации
+          text: 'Выйти',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await authService.logout();
+              console.log('Logout successful');
+              // Переходим к экрану авторизации
+              navigation.navigate('Auth' as never);
+            } catch (error) {
+              console.error('Ошибка выхода:', error);
+              Alert.alert('Ошибка', 'Не удалось выйти из аккаунта');
+            }
           }
         },
       ]
@@ -167,8 +177,8 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.lg,
   },
   title: {
-    fontSize: theme.typography.fontSize.xxl,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontSize: theme.fonts.sizes.xxl,
+    fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
   },
   profileInfo: {
@@ -187,22 +197,22 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontSize: 24,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontWeight: theme.fonts.weights.bold,
     color: theme.colors.white,
   },
   userName: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   userPhone: {
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing.xs,
   },
   userRole: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.primary,
     backgroundColor: `${theme.colors.primary}20`,
     paddingHorizontal: theme.spacing.sm,
@@ -222,13 +232,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statNumber: {
-    fontSize: theme.typography.fontSize.xl,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontSize: theme.fonts.sizes.xl,
+    fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   statLabel: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
     textAlign: 'center',
   },
@@ -262,9 +272,9 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.md,
   },
   optionTitle: {
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontWeight: theme.fonts.weights.medium,
   },
   optionArrow: {
     fontSize: 18,
@@ -279,8 +289,8 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xl,
   },
   logoutText: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.white,
   },
   appInfo: {
@@ -289,12 +299,12 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.xl,
   },
   appVersion: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing.xs,
   },
   appDescription: {
-    fontSize: theme.typography.fontSize.xs,
+    fontSize: theme.fonts.sizes.xs,
     color: theme.colors.text.secondary,
     textAlign: 'center',
   },

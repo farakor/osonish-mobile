@@ -166,8 +166,8 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   logoTitle: {
-    fontSize: theme.typography.fontSize.xl,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontSize: theme.fonts.sizes.xl,
+    fontWeight: theme.fonts.weights.bold,
     color: theme.colors.primary,
     letterSpacing: 2,
   },
@@ -209,19 +209,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   supportTitle: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   supportDescription: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing.xs,
   },
   supportContact: {
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.medium,
     color: theme.colors.primary,
   },
   additionalInfo: {
@@ -236,13 +236,13 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
   },
   infoTitle: {
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
   },
   infoText: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
     lineHeight: 20,
   },

@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -25,15 +26,44 @@ export const RoleSelectionScreen: React.FC = () => {
     setSelectedRole(role);
   };
 
-  const handleContinue = () => {
-    if (selectedRole) {
-      console.log('Selected role:', selectedRole);
+  const handleContinue = async () => {
+    if (!selectedRole) return;
 
-      if (selectedRole === 'customer') {
-        navigation.navigate('CustomerTabs');
-      } else if (selectedRole === 'worker') {
-        navigation.navigate('WorkerTabs');
+    try {
+      // Получаем данные профиля из временного хранилища
+      const AsyncStorage = await import('@react-native-async-storage/async-storage');
+      const profileDataString = await AsyncStorage.default.getItem('@temp_profile_data');
+
+      if (!profileDataString) {
+        Alert.alert('Ошибка', 'Данные профиля не найдены. Вернитесь к предыдущему шагу.');
+        return;
       }
+
+      const profileData = JSON.parse(profileDataString);
+
+      // Завершаем регистрацию
+      const { authService } = await import('../../services/authService');
+      const result = await authService.completeRegistration({
+        ...profileData,
+        role: selectedRole
+      });
+
+      if (result.success && result.user) {
+        // Очищаем временные данные
+        await AsyncStorage.default.removeItem('@temp_profile_data');
+
+        // Переходим в приложение в зависимости от роли
+        if (selectedRole === 'customer') {
+          navigation.navigate('CustomerTabs');
+        } else {
+          navigation.navigate('WorkerTabs');
+        }
+      } else {
+        Alert.alert('Ошибка', result.error || 'Не удалось завершить регистрацию');
+      }
+    } catch (error) {
+      console.error('Ошибка завершения регистрации:', error);
+      Alert.alert('Ошибка', 'Произошла ошибка при регистрации. Попробуйте еще раз.');
     }
   };
 
@@ -155,14 +185,14 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xxl,
   },
   title: {
-    fontSize: theme.typography.fontSize.xxl,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontSize: theme.fonts.sizes.xxl,
+    fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
     textAlign: 'center',
     marginBottom: theme.spacing.md,
   },
   subtitle: {
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 22,
@@ -205,8 +235,8 @@ const styles = StyleSheet.create({
     fontSize: 28,
   },
   roleTitle: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
   },
@@ -214,7 +244,7 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
   },
   roleDescription: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 20,
@@ -236,7 +266,7 @@ const styles = StyleSheet.create({
   checkmarkText: {
     color: theme.colors.white,
     fontSize: 14,
-    fontWeight: theme.typography.fontWeight.bold,
+    fontWeight: theme.fonts.weights.bold,
   },
   continueButton: {
     backgroundColor: theme.colors.primary,
@@ -250,14 +280,14 @@ const styles = StyleSheet.create({
   },
   continueButtonText: {
     color: theme.colors.white,
-    fontSize: theme.typography.fontSize.md,
-    fontWeight: theme.typography.fontWeight.semiBold,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
   },
   continueButtonTextDisabled: {
     color: theme.colors.text.disabled,
   },
   note: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
     textAlign: 'center',
     fontStyle: 'italic',

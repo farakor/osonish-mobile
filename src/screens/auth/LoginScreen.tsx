@@ -14,11 +14,12 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
+import { authService } from '../../services/authService';
 import type { RootStackParamList } from '../../types';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-export function RegistrationScreen() {
+export function LoginScreen() {
   const navigation = useNavigation<NavigationProp>();
   const [phoneNumber, setPhoneNumber] = useState('+998');
   const [isLoading, setIsLoading] = useState(false);
@@ -51,20 +52,23 @@ export function RegistrationScreen() {
     setIsLoading(true);
 
     try {
-      const { authService } = await import('../../services/authService');
-      const result = await authService.sendRegistrationCode(phoneNumber);
+      const result = await authService.sendLoginCode({ phone: phoneNumber });
 
       if (result.success) {
-        // Переходим к экрану верификации
-        navigation.navigate('SmsVerification', { phone: phoneNumber });
+        // Переходим к экрану верификации SMS для входа
+        navigation.navigate('LoginSmsVerification', { phone: phoneNumber });
       } else {
         Alert.alert('Ошибка', result.error || 'Не удалось отправить SMS');
       }
     } catch (error) {
-      Alert.alert('Ошибка', 'Не удалось отправить SMS. Попробуйте еще раз.');
+      Alert.alert('Ошибка', 'Произошла ошибка. Попробуйте еще раз.');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGoToRegistration = () => {
+    navigation.navigate('Registration');
   };
 
   return (
@@ -88,9 +92,9 @@ export function RegistrationScreen() {
 
           {/* Title Section */}
           <View style={styles.titleSection}>
-            <Text style={styles.title}>Введите номер телефона</Text>
+            <Text style={styles.title}>Вход в аккаунт</Text>
             <Text style={styles.subtitle}>
-              Мы отправим вам SMS с кодом подтверждения
+              Введите номер телефона для входа в ваш аккаунт
             </Text>
           </View>
 
@@ -108,7 +112,7 @@ export function RegistrationScreen() {
               autoFocus
             />
             <Text style={styles.inputHint}>
-              Введите номер телефона в формате +998
+              Введите номер телефона, который вы использовали при регистрации
             </Text>
           </View>
 
@@ -125,9 +129,19 @@ export function RegistrationScreen() {
               styles.continueButtonText,
               (!validatePhoneNumber() || isLoading) && styles.continueButtonTextDisabled
             ]}>
-              {isLoading ? 'Отправляем SMS...' : 'Продолжить'}
+              {isLoading ? 'Отправляем SMS...' : 'Войти'}
             </Text>
           </TouchableOpacity>
+
+          {/* Registration Link */}
+          <View style={styles.registrationSection}>
+            <Text style={styles.registrationText}>
+              Нет аккаунта?{' '}
+              <Text style={styles.registrationLink} onPress={handleGoToRegistration}>
+                Зарегистрироваться
+              </Text>
+            </Text>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -228,5 +242,17 @@ const styles = StyleSheet.create({
   },
   continueButtonTextDisabled: {
     color: theme.colors.text.secondary,
+  },
+  registrationSection: {
+    alignItems: 'center',
+    marginTop: theme.spacing.xl,
+  },
+  registrationText: {
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.text.secondary,
+  },
+  registrationLink: {
+    color: theme.colors.primary,
+    fontWeight: theme.fonts.weights.semiBold,
   },
 }); 

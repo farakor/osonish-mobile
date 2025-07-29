@@ -2,6 +2,8 @@
 export type RootStackParamList = {
   Splash: undefined;
   Auth: undefined;
+  Login: undefined;
+  LoginSmsVerification: { phone: string };
   Registration: undefined;
   SmsVerification: { phone: string };
   ProfileInfo: { phone: string };
