@@ -85,15 +85,20 @@
 # 1. Установите зависимости (уже сделано)
 npm install @supabase/supabase-js react-native-url-polyfill
 
-# 2. Настройте ключи в этом файле:
-src/services/supabaseClient.ts
+# 2. Создайте файл конфигурации:
+cp src/services/supabaseClient.template.ts src/services/supabaseClient.ts
 
-# 3. Выполните SQL схему в Supabase Dashboard:
-supabase-schema.sql
+# 3. Настройте ключи в созданном файле:
+# src/services/supabaseClient.ts (НЕ в .template!)
 
-# 4. Следуйте инструкции:
+# 4. Выполните SQL схему в Supabase Dashboard:
+supabase-schema-fix-correct.sql
+
+# 5. Следуйте полной инструкции:
 SUPABASE_SETUP.md
 ```
+
+**🔒 Безопасность**: Файл `supabaseClient.ts` добавлен в `.gitignore` для защиты ваших токенов.
 
 ## Статус задач
 

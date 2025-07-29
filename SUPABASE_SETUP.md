@@ -36,14 +36,21 @@ SQL создаст:
 
 ## 4. Настройка приложения
 
-1. Откройте файл `src/services/supabaseClient.ts`
-2. Замените placeholder значения:
+1. **Создайте файл конфигурации**:
+   ```bash
+   cp src/services/supabaseClient.template.ts src/services/supabaseClient.ts
+   ```
 
-```typescript
-// Замените эти значения на ваши реальные ключи от Supabase
-const supabaseUrl = 'https://your-project-id.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
-```
+2. **Откройте файл** `src/services/supabaseClient.ts`
+
+3. **Замените placeholder значения**:
+   ```typescript
+   // Замените эти значения на ваши реальные ключи от Supabase
+   const supabaseUrl = 'https://your-project-id.supabase.co';
+   const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+   ```
+
+**⚠️ Важно**: Файл `supabaseClient.ts` находится в `.gitignore` и не будет загружен в Git для безопасности.
 
 ## 5. Проверка подключения
 

@@ -1,9 +1,14 @@
 import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
 
-// Настройки Supabase проекта
-const supabaseUrl = 'https://qmbavgwkxtqudchuahdv.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtYmF2Z3dreHRxdWRjaHVhaGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3ODkzNzksImV4cCI6MjA2OTM2NTM3OX0.Gn5_S1eYrFpXNXMVHO0zfb8dclNZG1cjAqLHb5Wq0D4';
+// 🔧 НАСТРОЙКА SUPABASE:
+// 1. Создайте проект на https://supabase.com
+// 2. Скопируйте ваши URL и ключи из Settings -> API
+// 3. Скопируйте этот файл как supabaseClient.ts
+// 4. Замените YOUR_SUPABASE_URL и YOUR_SUPABASE_ANON_KEY на ваши реальные значения
+
+const supabaseUrl = 'YOUR_SUPABASE_URL';
+const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
 
 // Проверяем что URL корректный
 if (!supabaseUrl || supabaseUrl.includes('YOUR_SUPABASE_URL')) {
