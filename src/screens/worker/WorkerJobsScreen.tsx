@@ -128,7 +128,6 @@ const WorkerJobsScreen: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>('Все');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [supabaseConnected, setSupabaseConnected] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
@@ -157,19 +156,11 @@ const WorkerJobsScreen: React.FC = () => {
   // Загружаем заказы при первом открытии экрана
   useEffect(() => {
     loadOrders();
-
-    // Supabase теперь всегда используется (нет fallback на локальное хранилище)
-    setSupabaseConnected(true);
     console.log('[WorkerJobsScreen] Используем только Supabase');
   }, []);
 
   // Real-time обновления временно отключены
   // TODO: Реализовать real-time подписки через Supabase
-  useEffect(() => {
-    console.log('[WorkerJobsScreen] Автообновление отключено');
-    // Автообновление заказов отключено для экономии ресурсов
-    // Используйте pull-to-refresh для ручного обновления
-  }, [supabaseConnected]);
 
   // Обновляем заказы при возвращении на экран
   useFocusEffect(
@@ -306,12 +297,6 @@ const WorkerJobsScreen: React.FC = () => {
           <Text style={styles.subtitle}>
             {orders.length > 0 ? `Найдено ${orders.length} заказов` : 'Новых заказов пока нет'}
           </Text>
-          {supabaseConnected && (
-            <View style={styles.onlineIndicator}>
-              <View style={styles.onlineDot} />
-              <Text style={styles.onlineText}>Синхронизация включена</Text>
-            </View>
-          )}
         </View>
 
         <View style={styles.searchContainer}>
@@ -608,28 +593,6 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 24,
-  },
-  onlineIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    backgroundColor: '#E8F5E8',
-    borderRadius: theme.borderRadius.sm,
-  },
-  onlineDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#4CAF50',
-    marginRight: theme.spacing.sm,
-  },
-  onlineText: {
-    fontSize: theme.fonts.sizes.sm,
-    color: '#2E7D32',
-    fontWeight: '500',
   },
 });
 
