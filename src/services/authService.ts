@@ -3,10 +3,9 @@ import { User, AuthState, LoginRequest, VerifyCodeRequest, RegisterRequest, Auth
 import { smsService } from './smsService';
 import { supabase } from './supabaseClient';
 
-// Константы для хранения данных
+// Константы для хранения только сессионных данных
 const STORAGE_KEYS = {
-  AUTH_STATE: '@osonish_auth_state',
-  USERS: '@osonish_users',
+  SESSION_TOKEN: '@osonish_session_token',
   CURRENT_USER_ID: '@osonish_current_user_id'
 };
 
@@ -16,108 +15,112 @@ class AuthService {
     user: null
   };
 
-  private users: Map<string, User> = new Map();
-
   // Инициализация сервиса
   async init(): Promise<void> {
     try {
-      // Загружаем состояние авторизации
-      const storedAuthState = await AsyncStorage.getItem(STORAGE_KEYS.AUTH_STATE);
-      if (storedAuthState) {
-        this.authState = JSON.parse(storedAuthState);
-      }
-
-      // Загружаем пользователей
-      const storedUsers = await AsyncStorage.getItem(STORAGE_KEYS.USERS);
-      if (storedUsers) {
-        const usersArray: User[] = JSON.parse(storedUsers);
-        this.users = new Map(usersArray.map(user => [user.phone, user]));
-      }
-
-      // Проверяем текущего пользователя
-      const currentUserId = await AsyncStorage.getItem(STORAGE_KEYS.CURRENT_USER_ID);
-      if (currentUserId && this.users.has(currentUserId)) {
-        this.authState = {
-          isAuthenticated: true,
-          user: this.users.get(currentUserId) || null
-        };
-      }
-
-      // Синхронизируем существующих пользователей с Supabase
-      await this.syncUsersToSupabase();
-    } catch (error) {
-      console.error('Ошибка инициализации AuthService:', error);
-    }
-  }
-
-  /**
-   * Синхронизация локальных пользователей с Supabase
-   */
-  private async syncUsersToSupabase(): Promise<void> {
-    try {
-      if (!supabase || this.users.size === 0) {
+      if (!supabase) {
+        console.error('[AuthService] Supabase не инициализирован');
         return;
       }
 
-      console.log('[AuthService] Синхронизируем существующих пользователей с Supabase...');
+      // Проверяем сохраненную сессию
+      const storedUserId = await AsyncStorage.getItem(STORAGE_KEYS.CURRENT_USER_ID);
+      const storedToken = await AsyncStorage.getItem(STORAGE_KEYS.SESSION_TOKEN);
 
-      for (const [phone, user] of this.users) {
-        // Проверяем, существует ли пользователь в Supabase
-        const { data: existingUser } = await supabase
-          .from('users')
-          .select('id')
-          .eq('id', user.id)
-          .single();
-
-        if (!existingUser) {
-          // Создаем пользователя в Supabase если его там нет
-          await this.createUserInSupabase(user);
+      if (storedUserId && storedToken) {
+        // Проверяем валидность сессии через загрузку пользователя из Supabase
+        const user = await this.loadUserFromSupabase(storedUserId);
+        if (user) {
+          this.authState = {
+            isAuthenticated: true,
+            user
+          };
+          console.log(`[AuthService] Сессия восстановлена для пользователя: ${user.firstName} ${user.lastName}`);
+        } else {
+          // Сессия невалидна, очищаем
+          await this.clearSession();
         }
       }
-
-      console.log('[AuthService] ✅ Синхронизация пользователей завершена');
     } catch (error) {
-      console.error('[AuthService] Ошибка синхронизации пользователей:', error);
+      console.error('Ошибка инициализации AuthService:', error);
+      await this.clearSession();
     }
   }
 
-  // Сохранение состояния
-  private async saveAuthState(): Promise<void> {
+  // Загрузка пользователя из Supabase
+  private async loadUserFromSupabase(userId: string): Promise<User | null> {
     try {
-      await AsyncStorage.setItem(STORAGE_KEYS.AUTH_STATE, JSON.stringify(this.authState));
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-      if (this.authState.user) {
-        await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER_ID, this.authState.user.phone);
-      } else {
-        await AsyncStorage.removeItem(STORAGE_KEYS.CURRENT_USER_ID);
+      if (error || !data) {
+        console.log(`[AuthService] Пользователь с ID ${userId} не найден в Supabase`);
+        return null;
       }
+
+      return {
+        id: data.id,
+        phone: data.phone,
+        firstName: data.first_name,
+        lastName: data.last_name,
+        middleName: data.middle_name,
+        birthDate: data.birth_date,
+        profileImage: data.profile_image,
+        role: data.role as 'customer' | 'worker',
+        isVerified: data.is_verified || false,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+      };
     } catch (error) {
-      console.error('Ошибка сохранения состояния авторизации:', error);
+      console.error(`[AuthService] Ошибка загрузки пользователя ${userId}:`, error);
+      return null;
     }
   }
 
-  // Сохранение пользователей
-  private async saveUsers(): Promise<void> {
+  // Сохранение сессии (только токен и ID пользователя)
+  private async saveSession(user: User): Promise<void> {
     try {
-      const usersArray = Array.from(this.users.values());
-      await AsyncStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(usersArray));
+      const sessionToken = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      await AsyncStorage.setItem(STORAGE_KEYS.SESSION_TOKEN, sessionToken);
+      await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER_ID, user.id);
+
+      console.log('[AuthService] Сессия сохранена');
     } catch (error) {
-      console.error('Ошибка сохранения пользователей:', error);
+      console.error('Ошибка сохранения сессии:', error);
     }
   }
 
-  // Генерация ID для пользователя
-  private generateUserId(): string {
-    return `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  // Очистка сессии
+  private async clearSession(): Promise<void> {
+    try {
+      await AsyncStorage.multiRemove([
+        STORAGE_KEYS.SESSION_TOKEN,
+        STORAGE_KEYS.CURRENT_USER_ID
+      ]);
+
+      this.authState = {
+        isAuthenticated: false,
+        user: null
+      };
+
+      console.log('[AuthService] Сессия очищена');
+    } catch (error) {
+      console.error('Ошибка очистки сессии:', error);
+    }
   }
 
   // Форматирование номера телефона
   private formatPhoneNumber(phone: string): string {
     const digits = phone.replace(/\D/g, '');
-    if (digits.startsWith('998')) {
+    if (digits.startsWith('998') && digits.length === 12) {
       return '+' + digits;
-    }
-    if (digits.startsWith('8') && digits.length === 10) {
+    } else if (digits.length === 9) {
+      return '+998' + digits;
+    } else if (digits.length === 12 && digits.startsWith('998')) {
       return '+998' + digits.slice(1);
     }
     return phone;
@@ -128,159 +131,271 @@ class AuthService {
     return { ...this.authState };
   }
 
-  // Проверка, существует ли пользователь
-  getUserByPhone(phone: string): User | null {
-    const formattedPhone = this.formatPhoneNumber(phone);
-    return this.users.get(formattedPhone) || null;
-  }
-
-  // Начало процесса авторизации (отправка SMS)
-  async sendLoginCode(request: LoginRequest): Promise<AuthResponse> {
+  // Проверка, существует ли пользователь по номеру телефона
+  async getUserByPhone(phone: string): Promise<User | null> {
     try {
-      const formattedPhone = this.formatPhoneNumber(request.phone);
-
-      // Отправляем SMS код
-      const smsResult = await smsService.sendVerificationCode(formattedPhone);
-
-      if (smsResult.success) {
-        return { success: true };
-      } else {
-        return { success: false, error: smsResult.error || 'Не удалось отправить SMS' };
-      }
-    } catch (error) {
-      console.error('Ошибка отправки кода входа:', error);
-      return { success: false, error: 'Произошла ошибка при отправке кода' };
-    }
-  }
-
-  // Верификация кода для входа
-  async verifyLoginCode(request: VerifyCodeRequest): Promise<AuthResponse> {
-    try {
-      const formattedPhone = this.formatPhoneNumber(request.phone);
-
-      // Проверяем код
-      const verificationResult = await smsService.verifyCode(formattedPhone, request.code);
-
-      if (!verificationResult.success) {
-        return { success: false, error: verificationResult.error };
+      if (!supabase) {
+        console.error('[AuthService] Supabase не доступен');
+        return null;
       }
 
-      // Ищем пользователя
-      const user = this.getUserByPhone(formattedPhone);
-
-      if (user) {
-        // Пользователь существует - авторизуем
-        this.authState = {
-          isAuthenticated: true,
-          user: user
-        };
-
-        await this.saveAuthState();
-
-        return {
-          success: true,
-          user: user
-        };
-      } else {
-        // Пользователь не найден - нужна регистрация
-        return {
-          success: false,
-          error: 'user_not_found'
-        };
-      }
-    } catch (error) {
-      console.error('Ошибка верификации кода входа:', error);
-      return { success: false, error: 'Произошла ошибка при проверке кода' };
-    }
-  }
-
-  // Начало процесса регистрации (отправка SMS)
-  async sendRegistrationCode(phone: string): Promise<AuthResponse> {
-    try {
       const formattedPhone = this.formatPhoneNumber(phone);
 
-      // Проверяем, не существует ли уже пользователь
-      if (this.getUserByPhone(formattedPhone)) {
-        return { success: false, error: 'Пользователь с таким номером уже существует' };
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('phone', formattedPhone)
+        .single();
+
+      if (error || !data) {
+        return null;
       }
 
-      // Отправляем SMS код
-      const smsResult = await smsService.sendVerificationCode(formattedPhone);
-
-      if (smsResult.success) {
-        return { success: true };
-      } else {
-        return { success: false, error: smsResult.error || 'Не удалось отправить SMS' };
-      }
+      return {
+        id: data.id,
+        phone: data.phone,
+        firstName: data.first_name,
+        lastName: data.last_name,
+        middleName: data.middle_name,
+        birthDate: data.birth_date,
+        profileImage: data.profile_image,
+        role: data.role as 'customer' | 'worker',
+        isVerified: data.is_verified || false,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+      };
     } catch (error) {
-      console.error('Ошибка отправки кода регистрации:', error);
-      return { success: false, error: 'Произошла ошибка при отправке кода' };
+      console.error('Ошибка поиска пользователя по телефону:', error);
+      return null;
     }
   }
 
-  // Верификация кода для регистрации
-  async verifyRegistrationCode(request: VerifyCodeRequest): Promise<AuthResponse> {
+  // Генерация ID для пользователя
+  private generateUserId(): string {
+    return `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  // Аутентификация пользователя (вход)
+  async login(credentials: LoginRequest): Promise<AuthResponse> {
     try {
+      console.log('[AuthService] Попытка входа для номера:', credentials.phone);
+
+      const formattedPhone = this.formatPhoneNumber(credentials.phone);
+      const existingUser = await this.getUserByPhone(formattedPhone);
+
+      if (!existingUser) {
+        return {
+          success: false,
+          error: 'Пользователь не найден. Пожалуйста, зарегистрируйтесь.'
+        };
+      }
+
+      // Отправляем SMS-код
+      const smsResult = await smsService.sendVerificationCode(formattedPhone);
+      if (!smsResult.success) {
+        return {
+          success: false,
+          error: smsResult.error
+        };
+      }
+
+      return {
+        success: true,
+        requiresVerification: true,
+        phone: formattedPhone
+      };
+    } catch (error) {
+      console.error('Ошибка входа:', error);
+      return {
+        success: false,
+        error: 'Произошла ошибка при входе'
+      };
+    }
+  }
+
+  // Верификация SMS-кода для входа
+  async verifyLoginCode(request: VerifyCodeRequest): Promise<AuthResponse> {
+    try {
+      console.log('[AuthService] Верификация кода для входа:', request.phone);
+
       const formattedPhone = this.formatPhoneNumber(request.phone);
 
-      // Проверяем код
+      // Проверяем SMS-код
       const verificationResult = await smsService.verifyCode(formattedPhone, request.code);
-
       if (!verificationResult.success) {
-        return { success: false, error: verificationResult.error };
+        return {
+          success: false,
+          error: verificationResult.error
+        };
       }
 
-      // Проверяем, не создан ли уже пользователь
-      if (this.getUserByPhone(formattedPhone)) {
-        return { success: false, error: 'Пользователь с таким номером уже существует' };
+      // Загружаем пользователя из Supabase
+      const user = await this.getUserByPhone(formattedPhone);
+      if (!user) {
+        return {
+          success: false,
+          error: 'Пользователь не найден'
+        };
       }
 
-      return { success: true };
+      // Устанавливаем состояние авторизации
+      this.authState = {
+        isAuthenticated: true,
+        user
+      };
+
+      // Сохраняем сессию
+      await this.saveSession(user);
+
+      console.log(`[AuthService] Пользователь ${user.firstName} ${user.lastName} успешно авторизован`);
+
+      return {
+        success: true,
+        user,
+        requiresVerification: false
+      };
+    } catch (error) {
+      console.error('Ошибка верификации кода:', error);
+      return {
+        success: false,
+        error: 'Произошла ошибка при верификации'
+      };
+    }
+  }
+
+  // Начало регистрации
+  async startRegistration(phone: string): Promise<AuthResponse> {
+    try {
+      console.log('[AuthService] Начало регистрации для номера:', phone);
+
+      const formattedPhone = this.formatPhoneNumber(phone);
+
+      // Проверяем, не зарегистрирован ли уже пользователь
+      const existingUser = await this.getUserByPhone(formattedPhone);
+      if (existingUser) {
+        return {
+          success: false,
+          error: 'Пользователь с таким номером уже зарегистрирован'
+        };
+      }
+
+      // Отправляем SMS-код
+      const smsResult = await smsService.sendVerificationCode(formattedPhone);
+      if (!smsResult.success) {
+        return {
+          success: false,
+          error: smsResult.error
+        };
+      }
+
+      return {
+        success: true,
+        requiresVerification: true,
+        phone: formattedPhone
+      };
+    } catch (error) {
+      console.error('Ошибка начала регистрации:', error);
+      return {
+        success: false,
+        error: 'Произошла ошибка при регистрации'
+      };
+    }
+  }
+
+  // Верификация SMS-кода для регистрации
+  async verifyRegistrationCode(request: VerifyCodeRequest): Promise<AuthResponse> {
+    try {
+      console.log('[AuthService] Верификация кода для регистрации:', request.phone);
+
+      const formattedPhone = this.formatPhoneNumber(request.phone);
+
+      // Проверяем SMS-код
+      const verificationResult = await smsService.verifyCode(formattedPhone, request.code);
+      if (!verificationResult.success) {
+        return {
+          success: false,
+          error: verificationResult.error
+        };
+      }
+
+      return {
+        success: true,
+        phone: formattedPhone,
+        requiresProfileInfo: true
+      };
     } catch (error) {
       console.error('Ошибка верификации кода регистрации:', error);
-      return { success: false, error: 'Произошла ошибка при проверке кода' };
+      return {
+        success: false,
+        error: 'Произошла ошибка при верификации'
+      };
     }
   }
 
   // Завершение регистрации
-  async completeRegistration(request: RegisterRequest): Promise<AuthResponse> {
+  async completeRegistration(userData: RegisterRequest): Promise<AuthResponse> {
     try {
-      const formattedPhone = this.formatPhoneNumber(request.phone);
+      console.log('[AuthService] Завершение регистрации для:', userData.phone);
 
-      // Проверяем, не существует ли уже пользователь
-      if (this.getUserByPhone(formattedPhone)) {
-        return { success: false, error: 'Пользователь с таким номером уже существует' };
+      if (!supabase) {
+        return {
+          success: false,
+          error: 'База данных недоступна'
+        };
       }
 
-      // Создаем нового пользователя
+      const formattedPhone = this.formatPhoneNumber(userData.phone);
+      const userId = this.generateUserId();
+
+      // Создаем пользователя в Supabase
+      const { data, error } = await supabase
+        .from('users')
+        .insert({
+          id: userId,
+          phone: formattedPhone,
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          middle_name: userData.middleName || null,
+          birth_date: userData.birthDate,
+          role: userData.role,
+          profile_image: userData.profileImage || null,
+          is_verified: true
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('[AuthService] Ошибка создания пользователя в Supabase:', error);
+        return {
+          success: false,
+          error: 'Не удалось создать пользователя'
+        };
+      }
+
       const newUser: User = {
-        id: this.generateUserId(),
-        phone: formattedPhone,
-        firstName: request.firstName,
-        lastName: request.lastName,
-        middleName: request.middleName,
-        birthDate: request.birthDate,
-        profileImage: request.profileImage,
-        role: request.role,
-        isVerified: true, // После прохождения SMS верификации
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        id: data.id,
+        phone: data.phone,
+        firstName: data.first_name,
+        lastName: data.last_name,
+        middleName: data.middle_name,
+        birthDate: data.birth_date,
+        profileImage: data.profile_image,
+        role: data.role as 'customer' | 'worker',
+        isVerified: data.is_verified,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
       };
 
-      // Сохраняем пользователя локально
-      this.users.set(formattedPhone, newUser);
-      await this.saveUsers();
-
-      // Сохраняем пользователя в Supabase (если доступен)
-      await this.createUserInSupabase(newUser);
-
-      // Авторизуем пользователя
+      // Устанавливаем состояние авторизации
       this.authState = {
         isAuthenticated: true,
         user: newUser
       };
 
-      await this.saveAuthState();
+      // Сохраняем сессию
+      await this.saveSession(newUser);
+
+      console.log(`[AuthService] Пользователь ${newUser.firstName} ${newUser.lastName} успешно зарегистрирован`);
 
       return {
         success: true,
@@ -288,79 +403,69 @@ class AuthService {
       };
     } catch (error) {
       console.error('Ошибка завершения регистрации:', error);
-      return { success: false, error: 'Произошла ошибка при регистрации' };
-    }
-  }
-
-  /**
-   * Создание пользователя в Supabase
-   */
-  private async createUserInSupabase(user: User): Promise<void> {
-    try {
-      if (!supabase) {
-        console.log('[AuthService] Supabase недоступен, пользователь сохранен только локально');
-        return;
-      }
-
-      const { error } = await supabase
-        .from('users')
-        .insert({
-          id: user.id,
-          phone: user.phone,
-          first_name: user.firstName,
-          last_name: user.lastName,
-          middle_name: user.middleName,
-          birth_date: user.birthDate,
-          role: user.role,
-          profile_image: user.profileImage,
-          created_at: user.createdAt,
-          updated_at: user.updatedAt,
-        });
-
-      if (error) {
-        console.error('[AuthService] Ошибка создания пользователя в Supabase:', error);
-      } else {
-        console.log('[AuthService] ✅ Пользователь создан в Supabase:', user.firstName, user.lastName);
-      }
-    } catch (error) {
-      console.error('[AuthService] Исключение при создании пользователя в Supabase:', error);
-    }
-  }
-
-  // Выход из системы
-  async logout(): Promise<void> {
-    try {
-      this.authState = {
-        isAuthenticated: false,
-        user: null
+      return {
+        success: false,
+        error: 'Произошла ошибка при создании профиля'
       };
-
-      await this.saveAuthState();
-    } catch (error) {
-      console.error('Ошибка выхода из системы:', error);
     }
   }
 
   // Обновление профиля пользователя
-  async updateProfile(updates: Partial<Omit<User, 'id' | 'phone' | 'createdAt'>>): Promise<AuthResponse> {
+  async updateProfile(updates: Partial<User>): Promise<AuthResponse> {
     try {
-      if (!this.authState.user) {
-        return { success: false, error: 'Пользователь не авторизован' };
+      if (!this.authState.user || !supabase) {
+        return {
+          success: false,
+          error: 'Пользователь не авторизован или база данных недоступна'
+        };
       }
 
+      const userId = this.authState.user.id;
+
+      // Обновляем в Supabase
+      const { data, error } = await supabase
+        .from('users')
+        .update({
+          first_name: updates.firstName,
+          last_name: updates.lastName,
+          middle_name: updates.middleName,
+          birth_date: updates.birthDate,
+          profile_image: updates.profileImage,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('[AuthService] Ошибка обновления профиля в Supabase:', error);
+        return {
+          success: false,
+          error: 'Не удалось обновить профиль'
+        };
+      }
+
+      // Обновляем локальное состояние
       const updatedUser: User = {
-        ...this.authState.user,
-        ...updates,
-        updatedAt: new Date().toISOString()
+        id: data.id,
+        phone: data.phone,
+        firstName: data.first_name,
+        lastName: data.last_name,
+        middleName: data.middle_name,
+        birthDate: data.birth_date,
+        profileImage: data.profile_image,
+        role: data.role as 'customer' | 'worker',
+        isVerified: data.is_verified,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
       };
 
-      // Обновляем пользователя в хранилище
-      this.users.set(updatedUser.phone, updatedUser);
-      await this.saveUsers();
+      this.authState = {
+        isAuthenticated: true,
+        user: updatedUser
+      };
 
-      // Обновляем текущее состояние
-      this.authState.user = updatedUser;
-      await this.saveAuthState();
+      console.log(`[AuthService] Профиль пользователя ${updatedUser.firstName} ${updatedUser.lastName} обновлен`);
 
       return {
         success: true,
@@ -368,13 +473,66 @@ class AuthService {
       };
     } catch (error) {
       console.error('Ошибка обновления профиля:', error);
-      return { success: false, error: 'Произошла ошибка при обновлении профиля' };
+      return {
+        success: false,
+        error: 'Произошла ошибка при обновлении профиля'
+      };
     }
   }
 
-  // Получение всех пользователей (для тестирования)
-  getAllUsers(): User[] {
-    return Array.from(this.users.values());
+  // Выход из аккаунта
+  async logout(): Promise<void> {
+    try {
+      await this.clearSession();
+      console.log('[AuthService] Пользователь вышел из аккаунта');
+    } catch (error) {
+      console.error('Ошибка выхода:', error);
+    }
+  }
+
+  // Получение всех пользователей из Supabase (для отображения заказчиков)
+  async getAllUsersFromSupabase(): Promise<User[]> {
+    try {
+      if (!supabase) {
+        console.error('[AuthService] Supabase не доступен');
+        return [];
+      }
+
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('[AuthService] Ошибка загрузки пользователей из Supabase:', error);
+        return [];
+      }
+
+      const users: User[] = data.map((item: any) => ({
+        id: item.id,
+        phone: item.phone,
+        firstName: item.first_name,
+        lastName: item.last_name,
+        middleName: item.middle_name,
+        birthDate: item.birth_date,
+        profileImage: item.profile_image,
+        role: item.role as 'customer' | 'worker',
+        isVerified: item.is_verified || false,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at,
+      }));
+
+      console.log(`[AuthService] Загружено ${users.length} пользователей из Supabase`);
+      return users;
+    } catch (error) {
+      console.error('[AuthService] Исключение при загрузке пользователей:', error);
+      return [];
+    }
+  }
+
+  // Поиск пользователя по ID
+  async findUserById(userId: string): Promise<User | null> {
+    return await this.loadUserFromSupabase(userId);
   }
 
   // Очистка всех данных (для тестирования)
@@ -394,23 +552,19 @@ class AuthService {
         }
       }
 
-      // Очищаем локальные данные
-      this.users.clear();
-      this.authState = {
-        isAuthenticated: false,
-        user: null
-      };
+      // Очищаем сессию
+      await this.clearSession();
 
-      await AsyncStorage.multiRemove([
-        STORAGE_KEYS.AUTH_STATE,
-        STORAGE_KEYS.USERS,
-        STORAGE_KEYS.CURRENT_USER_ID
-      ]);
-
-      console.log('[AuthService] ✅ Локальные данные пользователей очищены');
+      console.log('[AuthService] ✅ Все данные очищены');
     } catch (error) {
       console.error('Ошибка очистки данных:', error);
     }
+  }
+
+  // Метод для совместимости (возвращает пустой массив, так как пользователи теперь только в Supabase)
+  getAllUsers(): User[] {
+    console.warn('[AuthService] getAllUsers устарел. Используйте getAllUsersFromSupabase()');
+    return [];
   }
 }
 

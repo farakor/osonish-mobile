@@ -45,6 +45,9 @@ export interface AuthResponse {
   user?: User;
   token?: string;
   error?: string;
+  requiresVerification?: boolean;
+  requiresProfileInfo?: boolean;
+  phone?: string;
 }
 
 // Order Types
@@ -84,8 +87,34 @@ export interface CreateOrderResponse {
   error?: string;
 }
 
+// Applicant Types
+export interface Applicant {
+  id: string;
+  orderId: string;
+  workerId: string;
+  workerName: string;
+  workerPhone: string;
+  rating?: number;
+  completedJobs?: number;
+  avatar?: string;
+  message?: string;
+  appliedAt: string;
+  status: 'pending' | 'accepted' | 'rejected';
+}
+
+export interface CreateApplicantRequest {
+  orderId: string;
+  workerId: string;
+  message?: string;
+}
+
 // Local Storage Types
 export interface OrdersState {
   orders: Order[];
+  lastUpdated: string;
+}
+
+export interface ApplicantsState {
+  applicants: Applicant[];
   lastUpdated: string;
 }

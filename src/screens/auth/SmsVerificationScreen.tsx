@@ -104,7 +104,7 @@ export function SmsVerificationScreen() {
 
     try {
       const { authService } = await import('../../services/authService');
-      const result = await authService.sendRegistrationCode(phone);
+      const result = await authService.startRegistration(phone);
 
       if (result.success) {
         Alert.alert('Успешно', 'SMS код отправлен повторно');

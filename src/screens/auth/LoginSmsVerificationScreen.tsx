@@ -120,7 +120,7 @@ export function LoginSmsVerificationScreen() {
     setCode(['', '', '', '', '', '']);
 
     try {
-      const result = await authService.sendLoginCode({ phone });
+      const result = await authService.login({ phone });
 
       if (result.success) {
         Alert.alert('Успешно', 'SMS код отправлен повторно');

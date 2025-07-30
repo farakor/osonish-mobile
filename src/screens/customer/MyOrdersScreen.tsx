@@ -30,7 +30,7 @@ export const MyOrdersScreen: React.FC = () => {
   const loadOrders = useCallback(async () => {
     try {
       setIsLoading(true);
-      const orders = await orderService.getUserOrders();
+      const orders = await orderService.getCustomerOrders();
       setAllOrders(orders);
     } catch (error) {
       console.error('Ошибка загрузки заказов:', error);

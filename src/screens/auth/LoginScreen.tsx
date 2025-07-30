@@ -52,7 +52,7 @@ export function LoginScreen() {
     setIsLoading(true);
 
     try {
-      const result = await authService.sendLoginCode({ phone: phoneNumber });
+      const result = await authService.login({ phone: phoneNumber });
 
       if (result.success) {
         // Переходим к экрану верификации SMS для входа

@@ -52,7 +52,7 @@ export function RegistrationScreen() {
 
     try {
       const { authService } = await import('../../services/authService');
-      const result = await authService.sendRegistrationCode(phoneNumber);
+      const result = await authService.startRegistration(phoneNumber);
 
       if (result.success) {
         // Переходим к экрану верификации

@@ -25,9 +25,24 @@ const JobCard: React.FC<{
   const [customerName, setCustomerName] = useState('Заказчик');
 
   const getCustomerName = async (customerId: string) => {
-    const users = authService.getAllUsers();
-    const customer = users.find(user => user.id === customerId);
-    return customer ? `${customer.firstName} ${customer.lastName.charAt(0)}.` : 'Заказчик';
+    try {
+      console.log(`[JobCard] Поиск заказчика с ID: ${customerId}`);
+
+      // Используем новый метод поиска пользователя
+      const customer = await authService.findUserById(customerId);
+
+      if (customer) {
+        const formattedName = `${customer.lastName} ${customer.firstName.charAt(0)}.`;
+        console.log(`[JobCard] Найден заказчик: ${formattedName}`);
+        return formattedName;
+      } else {
+        console.log(`[JobCard] Заказчик с ID ${customerId} не найден`);
+        return 'Заказчик';
+      }
+    } catch (error) {
+      console.error('[JobCard] Ошибка получения имени заказчика:', error);
+      return 'Заказчик';
+    }
   };
 
   const formatBudget = (amount: number) => {
@@ -123,7 +138,7 @@ const WorkerJobsScreen: React.FC = () => {
         setIsLoading(true);
       }
 
-      const availableOrders = await orderService.getAvailableOrders();
+      const availableOrders = await orderService.getActiveOrdersForWorkers();
       console.log(`[WorkerJobsScreen] Загружено ${availableOrders.length} доступных заказов`);
 
       setOrders(availableOrders);
@@ -140,29 +155,17 @@ const WorkerJobsScreen: React.FC = () => {
   useEffect(() => {
     loadOrders();
 
-    // Проверяем статус подключения к Supabase
-    const isSupabaseEnabled = orderService.getSupabaseStatus();
-    setSupabaseConnected(isSupabaseEnabled);
-    console.log('[WorkerJobsScreen] Supabase статус:', isSupabaseEnabled);
+    // Supabase теперь всегда используется (нет fallback на локальное хранилище)
+    setSupabaseConnected(true);
+    console.log('[WorkerJobsScreen] Используем только Supabase');
   }, []);
 
-  // Подписка на real-time обновления заказов
+  // Real-time обновления временно отключены
+  // TODO: Реализовать real-time подписки через Supabase
   useEffect(() => {
-    let unsubscribe: (() => void) | null = null;
-
-    if (supabaseConnected) {
-      console.log('[WorkerJobsScreen] Настраиваем real-time обновления');
-      unsubscribe = orderService.subscribeToOrderUpdates((updatedOrders) => {
-        console.log('[WorkerJobsScreen] Получены обновленные заказы:', updatedOrders.length);
-        setOrders(updatedOrders);
-      });
-    }
-
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
-    };
+    console.log('[WorkerJobsScreen] Автообновление отключено');
+    // Автообновление заказов отключено для экономии ресурсов
+    // Используйте pull-to-refresh для ручного обновления
   }, [supabaseConnected]);
 
   // Обновляем заказы при возвращении на экран
@@ -222,10 +225,14 @@ const WorkerJobsScreen: React.FC = () => {
         return;
       }
 
-      // Увеличиваем счетчик откликов
-      const success = await orderService.incrementOrderApplicants(orderId);
+      // Создаем полноценный отклик исполнителя
+      const applicantCreated = await orderService.createApplicant({
+        orderId: orderId,
+        workerId: authState.user.id
+      });
 
-      if (success) {
+      if (applicantCreated) {
+        // Счетчик откликов автоматически увеличивается в createApplicant
         Alert.alert(
           'Успешно!',
           'Ваш отклик отправлен заказчику. Ожидайте ответа.',

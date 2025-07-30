@@ -19,7 +19,7 @@ import CalendarDateIcon from '../../../assets/calendar-date.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { HeaderWithBack } from '../../components/common';
 import { orderService } from '../../services/orderService';
-import { Order } from '../../types';
+import { Order, Applicant } from '../../types';
 
 type OrderDetailsRouteProp = RouteProp<CustomerStackParamList, 'OrderDetails'>;
 type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
@@ -33,15 +33,7 @@ interface MediaFile {
 
 // Используем Order из типов вместо OrderData
 
-interface Applicant {
-  id: string;
-  name: string;
-  rating: number;
-  completedJobs: number;
-  avatar?: string;
-  message: string;
-  appliedAt: string;
-}
+
 
 // Компонент для превью видео
 const VideoPreview: React.FC<{ uri: string }> = ({ uri }) => {
@@ -58,49 +50,7 @@ const VideoPreview: React.FC<{ uri: string }> = ({ uri }) => {
 
 // Удаляем mockOrder - теперь загружаем реальные данные
 
-// Моковые данные откликов
-const mockApplicants: Applicant[] = [
-  {
-    id: '1',
-    name: 'Анна Петрова',
-    rating: 4.8,
-    completedJobs: 42,
-    message: 'Здравствуйте! Имею большой опыт в уборке квартир. Могу выполнить заказ качественно и в срок.',
-    appliedAt: '1 час назад'
-  },
-  {
-    id: '2',
-    name: 'Мария Сидорова',
-    rating: 4.6,
-    completedJobs: 28,
-    message: 'Готова приступить к работе сегодня. Все необходимые средства для уборки есть.',
-    appliedAt: '2 часа назад'
-  },
-  {
-    id: '3',
-    name: 'Елена Иванова',
-    rating: 4.9,
-    completedJobs: 67,
-    message: 'Профессиональная уборка с гарантией качества. Работаю быстро и аккуратно.',
-    appliedAt: '3 часа назад'
-  },
-  {
-    id: '4',
-    name: 'Ольга Козлова',
-    rating: 4.7,
-    completedJobs: 35,
-    message: 'Здравствуйте! Готова выполнить уборку в удобное для вас время.',
-    appliedAt: '4 часа назад'
-  },
-  {
-    id: '5',
-    name: 'Татьяна Смирнова',
-    rating: 4.5,
-    completedJobs: 19,
-    message: 'Опытный работник, все делаю качественно и в срок.',
-    appliedAt: '5 часов назад'
-  }
-];
+
 
 export const OrderDetailsScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
@@ -110,7 +60,8 @@ export const OrderDetailsScreen: React.FC = () => {
   const [showApplicants, setShowApplicants] = useState(false);
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [applicants] = useState<Applicant[]>(mockApplicants);
+  const [applicants, setApplicants] = useState<Applicant[]>([]);
+  const [applicantsLoading, setApplicantsLoading] = useState(false);
 
   // Загружаем заказ по ID
   useEffect(() => {
@@ -128,6 +79,26 @@ export const OrderDetailsScreen: React.FC = () => {
     };
 
     loadOrder();
+  }, [orderId]);
+
+  // Загружаем отклики для заказа
+  useEffect(() => {
+    const loadApplicants = async () => {
+      if (!orderId) return;
+
+      try {
+        setApplicantsLoading(true);
+        const orderApplicants = await orderService.getApplicantsForOrder(orderId);
+        setApplicants(orderApplicants);
+        console.log(`[OrderDetailsScreen] Загружено ${orderApplicants.length} откликов для заказа ${orderId}`);
+      } catch (error) {
+        console.error('Ошибка загрузки откликов:', error);
+      } finally {
+        setApplicantsLoading(false);
+      }
+    };
+
+    loadApplicants();
   }, [orderId]);
 
   const getStatusColor = (status: Order['status']) => {
@@ -186,29 +157,87 @@ export const OrderDetailsScreen: React.FC = () => {
     );
   };
 
-  const renderApplicant = ({ item }: { item: Applicant }) => (
-    <View style={styles.applicantCard}>
-      <View style={styles.applicantHeader}>
-        <View style={styles.applicantInfo}>
-          <Text style={styles.applicantName}>{item.name}</Text>
-          <View style={styles.applicantStats}>
-            <Text style={styles.applicantRating}>⭐ {item.rating}</Text>
-            <Text style={styles.applicantJobs}>• {item.completedJobs} заказов</Text>
+  const handleAcceptApplicant = async (applicantId: string) => {
+    try {
+      const success = await orderService.updateApplicantStatus(applicantId, 'accepted');
+      if (success) {
+        Alert.alert('Успешно', 'Отклик принят');
+        // Обновляем список откликов
+        const updatedApplicants = await orderService.getApplicantsForOrder(orderId);
+        setApplicants(updatedApplicants);
+      } else {
+        Alert.alert('Ошибка', 'Не удалось принять отклик');
+      }
+    } catch (error) {
+      console.error('Ошибка принятия отклика:', error);
+      Alert.alert('Ошибка', 'Произошла ошибка при принятии отклика');
+    }
+  };
+
+  const handleRejectApplicant = async (applicantId: string) => {
+    try {
+      const success = await orderService.updateApplicantStatus(applicantId, 'rejected');
+      if (success) {
+        Alert.alert('Успешно', 'Отклик отклонен');
+        // Обновляем список откликов
+        const updatedApplicants = await orderService.getApplicantsForOrder(orderId);
+        setApplicants(updatedApplicants);
+      } else {
+        Alert.alert('Ошибка', 'Не удалось отклонить отклик');
+      }
+    } catch (error) {
+      console.error('Ошибка отклонения отклика:', error);
+      Alert.alert('Ошибка', 'Произошла ошибка при отклонении отклика');
+    }
+  };
+
+  const renderApplicant = ({ item }: { item: Applicant }) => {
+    const formatAppliedAt = (dateString: string) => {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+      if (diffHours < 1) {
+        const diffMins = Math.floor(diffMs / (1000 * 60));
+        return `${diffMins} мин назад`;
+      } else if (diffHours < 24) {
+        return `${diffHours} ч назад`;
+      } else {
+        const diffDays = Math.floor(diffHours / 24);
+        return `${diffDays} дн назад`;
+      }
+    };
+
+    return (
+      <View style={styles.applicantCard}>
+        <View style={styles.applicantHeader}>
+          <View style={styles.applicantInfo}>
+            <Text style={styles.applicantName}>{item.workerName}</Text>
+            <View style={styles.applicantStats}>
+              <Text style={styles.applicantRating}>⭐ {item.rating?.toFixed(1) || '4.5'}</Text>
+              <Text style={styles.applicantJobs}>• {item.completedJobs || 0} заказов</Text>
+            </View>
           </View>
+          <Text style={styles.applicantTime}>{formatAppliedAt(item.appliedAt)}</Text>
         </View>
-        <Text style={styles.applicantTime}>{item.appliedAt}</Text>
+        <View style={styles.applicantActions}>
+          <TouchableOpacity
+            style={styles.acceptButton}
+            onPress={() => handleAcceptApplicant(item.id)}
+          >
+            <Text style={styles.acceptButtonText}>Принять</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.rejectButton}
+            onPress={() => handleRejectApplicant(item.id)}
+          >
+            <Text style={styles.rejectButtonText}>Отклонить</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-      <Text style={styles.applicantMessage}>{item.message}</Text>
-      <View style={styles.applicantActions}>
-        <TouchableOpacity style={styles.acceptButton}>
-          <Text style={styles.acceptButtonText}>Принять</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.rejectButton}>
-          <Text style={styles.rejectButtonText}>Отклонить</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    );
+  };
 
   // Утилитарные функции для форматирования
   const formatBudget = (budget: number) => {
@@ -350,23 +379,39 @@ export const OrderDetailsScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          {applicants.slice(0, 2).map((applicant) => (
-            <View key={applicant.id} style={styles.applicantPreview}>
-              <View style={styles.applicantHeader}>
-                <View style={styles.applicantInfo}>
-                  <Text style={styles.applicantName}>{applicant.name}</Text>
-                  <View style={styles.applicantStats}>
-                    <Text style={styles.applicantRating}>⭐ {applicant.rating}</Text>
-                    <Text style={styles.applicantJobs}>• {applicant.completedJobs} заказов</Text>
+          {applicants.slice(0, 2).map((applicant) => {
+            const formatAppliedAt = (dateString: string) => {
+              const date = new Date(dateString);
+              const now = new Date();
+              const diffMs = now.getTime() - date.getTime();
+              const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+              if (diffHours < 1) {
+                const diffMins = Math.floor(diffMs / (1000 * 60));
+                return `${diffMins} мин назад`;
+              } else if (diffHours < 24) {
+                return `${diffHours} ч назад`;
+              } else {
+                const diffDays = Math.floor(diffHours / 24);
+                return `${diffDays} дн назад`;
+              }
+            };
+
+            return (
+              <View key={applicant.id} style={styles.applicantPreview}>
+                <View style={styles.applicantHeader}>
+                  <View style={styles.applicantInfo}>
+                    <Text style={styles.applicantName}>{applicant.workerName}</Text>
+                    <View style={styles.applicantStats}>
+                      <Text style={styles.applicantRating}>⭐ {applicant.rating?.toFixed(1) || '4.5'}</Text>
+                      <Text style={styles.applicantJobs}>• {applicant.completedJobs || 0} заказов</Text>
+                    </View>
                   </View>
+                  <Text style={styles.applicantTime}>{formatAppliedAt(applicant.appliedAt)}</Text>
                 </View>
-                <Text style={styles.applicantTime}>{applicant.appliedAt}</Text>
               </View>
-              <Text style={styles.applicantMessage} numberOfLines={2}>
-                {applicant.message}
-              </Text>
-            </View>
-          ))}
+            );
+          })}
         </View>
       </ScrollView>
 
