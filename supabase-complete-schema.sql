@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS public.applicants (
     rating DECIMAL(3,2) DEFAULT 4.5,
     completed_jobs INTEGER DEFAULT 0,
     message TEXT,
+    proposed_price INTEGER, -- предложенная цена исполнителя в сумах
     applied_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     status VARCHAR(20) CHECK (status IN ('pending', 'accepted', 'rejected')) DEFAULT 'pending',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -180,6 +181,7 @@ COMMENT ON COLUMN public.orders.applicants_count IS 'Количество отк
 COMMENT ON COLUMN public.applicants.status IS 'Статус отклика: pending, accepted, rejected';
 COMMENT ON COLUMN public.applicants.rating IS 'Рейтинг исполнителя';
 COMMENT ON COLUMN public.applicants.completed_jobs IS 'Количество выполненных заказов исполнителем';
+COMMENT ON COLUMN public.applicants.proposed_price IS 'Предложенная цена исполнителя в сумах';
 
 -- Проверяем что все создано успешно
 SELECT 

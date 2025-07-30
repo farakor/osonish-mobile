@@ -209,6 +209,10 @@ export const OrderDetailsScreen: React.FC = () => {
       }
     };
 
+    const formatPrice = (price: number) => {
+      return price.toLocaleString('ru-RU');
+    };
+
     return (
       <View style={styles.applicantCard}>
         <View style={styles.applicantHeader}>
@@ -221,6 +225,33 @@ export const OrderDetailsScreen: React.FC = () => {
           </View>
           <Text style={styles.applicantTime}>{formatAppliedAt(item.appliedAt)}</Text>
         </View>
+
+        {/* Предложенная цена */}
+        {item.proposedPrice && (
+          <View style={styles.proposedPriceContainer}>
+            <Text style={styles.proposedPriceLabel}>Предложенная цена:</Text>
+            <Text style={styles.proposedPriceValue}>
+              {formatPrice(item.proposedPrice)} сум
+              {order && item.proposedPrice !== order.budget && (
+                <Text style={[
+                  styles.priceDifference,
+                  { color: item.proposedPrice > order.budget ? '#FF6B6B' : '#4ECDC4' }
+                ]}>
+                  {' '}({item.proposedPrice > order.budget ? '+' : ''}{formatPrice(item.proposedPrice - order.budget)})
+                </Text>
+              )}
+            </Text>
+          </View>
+        )}
+
+        {/* Комментарий исполнителя */}
+        {item.message && item.message.trim() && (
+          <View style={styles.messageContainer}>
+            <Text style={styles.messageLabel}>Комментарий:</Text>
+            <Text style={styles.messageText}>{item.message}</Text>
+          </View>
+        )}
+
         <View style={styles.applicantActions}>
           <TouchableOpacity
             style={styles.acceptButton}
@@ -409,6 +440,25 @@ export const OrderDetailsScreen: React.FC = () => {
                   </View>
                   <Text style={styles.applicantTime}>{formatAppliedAt(applicant.appliedAt)}</Text>
                 </View>
+
+                {/* Предложенная цена в превью */}
+                {applicant.proposedPrice && (
+                  <View style={styles.proposedPriceContainer}>
+                    <Text style={styles.proposedPriceLabel}>Цена:</Text>
+                    <Text style={styles.proposedPriceValue}>
+                      {formatBudget(applicant.proposedPrice)} сум
+                    </Text>
+                  </View>
+                )}
+
+                {/* Комментарий в превью (краткий) */}
+                {applicant.message && applicant.message.trim() && (
+                  <View style={styles.messageContainer}>
+                    <Text style={styles.messageText} numberOfLines={2}>
+                      {applicant.message}
+                    </Text>
+                  </View>
+                )}
               </View>
             );
           })}
@@ -705,5 +755,45 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.medium,
+  },
+  proposedPriceContainer: {
+    backgroundColor: '#f8f9fa',
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+  },
+  proposedPriceLabel: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
+    marginBottom: 4,
+    fontWeight: theme.fonts.weights.medium,
+  },
+  proposedPriceValue: {
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.text.primary,
+    fontWeight: theme.fonts.weights.semiBold,
+  },
+  priceDifference: {
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.medium,
+  },
+  messageContainer: {
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+  },
+  messageLabel: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
+    marginBottom: 4,
+    fontWeight: theme.fonts.weights.medium,
+  },
+  messageText: {
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.text.primary,
+    lineHeight: 20,
+    backgroundColor: '#f8f9fa',
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
   },
 }); 

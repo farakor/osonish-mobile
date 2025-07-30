@@ -98,6 +98,7 @@ export interface Applicant {
   completedJobs?: number;
   avatar?: string;
   message?: string;
+  proposedPrice?: number; // предложенная цена исполнителя
   appliedAt: string;
   status: 'pending' | 'accepted' | 'rejected';
 }
@@ -106,6 +107,7 @@ export interface CreateApplicantRequest {
   orderId: string;
   workerId: string;
   message?: string;
+  proposedPrice?: number; // предложенная цена исполнителя
 }
 
 // Local Storage Types

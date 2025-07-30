@@ -16,6 +16,7 @@ import { theme } from '../../constants/theme';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { Order } from '../../types';
+import { ProposePriceModal } from '../../components/common';
 
 // Отдельный компонент для карточки заказа
 const JobCard: React.FC<{
@@ -128,6 +129,8 @@ const WorkerJobsScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [supabaseConnected, setSupabaseConnected] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   // Функция загрузки заказов
   const loadOrders = async (isRefresh = false) => {
@@ -225,14 +228,39 @@ const WorkerJobsScreen: React.FC = () => {
         return;
       }
 
-      // Создаем полноценный отклик исполнителя
+      // Находим заказ для показа в модалке
+      const order = orders.find(o => o.id === orderId);
+      if (!order) {
+        Alert.alert('Ошибка', 'Заказ не найден');
+        return;
+      }
+
+      // Показываем модалку предложения цены
+      setSelectedOrder(order);
+      setModalVisible(true);
+    } catch (error) {
+      console.error('Ошибка при открытии формы отклика:', error);
+      Alert.alert('Ошибка', 'Произошла ошибка');
+    }
+  };
+
+  const handleSubmitProposal = async (proposedPrice: number, message: string) => {
+    try {
+      const authState = authService.getAuthState();
+      if (!authState.isAuthenticated || !authState.user || !selectedOrder) {
+        Alert.alert('Ошибка', 'Необходимо войти в систему');
+        return;
+      }
+
+      // Создаем отклик с предложенной ценой
       const applicantCreated = await orderService.createApplicant({
-        orderId: orderId,
-        workerId: authState.user.id
+        orderId: selectedOrder.id,
+        workerId: authState.user.id,
+        message: message,
+        proposedPrice: proposedPrice
       });
 
       if (applicantCreated) {
-        // Счетчик откликов автоматически увеличивается в createApplicant
         Alert.alert(
           'Успешно!',
           'Ваш отклик отправлен заказчику. Ожидайте ответа.',
@@ -358,6 +386,18 @@ const WorkerJobsScreen: React.FC = () => {
           }
         />
       </SafeAreaView>
+
+      {/* Модалка предложения цены */}
+      <ProposePriceModal
+        visible={modalVisible}
+        onClose={() => {
+          setModalVisible(false);
+          setSelectedOrder(null);
+        }}
+        onSubmit={handleSubmitProposal}
+        originalPrice={selectedOrder?.budget || 0}
+        orderTitle={selectedOrder?.title || ''}
+      />
     </View>
   );
 };

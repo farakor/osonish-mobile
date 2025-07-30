@@ -384,6 +384,7 @@ export class OrderService {
           rating: 4.5, // Default rating for new workers
           completed_jobs: 0, // Default for new workers
           message: request.message || '',
+          proposed_price: request.proposedPrice,
           applied_at: currentTime,
           status: 'pending',
           created_at: currentTime,
@@ -431,6 +432,7 @@ export class OrderService {
         rating: item.rating,
         completedJobs: item.completed_jobs,
         message: item.message,
+        proposedPrice: item.proposed_price,
         appliedAt: item.applied_at,
         status: item.status as 'pending' | 'accepted' | 'rejected'
       }));
