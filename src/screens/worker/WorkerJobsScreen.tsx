@@ -17,13 +17,19 @@ import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { Order } from '../../types';
 import { PriceConfirmationModal, ProposePriceModal } from '../../components/common';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { WorkerStackParamList } from '../../types/navigation';
+
+type WorkerNavigationProp = NativeStackNavigationProp<WorkerStackParamList>;
 
 // Отдельный компонент для карточки заказа
 const JobCard: React.FC<{
   item: Order;
   onApply: (orderId: string) => void;
   hasApplied?: boolean;
-}> = ({ item, onApply, hasApplied = false }) => {
+  navigation: WorkerNavigationProp;
+}> = ({ item, onApply, hasApplied = false, navigation }) => {
   const [customerName, setCustomerName] = useState('Заказчик');
 
   const getCustomerName = async (customerId: string) => {
@@ -65,7 +71,11 @@ const JobCard: React.FC<{
   }, [item.customerId]);
 
   return (
-    <View style={styles.jobCard}>
+    <TouchableOpacity
+      style={styles.jobCard}
+      activeOpacity={0.8}
+      onPress={() => navigation.navigate('JobDetails', { orderId: item.id })}
+    >
       {/* Header with title and budget */}
       <View style={styles.jobHeader}>
         <Text style={styles.jobTitle}>{item.title}</Text>
@@ -127,11 +137,12 @@ const JobCard: React.FC<{
           </Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
 const WorkerJobsScreen: React.FC = () => {
+  const navigation = useNavigation<WorkerNavigationProp>();
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -353,6 +364,7 @@ const WorkerJobsScreen: React.FC = () => {
         item={item}
         onApply={handleApplyToJob}
         hasApplied={hasApplied}
+        navigation={navigation}
       />
     );
   };

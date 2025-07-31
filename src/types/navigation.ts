@@ -34,6 +34,14 @@ export type CustomerTabParamList = {
   Profile: undefined;
 };
 
+export type WorkerStackParamList = {
+  MainTabs: undefined;
+  JobDetails: { orderId: string };
+  EditProfile: undefined;
+  Notifications: undefined;
+  Support: undefined;
+};
+
 export type WorkerTabParamList = {
   Jobs: undefined;
   Applications: undefined;
