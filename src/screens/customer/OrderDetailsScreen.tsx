@@ -384,16 +384,27 @@ export const OrderDetailsScreen: React.FC = () => {
           <Text style={styles.description}>{order.description}</Text>
         </View>
 
-        {/* Photos */}
+        {/* Photos and Videos */}
         {order.photos && order.photos.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Фотографии</Text>
+            <Text style={styles.sectionTitle}>Фото и видео</Text>
             <View style={styles.mediaGrid}>
-              {order.photos.map((photoUri: string, index: number) => (
-                <View key={index} style={styles.mediaItem}>
-                  <Image source={{ uri: photoUri }} style={styles.mediaImage} resizeMode="cover" />
-                </View>
-              ))}
+              {order.photos.map((photoUri: string, index: number) => {
+                // Улучшенное определение типа файла
+                const isVideo = /\.(mp4|mov|avi|mkv|webm|m4v)(\?|$)/i.test(photoUri) ||
+                  photoUri.includes('video') ||
+                  photoUri.includes('.mp4') ||
+                  photoUri.includes('.mov');
+                return (
+                  <View key={index} style={styles.mediaItem}>
+                    {isVideo ? (
+                      <VideoPreview uri={photoUri} />
+                    ) : (
+                      <Image source={{ uri: photoUri }} style={styles.mediaImage} resizeMode="cover" />
+                    )}
+                  </View>
+                );
+              })}
             </View>
           </View>
         )}

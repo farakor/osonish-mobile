@@ -198,7 +198,7 @@ export const CreateOrderScreen: React.FC = () => {
         budget: parseFloat(budget.replace(/[^\d]/g, '')), // убираем форматирование и преобразуем в число
         workersNeeded: parseInt(workersCount),
         serviceDate: selectedDate!.toISOString(),
-        photos: mediaFiles.filter(file => file.type === 'image').map(file => file.uri),
+        photos: mediaFiles.map(file => file.uri), // Сохраняем все медиа файлы (и фото и видео)
       };
 
       // Создаем заказ
