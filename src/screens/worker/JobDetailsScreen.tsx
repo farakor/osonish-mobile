@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,17 +8,24 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  FlatList,
+  Dimensions,
 } from 'react-native';
 import { theme } from '../../constants';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { WorkerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import CalendarDateIcon from '../../../assets/calendar-date.svg';
+import UserIcon from '../../../assets/user-01.svg';
+import HomeIcon from '../../../assets/home-02.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { HeaderWithBack, PriceConfirmationModal, ProposePriceModal } from '../../components/common';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
-import { Order } from '../../types';
+import { Order, User } from '../../types';
+
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = width - 48; // 24px margin on each side
 
 type JobDetailsRouteProp = RouteProp<WorkerStackParamList, 'JobDetails'>;
 type NavigationProp = NativeStackNavigationProp<WorkerStackParamList>;
@@ -32,13 +39,151 @@ const VideoPreview: React.FC<{ uri: string }> = ({ uri }) => {
 
   return (
     <VideoView
-      style={styles.media}
+      style={styles.mediaImage}
       player={player}
       allowsFullscreen
       allowsPictureInPicture
       contentFit="cover"
       nativeControls={false}
     />
+  );
+};
+
+// Компонент для изображения с обработкой ошибок
+const SafeImage: React.FC<{ uri: string; index: number }> = ({ uri, index }) => {
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  if (hasError) {
+    return (
+      <View style={[styles.mediaImage, styles.errorContainer]}>
+        <Text style={styles.errorText}>❌</Text>
+        <Text style={styles.errorSubtext}>Ошибка загрузки</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.mediaImageContainer}>
+      <Image
+        source={{ uri }}
+        style={styles.mediaImage}
+        resizeMode="cover"
+        onLoad={() => {
+          console.log(`[JobDetails] ✅ Изображение ${index + 1} загружено`);
+          setIsLoading(false);
+        }}
+        onError={(error) => {
+          console.error(`[JobDetails] ❌ Ошибка загрузки изображения ${index + 1}:`, error.nativeEvent.error);
+          console.error(`[JobDetails] URL: ${uri}`);
+          setHasError(true);
+          setIsLoading(false);
+        }}
+        onLoadStart={() => {
+          console.log(`[JobDetails] 🔄 Начинаем загрузку изображения ${index + 1}`);
+          setIsLoading(true);
+        }}
+      />
+      {isLoading && (
+        <View style={[styles.mediaImage, styles.loadingOverlay]}>
+          <Text style={styles.loadingText}>⏳</Text>
+        </View>
+      )}
+    </View>
+  );
+};
+
+// Компонент галереи изображений
+const ImageGallery: React.FC<{ photos: string[] }> = ({ photos }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const flatListRef = useRef<FlatList>(null);
+
+  const renderPhoto = ({ item, index }: { item: string; index: number }) => {
+    const isVideo = /\.(mp4|mov|avi|mkv|webm|m4v|3gp|flv|wmv)(\?|$)/i.test(item) ||
+      item.includes('video') ||
+      item.includes('/video/') ||
+      item.includes('_video_');
+
+    return (
+      <View style={styles.photoContainer}>
+        {isVideo ? (
+          <VideoPreview uri={item} />
+        ) : (
+          <SafeImage uri={item} index={index} />
+        )}
+      </View>
+    );
+  };
+
+  const onScroll = (event: any) => {
+    const slideSize = CARD_WIDTH;
+    const offset = event.nativeEvent.contentOffset.x;
+    const index = Math.round(offset / slideSize);
+    setCurrentIndex(index);
+  };
+
+  const goToPrevious = () => {
+    if (currentIndex > 0) {
+      flatListRef.current?.scrollToIndex({ index: currentIndex - 1, animated: true });
+    }
+  };
+
+  const goToNext = () => {
+    if (currentIndex < photos.length - 1) {
+      flatListRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true });
+    }
+  };
+
+  return (
+    <View style={styles.galleryContainer}>
+      <FlatList
+        ref={flatListRef}
+        data={photos}
+        renderItem={renderPhoto}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        keyExtractor={(item, index) => index.toString()}
+      />
+
+      {/* Navigation arrows */}
+      {photos.length > 1 && (
+        <>
+          <TouchableOpacity
+            style={[styles.navButton, styles.navButtonLeft]}
+            onPress={goToPrevious}
+            disabled={currentIndex === 0}
+          >
+            <Text style={styles.navButtonText}>‹</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.navButton, styles.navButtonRight]}
+            onPress={goToNext}
+            disabled={currentIndex === photos.length - 1}
+          >
+            <Text style={styles.navButtonText}>›</Text>
+          </TouchableOpacity>
+        </>
+      )}
+
+      {/* Dots indicator */}
+      {photos.length > 1 && (
+        <View style={styles.dotsContainer}>
+          {photos.map((_, index) => (
+            <View
+              key={index}
+              style={[
+                styles.dot,
+                index === currentIndex ? styles.activeDot : styles.inactiveDot
+              ]}
+            />
+          ))}
+        </View>
+      )}
+    </View>
   );
 };
 
@@ -50,7 +195,7 @@ export const JobDetailsScreen: React.FC = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasApplied, setHasApplied] = useState(false);
-  const [customerName, setCustomerName] = useState('Заказчик');
+  const [customer, setCustomer] = useState<User | null>(null);
   const [priceConfirmationVisible, setPriceConfirmationVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -66,11 +211,11 @@ export const JobDetailsScreen: React.FC = () => {
         const applied = await orderService.hasUserAppliedToOrder(orderId);
         setHasApplied(applied);
 
-        // Загружаем имя заказчика
+        // Загружаем информацию о заказчике
         if (orderData) {
-          const customer = await authService.findUserById(orderData.customerId);
-          if (customer) {
-            setCustomerName(`${customer.lastName} ${customer.firstName.charAt(0)}.`);
+          const customerData = await authService.findUserById(orderData.customerId);
+          if (customerData) {
+            setCustomer(customerData);
           }
         }
       } catch (error) {
@@ -86,30 +231,15 @@ export const JobDetailsScreen: React.FC = () => {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}.${month}.${year}`;
+    return date.toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
   };
 
   const formatBudget = (budget: number) => {
     return budget.toLocaleString('ru-RU');
-  };
-
-  const formatCreatedAt = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / 60000);
-
-    if (diffInMinutes < 60) {
-      return `${diffInMinutes} мин назад`;
-    } else if (diffInMinutes < 1440) {
-      const hours = Math.floor(diffInMinutes / 60);
-      return `${hours} ч назад`;
-    } else {
-      const days = Math.floor(diffInMinutes / 1440);
-      return `${days} дн назад`;
-    }
   };
 
   const handleApplyToJob = async () => {
@@ -241,88 +371,84 @@ export const JobDetailsScreen: React.FC = () => {
         {/* Header */}
         <HeaderWithBack />
 
-        {/* Order Title */}
-        <View style={styles.titleSection}>
-          <Text style={styles.title}>{order.title}</Text>
-          <Text style={styles.budget}>{formatBudget(order.budget)} сум</Text>
-        </View>
-
-        {/* Order Info */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Информация о заказе</Text>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Категория:</Text>
-            <Text style={styles.infoValue}>{order.category}</Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Работников:</Text>
-            <Text style={styles.infoValue}>{order.workersNeeded}</Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Дата:</Text>
-            <View style={styles.dateValue}>
-              <CalendarDateIcon width={16} height={16} stroke={theme.colors.text.primary} />
-              <Text style={styles.infoValue}>{formatDate(order.serviceDate)}</Text>
+        {/* Customer Profile Section */}
+        <View style={styles.profileSection}>
+          <View style={styles.profileContainer}>
+            <View style={styles.avatarContainer}>
+              {customer?.profileImage ? (
+                <Image source={{ uri: customer.profileImage }} style={styles.avatar} />
+              ) : (
+                <View style={styles.avatarPlaceholder}>
+                  <UserIcon width={24} height={24} stroke={theme.colors.text.secondary} />
+                </View>
+              )}
+            </View>
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileName}>
+                {customer ? `${customer.lastName} ${customer.firstName}` : 'Заказчик'}
+              </Text>
+              <Text style={styles.profileRole}>Заказчик</Text>
             </View>
           </View>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Местоположение:</Text>
-            <Text style={styles.infoValue}>{order.location}</Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Заказчик:</Text>
-            <Text style={styles.infoValue}>{customerName}</Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Откликов:</Text>
-            <Text style={styles.infoValue}>{order.applicantsCount}</Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Создан:</Text>
-            <Text style={styles.infoValue}>{formatCreatedAt(order.createdAt)}</Text>
-          </View>
         </View>
 
-        {/* Description */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Описание</Text>
-          <Text style={styles.description}>{order.description}</Text>
+        {/* Order Title */}
+        <View style={styles.titleSection}>
+          <Text style={styles.orderTitle}>{order.title}</Text>
         </View>
 
-        {/* Photos/Videos */}
+        {/* Image Gallery */}
         {order.photos && order.photos.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Фото и видео</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mediaContainer}>
-              {order.photos.map((photo, index) => {
-                // Улучшенное определение типа файла
-                const isVideo = /\.(mp4|mov|avi|mkv|webm|m4v|3gp|flv|wmv)(\?|$)/i.test(photo) ||
-                  photo.includes('video') ||
-                  photo.includes('/video/') ||
-                  photo.includes('_video_');
-                return (
-                  <View key={index} style={styles.mediaWrapper}>
-                    {isVideo ? (
-                      <VideoPreview uri={photo} />
-                    ) : (
-                      <Image source={{ uri: photo }} style={styles.media} />
-                    )}
-                  </View>
-                );
-              })}
-            </ScrollView>
+          <View style={styles.gallerySection}>
+            <ImageGallery photos={order.photos} />
           </View>
         )}
+
+        {/* Info Grid */}
+        <View style={styles.infoSection}>
+          <View style={styles.infoGrid}>
+            <View style={styles.infoCard}>
+              <View style={styles.infoIcon}>
+                <Text style={styles.iconText}>💰</Text>
+              </View>
+              <Text style={styles.infoValue}>{formatBudget(order.budget)}</Text>
+              <Text style={styles.infoLabel}>Бюджет</Text>
+            </View>
+
+            <View style={styles.infoCard}>
+              <View style={styles.infoIcon}>
+                <Text style={styles.iconText}>🏷️</Text>
+              </View>
+              <Text style={styles.infoValue}>{order.category}</Text>
+              <Text style={styles.infoLabel}>Категория</Text>
+            </View>
+
+            <View style={styles.infoCard}>
+              <View style={styles.infoIcon}>
+                <HomeIcon width={20} height={20} stroke={theme.colors.primary} />
+              </View>
+              <Text style={styles.infoValue}>{order.location}</Text>
+              <Text style={styles.infoLabel}>Район</Text>
+            </View>
+
+            <View style={styles.infoCard}>
+              <View style={styles.infoIcon}>
+                <CalendarDateIcon width={20} height={20} stroke={theme.colors.primary} />
+              </View>
+              <Text style={styles.infoValue}>{formatDate(order.serviceDate)}</Text>
+              <Text style={styles.infoLabel}>Дата</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Details Section */}
+        <View style={styles.detailsSection}>
+          <Text style={styles.detailsTitle}>Детали</Text>
+          <Text style={styles.detailsText}>{order.description}</Text>
+        </View>
       </ScrollView>
 
-      {/* Apply Button */}
+      {/* Bottom Action Button */}
       <View style={styles.bottomSection}>
         <TouchableOpacity
           style={[
@@ -336,7 +462,7 @@ export const JobDetailsScreen: React.FC = () => {
             styles.applyButtonText,
             hasApplied && styles.appliedButtonText
           ]}>
-            {hasApplied ? 'Отклик отправлен' : 'Откликнуться'}
+            {hasApplied ? 'Отклик отправлен' : 'Подать заявку'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -389,97 +515,233 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: theme.spacing.lg,
   },
+  errorSubtext: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+  },
   errorButton: {
     backgroundColor: theme.colors.primary,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
-    borderRadius: 8,
+    borderRadius: theme.borderRadius.md,
   },
   errorButtonText: {
-    color: theme.colors.background,
+    color: theme.colors.white,
     fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.semiBold,
+    fontWeight: theme.fonts.weights.medium,
   },
+
+  // Profile Section
+  profileSection: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+  },
+  profileContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatarContainer: {
+    marginRight: theme.spacing.md,
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  avatarPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: theme.colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.text.primary,
+    marginBottom: 2,
+  },
+  profileRole: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
+  },
+
+  // Title Section
   titleSection: {
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    paddingBottom: theme.spacing.lg,
   },
-  title: {
+  orderTitle: {
     fontSize: theme.fonts.sizes.xxl,
     fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
+    lineHeight: 32,
+  },
+
+  // Gallery Section
+  gallerySection: {
+    marginBottom: theme.spacing.lg,
+  },
+  galleryContainer: {
+    position: 'relative',
+  },
+  photoContainer: {
+    width: CARD_WIDTH,
+    height: 240,
+    marginHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
+    overflow: 'hidden',
+    backgroundColor: theme.colors.surface,
+  },
+  mediaImage: {
+    width: '100%',
+    height: '100%',
+  },
+  mediaImageContainer: {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.1)',
+  },
+  navButton: {
+    position: 'absolute',
+    top: '50%',
+    marginTop: -20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  navButtonLeft: {
+    left: theme.spacing.xl,
+  },
+  navButtonRight: {
+    right: theme.spacing.xl,
+  },
+  navButtonText: {
+    fontSize: 24,
+    color: theme.colors.text.primary,
+    fontWeight: theme.fonts.weights.bold,
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: theme.spacing.md,
+    left: 0,
+    right: 0,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4,
+  },
+  activeDot: {
+    backgroundColor: theme.colors.primary,
+  },
+  inactiveDot: {
+    backgroundColor: 'rgba(255,255,255,0.6)',
+  },
+
+  // Info Section
+  infoSection: {
+    paddingHorizontal: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
+  },
+  infoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  infoCard: {
+    width: '47%',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    alignItems: 'center',
     marginBottom: theme.spacing.sm,
   },
-  budget: {
-    fontSize: theme.fonts.sizes.xl,
-    fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.primary,
+  infoIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: theme.spacing.sm,
   },
-  section: {
+  iconText: {
+    fontSize: 20,
+  },
+  infoValue: {
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.text.primary,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  infoLabel: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+  },
+
+  // Details Section
+  detailsSection: {
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    marginBottom: theme.spacing.lg,
   },
-  sectionTitle: {
+  detailsTitle: {
     fontSize: theme.fonts.sizes.lg,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.md,
   },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: theme.spacing.sm,
-  },
-  infoLabel: {
+  detailsText: {
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
-    flex: 1,
+    lineHeight: 22,
   },
-  infoValue: {
-    fontSize: theme.fonts.sizes.md,
-    color: theme.colors.text.primary,
-    fontWeight: theme.fonts.weights.medium,
-    flex: 2,
-    textAlign: 'right',
-  },
-  dateValue: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 2,
-    justifyContent: 'flex-end',
-  },
-  description: {
-    fontSize: theme.fonts.sizes.md,
-    color: theme.colors.text.primary,
-    lineHeight: 24,
-  },
-  mediaContainer: {
-    marginTop: theme.spacing.sm,
-  },
-  mediaWrapper: {
-    marginRight: theme.spacing.md,
-  },
-  media: {
-    width: 120,
-    height: 120,
-    borderRadius: 8,
-  },
+
+  // Bottom Section
   bottomSection: {
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.lg,
+    backgroundColor: theme.colors.background,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
   },
   applyButton: {
     backgroundColor: theme.colors.primary,
-    borderRadius: 12,
+    borderRadius: theme.borderRadius.lg,
     paddingVertical: theme.spacing.md,
     alignItems: 'center',
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   appliedButton: {
     backgroundColor: theme.colors.surface,
@@ -489,7 +751,7 @@ const styles = StyleSheet.create({
   applyButtonText: {
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.background,
+    color: theme.colors.white,
   },
   appliedButtonText: {
     color: theme.colors.text.secondary,
