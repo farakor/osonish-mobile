@@ -16,13 +16,14 @@ import { theme } from '../../constants/theme';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { Order } from '../../types';
-import { ProposePriceModal } from '../../components/common';
+import { PriceConfirmationModal, ProposePriceModal } from '../../components/common';
 
 // Отдельный компонент для карточки заказа
 const JobCard: React.FC<{
   item: Order;
   onApply: (orderId: string) => void;
-}> = ({ item, onApply }) => {
+  hasApplied?: boolean;
+}> = ({ item, onApply, hasApplied = false }) => {
   const [customerName, setCustomerName] = useState('Заказчик');
 
   const getCustomerName = async (customerId: string) => {
@@ -111,10 +112,19 @@ const JobCard: React.FC<{
           {item.applicantsCount} заявок
         </Text>
         <TouchableOpacity
-          style={styles.applyButton}
-          onPress={() => onApply(item.id)}
+          style={[
+            styles.applyButton,
+            hasApplied && styles.appliedButton
+          ]}
+          onPress={hasApplied ? undefined : () => onApply(item.id)}
+          disabled={hasApplied}
         >
-          <Text style={styles.applyButtonText}>Откликнуться</Text>
+          <Text style={[
+            styles.applyButtonText,
+            hasApplied && styles.appliedButtonText
+          ]}>
+            {hasApplied ? 'Отклик отправлен' : 'Откликнуться'}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -128,8 +138,10 @@ const WorkerJobsScreen: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>('Все');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [priceConfirmationVisible, setPriceConfirmationVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [userApplications, setUserApplications] = useState<Set<string>>(new Set());
 
   // Функция загрузки заказов
   const loadOrders = async (isRefresh = false) => {
@@ -140,10 +152,16 @@ const WorkerJobsScreen: React.FC = () => {
         setIsLoading(true);
       }
 
-      const availableOrders = await orderService.getActiveOrdersForWorkers();
+      const [availableOrders, applications] = await Promise.all([
+        orderService.getActiveOrdersForWorkers(),
+        orderService.getUserApplications()
+      ]);
+
       console.log(`[WorkerJobsScreen] Загружено ${availableOrders.length} доступных заказов`);
+      console.log(`[WorkerJobsScreen] Найдено ${applications.size} откликов пользователя`);
 
       setOrders(availableOrders);
+      setUserApplications(applications);
     } catch (error) {
       console.error('Ошибка загрузки заказов:', error);
       Alert.alert('Ошибка', 'Не удалось загрузить заказы');
@@ -226,13 +244,64 @@ const WorkerJobsScreen: React.FC = () => {
         return;
       }
 
-      // Показываем модалку предложения цены
+      // Показываем модалку подтверждения цены
       setSelectedOrder(order);
-      setModalVisible(true);
+      setPriceConfirmationVisible(true);
     } catch (error) {
       console.error('Ошибка при открытии формы отклика:', error);
       Alert.alert('Ошибка', 'Произошла ошибка');
     }
+  };
+
+  const handleAcceptPrice = async () => {
+    try {
+      const authState = authService.getAuthState();
+      if (!authState.isAuthenticated || !authState.user || !selectedOrder) {
+        Alert.alert('Ошибка', 'Необходимо войти в систему');
+        return;
+      }
+
+      // Закрываем модалку подтверждения
+      setPriceConfirmationVisible(false);
+
+      // Создаем отклик с исходной ценой заказа
+      const applicantCreated = await orderService.createApplicant({
+        orderId: selectedOrder.id,
+        workerId: authState.user.id,
+        message: '',
+        proposedPrice: selectedOrder.budget
+      });
+
+      if (applicantCreated) {
+        // Добавляем заказ в список откликов пользователя
+        setUserApplications(prev => new Set([...prev, selectedOrder.id]));
+
+        Alert.alert(
+          'Успешно!',
+          'Отклик отправлен, ожидайте решение заказчика.',
+          [
+            {
+              text: 'ОК',
+              onPress: () => {
+                setSelectedOrder(null);
+                loadOrders(true); // Обновляем список
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Ошибка', 'Не удалось отправить отклик');
+      }
+    } catch (error) {
+      console.error('Ошибка отклика на заказ:', error);
+      Alert.alert('Ошибка', 'Произошла ошибка при отправке отклика');
+    }
+  };
+
+  const handleProposePrice = () => {
+    // Закрываем модалку подтверждения и показываем модалку предложения цены
+    setPriceConfirmationVisible(false);
+    setModalVisible(true);
   };
 
   const handleSubmitProposal = async (proposedPrice: number, message: string) => {
@@ -252,13 +321,19 @@ const WorkerJobsScreen: React.FC = () => {
       });
 
       if (applicantCreated) {
+        // Добавляем заказ в список откликов пользователя
+        setUserApplications(prev => new Set([...prev, selectedOrder.id]));
+
         Alert.alert(
           'Успешно!',
-          'Ваш отклик отправлен заказчику. Ожидайте ответа.',
+          'Отклик отправлен, ожидайте решение заказчика.',
           [
             {
               text: 'ОК',
-              onPress: () => loadOrders(true) // Обновляем список
+              onPress: () => {
+                setSelectedOrder(null);
+                loadOrders(true); // Обновляем список
+              }
             }
           ]
         );
@@ -272,7 +347,14 @@ const WorkerJobsScreen: React.FC = () => {
   };
 
   const renderJobCard = ({ item }: { item: Order }) => {
-    return <JobCard item={item} onApply={handleApplyToJob} />;
+    const hasApplied = userApplications.has(item.id);
+    return (
+      <JobCard
+        item={item}
+        onApply={handleApplyToJob}
+        hasApplied={hasApplied}
+      />
+    );
   };
 
   const categories = getCategories();
@@ -371,6 +453,19 @@ const WorkerJobsScreen: React.FC = () => {
           }
         />
       </SafeAreaView>
+
+      {/* Модалка подтверждения цены */}
+      <PriceConfirmationModal
+        visible={priceConfirmationVisible}
+        onClose={() => {
+          setPriceConfirmationVisible(false);
+          setSelectedOrder(null);
+        }}
+        onAcceptPrice={handleAcceptPrice}
+        onProposePrice={handleProposePrice}
+        orderPrice={selectedOrder?.budget || 0}
+        orderTitle={selectedOrder?.title || ''}
+      />
 
       {/* Модалка предложения цены */}
       <ProposePriceModal
@@ -567,10 +662,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
   },
+  appliedButton: {
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
   applyButtonText: {
     fontSize: theme.fonts.sizes.sm,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.background,
+  },
+  appliedButtonText: {
+    color: theme.colors.text.secondary,
   },
   emptyState: {
     flex: 1,

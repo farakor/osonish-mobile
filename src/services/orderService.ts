@@ -408,6 +408,62 @@ export class OrderService {
   }
 
   /**
+   * Проверка, отправлял ли пользователь отклик на заказ
+   */
+  async hasUserAppliedToOrder(orderId: string): Promise<boolean> {
+    try {
+      const authState = authService.getAuthState();
+      if (!authState.isAuthenticated || !authState.user) {
+        return false;
+      }
+
+      const { data, error } = await supabase
+        .from('applicants')
+        .select('id')
+        .eq('order_id', orderId)
+        .eq('worker_id', authState.user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 - no rows found
+        console.error('[OrderService] Ошибка проверки отклика:', error);
+        return false;
+      }
+
+      return !!data;
+    } catch (error) {
+      console.error('[OrderService] Ошибка проверки отклика:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Получение всех откликов текущего пользователя
+   */
+  async getUserApplications(): Promise<Set<string>> {
+    try {
+      const authState = authService.getAuthState();
+      if (!authState.isAuthenticated || !authState.user) {
+        return new Set();
+      }
+
+      const { data, error } = await supabase
+        .from('applicants')
+        .select('order_id')
+        .eq('worker_id', authState.user.id);
+
+      if (error) {
+        console.error('[OrderService] Ошибка получения откликов пользователя:', error);
+        return new Set();
+      }
+
+      return new Set(data?.map((item: any) => item.order_id) || []);
+    } catch (error) {
+      console.error('[OrderService] Ошибка получения откликов пользователя:', error);
+      return new Set();
+    }
+  }
+
+  /**
    * Получение откликов для заказа
    */
   async getApplicantsForOrder(orderId: string): Promise<Applicant[]> {
@@ -471,29 +527,7 @@ export class OrderService {
     }
   }
 
-  /**
-   * Проверка, откликнулся ли пользователь на заказ
-   */
-  async hasUserAppliedToOrder(orderId: string): Promise<boolean> {
-    try {
-      const authState = authService.getAuthState();
-      if (!authState.isAuthenticated || !authState.user) {
-        return false;
-      }
 
-      const { data, error } = await supabase
-        .from('applicants')
-        .select('id')
-        .eq('order_id', orderId)
-        .eq('worker_id', authState.user.id)
-        .single();
-
-      return !error && !!data;
-    } catch (error) {
-      console.error('[OrderService] Ошибка проверки отклика пользователя:', error);
-      return false;
-    }
-  }
 
   /**
    * Получение статистики заказов
