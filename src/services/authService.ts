@@ -6,7 +6,8 @@ import { supabase } from './supabaseClient';
 // Константы для хранения только сессионных данных
 const STORAGE_KEYS = {
   SESSION_TOKEN: '@osonish_session_token',
-  CURRENT_USER_ID: '@osonish_current_user_id'
+  CURRENT_USER_ID: '@osonish_current_user_id',
+  SUPABASE_SESSION: '@osonish_supabase_session' // Новый ключ для Supabase сессии
 };
 
 class AuthService {
@@ -26,6 +27,19 @@ class AuthService {
       // Проверяем сохраненную сессию
       const storedUserId = await AsyncStorage.getItem(STORAGE_KEYS.CURRENT_USER_ID);
       const storedToken = await AsyncStorage.getItem(STORAGE_KEYS.SESSION_TOKEN);
+      const storedSupabaseSession = await AsyncStorage.getItem(STORAGE_KEYS.SUPABASE_SESSION);
+
+      // Восстанавливаем Supabase сессию если есть
+      if (storedSupabaseSession) {
+        try {
+          const session = JSON.parse(storedSupabaseSession);
+          await supabase.auth.setSession(session);
+          console.log('[AuthService] ✅ Supabase сессия восстановлена');
+        } catch (error) {
+          console.error('[AuthService] ❌ Ошибка восстановления Supabase сессии:', error);
+          await AsyncStorage.removeItem(STORAGE_KEYS.SUPABASE_SESSION);
+        }
+      }
 
       if (storedUserId && storedToken) {
         // Проверяем валидность сессии через загрузку пользователя из Supabase
@@ -80,36 +94,67 @@ class AuthService {
     }
   }
 
-  // Сохранение сессии (только токен и ID пользователя)
+  // Сохранение сессии (обновленный метод)
   private async saveSession(user: User): Promise<void> {
     try {
-      const sessionToken = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-      await AsyncStorage.setItem(STORAGE_KEYS.SESSION_TOKEN, sessionToken);
       await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER_ID, user.id);
+      await AsyncStorage.setItem(STORAGE_KEYS.SESSION_TOKEN, 'authenticated'); // Простой токен
 
-      console.log('[AuthService] Сессия сохранена');
+      // Создаем анонимную Supabase сессию для загрузки файлов
+      await this.createSupabaseAnonymousSession();
+
+      console.log('[AuthService] ✅ Сессия сохранена');
     } catch (error) {
-      console.error('Ошибка сохранения сессии:', error);
+      console.error('[AuthService] ❌ Ошибка сохранения сессии:', error);
     }
   }
 
-  // Очистка сессии
+  // Очистка сессии (обновленный метод)
   private async clearSession(): Promise<void> {
     try {
       await AsyncStorage.multiRemove([
         STORAGE_KEYS.SESSION_TOKEN,
-        STORAGE_KEYS.CURRENT_USER_ID
+        STORAGE_KEYS.CURRENT_USER_ID,
+        STORAGE_KEYS.SUPABASE_SESSION
       ]);
+
+      // Выходим из Supabase Auth
+      if (supabase) {
+        await supabase.auth.signOut();
+      }
 
       this.authState = {
         isAuthenticated: false,
         user: null
       };
 
-      console.log('[AuthService] Сессия очищена');
+      console.log('[AuthService] ✅ Сессия очищена');
     } catch (error) {
-      console.error('Ошибка очистки сессии:', error);
+      console.error('[AuthService] ❌ Ошибка очистки сессии:', error);
+    }
+  }
+
+  // Создание анонимной сессии Supabase для загрузки файлов
+  private async createSupabaseAnonymousSession(): Promise<void> {
+    try {
+      if (!supabase) return;
+
+      // Создаем анонимную сессию через Supabase Auth
+      const { data, error } = await supabase.auth.signInAnonymously();
+
+      if (error) {
+        console.warn('[AuthService] ⚠️ Не удалось создать анонимную Supabase сессию:', error.message);
+        console.log('[AuthService] 💡 Убедитесь что анонимные политики Storage настроены');
+        return;
+      }
+
+      if (data.session) {
+        // Сохраняем сессию для восстановления
+        await AsyncStorage.setItem(STORAGE_KEYS.SUPABASE_SESSION, JSON.stringify(data.session));
+        console.log('[AuthService] ✅ Создана анонимная Supabase сессия для загрузки файлов');
+      }
+    } catch (error) {
+      console.warn('[AuthService] ⚠️ Ошибка создания анонимной сессии:', error);
     }
   }
 

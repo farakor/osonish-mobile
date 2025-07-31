@@ -104,6 +104,13 @@ export class OrderService {
       };
 
       console.log('[OrderService] ✅ Заказ создан:', newOrder.title);
+      console.log('[OrderService] 📷 Медиа файлов в заказе:', newOrder.photos?.length || 0);
+      if (newOrder.photos && newOrder.photos.length > 0) {
+        console.log('[OrderService] 📄 URL-ы медиа в заказе:');
+        newOrder.photos.forEach((url, index) => {
+          console.log(`  ${index + 1}. ${url}`);
+        });
+      }
 
       return {
         success: true,

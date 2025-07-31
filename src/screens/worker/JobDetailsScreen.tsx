@@ -303,10 +303,10 @@ export const JobDetailsScreen: React.FC = () => {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mediaContainer}>
               {order.photos.map((photo, index) => {
                 // Улучшенное определение типа файла
-                const isVideo = /\.(mp4|mov|avi|mkv|webm|m4v)(\?|$)/i.test(photo) ||
+                const isVideo = /\.(mp4|mov|avi|mkv|webm|m4v|3gp|flv|wmv)(\?|$)/i.test(photo) ||
                   photo.includes('video') ||
-                  photo.includes('.mp4') ||
-                  photo.includes('.mov');
+                  photo.includes('/video/') ||
+                  photo.includes('_video_');
                 return (
                   <View key={index} style={styles.mediaWrapper}>
                     {isVideo ? (

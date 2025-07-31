@@ -18,6 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import ImageIcon from '../../../assets/image-03.svg';
 import { orderService } from '../../services/orderService';
+import { mediaService } from '../../services/mediaService';
 import { CreateOrderRequest } from '../../types';
 import { useNavigation } from '@react-navigation/native';
 
@@ -44,6 +45,7 @@ export const CreateOrderScreen: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [mediaFiles, setMediaFiles] = useState<Array<{ uri: string; type: 'image' | 'video'; name: string; size: number }>>([]);
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [location, setLocation] = useState('');
@@ -154,25 +156,44 @@ export const CreateOrderScreen: React.FC = () => {
       result.assets.forEach((asset: any) => console.log('asset:', asset));
     }
     if (!result.canceled) {
-      let newFiles = result.assets
-        .filter((asset: any) => {
-          if (asset.fileSize && asset.fileSize > 20 * 1024 * 1024) {
-            setMediaError('Файл превышает 20 МБ: ' + (asset.fileName || asset.uri));
-            return false;
-          }
-          if (!['image', 'video'].includes(asset.type ?? '')) {
-            setMediaError('Можно загружать только фото и видео');
-            return false;
-          }
-          return true;
-        })
-        .map((asset: any) => ({
-          uri: asset.uri,
-          type: (asset.type ?? 'file') as 'image' | 'video',
-          name: asset.fileName || asset.uri.split('/').pop() || 'file',
-          size: asset.fileSize || 0,
-        }));
-      setMediaFiles((prev) => [...prev, ...newFiles].slice(0, 5));
+      // Проверяем формат файлов
+      let validFiles = result.assets.filter((asset: any) => {
+        if (!['image', 'video'].includes(asset.type ?? '')) {
+          setMediaError('Можно загружать только фото и видео');
+          return false;
+        }
+        return true;
+      });
+
+      // Преобразуем в нужный формат
+      let newFiles = validFiles.map((asset: any) => ({
+        uri: asset.uri,
+        type: (asset.type ?? 'file') as 'image' | 'video',
+        name: asset.fileName || asset.uri.split('/').pop() || 'file',
+        size: asset.fileSize || 0,
+      }));
+
+      // Проверяем общий размер с учетом уже загруженных файлов
+      const currentTotalSize = mediaFiles.reduce((sum: number, file: { uri: string; type: 'image' | 'video'; name: string; size: number }) => sum + file.size, 0);
+      const newTotalSize = newFiles.reduce((sum: number, file: { uri: string; type: 'image' | 'video'; name: string; size: number }) => sum + file.size, 0);
+      const maxTotalSize = 50 * 1024 * 1024; // 50 МБ
+
+      if (currentTotalSize + newTotalSize > maxTotalSize) {
+        const remainingSize = Math.max(0, maxTotalSize - currentTotalSize);
+        const remainingSizeMB = (remainingSize / (1024 * 1024)).toFixed(1);
+        setMediaError(`Превышен лимит в 50 МБ. Доступно: ${remainingSizeMB} МБ`);
+        return;
+      }
+
+      // Проверяем лимит количества файлов
+      const updatedFiles = [...mediaFiles, ...newFiles];
+      if (updatedFiles.length > 5) {
+        setMediaError('Максимум 5 файлов');
+        return;
+      }
+
+      setMediaFiles(updatedFiles);
+      setMediaError(''); // Очищаем ошибку при успешной загрузке
     }
   };
 
@@ -189,6 +210,36 @@ export const CreateOrderScreen: React.FC = () => {
 
     setIsLoading(true);
     try {
+      let mediaUrls: string[] = [];
+
+      // Загружаем медиа файлы в Supabase Storage если они есть
+      if (mediaFiles.length > 0) {
+        setIsUploadingMedia(true);
+        console.log('[CreateOrder] Загружаем медиа файлы...');
+
+        const mediaUploadResult = await mediaService.uploadMediaFiles(mediaFiles);
+        setIsUploadingMedia(false);
+
+        if (!mediaUploadResult.success) {
+          // Временное решение: используем локальные URI если Storage недоступен
+          console.warn('[CreateOrder] Storage недоступен, используем локальные URI');
+          mediaUrls = mediaFiles.map(file => file.uri);
+
+          Alert.alert(
+            'Предупреждение',
+            'Медиа файлы сохранены локально. Для полной функциональности настройте Supabase Storage.',
+            [{ text: 'ОК' }]
+          );
+        } else {
+          mediaUrls = mediaUploadResult.urls || [];
+          console.log('[CreateOrder] ✅ Медиа файлы загружены в Storage:', mediaUrls.length);
+          console.log('[CreateOrder] 📄 URL-ы медиа файлов:');
+          mediaUrls.forEach((url, index) => {
+            console.log(`  ${index + 1}. ${url}`);
+          });
+        }
+      }
+
       // Подготавливаем данные для создания заказа
       const orderData: CreateOrderRequest = {
         title: title.trim(),
@@ -198,7 +249,7 @@ export const CreateOrderScreen: React.FC = () => {
         budget: parseFloat(budget.replace(/[^\d]/g, '')), // убираем форматирование и преобразуем в число
         workersNeeded: parseInt(workersCount),
         serviceDate: selectedDate!.toISOString(),
-        photos: mediaFiles.map(file => file.uri), // Сохраняем все медиа файлы (и фото и видео)
+        photos: mediaUrls, // Используем публичные URL из Supabase Storage
       };
 
       // Создаем заказ
@@ -207,7 +258,9 @@ export const CreateOrderScreen: React.FC = () => {
       if (response.success) {
         Alert.alert(
           'Успешно!',
-          'Заказ создан! Исполнители скоро увидят его.',
+          mediaFiles.length > 0
+            ? `Заказ создан с ${mediaFiles.length} медиа файлами! Исполнители скоро увидят его.`
+            : 'Заказ создан! Исполнители скоро увидят его.',
           [
             {
               text: 'ОК',
@@ -221,6 +274,7 @@ export const CreateOrderScreen: React.FC = () => {
                 setSelectedDate(null);
                 setLocation('');
                 setMediaFiles([]);
+                setMediaError('');
 
                 // Возвращаемся на главный экран
                 navigation.goBack();
@@ -236,6 +290,7 @@ export const CreateOrderScreen: React.FC = () => {
       Alert.alert('Ошибка', 'Не удалось создать заказ. Попробуйте еще раз.');
     } finally {
       setIsLoading(false);
+      setIsUploadingMedia(false);
     }
   };
 
@@ -417,12 +472,12 @@ export const CreateOrderScreen: React.FC = () => {
         {!showDatePicker && (
           <View style={styles.fixedButtonContainer}>
             <TouchableOpacity
-              style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
+              style={[styles.submitButton, (isLoading || isUploadingMedia) && styles.submitButtonDisabled]}
               onPress={handleSubmit}
-              disabled={isLoading}
+              disabled={isLoading || isUploadingMedia}
             >
               <Text style={styles.submitButtonText}>
-                {isLoading ? 'Создаем заказ...' : 'Опубликовать заказ'}
+                {isUploadingMedia ? 'Загружаем медиа...' : isLoading ? 'Создаем заказ...' : 'Опубликовать заказ'}
               </Text>
             </TouchableOpacity>
           </View>

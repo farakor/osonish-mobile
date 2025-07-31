@@ -48,6 +48,50 @@ const VideoPreview: React.FC<{ uri: string }> = ({ uri }) => {
   );
 };
 
+// Компонент для изображения с обработкой ошибок
+const SafeImage: React.FC<{ uri: string; index: number }> = ({ uri, index }) => {
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  if (hasError) {
+    return (
+      <View style={[styles.mediaImage, styles.errorContainer]}>
+        <Text style={styles.errorText}>❌</Text>
+        <Text style={styles.errorSubtext}>Ошибка загрузки</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.mediaImageContainer}>
+      <Image
+        source={{ uri }}
+        style={styles.mediaImage}
+        resizeMode="cover"
+        onLoad={() => {
+          console.log(`[OrderDetails] ✅ Изображение ${index + 1} загружено`);
+          setIsLoading(false);
+        }}
+        onError={(error) => {
+          console.error(`[OrderDetails] ❌ Ошибка загрузки изображения ${index + 1}:`, error.nativeEvent.error);
+          console.error(`[OrderDetails] URL: ${uri}`);
+          setHasError(true);
+          setIsLoading(false);
+        }}
+        onLoadStart={() => {
+          console.log(`[OrderDetails] 🔄 Начинаем загрузку изображения ${index + 1}`);
+          setIsLoading(true);
+        }}
+      />
+      {isLoading && (
+        <View style={[styles.mediaImage, styles.loadingContainer]}>
+          <Text style={styles.loadingText}>⏳</Text>
+        </View>
+      )}
+    </View>
+  );
+};
+
 // Удаляем mockOrder - теперь загружаем реальные данные
 
 
@@ -390,17 +434,20 @@ export const OrderDetailsScreen: React.FC = () => {
             <Text style={styles.sectionTitle}>Фото и видео</Text>
             <View style={styles.mediaGrid}>
               {order.photos.map((photoUri: string, index: number) => {
+                // Отладочная информация
+                console.log(`[OrderDetails] Загружаем медиа ${index + 1}:`, photoUri);
+
                 // Улучшенное определение типа файла
-                const isVideo = /\.(mp4|mov|avi|mkv|webm|m4v)(\?|$)/i.test(photoUri) ||
+                const isVideo = /\.(mp4|mov|avi|mkv|webm|m4v|3gp|flv|wmv)(\?|$)/i.test(photoUri) ||
                   photoUri.includes('video') ||
-                  photoUri.includes('.mp4') ||
-                  photoUri.includes('.mov');
+                  photoUri.includes('/video/') ||
+                  photoUri.includes('_video_');
                 return (
                   <View key={index} style={styles.mediaItem}>
                     {isVideo ? (
                       <VideoPreview uri={photoUri} />
                     ) : (
-                      <Image source={{ uri: photoUri }} style={styles.mediaImage} resizeMode="cover" />
+                      <SafeImage uri={photoUri} index={index} />
                     )}
                   </View>
                 );
@@ -755,6 +802,14 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     textAlign: 'center',
     marginBottom: theme.spacing.lg,
+  },
+  errorSubtext: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+  },
+  mediaImageContainer: {
+    position: 'relative',
   },
   errorButton: {
     backgroundColor: theme.colors.primary,
