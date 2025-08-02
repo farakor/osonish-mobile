@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -19,6 +19,7 @@ import Animated, {
   runOnJS,
   interpolate,
   Extrapolation,
+  withDelay,
 } from 'react-native-reanimated';
 import { theme } from '../../constants';
 
@@ -313,6 +314,325 @@ export const AnimatedLoadingIndicator: React.FC<{
   );
 };
 
+// Улучшенный компонент анимированного поля с принудительным сбросом
+export const AnimatedField: React.FC<{
+  children: React.ReactNode;
+  delay?: number;
+  isActive: boolean;
+  resetKey?: string | number; // Ключ для принудительного сброса анимации
+}> = ({ children, delay = 0, isActive, resetKey = '' }) => {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(30);
+  const scale = useSharedValue(0.9);
+  const prevResetKey = useRef(resetKey);
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    // Принудительный сброс при изменении resetKey
+    if (prevResetKey.current !== resetKey) {
+      opacity.value = 0;
+      translateY.value = 30;
+      scale.value = 0.9;
+      prevResetKey.current = resetKey;
+      hasAnimated.current = false;
+    }
+
+    if (isActive && !hasAnimated.current) {
+      // Анимация появления с задержкой
+      opacity.value = withDelay(delay, withTiming(1, { duration: 600 }));
+      translateY.value = withDelay(delay, withSpring(0, {
+        damping: 20,
+        stiffness: 100
+      }));
+      scale.value = withDelay(delay, withSpring(1, {
+        damping: 15,
+        stiffness: 200
+      }));
+      hasAnimated.current = true;
+    } else if (!isActive && hasAnimated.current) {
+      // Быстрый сброс при переходе к неактивному состоянию
+      opacity.value = 0;
+      translateY.value = 30;
+      scale.value = 0.9;
+      hasAnimated.current = false;
+    }
+  }, [isActive, delay, resetKey]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [
+      { translateY: translateY.value },
+      { scale: scale.value }
+    ],
+  }));
+
+  return (
+    <Animated.View style={animatedStyle}>
+      {children}
+    </Animated.View>
+  );
+};
+
+// Анимированный элемент категории
+const AnimatedCategoryItem: React.FC<{
+  category: { label: string; emoji: string };
+  selectedCategory: string;
+  onSelectCategory: (category: string) => void;
+  isActive: boolean;
+  delay: number;
+  resetKey?: string | number;
+}> = ({ category, selectedCategory, onSelectCategory, isActive, delay, resetKey = '' }) => {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(30);
+  const scale = useSharedValue(0.9);
+  const prevResetKey = useRef(resetKey);
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    // Принудительный сброс при изменении resetKey
+    if (prevResetKey.current !== resetKey) {
+      opacity.value = 0;
+      translateY.value = 30;
+      scale.value = 0.9;
+      prevResetKey.current = resetKey;
+      hasAnimated.current = false;
+    }
+
+    if (isActive && !hasAnimated.current) {
+      opacity.value = withDelay(delay, withTiming(1, { duration: 600 }));
+      translateY.value = withDelay(delay, withSpring(0, {
+        damping: 20,
+        stiffness: 100
+      }));
+      scale.value = withDelay(delay, withSpring(1, {
+        damping: 15,
+        stiffness: 200
+      }));
+      hasAnimated.current = true;
+    } else if (!isActive && hasAnimated.current) {
+      opacity.value = 0;
+      translateY.value = 30;
+      scale.value = 0.9;
+      hasAnimated.current = false;
+    }
+  }, [isActive, delay, resetKey]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [
+      { translateY: translateY.value },
+      { scale: scale.value }
+    ],
+  }));
+
+  return (
+    <Animated.View style={animatedStyle}>
+      <AnimatedCategoryCard
+        emoji={category.emoji}
+        label={category.label}
+        isSelected={selectedCategory === category.label}
+        onPress={() => onSelectCategory(category.label)}
+      />
+    </Animated.View>
+  );
+};
+
+// Анимированная сетка категорий с индивидуальными задержками
+export const AnimatedCategoryGrid: React.FC<{
+  categories: Array<{ label: string; emoji: string }>;
+  selectedCategory: string;
+  onSelectCategory: (category: string) => void;
+  isActive: boolean;
+  resetKey?: string | number;
+}> = ({ categories, selectedCategory, onSelectCategory, isActive, resetKey = '' }) => {
+  return (
+    <View style={styles.categoriesGrid}>
+      {categories.map((cat, index) => (
+        <AnimatedCategoryItem
+          key={`${cat.label}-${resetKey}`}
+          category={cat}
+          selectedCategory={selectedCategory}
+          onSelectCategory={onSelectCategory}
+          isActive={isActive}
+          delay={index * 100 + 300}
+          resetKey={resetKey}
+        />
+      ))}
+    </View>
+  );
+};
+
+// Анимированная кнопка для навигации с появлением
+export const AnimatedNavigationButton: React.FC<{
+  children: React.ReactNode;
+  onPress: () => void;
+  disabled?: boolean;
+  variant?: 'primary' | 'secondary';
+  isVisible: boolean;
+  delay?: number;
+  resetKey?: string | number;
+}> = ({ children, onPress, disabled = false, variant = 'primary', isVisible, delay = 0, resetKey = '' }) => {
+  const opacity = useSharedValue(0);
+  const scale = useSharedValue(0.8);
+  const translateX = useSharedValue(variant === 'primary' ? 50 : -50);
+  const prevResetKey = useRef(resetKey);
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    // Принудительный сброс при изменении resetKey
+    if (prevResetKey.current !== resetKey) {
+      opacity.value = 0;
+      scale.value = 0.8;
+      translateX.value = variant === 'primary' ? 50 : -50;
+      prevResetKey.current = resetKey;
+      hasAnimated.current = false;
+    }
+
+    if (isVisible && !hasAnimated.current) {
+      opacity.value = withDelay(delay, withTiming(1, { duration: 400 }));
+      scale.value = withDelay(delay, withSpring(1, { damping: 15, stiffness: 200 }));
+      translateX.value = withDelay(delay, withSpring(0, { damping: 20, stiffness: 100 }));
+      hasAnimated.current = true;
+    } else if (!isVisible && hasAnimated.current) {
+      opacity.value = 0;
+      scale.value = 0.8;
+      translateX.value = variant === 'primary' ? 50 : -50;
+      hasAnimated.current = false;
+    }
+  }, [isVisible, delay, resetKey]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [
+      { scale: scale.value },
+      { translateX: translateX.value }
+    ],
+  }));
+
+  return (
+    <Animated.View style={animatedStyle}>
+      <AnimatedButton
+        variant={variant}
+        onPress={onPress}
+        disabled={disabled}
+      >
+        {children}
+      </AnimatedButton>
+    </Animated.View>
+  );
+};
+
+// Анимированный контейнер для интерактивных элементов
+export const AnimatedInteractiveContainer: React.FC<{
+  children: React.ReactNode;
+  isActive: boolean;
+  delay?: number;
+  resetKey?: string | number;
+}> = ({ children, isActive, delay = 0, resetKey = '' }) => {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(20);
+  const scale = useSharedValue(0.95);
+  const prevResetKey = useRef(resetKey);
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    // Принудительный сброс при изменении resetKey
+    if (prevResetKey.current !== resetKey) {
+      opacity.value = 0;
+      translateY.value = 20;
+      scale.value = 0.95;
+      prevResetKey.current = resetKey;
+      hasAnimated.current = false;
+    }
+
+    if (isActive && !hasAnimated.current) {
+      opacity.value = withDelay(delay, withTiming(1, { duration: 500 }));
+      translateY.value = withDelay(delay, withSpring(0, { damping: 20, stiffness: 100 }));
+      scale.value = withDelay(delay, withSpring(1, { damping: 15, stiffness: 150 }));
+      hasAnimated.current = true;
+    } else if (!isActive && hasAnimated.current) {
+      opacity.value = 0;
+      translateY.value = 20;
+      scale.value = 0.95;
+      hasAnimated.current = false;
+    }
+  }, [isActive, delay, resetKey]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [
+      { translateY: translateY.value },
+      { scale: scale.value }
+    ],
+  }));
+
+  return (
+    <Animated.View style={animatedStyle}>
+      {children}
+    </Animated.View>
+  );
+};
+
+// Анимированный элемент сводки с индивидуальной задержкой
+export const AnimatedSummaryItem: React.FC<{
+  label: string;
+  value: string;
+  index: number;
+  isActive: boolean;
+  resetKey?: string | number;
+}> = ({ label, value, index, isActive, resetKey = '' }) => {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(30);
+  const scale = useSharedValue(0.9);
+  const prevResetKey = useRef(resetKey);
+  const hasAnimated = useRef(false);
+  const delay = index * 100 + 400;
+
+  useEffect(() => {
+    // Принудительный сброс при изменении resetKey
+    if (prevResetKey.current !== resetKey) {
+      opacity.value = 0;
+      translateY.value = 30;
+      scale.value = 0.9;
+      prevResetKey.current = resetKey;
+      hasAnimated.current = false;
+    }
+
+    if (isActive && !hasAnimated.current) {
+      opacity.value = withDelay(delay, withTiming(1, { duration: 600 }));
+      translateY.value = withDelay(delay, withSpring(0, {
+        damping: 20,
+        stiffness: 100
+      }));
+      scale.value = withDelay(delay, withSpring(1, {
+        damping: 15,
+        stiffness: 200
+      }));
+      hasAnimated.current = true;
+    } else if (!isActive && hasAnimated.current) {
+      opacity.value = 0;
+      translateY.value = 30;
+      scale.value = 0.9;
+      hasAnimated.current = false;
+    }
+  }, [isActive, delay, resetKey]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [
+      { translateY: translateY.value },
+      { scale: scale.value }
+    ],
+  }));
+
+  return (
+    <Animated.View style={[styles.summaryItem, animatedStyle]}>
+      <Text style={styles.summaryLabel}>{label}</Text>
+      <Text style={styles.summaryValue}>{value}</Text>
+    </Animated.View>
+  );
+};
+
 const styles = StyleSheet.create({
   primaryButton: {
     backgroundColor: theme.colors.primary,
@@ -394,6 +714,12 @@ const styles = StyleSheet.create({
   },
   categoryLabelSelected: {
     color: theme.colors.white,
+  },
+  categoriesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: theme.spacing.md,
   },
   loadingContainer: {
     position: 'absolute',
