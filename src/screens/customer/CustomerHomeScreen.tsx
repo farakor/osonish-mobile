@@ -22,17 +22,17 @@ import { Order } from '../../types';
 
 
 export const CustomerHomeScreen: React.FC = () => {
-  const [activeOrders, setActiveOrders] = useState<Order[]>([]);
+  const [newOrders, setNewOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation<BottomTabNavigationProp<CustomerTabParamList> & NativeStackNavigationProp<CustomerStackParamList>>();
 
-  // Функция для загрузки активных заказов
-  const loadActiveOrders = useCallback(async () => {
+  // Функция для загрузки новых заказов
+  const loadNewOrders = useCallback(async () => {
     try {
       setIsLoading(true);
-      const orders = await orderService.getUserActiveOrders();
-      setActiveOrders(orders);
+      const orders = await orderService.getUserNewOrders();
+      setNewOrders(orders);
     } catch (error) {
       console.error('Ошибка загрузки заказов:', error);
     } finally {
@@ -43,21 +43,27 @@ export const CustomerHomeScreen: React.FC = () => {
   // Функция для обновления списка (pull-to-refresh)
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadActiveOrders();
+    await loadNewOrders();
     setRefreshing(false);
-  }, [loadActiveOrders]);
+  }, [loadNewOrders]);
 
   // Загружаем заказы при первом открытии и при фокусе на экране
   useFocusEffect(
     useCallback(() => {
-      loadActiveOrders();
-    }, [loadActiveOrders])
+      loadNewOrders();
+    }, [loadNewOrders])
   );
 
   const getStatusColor = (status: Order['status']) => {
     switch (status) {
-      case 'active':
+      case 'new':
         return theme.colors.primary;
+      case 'in_progress':
+        return '#FFA500';
+      case 'completed':
+        return '#6B7280';
+      case 'cancelled':
+        return '#DC3545';
       default:
         return 'transparent';
     }
@@ -65,8 +71,14 @@ export const CustomerHomeScreen: React.FC = () => {
 
   const getStatusText = (status: Order['status']) => {
     switch (status) {
-      case 'active':
-        return 'Активный';
+      case 'new':
+        return 'Новый';
+      case 'in_progress':
+        return 'В работе';
+      case 'completed':
+        return 'Завершен';
+      case 'cancelled':
+        return 'Отменен';
       default:
         return '';
     }
@@ -184,15 +196,15 @@ export const CustomerHomeScreen: React.FC = () => {
         <View style={styles.contentHeader}>
           <Text style={styles.greeting}>Мои заказы</Text>
           <Text style={styles.subtitle}>
-            {activeOrders.length > 0
-              ? `У вас ${activeOrders.length} активных заказа`
+            {newOrders.length > 0
+              ? `У вас ${newOrders.length} новых заказа`
               : 'Создайте свой первый заказ'
             }
           </Text>
         </View>
 
         {/* Quick Create Button */}
-        {activeOrders.length > 0 && (
+        {newOrders.length > 0 && (
           <TouchableOpacity
             style={styles.quickCreateButton}
             onPress={handleCreateOrder}
@@ -206,13 +218,13 @@ export const CustomerHomeScreen: React.FC = () => {
         )}
 
         {/* Orders List or Empty State */}
-        {isLoading && activeOrders.length === 0 ? (
+        {isLoading && newOrders.length === 0 ? (
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingText}>Загружаем ваши заказы...</Text>
           </View>
-        ) : activeOrders.length > 0 ? (
+        ) : newOrders.length > 0 ? (
           <FlatList
-            data={activeOrders}
+            data={newOrders}
             renderItem={renderOrderCard}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.ordersList}

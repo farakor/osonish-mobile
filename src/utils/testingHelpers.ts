@@ -1,5 +1,6 @@
 import { authService } from '../services/authService';
 import { orderService } from '../services/orderService';
+import { clearLocalData, getLocalDataInfo } from './clearLocalData';
 
 /**
  * Утилиты для тестирования приложения
@@ -7,7 +8,7 @@ import { orderService } from '../services/orderService';
 export class TestingHelpers {
 
   /**
-   * Очистка всех данных для начала чистого тестирования
+   * Очистка всех данных для начала чистого тестирования (включая Supabase)
    */
   static async clearAllData(): Promise<void> {
     try {
@@ -24,6 +25,26 @@ export class TestingHelpers {
       console.log('🎉 Все данные очищены! Можно начинать тестирование заново.');
     } catch (error) {
       console.error('❌ Ошибка очистки данных:', error);
+    }
+  }
+
+  /**
+   * Очистка только локальных данных (НЕ затрагивает Supabase)
+   */
+  static async clearLocalDataOnly(): Promise<void> {
+    try {
+      console.log('🧹 Очищаем только локальные данные...');
+
+      // Показываем информацию о данных перед очисткой
+      const info = await getLocalDataInfo();
+      console.log(`📊 Найдено ${info.appKeys.length} ключей приложения (${info.storageSize})`);
+
+      // Очищаем локальные данные
+      await clearLocalData();
+
+      console.log('🎉 Локальные данные очищены! Supabase остался нетронутым.');
+    } catch (error) {
+      console.error('❌ Ошибка очистки локальных данных:', error);
     }
   }
 
@@ -108,6 +129,7 @@ export class TestingHelpers {
 
 // Экспортируем для удобства использования в консоли
 export const clearAllData = TestingHelpers.clearAllData;
+export const clearLocalDataOnly = TestingHelpers.clearLocalDataOnly;
 export const showCurrentUser = TestingHelpers.showCurrentUser;
 export const showAllUsers = TestingHelpers.showAllUsers;
 export const showOrdersStats = TestingHelpers.showOrdersStats;
@@ -116,13 +138,15 @@ export const switchToTestUser = TestingHelpers.switchToTestUser;
 // Делаем доступными глобально для удобства тестирования
 if (__DEV__) {
   (global as any).clearAllData = clearAllData;
+  (global as any).clearLocalDataOnly = clearLocalDataOnly;
   (global as any).showCurrentUser = showCurrentUser;
   (global as any).showAllUsers = showAllUsers;
   (global as any).showOrdersStats = showOrdersStats;
   (global as any).switchToTestUser = switchToTestUser;
 
   console.log('🧪 Команды для тестирования:');
-  console.log('- clearAllData() - очистить все данные');
+  console.log('- clearAllData() - очистить все данные (включая Supabase)');
+  console.log('- clearLocalDataOnly() - очистить только локальные данные');
   console.log('- showCurrentUser() - показать текущего пользователя');
   console.log('- showAllUsers() - показать всех пользователей');
   console.log('- showOrdersStats() - показать статистику заказов');

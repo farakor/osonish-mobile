@@ -1,4 +1,4 @@
-import { Order, CreateOrderRequest, CreateOrderResponse, Applicant, CreateApplicantRequest, WorkerApplication } from '../types';
+import { Order, CreateOrderRequest, CreateOrderResponse, Applicant, CreateApplicantRequest, WorkerApplication, Review, CreateReviewRequest, WorkerRating } from '../types';
 import { authService } from './authService';
 import { supabase, Database } from './supabaseClient';
 
@@ -70,7 +70,7 @@ export class OrderService {
           service_date: request.serviceDate,
           photos: request.photos || [],
           customer_id: authState.user.id,
-          status: 'active',
+          status: 'new',
           applicants_count: 0,
           created_at: currentTime,
           updated_at: currentTime
@@ -96,7 +96,7 @@ export class OrderService {
         workersNeeded: data.workers_needed,
         serviceDate: data.service_date,
         photos: data.photos || [],
-        status: data.status as 'active' | 'in_progress' | 'completed' | 'cancelled',
+        status: data.status as 'new' | 'in_progress' | 'completed' | 'cancelled',
         customerId: data.customer_id,
         applicantsCount: data.applicants_count,
         createdAt: data.created_at,
@@ -150,7 +150,7 @@ export class OrderService {
         workersNeeded: item.workers_needed,
         serviceDate: item.service_date,
         photos: item.photos || [],
-        status: item.status as 'active' | 'in_progress' | 'completed' | 'cancelled',
+        status: item.status as 'new' | 'in_progress' | 'completed' | 'cancelled',
         customerId: item.customer_id,
         applicantsCount: item.applicants_count,
         createdAt: item.created_at,
@@ -197,7 +197,7 @@ export class OrderService {
         workersNeeded: item.workers_needed,
         serviceDate: item.service_date,
         photos: item.photos || [],
-        status: item.status as 'active' | 'in_progress' | 'completed' | 'cancelled',
+        status: item.status as 'new' | 'in_progress' | 'completed' | 'cancelled',
         customerId: item.customer_id,
         applicantsCount: item.applicants_count,
         createdAt: item.created_at,
@@ -213,18 +213,18 @@ export class OrderService {
   }
 
   /**
-   * Получение активных заказов для исполнителей
+   * Получение новых заказов для исполнителей
    */
-  async getActiveOrdersForWorkers(): Promise<Order[]> {
+  async getNewOrdersForWorkers(): Promise<Order[]> {
     try {
       const { data, error } = await supabase
         .from('orders')
         .select('*')
-        .eq('status', 'active')
+        .eq('status', 'new')
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('[OrderService] Ошибка получения активных заказов из Supabase:', error);
+        console.error('[OrderService] Ошибка получения новых заказов из Supabase:', error);
         return [];
       }
 
@@ -238,17 +238,17 @@ export class OrderService {
         workersNeeded: item.workers_needed,
         serviceDate: item.service_date,
         photos: item.photos || [],
-        status: item.status as 'active' | 'in_progress' | 'completed' | 'cancelled',
+        status: item.status as 'new' | 'in_progress' | 'completed' | 'cancelled',
         customerId: item.customer_id,
         applicantsCount: item.applicants_count,
         createdAt: item.created_at,
         updatedAt: item.updated_at
       }));
 
-      console.log(`[OrderService] Загружено ${orders.length} активных заказов`);
+      console.log(`[OrderService] Загружено ${orders.length} новых заказов`);
       return orders;
     } catch (error) {
-      console.error('[OrderService] Ошибка получения активных заказов:', error);
+      console.error('[OrderService] Ошибка получения новых заказов:', error);
       return [];
     }
   }
@@ -264,18 +264,18 @@ export class OrderService {
         return [];
       }
 
-      // Получаем активные заказы и отклики пользователя параллельно
-      const [allActiveOrders, userApplications] = await Promise.all([
-        this.getActiveOrdersForWorkers(),
+      // Получаем новые заказы и отклики пользователя параллельно
+      const [allNewOrders, userApplications] = await Promise.all([
+        this.getNewOrdersForWorkers(),
         this.getUserApplications()
       ]);
 
       // Фильтруем заказы, исключая те на которые уже есть отклик
-      const availableOrders = allActiveOrders.filter(order =>
+      const availableOrders = allNewOrders.filter(order =>
         !userApplications.has(order.id)
       );
 
-      console.log(`[OrderService] Из ${allActiveOrders.length} активных заказов доступно ${availableOrders.length} (исключено ${userApplications.size} с откликами)`);
+      console.log(`[OrderService] Из ${allNewOrders.length} новых заказов доступно ${availableOrders.length} (исключено ${userApplications.size} с откликами)`);
       return availableOrders;
     } catch (error) {
       console.error('[OrderService] Ошибка получения доступных заказов:', error);
@@ -284,9 +284,9 @@ export class OrderService {
   }
 
   /**
-   * Получение активных заказов для текущего пользователя (заказчика)
+   * Получение новых заказов для текущего пользователя (заказчика)
    */
-  async getUserActiveOrders(): Promise<Order[]> {
+  async getUserNewOrders(): Promise<Order[]> {
     try {
       const authState = authService.getAuthState();
       if (!authState.isAuthenticated || !authState.user) {
@@ -298,11 +298,11 @@ export class OrderService {
         .from('orders')
         .select('*')
         .eq('customer_id', authState.user.id)
-        .eq('status', 'active')
+        .eq('status', 'new')
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('[OrderService] Ошибка получения активных заказов пользователя из Supabase:', error);
+        console.error('[OrderService] Ошибка получения новых заказов пользователя из Supabase:', error);
         return [];
       }
 
@@ -316,17 +316,17 @@ export class OrderService {
         workersNeeded: item.workers_needed,
         serviceDate: item.service_date,
         photos: item.photos || [],
-        status: item.status as 'active' | 'in_progress' | 'completed' | 'cancelled',
+        status: item.status as 'new' | 'in_progress' | 'completed' | 'cancelled',
         customerId: item.customer_id,
         applicantsCount: item.applicants_count,
         createdAt: item.created_at,
         updatedAt: item.updated_at
       }));
 
-      console.log(`[OrderService] Загружено ${orders.length} активных заказов для текущего пользователя`);
+      console.log(`[OrderService] Загружено ${orders.length} новых заказов для текущего пользователя`);
       return orders;
     } catch (error) {
-      console.error('[OrderService] Ошибка получения активных заказов пользователя:', error);
+      console.error('[OrderService] Ошибка получения новых заказов пользователя:', error);
       return [];
     }
   }
@@ -357,7 +357,7 @@ export class OrderService {
         workersNeeded: data.workers_needed,
         serviceDate: data.service_date,
         photos: data.photos || [],
-        status: data.status as 'active' | 'in_progress' | 'completed' | 'cancelled',
+        status: data.status as 'new' | 'in_progress' | 'completed' | 'cancelled',
         customerId: data.customer_id,
         applicantsCount: data.applicants_count,
         createdAt: data.created_at,
@@ -644,7 +644,7 @@ export class OrderService {
         message: item.message,
         proposedPrice: item.proposed_price,
         appliedAt: item.applied_at,
-        status: item.status as 'pending' | 'accepted' | 'rejected'
+        status: item.status as 'pending' | 'accepted' | 'rejected' | 'completed'
       }));
 
       console.log(`[OrderService] Загружено ${applicants.length} откликов для заказа ${orderId}`);
@@ -652,6 +652,49 @@ export class OrderService {
     } catch (error) {
       console.error('[OrderService] Ошибка получения откликов:', error);
       return [];
+    }
+  }
+
+  /**
+   * Проверка и автоматическое обновление статуса заказа при достижении нужного количества исполнителей
+   */
+  async checkAndUpdateOrderStatus(orderId: string): Promise<boolean> {
+    try {
+      // Получаем информацию о заказе
+      const order = await this.getOrderById(orderId);
+      if (!order) {
+        console.error('[OrderService] Заказ не найден для обновления статуса');
+        return false;
+      }
+
+      // Проверяем только заказы со статусом 'new'
+      if (order.status !== 'new') {
+        console.log(`[OrderService] Заказ ${orderId} уже имеет статус ${order.status}, пропускаем обновление`);
+        return true;
+      }
+
+      // Получаем всех принятых исполнителей для этого заказа
+      const applicants = await this.getApplicantsForOrder(orderId);
+      const acceptedApplicants = applicants.filter(applicant => applicant.status === 'accepted');
+
+      console.log(`[OrderService] Заказ ${orderId}: принято ${acceptedApplicants.length} из ${order.workersNeeded} исполнителей`);
+
+      // Если принято достаточно исполнителей, меняем статус на 'in_progress'
+      if (acceptedApplicants.length >= order.workersNeeded) {
+        const statusUpdated = await this.updateOrderStatus(orderId, 'in_progress');
+        if (statusUpdated) {
+          console.log(`[OrderService] ✅ Статус заказа ${orderId} изменен на 'in_progress' - набрано ${acceptedApplicants.length} исполнителей`);
+          return true;
+        } else {
+          console.error(`[OrderService] ❌ Не удалось обновить статус заказа ${orderId}`);
+          return false;
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error('[OrderService] Ошибка при проверке и обновлении статуса заказа:', error);
+      return false;
     }
   }
 
@@ -686,7 +729,7 @@ export class OrderService {
   /**
    * Получение статистики заказов
    */
-  async getOrdersStats(): Promise<{ total: number; active: number; completed: number; cancelled: number }> {
+  async getOrdersStats(): Promise<{ total: number; new: number; inProgress: number; completed: number; cancelled: number }> {
     try {
       const { data, error } = await supabase
         .from('orders')
@@ -694,12 +737,13 @@ export class OrderService {
 
       if (error) {
         console.error('[OrderService] Ошибка получения статистики заказов:', error);
-        return { total: 0, active: 0, completed: 0, cancelled: 0 };
+        return { total: 0, new: 0, inProgress: 0, completed: 0, cancelled: 0 };
       }
 
       const stats = {
         total: data.length,
-        active: data.filter((order: any) => order.status === 'active').length,
+        new: data.filter((order: any) => order.status === 'new').length,
+        inProgress: data.filter((order: any) => order.status === 'in_progress').length,
         completed: data.filter((order: any) => order.status === 'completed').length,
         cancelled: data.filter((order: any) => order.status === 'cancelled').length
       };
@@ -708,7 +752,7 @@ export class OrderService {
       return stats;
     } catch (error) {
       console.error('[OrderService] Ошибка получения статистики заказов:', error);
-      return { total: 0, active: 0, completed: 0, cancelled: 0 };
+      return { total: 0, new: 0, inProgress: 0, completed: 0, cancelled: 0 };
     }
   }
 
@@ -772,6 +816,300 @@ export class OrderService {
       }
     } catch (error) {
       console.error('[OrderService] Ошибка очистки откликов:', error);
+    }
+  }
+
+  /**
+   * Завершить заказ заказчиком
+   */
+  async completeOrder(orderId: string): Promise<boolean> {
+    try {
+      const authState = authService.getAuthState();
+      if (!authState.isAuthenticated || !authState.user) {
+        console.error('[OrderService] Пользователь не авторизован');
+        return false;
+      }
+
+      // Проверяем, что заказ принадлежит текущему пользователю
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select('customer_id, status')
+        .eq('id', orderId)
+        .single();
+
+      if (orderError || !orderData) {
+        console.error('[OrderService] Заказ не найден:', orderError);
+        return false;
+      }
+
+      if (orderData.customer_id !== authState.user.id) {
+        console.error('[OrderService] Заказ не принадлежит пользователю');
+        return false;
+      }
+
+      if (orderData.status !== 'in_progress') {
+        console.error('[OrderService] Заказ не в процессе выполнения');
+        return false;
+      }
+
+      // Обновляем статус заказа на 'completed' для заказчика
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+          status: 'completed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId);
+
+      if (updateError) {
+        console.error('[OrderService] Ошибка обновления статуса заказа:', updateError);
+        return false;
+      }
+
+      // Обновляем статус всех принятых откликов на 'completed'
+      const { error: applicantsError } = await supabase
+        .from('applicants')
+        .update({ status: 'completed' })
+        .eq('order_id', orderId)
+        .eq('status', 'accepted');
+
+      if (applicantsError) {
+        console.error('[OrderService] Ошибка обновления статуса откликов:', applicantsError);
+        // Не возвращаем false, так как основная операция прошла успешно
+      }
+
+      console.log('[OrderService] ✅ Заказ успешно завершен');
+      return true;
+    } catch (error) {
+      console.error('[OrderService] Ошибка завершения заказа:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Получить принятых исполнителей для заказа
+   */
+  async getAcceptedWorkersForOrder(orderId: string): Promise<Applicant[]> {
+    try {
+      const { data, error } = await supabase
+        .from('applicants')
+        .select(`
+          *,
+          worker:worker_id (
+            first_name,
+            last_name,
+            phone,
+            profile_image
+          )
+        `)
+        .eq('order_id', orderId)
+        .eq('status', 'accepted');
+
+      if (error) {
+        console.error('[OrderService] Ошибка получения принятых исполнителей:', error);
+        return [];
+      }
+
+      if (!data) return [];
+
+      return data.map((item: any) => ({
+        id: item.id,
+        orderId: item.order_id,
+        workerId: item.worker_id,
+        workerName: `${item.worker.first_name} ${item.worker.last_name}`,
+        workerPhone: item.worker.phone,
+        rating: item.rating,
+        completedJobs: item.completed_jobs,
+        avatar: item.worker.profile_image,
+        message: item.message,
+        proposedPrice: item.proposed_price,
+        appliedAt: item.applied_at,
+        status: item.status as 'pending' | 'accepted' | 'rejected' | 'completed'
+      }));
+    } catch (error) {
+      console.error('[OrderService] Ошибка получения принятых исполнителей:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Создать отзыв
+   */
+  async createReview(request: CreateReviewRequest): Promise<boolean> {
+    try {
+      const authState = authService.getAuthState();
+      if (!authState.isAuthenticated || !authState.user) {
+        console.error('[OrderService] Пользователь не авторизован');
+        return false;
+      }
+
+      // Проверяем, что пользователь - заказчик данного заказа
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select('customer_id')
+        .eq('id', request.orderId)
+        .single();
+
+      if (orderError || !orderData || orderData.customer_id !== authState.user.id) {
+        console.error('[OrderService] Заказ не найден или не принадлежит пользователю');
+        return false;
+      }
+
+      // Проверяем, что отзыв еще не оставлен
+      const { data: existingReview } = await supabase
+        .from('reviews')
+        .select('id')
+        .eq('order_id', request.orderId)
+        .eq('worker_id', request.workerId)
+        .single();
+
+      if (existingReview) {
+        console.error('[OrderService] Отзыв уже существует');
+        return false;
+      }
+
+      // Создаем отзыв
+      const reviewData = {
+        order_id: request.orderId,
+        customer_id: authState.user.id, // Supabase автоматически приведет к TEXT если нужно
+        worker_id: request.workerId,
+        rating: request.rating,
+        comment: request.comment || null,
+        created_at: new Date().toISOString()
+      };
+
+      console.log('[OrderService] Создаем отзыв с данными:', reviewData);
+
+      const { data, error } = await supabase
+        .from('reviews')
+        .insert(reviewData)
+        .select();
+
+      if (error) {
+        console.error('[OrderService] Ошибка создания отзыва:', {
+          error,
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        return false;
+      }
+
+      console.log('[OrderService] ✅ Отзыв создан:', data);
+
+      console.log('[OrderService] ✅ Отзыв успешно создан');
+      return true;
+    } catch (error) {
+      console.error('[OrderService] Ошибка создания отзыва:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Получить отзывы о работнике
+   */
+  async getWorkerReviews(workerId: string): Promise<Review[]> {
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select(`
+          *,
+          order:order_id (title),
+          customer:customer_id (first_name, last_name)
+        `)
+        .eq('worker_id', workerId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('[OrderService] Ошибка получения отзывов:', error);
+        return [];
+      }
+
+      if (!data) return [];
+
+      return data.map((item: any) => ({
+        id: item.id,
+        orderId: item.order_id,
+        customerId: item.customer_id,
+        workerId: item.worker_id,
+        rating: item.rating,
+        comment: item.comment,
+        createdAt: item.created_at
+      }));
+    } catch (error) {
+      console.error('[OrderService] Ошибка получения отзывов:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Получить рейтинг работника
+   */
+  async getWorkerRating(workerId: string): Promise<WorkerRating | null> {
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('rating')
+        .eq('worker_id', workerId);
+
+      if (error) {
+        console.error('[OrderService] Ошибка получения рейтинга:', error);
+        return null;
+      }
+
+      if (!data || data.length === 0) {
+        return {
+          workerId,
+          averageRating: 0,
+          totalReviews: 0
+        };
+      }
+
+      const totalReviews = data.length;
+      const sumRating = data.reduce((sum: number, review: any) => sum + review.rating, 0);
+      const averageRating = Math.round((sumRating / totalReviews) * 10) / 10; // Округляем до 1 знака
+
+      return {
+        workerId,
+        averageRating,
+        totalReviews
+      };
+    } catch (error) {
+      console.error('[OrderService] Ошибка получения рейтинга:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Получить общий заработок исполнителя с принятых и завершенных заказов
+   */
+  async getWorkerEarnings(workerId: string): Promise<number> {
+    try {
+      const { data, error } = await supabase
+        .from('applicants')
+        .select(`
+          proposed_price,
+          order:order_id (budget)
+        `)
+        .eq('worker_id', workerId)
+        .in('status', ['accepted', 'completed']); // Считаем деньги с принятых и завершенных заказов
+
+      if (error) {
+        console.error('[OrderService] Ошибка получения заработка:', error);
+        return 0;
+      }
+
+      if (!data) return 0;
+
+      return data.reduce((total: number, applicant: any) => {
+        // Используем предложенную цену исполнителя, если есть, иначе бюджет заказа
+        const price = applicant.proposed_price || applicant.order?.budget || 0;
+        return total + price;
+      }, 0);
+    } catch (error) {
+      console.error('[OrderService] Ошибка получения заработка:', error);
+      return 0;
     }
   }
 }

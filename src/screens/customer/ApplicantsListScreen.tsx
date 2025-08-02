@@ -154,11 +154,17 @@ export const ApplicantsListScreen: React.FC = () => {
 
             await Promise.all(rejectPromises);
 
+            // Проверяем и обновляем статус заказа при достижении нужного количества исполнителей
+            await orderService.checkAndUpdateOrderStatus(order.id);
+
             Alert.alert(
               'Исполнители выбраны',
               `Выбрано ${selectedCount} исполнител${selectedCount === 1 ? 'ь' : 'ей'}. Остальные отклики автоматически отклонены.`
             );
           } else {
+            // Проверяем и обновляем статус заказа при достижении нужного количества исполнителей
+            await orderService.checkAndUpdateOrderStatus(order.id);
+
             Alert.alert('Успешно', `Исполнитель ${selectedApplicant.workerName} выбран для выполнения заказа`);
           }
         } else {

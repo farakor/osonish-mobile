@@ -56,7 +56,7 @@ export interface Database {
           service_date: string;
           photos: string[];
           customer_id: string;
-          status: 'active' | 'in_progress' | 'completed' | 'cancelled';
+          status: 'new' | 'in_progress' | 'completed' | 'cancelled';
           applicants_count: number;
           created_at: string;
           updated_at: string;
@@ -72,7 +72,7 @@ export interface Database {
           service_date: string;
           photos?: string[];
           customer_id: string;
-          status?: 'active' | 'in_progress' | 'completed' | 'cancelled';
+          status?: 'new' | 'in_progress' | 'completed' | 'cancelled';
           applicants_count?: number;
           created_at?: string;
           updated_at?: string;
@@ -88,8 +88,55 @@ export interface Database {
           service_date?: string;
           photos?: string[];
           customer_id?: string;
-          status?: 'active' | 'in_progress' | 'completed' | 'cancelled';
+          status?: 'new' | 'in_progress' | 'completed' | 'cancelled';
           applicants_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      applicants: {
+        Row: {
+          id: string;
+          order_id: string;
+          worker_id: string;
+          worker_name: string;
+          worker_phone: string;
+          rating?: number;
+          completed_jobs?: number;
+          message?: string;
+          proposed_price?: number;
+          applied_at: string;
+          status: 'pending' | 'accepted' | 'rejected';
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          worker_id: string;
+          worker_name: string;
+          worker_phone: string;
+          rating?: number;
+          completed_jobs?: number;
+          message?: string;
+          proposed_price?: number;
+          applied_at?: string;
+          status?: 'pending' | 'accepted' | 'rejected';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          order_id?: string;
+          worker_id?: string;
+          worker_name?: string;
+          worker_phone?: string;
+          rating?: number;
+          completed_jobs?: number;
+          message?: string;
+          proposed_price?: number;
+          applied_at?: string;
+          status?: 'pending' | 'accepted' | 'rejected';
           created_at?: string;
           updated_at?: string;
         };

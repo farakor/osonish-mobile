@@ -61,7 +61,7 @@ export interface Order {
   workersNeeded: number;
   serviceDate: string; // ISO date string
   photos?: string[]; // массив URL фотографий
-  status: 'active' | 'in_progress' | 'completed' | 'cancelled';
+  status: 'new' | 'in_progress' | 'completed' | 'cancelled';
   customerId: string;
   applicantsCount: number;
   createdAt: string; // ISO date string
@@ -100,7 +100,7 @@ export interface Applicant {
   message?: string;
   proposedPrice?: number; // предложенная цена исполнителя
   appliedAt: string;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: 'pending' | 'accepted' | 'rejected' | 'completed';
 }
 
 export interface CreateApplicantRequest {
@@ -140,4 +140,28 @@ export interface WorkerApplication {
   proposedPrice?: number;
   appliedAt: string;
   status: 'pending' | 'accepted' | 'rejected' | 'completed';
+}
+
+// Review Types
+export interface Review {
+  id: string;
+  orderId: string;
+  customerId: string;
+  workerId: string;
+  rating: number; // 1-5 звезд
+  comment?: string;
+  createdAt: string;
+}
+
+export interface CreateReviewRequest {
+  orderId: string;
+  workerId: string;
+  rating: number;
+  comment?: string;
+}
+
+export interface WorkerRating {
+  workerId: string;
+  averageRating: number;
+  totalReviews: number;
 }

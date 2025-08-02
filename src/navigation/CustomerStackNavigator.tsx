@@ -1,16 +1,8 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { CustomerStackParamList } from '../types/navigation';
 import { CustomerTabNavigator } from './CustomerTabNavigator';
-import { OrderDetailsScreen, EditProfileScreen, NotificationsScreen, SupportScreen, ApplicantsListScreen } from '../screens/customer';
-
-export type CustomerStackParamList = {
-  MainTabs: undefined;
-  OrderDetails: { orderId: string };
-  ApplicantsList: { orderId: string };
-  EditProfile: undefined;
-  Notifications: undefined;
-  Support: undefined;
-};
+import { OrderDetailsScreen, EditProfileScreen, NotificationsScreen, SupportScreen, ApplicantsListScreen, RatingScreen } from '../screens/customer';
 
 const Stack = createNativeStackNavigator<CustomerStackParamList>();
 
@@ -56,6 +48,13 @@ export function CustomerStackNavigator() {
       <Stack.Screen
         name="Support"
         component={SupportScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="Rating"
+        component={RatingScreen}
         options={{
           presentation: 'card',
         }}

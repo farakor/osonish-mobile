@@ -21,7 +21,7 @@ type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
 
 export const MyOrdersScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
-  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'new' | 'in_progress' | 'completed'>('all');
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -55,10 +55,14 @@ export const MyOrdersScreen: React.FC = () => {
 
   const getStatusColor = (status: Order['status']) => {
     switch (status) {
-      case 'active':
+      case 'new':
         return theme.colors.primary;
+      case 'in_progress':
+        return '#FFA500';
       case 'completed':
         return '#6B7280';
+      case 'cancelled':
+        return '#DC3545';
       default:
         return theme.colors.text.secondary;
     }
@@ -66,10 +70,14 @@ export const MyOrdersScreen: React.FC = () => {
 
   const getStatusText = (status: Order['status']) => {
     switch (status) {
-      case 'active':
-        return 'Активный';
+      case 'new':
+        return 'Новый';
+      case 'in_progress':
+        return 'В работе';
       case 'completed':
         return 'Завершен';
+      case 'cancelled':
+        return 'Отменен';
       default:
         return status;
     }
@@ -107,11 +115,7 @@ export const MyOrdersScreen: React.FC = () => {
   // Фильтрация заказов по активной вкладке
   const filteredOrders = activeTab === 'all'
     ? allOrders
-    : allOrders.filter((order: Order) =>
-      activeTab === 'active'
-        ? order.status === 'active'
-        : order.status === 'completed'
-    );
+    : allOrders.filter((order: Order) => order.status === activeTab);
 
   const renderOrder = ({ item }: { item: Order }) => (
     <TouchableOpacity
@@ -184,11 +188,19 @@ export const MyOrdersScreen: React.FC = () => {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.tab, activeTab === 'active' && styles.activeTab]}
-            onPress={() => setActiveTab('active')}
+            style={[styles.tab, activeTab === 'new' && styles.activeTab]}
+            onPress={() => setActiveTab('new')}
           >
-            <Text style={[styles.tabText, activeTab === 'active' && styles.activeTabText]}>
-              Активные
+            <Text style={[styles.tabText, activeTab === 'new' && styles.activeTabText]}>
+              Новые
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'in_progress' && styles.activeTab]}
+            onPress={() => setActiveTab('in_progress')}
+          >
+            <Text style={[styles.tabText, activeTab === 'in_progress' && styles.activeTabText]}>
+              В работе
             </Text>
           </TouchableOpacity>
           <TouchableOpacity

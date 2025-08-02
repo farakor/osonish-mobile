@@ -31,6 +31,7 @@ interface ProfileOption {
 interface WorkerStats {
   completedJobs: number;
   rating: number;
+  totalReviews: number;
   monthsOnPlatform: number;
   activeApplications: number;
   earnings: number;
@@ -44,6 +45,7 @@ export const WorkerProfileScreen: React.FC = () => {
   const [stats, setStats] = useState<WorkerStats>({
     completedJobs: 0,
     rating: 0,
+    totalReviews: 0,
     monthsOnPlatform: 0,
     activeApplications: 0,
     earnings: 0
@@ -111,6 +113,12 @@ export const WorkerProfileScreen: React.FC = () => {
     try {
       setIsLoading(true);
 
+      const authState = authService.getAuthState();
+      if (!authState.user) {
+        console.error('[WorkerProfile] Пользователь не авторизован');
+        return;
+      }
+
       // Получаем реальные данные о заявках исполнителя
       const applications = await orderService.getWorkerApplications();
 
@@ -120,16 +128,12 @@ export const WorkerProfileScreen: React.FC = () => {
         app.status === 'pending' || app.status === 'accepted'
       ).length;
 
-      // Расчет рейтинга на основе завершенных работ
-      const completedWithRating = applications.filter(app =>
-        app.status === 'completed' && app.rating
-      );
-      const averageRating = completedWithRating.length > 0
-        ? completedWithRating.reduce((sum, app) => sum + (app.rating || 0), 0) / completedWithRating.length
-        : 0;
+      // Получаем рейтинг из новой системы отзывов
+      const workerRating = await orderService.getWorkerRating(authState.user.id);
+      const averageRating = workerRating?.averageRating || 0;
+      const totalReviews = workerRating?.totalReviews || 0;
 
       // Расчет месяцев на платформе
-      const authState = authService.getAuthState();
       let monthsOnPlatform = 0;
       if (authState.user?.createdAt) {
         const createdDate = new Date(authState.user.createdAt);
@@ -138,14 +142,13 @@ export const WorkerProfileScreen: React.FC = () => {
         monthsOnPlatform = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30));
       }
 
-      // Расчет заработанных средств (симуляция на основе завершенных заказов)
-      const earnings = applications
-        .filter(app => app.status === 'completed')
-        .reduce((sum, app) => sum + (app.proposedPrice || app.orderBudget), 0);
+      // Получаем заработок с принятых заказов (не дожидаясь завершения)
+      const earnings = await orderService.getWorkerEarnings(authState.user.id);
 
       setStats({
         completedJobs,
-        rating: Number(averageRating.toFixed(1)),
+        rating: averageRating,
+        totalReviews,
         monthsOnPlatform: Math.max(monthsOnPlatform, 1),
         activeApplications,
         earnings
@@ -153,10 +156,11 @@ export const WorkerProfileScreen: React.FC = () => {
 
       console.log('[WorkerProfile] Статистика загружена:', {
         completedJobs,
-        averageRating: Number(averageRating.toFixed(1)),
+        averageRating,
         monthsOnPlatform,
         activeApplications,
-        earnings
+        earnings,
+        totalReviews: workerRating?.totalReviews || 0
       });
 
     } catch (error) {
@@ -175,6 +179,7 @@ export const WorkerProfileScreen: React.FC = () => {
       setStats({
         completedJobs: 0,
         rating: 0,
+        totalReviews: 0,
         monthsOnPlatform,
         activeApplications: 0,
         earnings: 0
@@ -343,7 +348,7 @@ export const WorkerProfileScreen: React.FC = () => {
                 <Text style={styles.ratingStars}>⭐</Text>
                 <Text style={styles.ratingText}>{stats.rating}</Text>
                 <Text style={styles.ratingCount}>
-                  ({stats.completedJobs} отзыв{stats.completedJobs === 1 ? '' : stats.completedJobs < 5 ? 'а' : 'ов'})
+                  ({stats.totalReviews} отзыв{stats.totalReviews === 1 ? '' : stats.totalReviews < 5 ? 'а' : 'ов'})
                 </Text>
               </View>
             )}

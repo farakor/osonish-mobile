@@ -202,6 +202,9 @@ export const OrderDetailsScreen: React.FC = () => {
   const [acceptedApplicants, setAcceptedApplicants] = useState<Set<string>>(new Set());
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Состояния для завершения заказа
+  const [isCompletingOrder, setIsCompletingOrder] = useState(false);
+
   // Загружаем заказ по ID
   useEffect(() => {
     const loadOrder = async () => {
@@ -375,6 +378,9 @@ export const OrderDetailsScreen: React.FC = () => {
           );
           setAcceptedApplicants(finalAcceptedApplicants);
         }
+
+        // Проверяем и обновляем статус заказа при достижении нужного количества исполнителей
+        await orderService.checkAndUpdateOrderStatus(orderId);
       }
 
       setIsProcessing(false);
@@ -391,6 +397,61 @@ export const OrderDetailsScreen: React.FC = () => {
       setShowConfirmModal(false);
       setSelectedApplicant(null);
     }
+  };
+
+  // Завершить заказ
+  const handleCompleteOrder = async () => {
+    if (!order || isCompletingOrder) return;
+
+    Alert.alert(
+      'Завершить заказ',
+      'Вы уверены, что хотите завершить этот заказ? После завершения вам нужно будет оценить работу исполнителей.',
+      [
+        { text: 'Отмена', style: 'cancel' },
+        {
+          text: 'Завершить',
+          style: 'destructive',
+          onPress: async () => {
+            setIsCompletingOrder(true);
+            try {
+              // Получаем принятых исполнителей
+              const acceptedWorkers = await orderService.getAcceptedWorkersForOrder(orderId);
+
+              // Завершаем заказ
+              const success = await orderService.completeOrder(orderId);
+              if (!success) {
+                Alert.alert('Ошибка', 'Не удалось завершить заказ');
+                return;
+              }
+
+              // Обновляем статус заказа локально
+              setOrder(prev => prev ? { ...prev, status: 'completed' } : null);
+
+              // Если есть принятые исполнители, переходим к оценке
+              if (acceptedWorkers.length > 0) {
+                // Передаем всех принятых исполнителей для оценки
+                navigation.navigate('Rating', {
+                  orderId: orderId,
+                  acceptedWorkers: acceptedWorkers,
+                });
+              } else {
+                // Если нет исполнителей, просто показываем сообщение
+                Alert.alert(
+                  'Заказ завершен',
+                  'Заказ успешно завершен',
+                  [{ text: 'ОК', onPress: () => navigation.navigate('MainTabs' as any) }]
+                );
+              }
+            } catch (error) {
+              console.error('Ошибка завершения заказа:', error);
+              Alert.alert('Ошибка', 'Произошла ошибка при завершении заказа');
+            } finally {
+              setIsCompletingOrder(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const renderApplicant = ({ item }: { item: Applicant }) => {
@@ -561,7 +622,15 @@ export const OrderDetailsScreen: React.FC = () => {
           contentContainerStyle={styles.scrollContent}
         >
           {/* Header */}
-          <HeaderWithBack />
+          <HeaderWithBack
+            rightAction={
+              order?.status === 'in_progress' ? {
+                text: isCompletingOrder ? 'Завершаем...' : 'Завершить',
+                color: '#DC2626', // Красный цвет
+                onPress: handleCompleteOrder,
+              } : undefined
+            }
+          />
 
           {/* User Profile Section */}
           <View style={styles.profileSection}>
