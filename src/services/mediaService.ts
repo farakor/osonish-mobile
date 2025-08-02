@@ -28,96 +28,70 @@ export class MediaService {
     try {
       console.log(`[MediaService] 🔍 Проверяем bucket '${this.BUCKET_NAME}'...`);
 
-      // Проверяем подключение к Supabase Storage
-      console.log('[MediaService] 📡 Отправляем запрос listBuckets()...');
-      const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+      // Сначала попробуем прямое обращение к bucket (более надежно)
+      console.log('[MediaService] 🎯 Прямая проверка bucket...');
+      try {
+        const { data: testData, error: testError } = await supabase.storage
+          .from(this.BUCKET_NAME)
+          .list('', { limit: 1 });
 
-      if (listError) {
-        console.error('[MediaService] ❌ Ошибка подключения к Storage:', listError);
-        console.error('[MediaService] Детали ошибки:', JSON.stringify(listError, null, 2));
-        console.error(`[MediaService] Код ошибки: ${listError.status}`);
-        console.error(`[MediaService] Сообщение: ${listError.message}`);
+        if (testError) {
+          console.error('[MediaService] ❌ Ошибка доступа к bucket:', testError);
 
-        // Попробуем альтернативный способ - проверить конкретный bucket
-        console.log('[MediaService] 🔄 Пробуем альтернативный способ проверки...');
-        try {
-          const { data: testData, error: testError } = await supabase.storage
-            .from(this.BUCKET_NAME)
-            .list('', { limit: 1 });
-
-          if (testError) {
-            console.error('[MediaService] ❌ Альтернативная проверка не удалась:', testError);
-
-            // Дополнительная диагностика типов ошибок
-            if (testError.message?.includes('JWT')) {
-              console.error('[MediaService] 🔑 Проблема с аутентификацией - нужны анонимные политики');
-              console.error('[MediaService] 💡 Выполните SQL: STORAGE_POLICIES_ANONYMOUS.sql');
-            } else if (testError.message?.includes('not found')) {
-              console.error('[MediaService] 📦 Bucket не найден - создайте в Dashboard');
-              console.error('[MediaService] 💡 Storage → New Bucket → name: order-media → Public: ✅');
-            } else if (testError.message?.includes('policy')) {
-              console.error('[MediaService] 🔒 Проблема с RLS политиками');
-              console.error('[MediaService] 💡 Выполните: CREATE POLICY "Public buckets are viewable by everyone" ON storage.buckets FOR SELECT USING (true);');
-            }
-          } else {
-            console.log('[MediaService] ✅ Альтернативная проверка: bucket существует!');
-            return true; // Bucket существует, даже если listBuckets() не работает
+          // Диагностика ошибок
+          if (testError.message?.includes('JWT') || testError.message?.includes('session missing')) {
+            console.error('[MediaService] 🔑 Проблема с аутентификацией - нужны анонимные политики');
+            console.error('[MediaService] 💡 Выполните SQL: STORAGE_POLICIES_ANONYMOUS.sql');
+          } else if (testError.message?.includes('not found')) {
+            console.error('[MediaService] 📦 Bucket не найден - создайте в Dashboard');
+            console.error('[MediaService] 💡 Storage → New Bucket → name: order-media → Public: ✅');
+          } else if (testError.message?.includes('policy')) {
+            console.error('[MediaService] 🔒 Проблема с RLS политиками');
+            console.error('[MediaService] 💡 Выполните: CREATE POLICY "Public buckets are viewable by everyone" ON storage.buckets FOR SELECT USING (true);');
           }
-        } catch (altError) {
-          console.error('[MediaService] ❌ Альтернативная проверка - критическая ошибка:', altError);
+
+          return false;
+        } else {
+          console.log('[MediaService] ✅ Bucket доступен и работает!');
+          return true;
         }
+      } catch (directError) {
+        console.error('[MediaService] ❌ Критическая ошибка прямого доступа:', directError);
 
-        return false;
-      }
-
-      console.log(`[MediaService] 📋 Найдено buckets: ${buckets.length}`);
-      console.log('[MediaService] Список всех buckets:');
-      buckets.forEach((bucket: { name: string, id: string, public: boolean }, index: number) => {
-        console.log(`  ${index + 1}. "${bucket.name}" (id: ${bucket.id}, public: ${bucket.public})`);
-      });
-
-      const bucketExists = buckets.some((bucket: { name: string }) => bucket.name === this.BUCKET_NAME);
-
-      if (!bucketExists) {
-        console.error(`[MediaService] ❌ Bucket '${this.BUCKET_NAME}' НЕ НАЙДЕН в списке!`);
-
-        // Попробуем альтернативный способ - прямое обращение к bucket
-        console.log('[MediaService] 🔄 Пробуем прямое обращение к bucket...');
+        // Попробуем listBuckets как fallback, но с обработкой ошибок
+        console.log('[MediaService] 🔄 Fallback: проверяем через listBuckets...');
         try {
-          const { data: listData, error: directError } = await supabase.storage
-            .from(this.BUCKET_NAME)
-            .list('', { limit: 1 });
+          const { data: buckets, error: listError } = await supabase.storage.listBuckets();
 
-          if (directError) {
-            console.error('[MediaService] ❌ Прямое обращение не удалось:', directError);
-            if (directError.message?.includes('not found')) {
-              console.error('[MediaService] 💀 Bucket действительно не существует');
-            } else if (directError.message?.includes('permission') || directError.message?.includes('policy')) {
-              console.error('[MediaService] 🔒 Проблема с правами доступа (RLS политики)');
-              console.error('[MediaService] 💡 Решение: настройте политики в Storage → Policies');
-            }
-          } else {
-            console.log('[MediaService] ✅ Прямое обращение успешно! Bucket существует');
-            console.log('[MediaService] 🔍 Возможно проблема с политикой listBuckets');
-            return true; // Bucket существует, используем его
+          if (listError) {
+            console.error('[MediaService] ❌ listBuckets также не работает:', listError);
+            return false;
           }
-        } catch (directAltError) {
-          console.error('[MediaService] ❌ Прямое обращение - критическая ошибка:', directAltError);
+
+          if (!buckets || !Array.isArray(buckets)) {
+            console.error('[MediaService] ❌ Некорректный ответ от listBuckets');
+            return false;
+          }
+
+          console.log(`[MediaService] 📋 Найдено buckets: ${buckets.length}`);
+
+          const bucketExists = buckets.some((bucket: { name: string }) => bucket?.name === this.BUCKET_NAME);
+
+          if (bucketExists) {
+            console.log(`[MediaService] ✅ Bucket '${this.BUCKET_NAME}' найден в списке!`);
+            return true;
+          } else {
+            console.error(`[MediaService] ❌ Bucket '${this.BUCKET_NAME}' НЕ НАЙДЕН в списке!`);
+            console.error('[MediaService] 💡 Создайте bucket в Supabase Dashboard');
+            return false;
+          }
+        } catch (listBucketsError) {
+          console.error('[MediaService] ❌ Критическая ошибка listBuckets:', listBucketsError);
+          return false;
         }
-
-        console.error('[MediaService] 💡 Возможные решения:');
-        console.error('  1. Создайте bucket: https://supabase.com → Storage → Create bucket');
-        console.error(`  2. Name: ${this.BUCKET_NAME} (точно так!)`);
-        console.error('  3. Public bucket: ✅ Включите');
-        console.error('  4. Настройте политики Storage → Policies');
-        console.error('  5. Выполните SQL скрипт: STORAGE_POLICIES_ANONYMOUS.sql');
-        return false;
       }
-
-      console.log(`[MediaService] ✅ Bucket '${this.BUCKET_NAME}' найден!`);
-      return true;
     } catch (error) {
-      console.error('[MediaService] ❌ Критическая ошибка при проверке bucket:', error);
+      console.error('[MediaService] ❌ Неожиданная ошибка при проверке bucket:', error);
       console.error('[MediaService] 💡 Проверьте настройки Supabase в supabaseClient.ts');
       return false;
     }
@@ -127,11 +101,21 @@ export class MediaService {
    * Проверяет и восстанавливает аутентификацию Supabase
    */
   private async ensureAuthentication(): Promise<void> {
-    console.log('[MediaService] 🔍 Проверяем аутентификацию...');
-
     try {
-      // Проверяем текущего пользователя
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      console.log('[MediaService] 🔍 Проверяем аутентификацию...');
+
+      // Проверяем текущего пользователя с обработкой ошибок
+      let user = null;
+      let authError = null;
+
+      try {
+        const result = await supabase.auth.getUser();
+        user = result.data?.user;
+        authError = result.error;
+      } catch (getUserError) {
+        console.warn('[MediaService] ⚠️ Ошибка getUser():', getUserError);
+        authError = getUserError;
+      }
 
       if (authError || !user) {
         console.warn('[MediaService] ⚠️ Аутентификация не настроена:', authError?.message || 'Auth session missing!');
@@ -144,50 +128,64 @@ export class MediaService {
           console.log('[MediaService] 📱 Проверяем сохраненную сессию:', storedSession ? 'найдена' : 'не найдена');
 
           if (storedSession) {
-            console.log('[MediaService] 🔄 Восстанавливаем Supabase сессию...');
-            const session = JSON.parse(storedSession);
-            console.log('[MediaService] 📋 Сессия содержит:', {
-              hasAccessToken: !!session.access_token,
-              hasRefreshToken: !!session.refresh_token,
-              expiresAt: session.expires_at
-            });
+            try {
+              console.log('[MediaService] 🔄 Восстанавливаем Supabase сессию...');
+              const session = JSON.parse(storedSession);
 
-            const { data, error: setSessionError } = await supabase.auth.setSession(session);
+              // Проверяем валидность сессии
+              if (!session || !session.access_token) {
+                console.warn('[MediaService] ❌ Сессия повреждена, удаляем...');
+                await AsyncStorage.removeItem('@osonish_supabase_session');
+                console.log('[MediaService] 💡 Используем анонимную загрузку');
+                return;
+              }
 
-            if (setSessionError) {
-              console.error('[MediaService] ❌ Ошибка установки сессии:', setSessionError.message);
+              console.log('[MediaService] 📋 Сессия содержит:', {
+                hasAccessToken: !!session.access_token,
+                hasRefreshToken: !!session.refresh_token,
+                expiresAt: session.expires_at
+              });
+
+              const { data, error: setSessionError } = await supabase.auth.setSession(session);
+
+              if (setSessionError) {
+                console.error('[MediaService] ❌ Ошибка установки сессии:', setSessionError.message);
+                // Удаляем поврежденную сессию
+                await AsyncStorage.removeItem('@osonish_supabase_session');
+                console.log('[MediaService] 💡 Используем анонимную загрузку (требуются анонимные политики Storage)');
+                return;
+              }
+
+              // Проверяем снова после установки сессии
+              console.log('[MediaService] ✅ Сессия установлена, проверяем пользователя...');
+              try {
+                const { data: { user: restoredUser }, error: restoreError } = await supabase.auth.getUser();
+
+                if (restoreError || !restoredUser) {
+                  console.warn('[MediaService] ❌ Пользователь не найден после восстановления сессии');
+                  console.warn('[MediaService] Ошибка:', restoreError?.message);
+                  console.log('[MediaService] 💡 Используем анонимную загрузку (требуются анонимные политики Storage)');
+                } else {
+                  console.log('[MediaService] ✅ Supabase сессия успешно восстановлена!');
+                  console.log(`[MediaService] 👤 Пользователь: ${restoredUser.id}`);
+                  console.log(`[MediaService] 📧 Email: ${restoredUser.email || 'не указан'}`);
+                }
+              } catch (verifyError) {
+                console.warn('[MediaService] ❌ Ошибка проверки восстановленной сессии:', verifyError);
+                console.log('[MediaService] 💡 Используем анонимную загрузку');
+              }
+            } catch (parseError) {
+              console.error('[MediaService] ❌ Ошибка парсинга сессии:', parseError);
               // Удаляем поврежденную сессию
-              await AsyncStorage.removeItem('@osonish_supabase_session');
-              console.log('[MediaService] 💡 Используем анонимную загрузку (требуются анонимные политики Storage)');
-              return;
-            }
-
-            // Проверяем снова после установки сессии
-            console.log('[MediaService] ✅ Сессия установлена, проверяем пользователя...');
-            const { data: { user: restoredUser }, error: restoreError } = await supabase.auth.getUser();
-
-            if (restoreError || !restoredUser) {
-              console.warn('[MediaService] ❌ Пользователь не найден после восстановления сессии');
-              console.warn('[MediaService] Ошибка:', restoreError?.message);
-              console.log('[MediaService] 💡 Используем анонимную загрузку (требуются анонимные политики Storage)');
-            } else {
-              console.log('[MediaService] ✅ Supabase сессия успешно восстановлена!');
-              console.log(`[MediaService] 👤 Пользователь: ${restoredUser.id}`);
-              console.log(`[MediaService] 📧 Email: ${restoredUser.email || 'не указан'}`);
+              try {
+                await AsyncStorage.removeItem('@osonish_supabase_session');
+              } catch (removeError) {
+                console.error('[MediaService] ❌ Ошибка удаления поврежденной сессии:', removeError);
+              }
+              console.log('[MediaService] 💡 Используем анонимную загрузку');
             }
           } else {
             console.log('[MediaService] 💡 Сохраненная сессия не найдена, используем анонимную загрузку');
-            console.log('[MediaService] 🔍 Проверим все ключи AsyncStorage...');
-
-            // Проверим все возможные ключи
-            const allKeys = await AsyncStorage.getAllKeys();
-            const relevantKeys = allKeys.filter(key => key.includes('osonish') || key.includes('supabase'));
-            console.log('[MediaService] 🗂️ Найденные ключи Osonish:', relevantKeys);
-
-            for (const key of relevantKeys) {
-              const value = await AsyncStorage.getItem(key);
-              console.log(`[MediaService] 🔑 ${key}: ${value ? 'имеет значение' : 'пустое'}`);
-            }
           }
         } catch (sessionError) {
           console.warn('[MediaService] ⚠️ Ошибка восстановления сессии:', sessionError);
@@ -198,7 +196,7 @@ export class MediaService {
         console.log(`[MediaService] 📧 Email: ${user.email || 'не указан'}`);
       }
     } catch (error) {
-      console.warn('[MediaService] ⚠️ Ошибка проверки аутентификации:', error);
+      console.warn('[MediaService] ⚠️ Критическая ошибка проверки аутентификации:', error);
       console.log('[MediaService] 💡 Используем анонимную загрузку (требуются анонимные политики Storage)');
     }
   }
@@ -233,11 +231,26 @@ export class MediaService {
       console.log(`[MediaService] 🌐 Supabase URL: ${supabase.supabaseUrl}`);
       console.log(`[MediaService] 🔑 Auth: ${supabase.supabaseKey ? 'настроен' : 'не настроен'}`);
 
-      // Проверяем и восстанавливаем аутентификацию
-      await this.ensureAuthentication();
+      // Проверяем и восстанавливаем аутентификацию с обработкой ошибок
+      try {
+        await this.ensureAuthentication();
+      } catch (authError) {
+        console.warn('[MediaService] ⚠️ Ошибка проверки аутентификации:', authError);
+        console.log('[MediaService] 💡 Продолжаем с анонимным доступом');
+      }
 
-      // Проверяем и создаем bucket при необходимости
-      const bucketReady = await this.ensureBucketExists();
+      // Проверяем и создаем bucket при необходимости с обработкой ошибок
+      let bucketReady = false;
+      try {
+        bucketReady = await this.ensureBucketExists();
+      } catch (bucketError) {
+        console.error('[MediaService] ❌ Критическая ошибка проверки bucket:', bucketError);
+        return {
+          success: false,
+          error: 'Критическая ошибка доступа к хранилищу файлов.'
+        };
+      }
+
       if (!bucketReady) {
         return {
           success: false,

@@ -4,7 +4,7 @@ import { theme } from '../constants';
 import type { CustomerTabParamList } from '../types';
 import {
   CustomerHomeScreen,
-  CreateOrderScreen,
+  CreateOrderStepByStepScreen,
   MyOrdersScreen,
   CustomerProfileScreen
 } from '../screens/customer';
@@ -63,7 +63,7 @@ export function CustomerTabNavigator() {
       />
       <Tab.Screen
         name="CreateOrder"
-        component={CreateOrderScreen}
+        component={CreateOrderStepByStepScreen}
         options={{
           tabBarLabel: 'Создать',
           tabBarIcon: ({ color, size, focused }) => (
