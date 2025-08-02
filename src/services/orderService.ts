@@ -777,4 +777,4 @@ export class OrderService {
 }
 
 // Экспортируем синглтон
-export const orderService = OrderService.getInstance(); 
+export const orderService = OrderService.getInstance();

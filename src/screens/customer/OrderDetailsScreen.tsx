@@ -554,164 +554,172 @@ export const OrderDetailsScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <HeaderWithBack />
+      <View style={styles.contentContainer}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {/* Header */}
+          <HeaderWithBack />
 
-        {/* User Profile Section */}
-        <View style={styles.profileSection}>
-          <View style={styles.profileContainer}>
-            <View style={styles.avatarContainer}>
-              {currentUser?.profileImage ? (
-                <Image source={{ uri: currentUser.profileImage }} style={styles.avatar} />
-              ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <UserIcon width={24} height={24} stroke={theme.colors.text.secondary} />
-                </View>
-              )}
+          {/* User Profile Section */}
+          <View style={styles.profileSection}>
+            <View style={styles.profileContainer}>
+              <View style={styles.avatarContainer}>
+                {currentUser?.profileImage ? (
+                  <Image source={{ uri: currentUser.profileImage }} style={styles.avatar} />
+                ) : (
+                  <View style={styles.avatarPlaceholder}>
+                    <UserIcon width={24} height={24} stroke={theme.colors.text.secondary} />
+                  </View>
+                )}
+              </View>
+              <View style={styles.profileInfo}>
+                <Text style={styles.profileName}>
+                  {currentUser ? `${currentUser.lastName} ${currentUser.firstName}` : 'Пользователь'}
+                </Text>
+                <Text style={styles.profileRole}>Заказчик</Text>
+              </View>
+              <View style={styles.priceContainer}>
+                <Text style={styles.orderPrice}>{formatBudget(order.budget)} сум</Text>
+              </View>
             </View>
-            <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>
-                {currentUser ? `${currentUser.lastName} ${currentUser.firstName}` : 'Пользователь'}
+          </View>
+
+          {/* Order Title */}
+          <View style={styles.titleSection}>
+            <Text style={styles.orderTitle}>{order.title}</Text>
+          </View>
+
+          {/* Image Gallery */}
+          {order.photos && order.photos.length > 0 && (
+            <View style={styles.gallerySection}>
+              <ImageGallery photos={order.photos} />
+            </View>
+          )}
+
+          {/* Info Grid */}
+          <View style={styles.infoSection}>
+            <View style={styles.infoGrid}>
+              <View style={styles.infoCard}>
+                <View style={styles.infoIcon}>
+                  <Text style={styles.iconText}>💰</Text>
+                </View>
+                <Text style={styles.infoValue}>{formatBudget(order.budget)}</Text>
+              </View>
+
+              <View style={styles.infoCard}>
+                <View style={styles.infoIcon}>
+                  <Text style={styles.iconText}>🏷️</Text>
+                </View>
+                <Text style={styles.infoValue}>{order.category}</Text>
+              </View>
+
+              <View style={styles.infoCard}>
+                <View style={styles.infoIcon}>
+                  <HomeIcon width={20} height={20} stroke={theme.colors.primary} />
+                </View>
+                <Text style={styles.infoValue}>{order.location}</Text>
+              </View>
+
+              <View style={styles.infoCard}>
+                <View style={styles.infoIcon}>
+                  <CalendarDateIcon width={20} height={20} stroke={theme.colors.primary} />
+                </View>
+                <Text style={styles.infoValue}>{formatDate(order.serviceDate)}</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Details Section */}
+          <View style={styles.detailsSection}>
+            <Text style={styles.detailsTitle}>Детали</Text>
+            <Text style={styles.detailsText}>{order.description}</Text>
+          </View>
+
+          {/* Краткий обзор откликов */}
+          {applicants.length > 0 && (
+            <View style={styles.applicantsSection}>
+              <View style={styles.applicantsHeader}>
+                <Text style={styles.applicantsTitle}>Отклики ({applicants.length})</Text>
+                {order?.workersNeeded && (
+                  <View style={styles.progressInfo}>
+                    <Text style={styles.applicantsSubtitle}>
+                      Выбрано {acceptedApplicants.size} из {order.workersNeeded} исполнител{order.workersNeeded === 1 ? 'я' : 'ей'}
+                    </Text>
+                    <View style={styles.progressBarSmall}>
+                      <View
+                        style={[
+                          styles.progressFillSmall,
+                          { width: `${Math.min((acceptedApplicants.size / order.workersNeeded) * 100, 100)}%` }
+                        ]}
+                      />
+                    </View>
+                  </View>
+                )}
+              </View>
+
+              {/* Статистика по откликам */}
+              <View style={styles.applicantsStats}>
+                <View style={styles.statCard}>
+                  <Text style={styles.statNumber}>{applicants.length}</Text>
+                  <Text style={styles.statLabel}>Всего откликов</Text>
+                </View>
+                <View style={styles.statCard}>
+                  <Text style={styles.statNumber}>{applicants.filter(a => a.status === 'pending').length}</Text>
+                  <Text style={styles.statLabel}>Ожидают</Text>
+                </View>
+                <View style={styles.statCard}>
+                  <Text style={styles.statNumber}>{applicants.filter(a => a.status === 'accepted').length}</Text>
+                  <Text style={styles.statLabel}>Выбрано</Text>
+                </View>
+              </View>
+
+              {/* Последние отклики (первые 3) */}
+              {applicants.slice(0, 3).map((item) => (
+                <View key={item.id} style={styles.applicantPreview}>
+                  <View style={styles.applicantPreviewHeader}>
+                    <Text style={styles.applicantPreviewName}>{item.workerName}</Text>
+                    <Text style={styles.applicantPreviewPrice}>{Math.round(item.proposedPrice || 0).toLocaleString()} сум</Text>
+                  </View>
+                  <View style={styles.applicantPreviewDetails}>
+                    <Text style={styles.applicantPreviewRating}>⭐ {item.rating?.toFixed(1) || '0.0'}</Text>
+                    <Text style={styles.applicantPreviewJobs}>• {item.completedJobs} работ</Text>
+                    <View style={[styles.applicantPreviewStatus, { backgroundColor: getApplicantStatusColor(item.status) }]}>
+                      <Text style={styles.applicantPreviewStatusText}>{getApplicantStatusText(item.status)}</Text>
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Если откликов нет */}
+          {applicants.length === 0 && !applicantsLoading && (
+            <View style={styles.noApplicantsSection}>
+              <Text style={styles.noApplicantsTitle}>Пока нет откликов</Text>
+              <Text style={styles.noApplicantsText}>
+                Исполнители еще не откликнулись на ваш заказ. Подождите немного или расширьте описание заказа.
               </Text>
-              <Text style={styles.profileRole}>Заказчик</Text>
             </View>
-            <View style={styles.priceContainer}>
-              <Text style={styles.orderPrice}>{formatBudget(order.budget)} сум</Text>
-            </View>
-          </View>
-        </View>
+          )}
+        </ScrollView>
 
-        {/* Order Title */}
-        <View style={styles.titleSection}>
-          <Text style={styles.orderTitle}>{order.title}</Text>
-        </View>
-
-        {/* Image Gallery */}
-        {order.photos && order.photos.length > 0 && (
-          <View style={styles.gallerySection}>
-            <ImageGallery photos={order.photos} />
-          </View>
-        )}
-
-        {/* Info Grid */}
-        <View style={styles.infoSection}>
-          <View style={styles.infoGrid}>
-            <View style={styles.infoCard}>
-              <View style={styles.infoIcon}>
-                <Text style={styles.iconText}>💰</Text>
-              </View>
-              <Text style={styles.infoValue}>{formatBudget(order.budget)}</Text>
-            </View>
-
-            <View style={styles.infoCard}>
-              <View style={styles.infoIcon}>
-                <Text style={styles.iconText}>🏷️</Text>
-              </View>
-              <Text style={styles.infoValue}>{order.category}</Text>
-            </View>
-
-            <View style={styles.infoCard}>
-              <View style={styles.infoIcon}>
-                <HomeIcon width={20} height={20} stroke={theme.colors.primary} />
-              </View>
-              <Text style={styles.infoValue}>{order.location}</Text>
-            </View>
-
-            <View style={styles.infoCard}>
-              <View style={styles.infoIcon}>
-                <CalendarDateIcon width={20} height={20} stroke={theme.colors.primary} />
-              </View>
-              <Text style={styles.infoValue}>{formatDate(order.serviceDate)}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Details Section */}
-        <View style={styles.detailsSection}>
-          <Text style={styles.detailsTitle}>Детали</Text>
-          <Text style={styles.detailsText}>{order.description}</Text>
-        </View>
-
-        {/* Краткий обзор откликов */}
+        {/* Закрепленная кнопка внизу - показываем только если есть отклики */}
         {applicants.length > 0 && (
-          <View style={styles.applicantsSection}>
-            <View style={styles.applicantsHeader}>
-              <Text style={styles.applicantsTitle}>Отклики ({applicants.length})</Text>
-              {order?.workersNeeded && (
-                <View style={styles.progressInfo}>
-                  <Text style={styles.applicantsSubtitle}>
-                    Выбрано {acceptedApplicants.size} из {order.workersNeeded} исполнител{order.workersNeeded === 1 ? 'я' : 'ей'}
-                  </Text>
-                  <View style={styles.progressBarSmall}>
-                    <View
-                      style={[
-                        styles.progressFillSmall,
-                        { width: `${Math.min((acceptedApplicants.size / order.workersNeeded) * 100, 100)}%` }
-                      ]}
-                    />
-                  </View>
-                </View>
-              )}
-            </View>
-
-            {/* Статистика по откликам */}
-            <View style={styles.applicantsStats}>
-              <View style={styles.statCard}>
-                <Text style={styles.statNumber}>{applicants.length}</Text>
-                <Text style={styles.statLabel}>Всего откликов</Text>
-              </View>
-              <View style={styles.statCard}>
-                <Text style={styles.statNumber}>{applicants.filter(a => a.status === 'pending').length}</Text>
-                <Text style={styles.statLabel}>Ожидают</Text>
-              </View>
-              <View style={styles.statCard}>
-                <Text style={styles.statNumber}>{applicants.filter(a => a.status === 'accepted').length}</Text>
-                <Text style={styles.statLabel}>Выбрано</Text>
-              </View>
-            </View>
-
-            {/* Последние отклики (первые 3) */}
-            {applicants.slice(0, 3).map((item) => (
-              <View key={item.id} style={styles.applicantPreview}>
-                <View style={styles.applicantPreviewHeader}>
-                  <Text style={styles.applicantPreviewName}>{item.workerName}</Text>
-                  <Text style={styles.applicantPreviewPrice}>{Math.round(item.proposedPrice || 0).toLocaleString()} сум</Text>
-                </View>
-                <View style={styles.applicantPreviewDetails}>
-                  <Text style={styles.applicantPreviewRating}>⭐ {item.rating?.toFixed(1) || '0.0'}</Text>
-                  <Text style={styles.applicantPreviewJobs}>• {item.completedJobs} работ</Text>
-                  <View style={[styles.applicantPreviewStatus, { backgroundColor: getApplicantStatusColor(item.status) }]}>
-                    <Text style={styles.applicantPreviewStatusText}>{getApplicantStatusText(item.status)}</Text>
-                  </View>
-                </View>
-              </View>
-            ))}
-
-            {/* Кнопка перехода к полному списку */}
+          <View style={styles.fixedBottomSection}>
             <TouchableOpacity
-              style={styles.viewAllApplicantsButton}
+              style={styles.fixedViewAllApplicantsButton}
               onPress={() => navigation.navigate('ApplicantsList', { orderId: orderId })}
             >
-              <Text style={styles.viewAllApplicantsButtonText}>
+              <Text style={styles.fixedViewAllApplicantsButtonText}>
                 Посмотреть все отклики ({applicants.length})
               </Text>
             </TouchableOpacity>
           </View>
         )}
-
-        {/* Если откликов нет */}
-        {applicants.length === 0 && !applicantsLoading && (
-          <View style={styles.noApplicantsSection}>
-            <Text style={styles.noApplicantsTitle}>Пока нет откликов</Text>
-            <Text style={styles.noApplicantsText}>
-              Исполнители еще не откликнулись на ваш заказ. Подождите немного или расширьте описание заказа.
-            </Text>
-          </View>
-        )}
-      </ScrollView>
-
-      {/* Нижняя секция теперь не нужна, так как отклики показываются на главной странице */}
+      </View>
 
 
 
@@ -1507,5 +1515,51 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: theme.colors.primary,
     borderRadius: 3,
+  },
+
+  // Новые стили для фиксированной кнопки
+  contentContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 120, // Достаточный отступ снизу для избежания перекрытия с кнопкой (высота кнопки + отступы)
+  },
+  fixedBottomSection: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: theme.colors.background,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    paddingBottom: theme.spacing.lg, // Дополнительный отступ для безопасной области
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    elevation: 8,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  fixedViewAllApplicantsButton: {
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
+    alignItems: 'center',
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  fixedViewAllApplicantsButtonText: {
+    color: '#fff',
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.bold,
+    textAlign: 'center',
   },
 }); 

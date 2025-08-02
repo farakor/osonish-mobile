@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../constants';
-import { StatsWidget, StatItem } from '../../components/common';
 import { authService } from '../../services/authService';
+import { orderService } from '../../services/orderService';
 import { User } from '../../types';
 import UserEditIcon from '../../../assets/user-edit.svg';
 import NotificationMessageIcon from '../../../assets/notification-message.svg';
@@ -28,15 +28,30 @@ interface ProfileOption {
   action: () => void;
 }
 
+interface CustomerStats {
+  totalOrders: number;
+  completedOrders: number;
+  activeOrders: number;
+  averageRating: number;
+  monthsOnPlatform: number;
+}
+
 export const CustomerProfileScreen: React.FC = () => {
   const navigation = useNavigation();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [stats, setStats] = useState<CustomerStats>({
+    totalOrders: 0,
+    completedOrders: 0,
+    activeOrders: 0,
+    averageRating: 0,
+    monthsOnPlatform: 0
+  });
 
-  // Загружаем профиль при первой загрузке
   useEffect(() => {
     loadUserProfile();
+    loadCustomerStats();
   }, []);
 
   // Обновляем профиль при возврате на экран (например, после редактирования)
@@ -44,6 +59,7 @@ export const CustomerProfileScreen: React.FC = () => {
     React.useCallback(() => {
       console.log('[CustomerProfile] 🔄 useFocusEffect: перезагружаем профиль');
       loadUserProfile();
+      loadCustomerStats();
     }, [])
   );
 
@@ -78,10 +94,79 @@ export const CustomerProfileScreen: React.FC = () => {
     }
   };
 
+  const loadCustomerStats = async () => {
+    try {
+      // Получаем заказы заказчика
+      const orders = await orderService.getCustomerOrders();
+
+      // Рассчитываем статистику на основе реальных данных
+      const totalOrders = orders.length;
+      const completedOrders = orders.filter(order => order.status === 'completed').length;
+      const activeOrders = orders.filter(order => order.status === 'active').length;
+
+      // Расчет рейтинга на основе завершенных заказов (простая формула)
+      let averageRating = 0;
+      if (completedOrders > 0) {
+        averageRating = Math.min(5.0, 4.5 + (completedOrders * 0.1));
+        averageRating = Number(averageRating.toFixed(1));
+      }
+
+      // Расчет месяцев на платформе
+      const authState = authService.getAuthState();
+      let monthsOnPlatform = 0;
+      if (authState.user?.createdAt) {
+        const createdDate = new Date(authState.user.createdAt);
+        const now = new Date();
+        const diffTime = Math.abs(now.getTime() - createdDate.getTime());
+        monthsOnPlatform = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30));
+      }
+
+      setStats({
+        totalOrders,
+        completedOrders,
+        activeOrders,
+        averageRating,
+        monthsOnPlatform: Math.max(monthsOnPlatform, 1)
+      });
+
+      console.log('[CustomerProfile] Статистика загружена:', {
+        totalOrders,
+        completedOrders,
+        activeOrders,
+        averageRating,
+        monthsOnPlatform
+      });
+
+    } catch (error) {
+      console.error('Ошибка загрузки статистики:', error);
+
+      // Fallback к начальным данным при ошибке
+      const authState = authService.getAuthState();
+      let monthsOnPlatform = 1;
+      if (authState.user?.createdAt) {
+        const createdDate = new Date(authState.user.createdAt);
+        const now = new Date();
+        const diffTime = Math.abs(now.getTime() - createdDate.getTime());
+        monthsOnPlatform = Math.max(Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30)), 1);
+      }
+
+      setStats({
+        totalOrders: 0,
+        completedOrders: 0,
+        activeOrders: 0,
+        averageRating: 0,
+        monthsOnPlatform
+      });
+    }
+  };
+
   const onRefresh = async () => {
     try {
       setIsRefreshing(true);
-      await loadUserProfile();
+      await Promise.all([
+        loadUserProfile(),
+        loadCustomerStats()
+      ]);
     } catch (error) {
       console.error('Ошибка обновления данных:', error);
     } finally {
@@ -95,28 +180,27 @@ export const CustomerProfileScreen: React.FC = () => {
     return first + last || 'У';
   };
 
-  const statsData: StatItem[] = [
+  const mainStatsData = [
     {
       id: 'orders',
-      icon: '',
-      value: '12',
+      value: stats.totalOrders.toString(),
       label: 'Заказов',
       color: theme.colors.primary,
       onPress: () => navigation.navigate('MyOrders' as never),
     },
     {
       id: 'rating',
-      icon: '',
-      value: '4.8',
+      value: stats.averageRating.toString(),
       label: 'Рейтинг',
-      color: theme.colors.primary,
+      color: theme.colors.success,
     },
     {
-      id: 'months',
-      icon: '',
-      value: '6 мес',
-      label: 'На Oson Ish',
-      color: theme.colors.primary,
+      id: 'experience',
+      value: stats.monthsOnPlatform > 12
+        ? `${Math.floor(stats.monthsOnPlatform / 12)} г`
+        : `${stats.monthsOnPlatform} мес`,
+      label: 'На платформе',
+      color: theme.colors.secondary,
     },
   ];
 
@@ -202,6 +286,11 @@ export const CustomerProfileScreen: React.FC = () => {
           {/* Content Header */}
           <View style={styles.contentHeader}>
             <Text style={styles.title}>Профиль</Text>
+            <Text style={styles.subtitle}>
+              {stats.activeOrders > 0 && (
+                `${stats.activeOrders} активных заказов`
+              )}
+            </Text>
           </View>
 
           {/* Profile Info */}
@@ -220,18 +309,46 @@ export const CustomerProfileScreen: React.FC = () => {
               {user.middleName && ` ${user.middleName}`}
             </Text>
             <Text style={styles.userPhone}>{user.phone}</Text>
-            <Text style={styles.userRole}>Заказчик</Text>
+            <View style={styles.roleContainer}>
+              <Text style={styles.userRole}>Заказчик</Text>
+              {user.isVerified && (
+                <View style={styles.verifiedBadge}>
+                  <Text style={styles.verifiedText}>✓ Верифицирован</Text>
+                </View>
+              )}
+            </View>
+            {stats.averageRating > 0 && (
+              <View style={styles.ratingContainer}>
+                <Text style={styles.ratingStars}>⭐</Text>
+                <Text style={styles.ratingText}>{stats.averageRating}</Text>
+                <Text style={styles.ratingCount}>
+                  ({stats.completedOrders} заказ{stats.completedOrders === 1 ? '' : stats.completedOrders < 5 ? 'а' : 'ов'})
+                </Text>
+              </View>
+            )}
           </View>
 
-          {/* Enhanced Stats Widget */}
-          <StatsWidget
-            stats={statsData}
-            variant="cards"
-            style={{ marginBottom: theme.spacing.xl }}
-          />
+          {/* Main Stats - Three Cards in Row */}
+          <View style={styles.mainStatsContainer}>
+            {mainStatsData.map((stat) => (
+              <TouchableOpacity
+                key={stat.id}
+                style={styles.statCard}
+                onPress={stat.onPress}
+                activeOpacity={stat.onPress ? 0.7 : 1}
+                disabled={!stat.onPress}
+              >
+                <Text style={[styles.statValue, { color: stat.color }]}>
+                  {stat.value}
+                </Text>
+                <Text style={styles.statLabel}>{stat.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
           {/* Profile Options */}
           <View style={styles.profileOptions}>
+            <Text style={styles.sectionTitle}>Настройки</Text>
             {profileOptions.map((option) => (
               <TouchableOpacity
                 key={option.id}
@@ -240,7 +357,6 @@ export const CustomerProfileScreen: React.FC = () => {
                 activeOpacity={0.7}
               >
                 <View style={styles.optionLeft}>
-                  {/* Изменено: поддержка компонента-иконки */}
                   {typeof option.icon === 'string' ? (
                     <Text style={styles.optionIcon}>{option.icon}</Text>
                   ) : (
@@ -278,7 +394,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    backgroundColor: theme.colors.background,
   },
   loadingContainer: {
     justifyContent: 'center',
@@ -313,26 +428,42 @@ const styles = StyleSheet.create({
   },
   contentHeader: {
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl,
-    paddingBottom: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
+    backgroundColor: theme.colors.background,
   },
   title: {
     fontSize: theme.fonts.sizes.xxl,
     fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  subtitle: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.xs,
   },
   profileInfo: {
     alignItems: 'center',
+    paddingVertical: theme.spacing.xl,
     paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
+    backgroundColor: theme.colors.surface,
+    marginHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
+    marginBottom: theme.spacing.lg,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   avatar: {
     width: 80,
     height: 80,
     borderRadius: 40,
     backgroundColor: theme.colors.primary,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: theme.spacing.md,
   },
   profileImage: {
@@ -342,9 +473,9 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   avatarText: {
-    fontSize: 24,
+    fontSize: theme.fonts.sizes.xl,
     fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.white,
+    color: theme.colors.background,
   },
   userName: {
     fontSize: theme.fonts.sizes.lg,
@@ -356,44 +487,57 @@ const styles = StyleSheet.create({
   userPhone: {
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.xs,
+    marginBottom: theme.spacing.sm,
+  },
+  roleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
   },
   userRole: {
     fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.primary,
-    backgroundColor: `${theme.colors.primary}20`,
+    color: theme.colors.secondary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    fontWeight: theme.fonts.weights.semiBold,
+  },
+  verifiedBadge: {
+    backgroundColor: theme.colors.success + '20',
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
     borderRadius: theme.borderRadius.sm,
   },
-  stats: {
+  verifiedText: {
+    fontSize: theme.fonts.sizes.xs,
+    color: theme.colors.success,
+    fontWeight: theme.fonts.weights.medium,
+  },
+  ratingContainer: {
     flexDirection: 'row',
-    backgroundColor: theme.colors.surface,
-    marginHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
-    borderRadius: theme.borderRadius.lg,
-    paddingVertical: theme.spacing.lg,
-  },
-  statItem: {
-    flex: 1,
     alignItems: 'center',
+    marginTop: theme.spacing.sm,
   },
-  statNumber: {
-    fontSize: theme.fonts.sizes.xl,
-    fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
+  ratingStars: {
+    fontSize: 16,
+    marginRight: theme.spacing.xs,
   },
-  statLabel: {
+  ratingText: {
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.warning,
+    marginRight: theme.spacing.xs,
+  },
+  ratingCount: {
     fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
-    textAlign: 'center',
   },
-  statDivider: {
-    width: 1,
-    backgroundColor: theme.colors.border,
-    marginHorizontal: theme.spacing.sm,
+  sectionTitle: {
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.md,
   },
+
   profileOptions: {
     paddingHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.xl,
@@ -413,10 +557,14 @@ const styles = StyleSheet.create({
   optionLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   optionIcon: {
-    fontSize: 20,
     marginRight: theme.spacing.md,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   optionTitle: {
     fontSize: theme.fonts.sizes.md,
@@ -424,21 +572,23 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.medium,
   },
   optionArrow: {
-    fontSize: 18,
+    fontSize: theme.fonts.sizes.lg,
     color: theme.colors.text.secondary,
   },
   logoutButton: {
-    backgroundColor: theme.colors.error,
-    marginHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#FF6B6B',
     borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
+    paddingVertical: theme.spacing.md,
+    marginHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.xl,
+    alignItems: 'center',
   },
   logoutText: {
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.white,
+    color: '#FF6B6B',
   },
   appInfo: {
     alignItems: 'center',
@@ -454,5 +604,44 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.xs,
     color: theme.colors.text.secondary,
     textAlign: 'center',
+  },
+
+  // Main Stats Styles
+  mainStatsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: theme.spacing.lg,
+    marginBottom: theme.spacing.xl,
+    gap: theme.spacing.md,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    minHeight: 80,
+  },
+  statIcon: {
+    fontSize: 28,
+    marginBottom: theme.spacing.sm,
+  },
+  statValue: {
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.bold,
+    marginBottom: theme.spacing.xs,
+  },
+  statLabel: {
+    fontSize: theme.fonts.sizes.xs,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    fontWeight: theme.fonts.weights.medium,
   },
 }); 
