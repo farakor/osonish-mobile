@@ -11,6 +11,7 @@ import {
   FlatList,
   Modal,
   Dimensions,
+  Pressable,
 } from 'react-native';
 import { theme } from '../../constants';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -140,7 +141,7 @@ const ImageGallery: React.FC<{ photos: string[] }> = ({ photos }) => {
         showsHorizontalScrollIndicator={false}
         onScroll={onScroll}
         scrollEventThrottle={16}
-        keyExtractor={(item, index) => index.toString()}
+        keyExtractor={(item: string, index: number) => index.toString()}
       />
 
       {/* Navigation arrows */}
@@ -187,12 +188,19 @@ export const OrderDetailsScreen: React.FC = () => {
   const route = useRoute<OrderDetailsRouteProp>();
   const { orderId } = route.params;
 
-  const [showApplicants, setShowApplicants] = useState(false);
+
+
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [applicantsLoading, setApplicantsLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  // Состояния для подтверждения выбора исполнителя
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
+  const [acceptedApplicants, setAcceptedApplicants] = useState<Set<string>>(new Set());
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Загружаем заказ по ID
   useEffect(() => {
@@ -227,7 +235,16 @@ export const OrderDetailsScreen: React.FC = () => {
         setApplicantsLoading(true);
         const orderApplicants = await orderService.getApplicantsForOrder(orderId);
         setApplicants(orderApplicants);
-        console.log(`[OrderDetailsScreen] Загружено ${orderApplicants.length} откликов для заказа ${orderId}`);
+
+        // Инициализируем список принятых исполнителей
+        const accepted = new Set(
+          orderApplicants
+            .filter(applicant => applicant.status === 'accepted')
+            .map(applicant => applicant.id)
+        );
+        setAcceptedApplicants(accepted);
+
+        console.log(`[OrderDetailsScreen] Загружено ${orderApplicants.length} откликов для заказа ${orderId}, принято: ${accepted.size}`);
       } catch (error) {
         console.error('Ошибка загрузки откликов:', error);
       } finally {
@@ -237,6 +254,8 @@ export const OrderDetailsScreen: React.FC = () => {
 
     loadApplicants();
   }, [orderId]);
+
+
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -275,37 +294,84 @@ export const OrderDetailsScreen: React.FC = () => {
     );
   };
 
-  const handleAcceptApplicant = async (applicantId: string) => {
+  // Показать модалку подтверждения выбора исполнителя
+  const handleSelectApplicant = (applicant: Applicant) => {
+    setSelectedApplicant(applicant);
+    setShowConfirmModal(true);
+  };
+
+  // Подтвердить выбор исполнителя
+  const handleConfirmSelection = async () => {
+    if (!selectedApplicant || !order || isProcessing) return;
+
+    setIsProcessing(true);
+
     try {
-      const success = await orderService.updateApplicantStatus(applicantId, 'accepted');
-      if (success) {
-        Alert.alert('Успешно', 'Отклик принят');
-        // Обновляем список откликов
-        const updatedApplicants = await orderService.getApplicantsForOrder(orderId);
-        setApplicants(updatedApplicants);
-      } else {
+      // Принимаем выбранного исполнителя
+      const success = await orderService.updateApplicantStatus(selectedApplicant.id, 'accepted');
+      if (!success) {
         Alert.alert('Ошибка', 'Не удалось принять отклик');
+        setIsProcessing(false);
+        setShowConfirmModal(false);
+        setSelectedApplicant(null);
+        return;
       }
+
+      // Небольшая задержка для обеспечения обновления в БД
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Обновляем список откликов
+      const updatedApplicants = await orderService.getApplicantsForOrder(orderId);
+      setApplicants(updatedApplicants);
+
+      // Обновляем список принятых исполнителей
+      const newAcceptedApplicants = new Set(
+        updatedApplicants
+          .filter(applicant => applicant.status === 'accepted')
+          .map(applicant => applicant.id)
+      );
+      setAcceptedApplicants(newAcceptedApplicants);
+
+      // Проверяем, достигнуто ли нужное количество исполнителей
+      if (newAcceptedApplicants.size >= order.workersNeeded) {
+        // Автоматически отклоняем остальных
+        const rejectionPromises = updatedApplicants
+          .filter(applicant =>
+            applicant.status === 'pending' &&
+            !newAcceptedApplicants.has(applicant.id)
+          )
+          .map(applicant => orderService.updateApplicantStatus(applicant.id, 'rejected'));
+
+        if (rejectionPromises.length > 0) {
+          await Promise.all(rejectionPromises);
+
+          // Обновляем список откликов еще раз после отклонения
+          const finalUpdatedApplicants = await orderService.getApplicantsForOrder(orderId);
+          setApplicants(finalUpdatedApplicants);
+
+          // Обновляем список принятых исполнителей
+          const finalAcceptedApplicants = new Set(
+            finalUpdatedApplicants
+              .filter(applicant => applicant.status === 'accepted')
+              .map(applicant => applicant.id)
+          );
+          setAcceptedApplicants(finalAcceptedApplicants);
+        }
+      }
+
+      setIsProcessing(false);
+      setShowConfirmModal(false);
+      setSelectedApplicant(null);
+
+      // Показываем сообщение об успехе
+      Alert.alert('Успешно', `Исполнитель ${selectedApplicant.workerName} выбран для выполнения заказа`);
+
     } catch (error) {
       console.error('Ошибка принятия отклика:', error);
       Alert.alert('Ошибка', 'Произошла ошибка при принятии отклика');
-    }
-  };
-
-  const handleRejectApplicant = async (applicantId: string) => {
-    try {
-      const success = await orderService.updateApplicantStatus(applicantId, 'rejected');
-      if (success) {
-        Alert.alert('Успешно', 'Отклик отклонен');
-        // Обновляем список откликов
-        const updatedApplicants = await orderService.getApplicantsForOrder(orderId);
-        setApplicants(updatedApplicants);
-      } else {
-        Alert.alert('Ошибка', 'Не удалось отклонить отклик');
-      }
-    } catch (error) {
-      console.error('Ошибка отклонения отклика:', error);
-      Alert.alert('Ошибка', 'Произошла ошибка при отклонении отклика');
+      setIsProcessing(false);
+      setShowConfirmModal(false);
+      setSelectedApplicant(null);
     }
   };
 
@@ -331,29 +397,70 @@ export const OrderDetailsScreen: React.FC = () => {
       return price.toLocaleString('ru-RU');
     };
 
+    const isAccepted = item.status === 'accepted';
+    const isRejected = item.status === 'rejected';
+    const isPending = item.status === 'pending';
+
     return (
-      <View style={styles.applicantCard}>
-        <View style={styles.applicantHeader}>
-          <View style={styles.applicantInfo}>
-            <Text style={styles.applicantName}>{item.workerName}</Text>
-            <View style={styles.applicantStats}>
-              <Text style={styles.applicantRating}>⭐ {item.rating?.toFixed(1) || '4.5'}</Text>
-              <Text style={styles.applicantJobs}>• {item.completedJobs || 0} заказов</Text>
+      <View style={[
+        styles.applicantCard,
+        isAccepted && styles.acceptedCard,
+        isRejected && styles.rejectedCard
+      ]}>
+        {/* Статус полоса */}
+        {isAccepted && (
+          <View style={styles.statusBar}>
+            <View style={styles.statusIndicator}>
+              <Text style={styles.statusIcon}>✓</Text>
+              <Text style={styles.statusText}>Выбран</Text>
             </View>
           </View>
-          <Text style={styles.applicantTime}>{formatAppliedAt(item.appliedAt)}</Text>
+        )}
+
+        {isRejected && (
+          <View style={styles.statusBarRejected}>
+            <View style={styles.statusIndicator}>
+              <Text style={styles.statusIconRejected}>✗</Text>
+              <Text style={styles.statusTextRejected}>Отклонен</Text>
+            </View>
+          </View>
+        )}
+
+        <View style={styles.applicantHeader}>
+          <View style={styles.applicantInfo}>
+            <View style={styles.nameContainer}>
+              <Text style={[styles.applicantName, isRejected && styles.rejectedText]}>
+                {item.workerName}
+              </Text>
+              {isAccepted && <Text style={styles.selectedBadge}>ВЫБРАН</Text>}
+            </View>
+            <View style={styles.applicantStats}>
+              <Text style={[styles.applicantRating, isRejected && styles.rejectedText]}>
+                ⭐ {item.rating?.toFixed(1) || '4.5'}
+              </Text>
+              <Text style={[styles.applicantJobs, isRejected && styles.rejectedText]}>
+                • {item.completedJobs || 0} заказов
+              </Text>
+            </View>
+          </View>
+          <Text style={[styles.applicantTime, isRejected && styles.rejectedText]}>
+            {formatAppliedAt(item.appliedAt)}
+          </Text>
         </View>
 
         {/* Предложенная цена */}
         {item.proposedPrice && (
           <View style={styles.proposedPriceContainer}>
-            <Text style={styles.proposedPriceLabel}>Предложенная цена:</Text>
-            <Text style={styles.proposedPriceValue}>
+            <Text style={[styles.proposedPriceLabel, isRejected && styles.rejectedText]}>
+              Предложенная цена:
+            </Text>
+            <Text style={[styles.proposedPriceValue, isAccepted && styles.acceptedPrice]}>
               {formatPrice(item.proposedPrice)} сум
               {order && item.proposedPrice !== order.budget && (
                 <Text style={[
                   styles.priceDifference,
-                  { color: item.proposedPrice > order.budget ? '#FF6B6B' : '#4ECDC4' }
+                  { color: item.proposedPrice > order.budget ? '#FF6B6B' : '#4ECDC4' },
+                  isRejected && styles.rejectedText
                 ]}>
                   {' '}({item.proposedPrice > order.budget ? '+' : ''}{formatPrice(item.proposedPrice - order.budget)})
                 </Text>
@@ -365,25 +472,35 @@ export const OrderDetailsScreen: React.FC = () => {
         {/* Комментарий исполнителя */}
         {item.message && item.message.trim() && (
           <View style={styles.messageContainer}>
-            <Text style={styles.messageLabel}>Комментарий:</Text>
-            <Text style={styles.messageText}>{item.message}</Text>
+            <Text style={[styles.messageLabel, isRejected && styles.rejectedText]}>
+              Комментарий:
+            </Text>
+            <Text style={[styles.messageText, isRejected && styles.rejectedText]}>
+              {item.message}
+            </Text>
           </View>
         )}
 
-        <View style={styles.applicantActions}>
-          <TouchableOpacity
-            style={styles.acceptButton}
-            onPress={() => handleAcceptApplicant(item.id)}
-          >
-            <Text style={styles.acceptButtonText}>Принять</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.rejectButton}
-            onPress={() => handleRejectApplicant(item.id)}
-          >
-            <Text style={styles.rejectButtonText}>Отклонить</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Кнопки действий - показываем только для pending заявок */}
+        {isPending && (
+          <View style={styles.applicantActions}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.acceptButton,
+                {
+                  backgroundColor: pressed ? '#3ABCB4' : theme.colors.primary,
+                  opacity: pressed ? 0.8 : 1,
+                  transform: pressed ? [{ scale: 0.98 }] : [{ scale: 1 }],
+                }
+              ]}
+              onPress={() => handleSelectApplicant(item)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              android_ripple={{ color: 'rgba(255, 255, 255, 0.3)' }}
+            >
+              <Text style={styles.acceptButtonText}>Принять</Text>
+            </Pressable>
+          </View>
+        )}
       </View>
     );
   };
@@ -441,6 +558,9 @@ export const OrderDetailsScreen: React.FC = () => {
               </Text>
               <Text style={styles.profileRole}>Заказчик</Text>
             </View>
+            <View style={styles.priceContainer}>
+              <Text style={styles.orderPrice}>{formatBudget(order.budget)} сум</Text>
+            </View>
           </View>
         </View>
 
@@ -464,7 +584,6 @@ export const OrderDetailsScreen: React.FC = () => {
                 <Text style={styles.iconText}>💰</Text>
               </View>
               <Text style={styles.infoValue}>{formatBudget(order.budget)}</Text>
-              <Text style={styles.infoLabel}>Бюджет</Text>
             </View>
 
             <View style={styles.infoCard}>
@@ -472,7 +591,6 @@ export const OrderDetailsScreen: React.FC = () => {
                 <Text style={styles.iconText}>🏷️</Text>
               </View>
               <Text style={styles.infoValue}>{order.category}</Text>
-              <Text style={styles.infoLabel}>Категория</Text>
             </View>
 
             <View style={styles.infoCard}>
@@ -480,7 +598,6 @@ export const OrderDetailsScreen: React.FC = () => {
                 <HomeIcon width={20} height={20} stroke={theme.colors.primary} />
               </View>
               <Text style={styles.infoValue}>{order.location}</Text>
-              <Text style={styles.infoLabel}>Район</Text>
             </View>
 
             <View style={styles.infoCard}>
@@ -488,7 +605,6 @@ export const OrderDetailsScreen: React.FC = () => {
                 <CalendarDateIcon width={20} height={20} stroke={theme.colors.primary} />
               </View>
               <Text style={styles.infoValue}>{formatDate(order.serviceDate)}</Text>
-              <Text style={styles.infoLabel}>Дата</Text>
             </View>
           </View>
         </View>
@@ -499,71 +615,84 @@ export const OrderDetailsScreen: React.FC = () => {
           <Text style={styles.detailsText}>{order.description}</Text>
         </View>
 
-        {/* Applicants Preview */}
+        {/* Полный список откликов прямо на странице */}
         {applicants.length > 0 && (
-          <View style={styles.applicantsPreviewSection}>
+          <View style={styles.applicantsSection}>
             <View style={styles.applicantsHeader}>
               <Text style={styles.applicantsTitle}>Отклики ({applicants.length})</Text>
-              <TouchableOpacity onPress={() => setShowApplicants(true)}>
-                <Text style={styles.viewAllText}>Посмотреть все</Text>
-              </TouchableOpacity>
+              <Text style={styles.applicantsSubtitle}>
+                {order?.workersNeeded && `Нужно выбрать: ${order.workersNeeded} исполнител${order.workersNeeded === 1 ? 'я' : 'ей'}`}
+              </Text>
             </View>
 
-            {applicants.slice(0, 2).map((applicant) => (
-              <View key={applicant.id} style={styles.applicantPreview}>
-                <View style={styles.applicantPreviewHeader}>
-                  <Text style={styles.applicantPreviewName}>{applicant.workerName}</Text>
-                  <Text style={styles.applicantPreviewRating}>⭐ {applicant.rating?.toFixed(1) || '4.5'}</Text>
-                </View>
-                {applicant.proposedPrice && (
-                  <Text style={styles.applicantPreviewPrice}>
-                    {formatBudget(applicant.proposedPrice)} сум
-                  </Text>
-                )}
+            {/* Отображаем все отклики прямо здесь */}
+            {applicants.map((item) => (
+              <View key={item.id}>
+                {renderApplicant({ item })}
               </View>
             ))}
           </View>
         )}
       </ScrollView>
 
-      {/* Bottom Action Button */}
-      <View style={styles.bottomSection}>
-        <TouchableOpacity
-          style={styles.manageButton}
-          onPress={() => setShowApplicants(true)}
-        >
-          <Text style={styles.manageButtonText}>
-            Управление откликами {applicants.length > 0 ? `(${applicants.length})` : ''}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {/* Нижняя секция теперь не нужна, так как отклики показываются на главной странице */}
 
-      {/* Applicants Modal */}
+
+
+      {/* Confirmation Modal */}
       <Modal
-        visible={showApplicants}
-        animationType="slide"
-        presentationStyle="pageSheet"
+        visible={showConfirmModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowConfirmModal(false)}
       >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Отклики ({applicants.length})</Text>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShowApplicants(false)}
-            >
-              <Text style={styles.closeButtonText}>Закрыть</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={styles.confirmModalOverlay}>
+          <View style={styles.confirmModalContainer}>
+            <View style={styles.confirmModalHeader}>
+              <Text style={styles.confirmModalIcon}>👤</Text>
+              <Text style={styles.confirmModalTitle}>
+                Вы выбрали {selectedApplicant?.workerName} как исполнителя
+              </Text>
+              <Text style={styles.confirmModalSubtitle}>
+                Подтвердите свой выбор. Данное действие нельзя отменить.
+              </Text>
+            </View>
 
-          <FlatList
-            data={applicants}
-            renderItem={renderApplicant}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.applicantsList}
-            showsVerticalScrollIndicator={false}
-          />
-        </SafeAreaView>
+            <View style={styles.confirmModalActions}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.confirmButton,
+                  isProcessing && styles.confirmButtonDisabled,
+                  {
+                    opacity: pressed && !isProcessing ? 0.8 : 1,
+                    backgroundColor: pressed && !isProcessing ? theme.colors.primary + 'CC' : theme.colors.primary
+                  }
+                ]}
+                onPress={handleConfirmSelection}
+                disabled={isProcessing}
+              >
+                <Text style={styles.confirmButtonText}>
+                  {isProcessing ? 'Обрабатываем...' : 'Подтверждаю'}
+                </Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.cancelButton,
+                  { opacity: pressed && !isProcessing ? 0.7 : 1 }
+                ]}
+                onPress={() => setShowConfirmModal(false)}
+                disabled={isProcessing}
+              >
+                <Text style={[styles.cancelButtonText, isProcessing && styles.cancelButtonTextDisabled]}>
+                  Отмена
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
       </Modal>
+
+
     </SafeAreaView>
   );
 };
@@ -650,6 +779,14 @@ const styles = StyleSheet.create({
   profileRole: {
     fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
+  },
+  priceContainer: {
+    alignItems: 'flex-end',
+  },
+  orderPrice: {
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.bold,
+    color: theme.colors.primary,
   },
 
   // Title Section
@@ -759,32 +896,26 @@ const styles = StyleSheet.create({
     width: '47%',
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
+    padding: theme.spacing.sm,
     alignItems: 'center',
     marginBottom: theme.spacing.sm,
   },
   infoIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
   },
   iconText: {
-    fontSize: 20,
+    fontSize: 16,
   },
   infoValue: {
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  infoLabel: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
     textAlign: 'center',
   },
 
@@ -805,21 +936,25 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 
-  // Applicants Preview Section
-  applicantsPreviewSection: {
+  // Applicants Section
+  applicantsSection: {
     paddingHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
   },
   applicantsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'column',
     marginBottom: theme.spacing.md,
   },
   applicantsTitle: {
     fontSize: theme.fonts.sizes.lg,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  applicantsSubtitle: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
+    fontWeight: theme.fonts.weights.medium,
   },
   viewAllText: {
     fontSize: theme.fonts.sizes.sm,
@@ -918,6 +1053,8 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
     borderWidth: 1,
     borderColor: theme.colors.border,
+    position: 'relative',
+    paddingTop: theme.spacing.xl, // Дополнительный отступ для полосы статуса
   },
   applicantHeader: {
     flexDirection: 'row',
@@ -961,7 +1098,7 @@ const styles = StyleSheet.create({
   acceptButton: {
     flex: 1,
     backgroundColor: theme.colors.primary,
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: theme.spacing.md, // Увеличен размер как у кнопки "Создать новый заказ"
     borderRadius: theme.borderRadius.md,
     alignItems: 'center',
   },
@@ -1023,5 +1160,173 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
     padding: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
+  },
+
+  // Стили для статусов карточек
+  acceptedCard: {
+    borderWidth: 2,
+    borderColor: '#4ECDC4',
+    backgroundColor: '#f0fffe',
+  },
+  rejectedCard: {
+    backgroundColor: '#f8f9fa',
+    opacity: 0.7,
+  },
+  statusBar: {
+    position: 'absolute',
+    top: 1,
+    left: 1,
+    right: 1,
+    backgroundColor: '#4ECDC4',
+    paddingVertical: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.md,
+    borderTopLeftRadius: theme.borderRadius.lg - 1,
+    borderTopRightRadius: theme.borderRadius.lg - 1,
+    zIndex: 10,
+  },
+  statusBarRejected: {
+    position: 'absolute',
+    top: 1,
+    left: 1,
+    right: 1,
+    backgroundColor: '#FF6B6B',
+    paddingVertical: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.md,
+    borderTopLeftRadius: theme.borderRadius.lg - 1,
+    borderTopRightRadius: theme.borderRadius.lg - 1,
+    zIndex: 10,
+  },
+  statusIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statusIcon: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginRight: theme.spacing.xs,
+  },
+  statusIconRejected: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginRight: theme.spacing.xs,
+  },
+  statusText: {
+    color: 'white',
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.semiBold,
+  },
+  statusTextRejected: {
+    color: 'white',
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.semiBold,
+  },
+  nameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+  selectedBadge: {
+    backgroundColor: '#4ECDC4',
+    color: 'white',
+    fontSize: theme.fonts.sizes.xs,
+    fontWeight: theme.fonts.weights.bold,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 2,
+    borderRadius: theme.borderRadius.sm,
+    marginLeft: theme.spacing.sm,
+    overflow: 'hidden',
+  },
+  rejectedText: {
+    color: '#9ca3af',
+  },
+  acceptedPrice: {
+    color: '#4ECDC4',
+    fontWeight: theme.fonts.weights.bold,
+  },
+
+
+  // Стили для модалки подтверждения
+  confirmModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)', // Увеличил прозрачность для лучшей видимости
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
+    zIndex: 9999, // Максимальный z-index
+  },
+  confirmModalContainer: {
+    backgroundColor: 'white',
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.spacing.lg,
+    width: '100%',
+    maxWidth: 350,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  confirmModalHeader: {
+    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  confirmModalIcon: {
+    fontSize: 48,
+    marginBottom: theme.spacing.md,
+  },
+  confirmModalTitle: {
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.bold,
+    color: theme.colors.text.primary,
+    textAlign: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  confirmModalSubtitle: {
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  confirmModalActions: {
+    gap: theme.spacing.md,
+  },
+  confirmButton: {
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
+    alignItems: 'center',
+  },
+  confirmButtonText: {
+    color: 'white',
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
+  },
+  confirmButtonDisabled: {
+    backgroundColor: theme.colors.disabled,
+    opacity: 0.7,
+  },
+  cancelButton: {
+    backgroundColor: 'transparent',
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  cancelButtonText: {
+    color: theme.colors.text.secondary,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.medium,
+  },
+  cancelButtonTextDisabled: {
+    color: '#d1d5db',
   },
 }); 

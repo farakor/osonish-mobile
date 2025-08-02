@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient';
 import * as FileSystem from 'expo-file-system';
 import { decode } from 'base64-arraybuffer';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface MediaUploadResult {
   success: boolean;
@@ -123,6 +124,86 @@ export class MediaService {
   }
 
   /**
+   * Проверяет и восстанавливает аутентификацию Supabase
+   */
+  private async ensureAuthentication(): Promise<void> {
+    console.log('[MediaService] 🔍 Проверяем аутентификацию...');
+
+    try {
+      // Проверяем текущего пользователя
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        console.warn('[MediaService] ⚠️ Аутентификация не настроена:', authError?.message || 'Auth session missing!');
+
+        // Пытаемся восстановить сессию из AsyncStorage
+        console.log('[MediaService] 🔄 Пытаемся восстановить Supabase сессию из AsyncStorage...');
+
+        try {
+          const storedSession = await AsyncStorage.getItem('@osonish_supabase_session');
+          console.log('[MediaService] 📱 Проверяем сохраненную сессию:', storedSession ? 'найдена' : 'не найдена');
+
+          if (storedSession) {
+            console.log('[MediaService] 🔄 Восстанавливаем Supabase сессию...');
+            const session = JSON.parse(storedSession);
+            console.log('[MediaService] 📋 Сессия содержит:', {
+              hasAccessToken: !!session.access_token,
+              hasRefreshToken: !!session.refresh_token,
+              expiresAt: session.expires_at
+            });
+
+            const { data, error: setSessionError } = await supabase.auth.setSession(session);
+
+            if (setSessionError) {
+              console.error('[MediaService] ❌ Ошибка установки сессии:', setSessionError.message);
+              // Удаляем поврежденную сессию
+              await AsyncStorage.removeItem('@osonish_supabase_session');
+              console.log('[MediaService] 💡 Используем анонимную загрузку (требуются анонимные политики Storage)');
+              return;
+            }
+
+            // Проверяем снова после установки сессии
+            console.log('[MediaService] ✅ Сессия установлена, проверяем пользователя...');
+            const { data: { user: restoredUser }, error: restoreError } = await supabase.auth.getUser();
+
+            if (restoreError || !restoredUser) {
+              console.warn('[MediaService] ❌ Пользователь не найден после восстановления сессии');
+              console.warn('[MediaService] Ошибка:', restoreError?.message);
+              console.log('[MediaService] 💡 Используем анонимную загрузку (требуются анонимные политики Storage)');
+            } else {
+              console.log('[MediaService] ✅ Supabase сессия успешно восстановлена!');
+              console.log(`[MediaService] 👤 Пользователь: ${restoredUser.id}`);
+              console.log(`[MediaService] 📧 Email: ${restoredUser.email || 'не указан'}`);
+            }
+          } else {
+            console.log('[MediaService] 💡 Сохраненная сессия не найдена, используем анонимную загрузку');
+            console.log('[MediaService] 🔍 Проверим все ключи AsyncStorage...');
+
+            // Проверим все возможные ключи
+            const allKeys = await AsyncStorage.getAllKeys();
+            const relevantKeys = allKeys.filter(key => key.includes('osonish') || key.includes('supabase'));
+            console.log('[MediaService] 🗂️ Найденные ключи Osonish:', relevantKeys);
+
+            for (const key of relevantKeys) {
+              const value = await AsyncStorage.getItem(key);
+              console.log(`[MediaService] 🔑 ${key}: ${value ? 'имеет значение' : 'пустое'}`);
+            }
+          }
+        } catch (sessionError) {
+          console.warn('[MediaService] ⚠️ Ошибка восстановления сессии:', sessionError);
+          console.log('[MediaService] 💡 Используем анонимную загрузку (требуются анонимные политики Storage)');
+        }
+      } else {
+        console.log(`[MediaService] ✅ Пользователь уже аутентифицирован: ${user.id}`);
+        console.log(`[MediaService] 📧 Email: ${user.email || 'не указан'}`);
+      }
+    } catch (error) {
+      console.warn('[MediaService] ⚠️ Ошибка проверки аутентификации:', error);
+      console.log('[MediaService] 💡 Используем анонимную загрузку (требуются анонимные политики Storage)');
+    }
+  }
+
+  /**
    * Загружает медиа файлы в Supabase Storage
    */
   async uploadMediaFiles(files: Array<{ uri: string, type: 'image' | 'video', name: string, size: number }>): Promise<MediaUploadResult> {
@@ -152,14 +233,8 @@ export class MediaService {
       console.log(`[MediaService] 🌐 Supabase URL: ${supabase.supabaseUrl}`);
       console.log(`[MediaService] 🔑 Auth: ${supabase.supabaseKey ? 'настроен' : 'не настроен'}`);
 
-      // Проверяем текущего пользователя (не критично для анонимной загрузки)
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError) {
-        console.warn('[MediaService] ⚠️ Аутентификация не настроена:', authError.message);
-        console.log('[MediaService] 💡 Используем анонимную загрузку (требуются анонимные политики Storage)');
-      } else {
-        console.log(`[MediaService] 👤 Пользователь: ${user ? user.id : 'анонимный'}`);
-      }
+      // Проверяем и восстанавливаем аутентификацию
+      await this.ensureAuthentication();
 
       // Проверяем и создаем bucket при необходимости
       const bucketReady = await this.ensureBucketExists();

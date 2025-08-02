@@ -120,3 +120,24 @@ export interface ApplicantsState {
   applicants: Applicant[];
   lastUpdated: string;
 }
+
+// Worker Application Types
+export interface WorkerApplication {
+  id: string;
+  orderId: string;
+  orderTitle: string;
+  orderCategory: string;
+  orderDescription: string;
+  orderLocation: string;
+  orderBudget: number;
+  orderServiceDate: string;
+  orderStatus: Order['status'];
+  customerName: string;
+  customerPhone: string;
+  rating?: number;
+  completedJobs?: number;
+  message?: string;
+  proposedPrice?: number;
+  appliedAt: string;
+  status: 'pending' | 'accepted' | 'rejected' | 'completed';
+}

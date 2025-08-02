@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,112 +7,101 @@ import {
   ScrollView,
   TouchableOpacity,
   FlatList,
+  Alert,
+  RefreshControl,
+  Linking,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../constants/theme';
+import { orderService } from '../../services/orderService';
+import { authService } from '../../services/authService';
+import { supabase } from '../../services/supabaseClient';
+import { WorkerApplication } from '../../types';
 
 
 type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | 'completed';
 
-type Application = {
-  id: string;
-  jobId: string;
-  jobTitle: string;
-  jobCategory: string;
-  customerName: string;
-  customerRating: number;
-  budget: number;
-  status: ApplicationStatus;
-  appliedAt: string;
-  deadline: string;
-  location: string;
-  message: string;
-};
-
-const mockApplications: Application[] = [
-  {
-    id: '1',
-    jobId: 'j1',
-    jobTitle: 'Уборка 3-комнатной квартиры',
-    jobCategory: 'Уборка дома',
-    customerName: 'Азиза К.',
-    customerRating: 4.8,
-    budget: 150000,
-    status: 'accepted',
-    appliedAt: '2024-01-15T10:30:00Z',
-    deadline: '2024-01-20',
-    location: 'Ташкент, Юнусабад',
-    message: 'Здравствуйте! Имею опыт уборки квартир более 3 лет. Работаю качественно и в срок.',
-  },
-  {
-    id: '2',
-    jobId: 'j2',
-    jobTitle: 'Ремонт стиральной машины',
-    jobCategory: 'Ремонт техники',
-    customerName: 'Фарход Н.',
-    customerRating: 4.9,
-    budget: 200000,
-    status: 'pending',
-    appliedAt: '2024-01-14T15:45:00Z',
-    deadline: '2024-01-18',
-    location: 'Ташкент, Мирзо-Улугбек',
-    message: 'Специализируюсь на ремонте стиральных машин Samsung. Диагностика бесплатно.',
-  },
-  {
-    id: '3',
-    jobId: 'j3',
-    jobTitle: 'Настройка домашней сети',
-    jobCategory: 'IT услуги',
-    customerName: 'Дилшод А.',
-    customerRating: 4.6,
-    budget: 120000,
-    status: 'completed',
-    appliedAt: '2024-01-10T09:15:00Z',
-    deadline: '2024-01-12',
-    location: 'Ташкент, Чиланзар',
-    message: 'Настрою роутер и Wi-Fi сеть. Гарантия 6 месяцев.',
-  },
-  {
-    id: '4',
-    jobId: 'j4',
-    jobTitle: 'Репетиторство по математике',
-    jobCategory: 'Репетиторство',
-    customerName: 'Севара М.',
-    customerRating: 4.7,
-    budget: 100000,
-    status: 'rejected',
-    appliedAt: '2024-01-08T14:20:00Z',
-    deadline: '2024-01-25',
-    location: 'Ташкент, Сергели',
-    message: 'Преподаватель математики с опытом 5 лет. Индивидуальный подход.',
-  },
-  {
-    id: '5',
-    jobId: 'j5',
-    jobTitle: 'Генеральная уборка офиса',
-    jobCategory: 'Уборка дома',
-    customerName: 'ООО "Бизнес"',
-    customerRating: 4.5,
-    budget: 300000,
-    status: 'accepted',
-    appliedAt: '2024-01-12T11:00:00Z',
-    deadline: '2024-01-16',
-    location: 'Ташкент, Мирабад',
-    message: 'Выполню качественную уборку офиса. Свои моющие средства и инвентарь.',
-  },
-];
-
 export const WorkerApplicationsScreen: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus | 'all'>('all');
+  const [applications, setApplications] = useState<WorkerApplication[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Функция загрузки заявок
+  const loadApplications = async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+
+      const workerApplications = await orderService.getWorkerApplications();
+      setApplications(workerApplications);
+      console.log(`[WorkerApplicationsScreen] Загружено ${workerApplications.length} заявок`);
+    } catch (error) {
+      console.error('Ошибка загрузки заявок:', error);
+      Alert.alert('Ошибка', 'Не удалось загрузить заявки');
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  // Загружаем заявки при первом открытии экрана
+  useEffect(() => {
+    loadApplications();
+  }, []);
+
+  // Обновляем данные когда экран получает фокус
+  useFocusEffect(
+    React.useCallback(() => {
+      loadApplications();
+    }, [])
+  );
+
+  // Real-time обновления заявок
+  useEffect(() => {
+    const authState = authService.getAuthState();
+    if (!authState.isAuthenticated || !authState.user) {
+      return;
+    }
+
+    console.log('[WorkerApplicationsScreen] Подключаем real-time обновления заявок');
+
+    const subscription = supabase
+      .channel('worker_applications')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'applicants',
+          filter: `worker_id=eq.${authState.user.id}`
+        },
+        (payload: any) => {
+          console.log('[WorkerApplicationsScreen] Real-time изменение заявки:', payload);
+          // Перезагружаем данные при любых изменениях
+          loadApplications();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('[WorkerApplicationsScreen] Отключаем real-time обновления заявок');
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const statusFilters = [
-    { key: 'all', label: 'Все', emoji: '📋', count: mockApplications.length },
-    { key: 'pending', label: 'Ожидание', emoji: '⏳', count: mockApplications.filter(a => a.status === 'pending').length },
-    { key: 'accepted', label: 'Принято', emoji: '✅', count: mockApplications.filter(a => a.status === 'accepted').length },
-    { key: 'completed', label: 'Выполнено', emoji: '🎉', count: mockApplications.filter(a => a.status === 'completed').length },
-    { key: 'rejected', label: 'Отклонено', emoji: '❌', count: mockApplications.filter(a => a.status === 'rejected').length },
+    { key: 'all', label: 'Все', emoji: '📋', count: applications.length },
+    { key: 'pending', label: 'Ожидание', emoji: '⏳', count: applications.filter(a => a.status === 'pending').length },
+    { key: 'accepted', label: 'Принято', emoji: '✅', count: applications.filter(a => a.status === 'accepted').length },
+    { key: 'completed', label: 'Выполнено', emoji: '🎉', count: applications.filter(a => a.status === 'completed').length },
+    { key: 'rejected', label: 'Отклонено', emoji: '❌', count: applications.filter(a => a.status === 'rejected').length },
   ];
 
-  const filteredApplications = mockApplications.filter(app =>
+  const filteredApplications = applications.filter(app =>
     selectedStatus === 'all' || app.status === selectedStatus
   );
 
@@ -148,9 +137,50 @@ export const WorkerApplicationsScreen: React.FC = () => {
     return `${day}.${month}.${year}`;
   };
 
-  const handleApplicationAction = (applicationId: string, action: string) => {
+  const handleApplicationAction = async (applicationId: string, action: string, customerPhone?: string) => {
     console.log(`Action: ${action} for application: ${applicationId}`);
-    // TODO: Implement application actions
+
+    if (action === 'cancel') {
+      Alert.alert(
+        'Отменить заявку',
+        'Вы действительно хотите отменить эту заявку?',
+        [
+          { text: 'Отмена', style: 'cancel' },
+          {
+            text: 'Отменить заявку',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                const success = await orderService.cancelWorkerApplication(applicationId);
+                if (success) {
+                  Alert.alert('Успешно', 'Заявка отменена');
+                  loadApplications(); // Перезагружаем данные
+                } else {
+                  Alert.alert('Ошибка', 'Не удалось отменить заявку');
+                }
+              } catch (error) {
+                console.error('Ошибка отмены заявки:', error);
+                Alert.alert('Ошибка', 'Произошла ошибка при отмене заявки');
+              }
+            }
+          }
+        ]
+      );
+    } else if (action === 'contact' && customerPhone) {
+      Alert.alert(
+        'Связаться с заказчиком',
+        `Позвонить по номеру ${customerPhone}?`,
+        [
+          { text: 'Отмена', style: 'cancel' },
+          {
+            text: 'Позвонить',
+            onPress: () => {
+              Linking.openURL(`tel:${customerPhone}`);
+            }
+          }
+        ]
+      );
+    }
   };
 
   const renderStatusFilter = (filter: any) => (
@@ -178,13 +208,13 @@ export const WorkerApplicationsScreen: React.FC = () => {
     </TouchableOpacity>
   );
 
-  const renderApplicationCard = ({ item }: { item: Application }) => (
+  const renderApplicationCard = ({ item }: { item: WorkerApplication }) => (
     <View style={styles.applicationCard}>
       {/* Header with title, budget and status */}
       <View style={styles.applicationHeader}>
         <View style={styles.applicationInfo}>
-          <Text style={styles.jobTitle}>{item.jobTitle}</Text>
-          <Text style={styles.jobBudget}>{formatBudget(item.budget)}</Text>
+          <Text style={styles.jobTitle}>{item.orderTitle}</Text>
+          <Text style={styles.jobBudget}>{formatBudget(item.orderBudget)}</Text>
         </View>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
           <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
@@ -193,7 +223,7 @@ export const WorkerApplicationsScreen: React.FC = () => {
 
       {/* Category */}
       <View style={styles.categoryContainer}>
-        <Text style={styles.jobCategory}>{item.jobCategory}</Text>
+        <Text style={styles.jobCategory}>{item.orderCategory}</Text>
       </View>
 
       {/* Details in new layout */}
@@ -201,14 +231,14 @@ export const WorkerApplicationsScreen: React.FC = () => {
         <View style={styles.locationCard}>
           <View style={styles.detailValue}>
             <Text style={styles.detailIcon}>📍</Text>
-            <Text style={styles.detailText}>{item.location}</Text>
+            <Text style={styles.detailText}>{item.orderLocation}</Text>
           </View>
         </View>
         <View style={styles.topRow}>
           <View style={styles.detailCard}>
             <View style={styles.detailValue}>
               <Text style={styles.detailIcon}>📅</Text>
-              <Text style={styles.detailText}>{formatDate(item.deadline)}</Text>
+              <Text style={styles.detailText}>{formatDate(item.orderServiceDate)}</Text>
             </View>
           </View>
           <View style={styles.detailCard}>
@@ -236,7 +266,7 @@ export const WorkerApplicationsScreen: React.FC = () => {
         {(item.status === 'accepted' || item.status === 'completed') && (
           <TouchableOpacity
             style={styles.contactButton}
-            onPress={() => handleApplicationAction(item.id, 'contact')}
+            onPress={() => handleApplicationAction(item.id, 'contact', item.customerPhone)}
           >
             <Text style={styles.contactButtonText}>Связаться с заказчиком</Text>
           </TouchableOpacity>
@@ -274,14 +304,26 @@ export const WorkerApplicationsScreen: React.FC = () => {
           style={styles.applicationsList}
           contentContainerStyle={styles.applicationsListContent}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={() => loadApplications(true)}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
+            />
+          }
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <Text style={styles.emptyStateIcon}>📝</Text>
-              <Text style={styles.emptyStateTitle}>Нет заявок</Text>
+              <Text style={styles.emptyStateTitle}>
+                {isLoading ? 'Загрузка...' : 'Нет заявок'}
+              </Text>
               <Text style={styles.emptyStateText}>
-                {selectedStatus === 'all'
-                  ? 'Вы еще не подавали заявки на заказы'
-                  : `Нет заявок со статусом "${statusFilters.find(f => f.key === selectedStatus)?.label}"`
+                {isLoading
+                  ? 'Загружаем ваши заявки...'
+                  : selectedStatus === 'all'
+                    ? 'Вы еще не подавали заявки на заказы'
+                    : `Нет заявок со статусом "${statusFilters.find(f => f.key === selectedStatus)?.label}"`
                 }
               </Text>
             </View>

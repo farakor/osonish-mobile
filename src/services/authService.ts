@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, AuthState, LoginRequest, VerifyCodeRequest, RegisterRequest, AuthResponse } from '../types';
 import { smsService } from './smsService';
 import { supabase } from './supabaseClient';
+import { mediaService } from './mediaService';
 
 // Константы для хранения только сессионных данных
 const STORAGE_KEYS = {
@@ -18,30 +19,64 @@ class AuthService {
 
   // Инициализация сервиса
   async init(): Promise<void> {
+    console.log('[AuthService] 🚀 Инициализация AuthService...');
+
     try {
       if (!supabase) {
-        console.error('[AuthService] Supabase не инициализирован');
+        console.error('[AuthService] ❌ Supabase не инициализирован');
         return;
       }
+      console.log('[AuthService] ✅ Supabase клиент доступен');
 
       // Проверяем сохраненную сессию
+      console.log('[AuthService] 🔍 Проверяем сохраненные данные в AsyncStorage...');
       const storedUserId = await AsyncStorage.getItem(STORAGE_KEYS.CURRENT_USER_ID);
       const storedToken = await AsyncStorage.getItem(STORAGE_KEYS.SESSION_TOKEN);
       const storedSupabaseSession = await AsyncStorage.getItem(STORAGE_KEYS.SUPABASE_SESSION);
 
+      console.log('[AuthService] 📱 Найденные данные:', {
+        hasUserId: !!storedUserId,
+        hasToken: !!storedToken,
+        hasSupabaseSession: !!storedSupabaseSession
+      });
+
       // Восстанавливаем Supabase сессию если есть
       if (storedSupabaseSession) {
+        console.log('[AuthService] 🔄 Восстанавливаем Supabase сессию...');
         try {
           const session = JSON.parse(storedSupabaseSession);
-          await supabase.auth.setSession(session);
-          console.log('[AuthService] ✅ Supabase сессия восстановлена');
+          console.log('[AuthService] 📋 Данные сессии:', {
+            hasAccessToken: !!session.access_token,
+            hasRefreshToken: !!session.refresh_token,
+            expiresAt: session.expires_at,
+            userId: session.user?.id
+          });
+
+          const { data, error } = await supabase.auth.setSession(session);
+
+          if (error) {
+            console.error('[AuthService] ❌ Ошибка восстановления Supabase сессии:', error.message);
+            await AsyncStorage.removeItem(STORAGE_KEYS.SUPABASE_SESSION);
+            console.log('[AuthService] 🗑️ Поврежденная сессия удалена');
+          } else {
+            console.log('[AuthService] ✅ Supabase сессия успешно восстановлена');
+            if (data.user) {
+              console.log('[AuthService] 👤 Supabase пользователь:', data.user.id);
+            }
+          }
         } catch (error) {
-          console.error('[AuthService] ❌ Ошибка восстановления Supabase сессии:', error);
+          console.error('[AuthService] ❌ Ошибка парсинга Supabase сессии:', error);
           await AsyncStorage.removeItem(STORAGE_KEYS.SUPABASE_SESSION);
+          console.log('[AuthService] 🗑️ Поврежденная сессия удалена');
         }
+      } else {
+        console.log('[AuthService] 💡 Сохраненная Supabase сессия не найдена');
       }
 
       if (storedUserId && storedToken) {
+        console.log('[AuthService] 🔄 Восстанавливаем пользовательскую сессию...');
+        console.log('[AuthService] 🆔 Пользователь ID:', storedUserId);
+
         // Проверяем валидность сессии через загрузку пользователя из Supabase
         const user = await this.loadUserFromSupabase(storedUserId);
         if (user) {
@@ -49,14 +84,19 @@ class AuthService {
             isAuthenticated: true,
             user
           };
-          console.log(`[AuthService] Сессия восстановлена для пользователя: ${user.firstName} ${user.lastName}`);
+          console.log(`[AuthService] ✅ Сессия восстановлена для пользователя: ${user.firstName} ${user.lastName}`);
         } else {
+          console.warn('[AuthService] ❌ Пользователь не найден в Supabase, очищаем сессию');
           // Сессия невалидна, очищаем
           await this.clearSession();
         }
+      } else {
+        console.log('[AuthService] 💡 Пользовательская сессия не найдена');
       }
+
+      console.log('[AuthService] 🏁 Инициализация завершена');
     } catch (error) {
-      console.error('Ошибка инициализации AuthService:', error);
+      console.error('[AuthService] ❌ Ошибка инициализации AuthService:', error);
       await this.clearSession();
     }
   }
@@ -100,8 +140,8 @@ class AuthService {
       await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER_ID, user.id);
       await AsyncStorage.setItem(STORAGE_KEYS.SESSION_TOKEN, 'authenticated'); // Простой токен
 
-      // Создаем анонимную Supabase сессию для загрузки файлов
-      await this.createSupabaseAnonymousSession();
+      // Создаем аутентифицированную Supabase сессию для пользователя
+      await this.createSupabaseAuthSession(user);
 
       console.log('[AuthService] ✅ Сессия сохранена');
     } catch (error) {
@@ -134,27 +174,84 @@ class AuthService {
     }
   }
 
-  // Создание анонимной сессии Supabase для загрузки файлов
-  private async createSupabaseAnonymousSession(): Promise<void> {
+  // Создание аутентифицированной сессии Supabase для загрузки файлов
+  private async createSupabaseAuthSession(user: User): Promise<void> {
+    console.log('[AuthService] 🚀 Создание Supabase Auth сессии для пользователя:', user.id);
+
     try {
-      if (!supabase) return;
-
-      // Создаем анонимную сессию через Supabase Auth
-      const { data, error } = await supabase.auth.signInAnonymously();
-
-      if (error) {
-        console.warn('[AuthService] ⚠️ Не удалось создать анонимную Supabase сессию:', error.message);
-        console.log('[AuthService] 💡 Убедитесь что анонимные политики Storage настроены');
+      if (!supabase) {
+        console.error('[AuthService] ❌ Supabase клиент не доступен');
         return;
       }
 
-      if (data.session) {
+      // Создаем email из номера телефона для аутентификации
+      const email = `osonish.${user.phone.replace(/[^0-9]/g, '')}@gmail.com`;
+      const password = `osonish_${user.id}`;
+
+      console.log('[AuthService] 📧 Используем email для Auth:', email);
+      console.log('[AuthService] 🔐 Пароль сгенерирован для пользователя:', user.id);
+
+      // Пробуем войти существующей учетной записью
+      console.log('[AuthService] 🔄 Пытаемся войти с существующими учетными данными...');
+      let authResult = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      // Если пользователя нет, создаем его
+      if (authResult.error?.message?.includes('Invalid login credentials')) {
+        console.log('[AuthService] 🔄 Пользователь Auth не найден, создаем новую учетную запись...');
+
+        authResult = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              user_id: user.id,
+              phone: user.phone,
+              first_name: user.firstName,
+              last_name: user.lastName
+            }
+          }
+        });
+
+        if (authResult.data?.user) {
+          console.log('[AuthService] ✅ Новая Auth учетная запись создана:', authResult.data.user.id);
+        }
+      } else if (authResult.data?.user) {
+        console.log('[AuthService] ✅ Вход выполнен с существующей Auth учетной записью:', authResult.data.user.id);
+      }
+
+      if (authResult.error) {
+        console.error('[AuthService] ❌ Ошибка Supabase Auth:', authResult.error.message);
+        console.log('[AuthService] 💡 Используем fallback к анонимной загрузке');
+        return;
+      }
+
+      if (authResult.data.session) {
         // Сохраняем сессию для восстановления
-        await AsyncStorage.setItem(STORAGE_KEYS.SUPABASE_SESSION, JSON.stringify(data.session));
-        console.log('[AuthService] ✅ Создана анонимная Supabase сессия для загрузки файлов');
+        console.log('[AuthService] 💾 Сохраняем Supabase сессию в AsyncStorage...');
+        console.log('[AuthService] 📋 Данные сессии:', {
+          hasAccessToken: !!authResult.data.session.access_token,
+          hasRefreshToken: !!authResult.data.session.refresh_token,
+          expiresAt: authResult.data.session.expires_at,
+          userId: authResult.data.session.user?.id
+        });
+
+        await AsyncStorage.setItem(STORAGE_KEYS.SUPABASE_SESSION, JSON.stringify(authResult.data.session));
+        console.log('[AuthService] ✅ Supabase сессия сохранена в AsyncStorage');
+
+        // Проверяем что сессия действительно сохранилась
+        const savedSession = await AsyncStorage.getItem(STORAGE_KEYS.SUPABASE_SESSION);
+        console.log('[AuthService] 🔍 Проверка сохранения:', savedSession ? 'сессия найдена в AsyncStorage' : 'сессия НЕ найдена в AsyncStorage');
+
+        console.log('[AuthService] ✅ Создана аутентифицированная Supabase сессия для загрузки файлов');
+      } else {
+        console.warn('[AuthService] ⚠️ Не удалось получить сессию из Supabase Auth');
       }
     } catch (error) {
-      console.warn('[AuthService] ⚠️ Ошибка создания анонимной сессии:', error);
+      console.error('[AuthService] ❌ Исключение при создании Auth сессии:', error);
+      console.log('[AuthService] 💡 Используем fallback к анонимной загрузке');
     }
   }
 
@@ -455,6 +552,62 @@ class AuthService {
     }
   }
 
+  // Загрузка аватара пользователя в Supabase Storage
+  async uploadProfileImage(imageUri: string): Promise<{ success: boolean; url?: string; error?: string }> {
+    try {
+      if (!this.authState.user) {
+        return {
+          success: false,
+          error: 'Пользователь не авторизован'
+        };
+      }
+
+      console.log('[AuthService] 🖼️ Загружаем аватар пользователя...');
+      console.log('[AuthService] 📱 URI изображения:', imageUri);
+
+      // Определяем размер файла
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      const fileSize = blob.size;
+
+      console.log(`[AuthService] 📏 Размер изображения: ${(fileSize / 1024).toFixed(1)} KB`);
+
+      // Подготавливаем файл для загрузки
+      const fileName = `profile_${this.authState.user.id}_${Date.now()}.jpg`;
+      const file = {
+        uri: imageUri,
+        type: 'image' as const,
+        name: fileName,
+        size: fileSize
+      };
+
+      // Используем mediaService для загрузки
+      const uploadResult = await mediaService.uploadMediaFiles([file]);
+
+      if (!uploadResult.success || !uploadResult.urls || uploadResult.urls.length === 0) {
+        console.error('[AuthService] ❌ Ошибка загрузки аватара:', uploadResult.error);
+        return {
+          success: false,
+          error: uploadResult.error || 'Не удалось загрузить изображение'
+        };
+      }
+
+      const profileImageUrl = uploadResult.urls[0];
+      console.log('[AuthService] ✅ Аватар успешно загружен:', profileImageUrl);
+
+      return {
+        success: true,
+        url: profileImageUrl
+      };
+    } catch (error) {
+      console.error('[AuthService] ❌ Ошибка загрузки аватара:', error);
+      return {
+        success: false,
+        error: 'Произошла ошибка при загрузке изображения'
+      };
+    }
+  }
+
   // Обновление профиля пользователя
   async updateProfile(updates: Partial<User>): Promise<AuthResponse> {
     try {
@@ -466,6 +619,23 @@ class AuthService {
       }
 
       const userId = this.authState.user.id;
+      let profileImageUrl = updates.profileImage;
+
+      // Если передано изображение и это локальный URI, загружаем его в Storage
+      if (updates.profileImage && updates.profileImage.startsWith('file://')) {
+        console.log('[AuthService] 🔄 Обнаружен локальный URI изображения, загружаем в Storage...');
+
+        const uploadResult = await this.uploadProfileImage(updates.profileImage);
+        if (!uploadResult.success) {
+          return {
+            success: false,
+            error: uploadResult.error || 'Не удалось загрузить изображение профиля'
+          };
+        }
+
+        profileImageUrl = uploadResult.url;
+        console.log('[AuthService] ✅ Изображение загружено, URL:', profileImageUrl);
+      }
 
       // Обновляем в Supabase
       const { data, error } = await supabase
@@ -475,7 +645,7 @@ class AuthService {
           last_name: updates.lastName,
           middle_name: updates.middleName,
           birth_date: updates.birthDate,
-          profile_image: updates.profileImage,
+          profile_image: profileImageUrl,
           updated_at: new Date().toISOString()
         })
         .eq('id', userId)

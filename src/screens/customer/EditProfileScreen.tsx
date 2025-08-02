@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,27 +11,63 @@ import {
   ScrollView,
   Platform,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import { HeaderWithBack } from '../../components/common';
+import { authService } from '../../services/authService';
+import { User } from '../../types';
 
 export const EditProfileScreen: React.FC = () => {
   const navigation = useNavigation();
 
-  // Состояние с текущими данными пользователя (позже можно подгружать из API)
-  const [firstName, setFirstName] = useState('Фаррух');
-  const [lastName, setLastName] = useState('Урипов');
+  // Состояние загрузки и данных пользователя
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Состояние формы
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [middleName, setMiddleName] = useState('');
-  const [birthDate, setBirthDate] = useState<Date | null>(new Date(1985, 3, 15));
+  const [birthDate, setBirthDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  // Номер телефона (не редактируемый)
-  const phoneNumber = '+998 90 123 45 67';
+  useEffect(() => {
+    loadUserProfile();
+  }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      setIsLoading(true);
+      const authState = authService.getAuthState();
+
+      if (authState.isAuthenticated && authState.user) {
+        const userData = authState.user;
+        setUser(userData);
+
+        // Заполняем форму данными пользователя
+        setFirstName(userData.firstName || '');
+        setLastName(userData.lastName || '');
+        setMiddleName(userData.middleName || '');
+        setBirthDate(userData.birthDate ? new Date(userData.birthDate) : null);
+        setProfileImage(userData.profileImage || null);
+      } else {
+        Alert.alert('Ошибка', 'Пользователь не авторизован');
+        navigation.goBack();
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки профиля:', error);
+      Alert.alert('Ошибка', 'Не удалось загрузить данные профиля');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     if (Platform.OS === 'android') {
@@ -70,27 +106,135 @@ export const EditProfileScreen: React.FC = () => {
     }
   };
 
+  const validateForm = (): boolean => {
+    if (!firstName.trim()) {
+      Alert.alert('Ошибка', 'Введите имя');
+      return false;
+    }
+
+    if (!lastName.trim()) {
+      Alert.alert('Ошибка', 'Введите фамилию');
+      return false;
+    }
+
+    if (!birthDate) {
+      Alert.alert('Ошибка', 'Выберите дату рождения');
+      return false;
+    }
+
+    // Проверка возраста (должен быть старше 16 лет)
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    if (age < 16 || (age === 16 && monthDiff < 0)) {
+      Alert.alert('Ошибка', 'Возраст должен быть не менее 16 лет');
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSave = async () => {
-    if (!firstName.trim() || !lastName.trim() || !birthDate) {
-      Alert.alert('Ошибка', 'Заполните все обязательные поля');
+    if (!validateForm() || !user) {
       return;
     }
 
-    setIsLoading(true);
+    setIsSaving(true);
 
     try {
-      // TODO: API запрос для обновления профиля
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Проверяем, нужно ли загружать изображение
+      const hasNewImage = profileImage && profileImage.startsWith('file://');
 
-      Alert.alert('Успешно', 'Профиль обновлен', [
-        { text: 'OK', onPress: () => navigation.goBack() }
-      ]);
+      if (hasNewImage) {
+        setIsUploadingImage(true);
+        console.log('[EditProfile] 🖼️ Загружаем новое изображение профиля...');
+      }
+
+      const updatedData: Partial<User> = {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        middleName: middleName.trim() || undefined,
+        birthDate: birthDate!.toISOString(),
+        profileImage: profileImage || undefined,
+      };
+
+      const result = await authService.updateProfile(updatedData);
+
+      if (result.success && result.user) {
+        setUser(result.user);
+        console.log('[EditProfile] ✅ Профиль успешно обновлен');
+
+        const successMessage = hasNewImage
+          ? 'Профиль и фото успешно обновлены'
+          : 'Профиль обновлен';
+
+        Alert.alert('Успешно', successMessage, [
+          { text: 'OK', onPress: () => navigation.goBack() }
+        ]);
+      } else {
+        console.error('[EditProfile] ❌ Ошибка обновления профиля:', result.error);
+
+        // Более детальные сообщения об ошибках
+        let errorMessage = result.error || 'Не удалось обновить профиль';
+        if (result.error?.includes('Storage') || result.error?.includes('изображение')) {
+          errorMessage = 'Не удалось загрузить фото. Попробуйте выбрать другое изображение или проверьте интернет-соединение.';
+        }
+
+        Alert.alert('Ошибка', errorMessage);
+      }
     } catch (error) {
-      Alert.alert('Ошибка', 'Не удалось обновить профиль. Попробуйте еще раз.');
+      console.error('Ошибка сохранения профиля:', error);
+      Alert.alert('Ошибка', 'Произошла ошибка при сохранении. Попробуйте еще раз.');
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
+      setIsUploadingImage(false);
     }
   };
+
+  const getInitials = (): string => {
+    const first = firstName.charAt(0)?.toUpperCase() || '';
+    const last = lastName.charAt(0)?.toUpperCase() || '';
+    return first + last || 'У';
+  };
+
+  const hasChanges = (): boolean => {
+    if (!user) return false;
+
+    return (
+      firstName.trim() !== (user.firstName || '') ||
+      lastName.trim() !== (user.lastName || '') ||
+      middleName.trim() !== (user.middleName || '') ||
+      birthDate?.toISOString() !== user.birthDate ||
+      profileImage !== user.profileImage
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <HeaderWithBack title="Редактировать профиль" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.loadingText}>Загрузка профиля...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <HeaderWithBack title="Редактировать профиль" />
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Ошибка загрузки профиля</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={loadUserProfile}>
+            <Text style={styles.retryButtonText}>Попробовать снова</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -109,7 +253,7 @@ export const EditProfileScreen: React.FC = () => {
             ) : (
               <View style={styles.photoPlaceholder}>
                 <Text style={styles.avatarText}>
-                  {firstName[0]?.toUpperCase()}{lastName[0]?.toUpperCase()}
+                  {getInitials()}
                 </Text>
                 <View style={styles.editPhotoButton}>
                   <Text style={styles.editPhotoButtonText}>✏️</Text>
@@ -130,7 +274,7 @@ export const EditProfileScreen: React.FC = () => {
             <View style={styles.phoneContainer}>
               <TextInput
                 style={[styles.input, styles.phoneInput]}
-                value={phoneNumber}
+                value={user.phone}
                 editable={false}
                 placeholder="Номер телефона"
                 placeholderTextColor={theme.colors.text.secondary}
@@ -152,6 +296,7 @@ export const EditProfileScreen: React.FC = () => {
               onChangeText={setLastName}
               placeholder="Введите фамилию"
               placeholderTextColor={theme.colors.text.secondary}
+              maxLength={50}
             />
           </View>
 
@@ -166,6 +311,7 @@ export const EditProfileScreen: React.FC = () => {
               onChangeText={setFirstName}
               placeholder="Введите имя"
               placeholderTextColor={theme.colors.text.secondary}
+              maxLength={50}
             />
           </View>
 
@@ -178,6 +324,7 @@ export const EditProfileScreen: React.FC = () => {
               onChangeText={setMiddleName}
               placeholder="Введите отчество (необязательно)"
               placeholderTextColor={theme.colors.text.secondary}
+              maxLength={50}
             />
           </View>
 
@@ -199,20 +346,34 @@ export const EditProfileScreen: React.FC = () => {
               </Text>
             </TouchableOpacity>
           </View>
+
+          {/* User Role Info */}
+          <View style={styles.roleInfo}>
+            <Text style={styles.roleTitle}>Роль: Заказчик</Text>
+            <Text style={styles.roleDescription}>
+              Вы можете создавать заказы и находить исполнителей для различных задач
+            </Text>
+          </View>
         </View>
       </ScrollView>
 
       {/* Save Button */}
       <View style={styles.saveSection}>
         <TouchableOpacity
-          style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
+          style={[
+            styles.saveButton,
+            (isSaving || !hasChanges()) && styles.saveButtonDisabled
+          ]}
           onPress={handleSave}
-          disabled={isLoading}
+          disabled={isSaving || !hasChanges()}
         >
           <Text style={styles.saveButtonText}>
-            {isLoading ? 'Сохраняем...' : 'Сохранить изменения'}
+            {isUploadingImage ? 'Загружаем фото...' : isSaving ? 'Сохраняем...' : 'Сохранить изменения'}
           </Text>
         </TouchableOpacity>
+        {!hasChanges() && (
+          <Text style={styles.noChangesText}>Нет изменений для сохранения</Text>
+        )}
       </View>
 
       {/* Date Picker */}
@@ -248,12 +409,46 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.md,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
+  },
+  errorText: {
+    fontSize: theme.fonts.sizes.lg,
+    color: theme.colors.error,
+    textAlign: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  retryButton: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+  },
+  retryButtonText: {
+    color: theme.colors.white,
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
+  },
   scrollView: {
     flex: 1,
   },
   photoSection: {
     alignItems: 'center',
     paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
     marginBottom: theme.spacing.xl,
   },
   photoContainer: {
@@ -338,7 +533,7 @@ const styles = StyleSheet.create({
   phoneInput: {
     backgroundColor: theme.colors.border + '20',
     color: theme.colors.text.secondary,
-    paddingRight: 100,
+    paddingRight: 120,
   },
   phoneVerified: {
     position: 'absolute',
@@ -376,6 +571,25 @@ const styles = StyleSheet.create({
   datePlaceholder: {
     color: theme.colors.text.secondary,
   },
+  roleInfo: {
+    backgroundColor: theme.colors.primary + '10',
+    borderWidth: 1,
+    borderColor: theme.colors.primary + '30',
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginTop: theme.spacing.md,
+  },
+  roleTitle: {
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  roleDescription: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
+    lineHeight: 20,
+  },
   saveSection: {
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.lg,
@@ -397,6 +611,12 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
+  },
+  noChangesText: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    marginTop: theme.spacing.sm,
   },
   datePickerContainer: {
     position: 'absolute',

@@ -1,4 +1,4 @@
-import { Order, CreateOrderRequest, CreateOrderResponse, Applicant, CreateApplicantRequest } from '../types';
+import { Order, CreateOrderRequest, CreateOrderResponse, Applicant, CreateApplicantRequest, WorkerApplication } from '../types';
 import { authService } from './authService';
 import { supabase, Database } from './supabaseClient';
 
@@ -254,6 +254,36 @@ export class OrderService {
   }
 
   /**
+   * Получение доступных заказов для исполнителя (исключая те, на которые уже отправлен отклик)
+   */
+  async getAvailableOrdersForWorker(): Promise<Order[]> {
+    try {
+      const authState = authService.getAuthState();
+      if (!authState.isAuthenticated || !authState.user) {
+        console.warn('[OrderService] Пользователь не авторизован');
+        return [];
+      }
+
+      // Получаем активные заказы и отклики пользователя параллельно
+      const [allActiveOrders, userApplications] = await Promise.all([
+        this.getActiveOrdersForWorkers(),
+        this.getUserApplications()
+      ]);
+
+      // Фильтруем заказы, исключая те на которые уже есть отклик
+      const availableOrders = allActiveOrders.filter(order =>
+        !userApplications.has(order.id)
+      );
+
+      console.log(`[OrderService] Из ${allActiveOrders.length} активных заказов доступно ${availableOrders.length} (исключено ${userApplications.size} с откликами)`);
+      return availableOrders;
+    } catch (error) {
+      console.error('[OrderService] Ошибка получения доступных заказов:', error);
+      return [];
+    }
+  }
+
+  /**
    * Получение активных заказов для текущего пользователя (заказчика)
    */
   async getUserActiveOrders(): Promise<Order[]> {
@@ -467,6 +497,123 @@ export class OrderService {
     } catch (error) {
       console.error('[OrderService] Ошибка получения откликов пользователя:', error);
       return new Set();
+    }
+  }
+
+  /**
+   * Получение детальных заявок исполнителя с информацией о заказах
+   */
+  async getWorkerApplications(): Promise<WorkerApplication[]> {
+    try {
+      const authState = authService.getAuthState();
+      if (!authState.isAuthenticated || !authState.user) {
+        console.warn('[OrderService] Пользователь не авторизован');
+        return [];
+      }
+
+      // Получаем заявки исполнителя с присоединенной информацией о заказах
+      const { data, error } = await supabase
+        .from('applicants')
+        .select(`
+          *,
+          orders!inner (
+            id,
+            title,
+            description,
+            category,
+            location,
+            budget,
+            service_date,
+            status,
+            customer_id
+          )
+        `)
+        .eq('worker_id', authState.user.id)
+        .order('applied_at', { ascending: false });
+
+      if (error) {
+        console.error('[OrderService] Ошибка получения заявок исполнителя из Supabase:', error);
+        return [];
+      }
+
+      // Получаем уникальные ID заказчиков
+      const customerIds = [...new Set(data.map((item: any) => item.orders.customer_id))];
+
+      // Получаем информацию о заказчиках
+      const { data: customers, error: customersError } = await supabase
+        .from('users')
+        .select('id, first_name, last_name, phone')
+        .in('id', customerIds);
+
+      if (customersError) {
+        console.warn('[OrderService] Не удалось загрузить информацию о заказчиках:', customersError);
+      }
+
+      // Создаем мапу заказчиков для быстрого поиска
+      const customersMap = new Map();
+      customers?.forEach((customer: any) => {
+        customersMap.set(customer.id, customer);
+      });
+
+      const applications: WorkerApplication[] = data.map((item: any) => {
+        const order = item.orders;
+        const customer = customersMap.get(order.customer_id);
+
+        // Определяем статус заявки с учетом статуса заказа
+        let applicationStatus = item.status;
+        if (item.status === 'accepted' && order.status === 'completed') {
+          applicationStatus = 'completed';
+        }
+
+        return {
+          id: item.id,
+          orderId: order.id,
+          orderTitle: order.title,
+          orderCategory: order.category,
+          orderDescription: order.description,
+          orderLocation: order.location,
+          orderBudget: order.budget,
+          orderServiceDate: order.service_date,
+          orderStatus: order.status,
+          customerName: customer ? `${customer.first_name} ${customer.last_name}` : 'Заказчик',
+          customerPhone: customer?.phone || '',
+          rating: item.rating,
+          completedJobs: item.completed_jobs,
+          message: item.message,
+          proposedPrice: item.proposed_price,
+          appliedAt: item.applied_at,
+          status: applicationStatus
+        };
+      });
+
+      console.log(`[OrderService] Загружено ${applications.length} заявок исполнителя`);
+      return applications;
+    } catch (error) {
+      console.error('[OrderService] Ошибка получения заявок исполнителя:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Отмена заявки исполнителя
+   */
+  async cancelWorkerApplication(applicationId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('applicants')
+        .delete()
+        .eq('id', applicationId);
+
+      if (error) {
+        console.error('[OrderService] Ошибка отмены заявки:', error);
+        return false;
+      }
+
+      console.log(`[OrderService] ✅ Заявка ${applicationId} отменена`);
+      return true;
+    } catch (error) {
+      console.error('[OrderService] Ошибка отмены заявки:', error);
+      return false;
     }
   }
 

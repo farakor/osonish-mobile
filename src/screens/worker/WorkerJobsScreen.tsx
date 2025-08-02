@@ -163,12 +163,13 @@ const WorkerJobsScreen: React.FC = () => {
         setIsLoading(true);
       }
 
+      // Используем новый метод который автоматически исключает заказы с откликами
       const [availableOrders, applications] = await Promise.all([
-        orderService.getActiveOrdersForWorkers(),
+        orderService.getAvailableOrdersForWorker(),
         orderService.getUserApplications()
       ]);
 
-      console.log(`[WorkerJobsScreen] Загружено ${availableOrders.length} доступных заказов`);
+      console.log(`[WorkerJobsScreen] Загружено ${availableOrders.length} доступных заказов (без тех, на которые уже отправлен отклик)`);
       console.log(`[WorkerJobsScreen] Найдено ${applications.size} откликов пользователя`);
 
       setOrders(availableOrders);
@@ -287,15 +288,18 @@ const WorkerJobsScreen: React.FC = () => {
         // Добавляем заказ в список откликов пользователя
         setUserApplications(prev => new Set([...prev, selectedOrder.id]));
 
+        // Мгновенно убираем заказ из списка доступных
+        setOrders(prev => prev.filter(order => order.id !== selectedOrder.id));
+        setFilteredOrders(prev => prev.filter(order => order.id !== selectedOrder.id));
+
         Alert.alert(
           'Успешно!',
-          'Отклик отправлен, ожидайте решение заказчика.',
+          'Отклик отправлен! Заказ перемещен в раздел "История".',
           [
             {
               text: 'ОК',
               onPress: () => {
                 setSelectedOrder(null);
-                loadOrders(true); // Обновляем список
               }
             }
           ]
@@ -335,15 +339,18 @@ const WorkerJobsScreen: React.FC = () => {
         // Добавляем заказ в список откликов пользователя
         setUserApplications(prev => new Set([...prev, selectedOrder.id]));
 
+        // Мгновенно убираем заказ из списка доступных
+        setOrders(prev => prev.filter(order => order.id !== selectedOrder.id));
+        setFilteredOrders(prev => prev.filter(order => order.id !== selectedOrder.id));
+
         Alert.alert(
           'Успешно!',
-          'Отклик отправлен, ожидайте решение заказчика.',
+          'Отклик отправлен! Заказ перемещен в раздел "История".',
           [
             {
               text: 'ОК',
               onPress: () => {
                 setSelectedOrder(null);
-                loadOrders(true); // Обновляем список
               }
             }
           ]

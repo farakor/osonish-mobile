@@ -389,6 +389,9 @@ export const JobDetailsScreen: React.FC = () => {
               </Text>
               <Text style={styles.profileRole}>Заказчик</Text>
             </View>
+            <View style={styles.priceContainer}>
+              <Text style={styles.orderPrice}>{formatBudget(order.budget)} сум</Text>
+            </View>
           </View>
         </View>
 
@@ -412,7 +415,6 @@ export const JobDetailsScreen: React.FC = () => {
                 <Text style={styles.iconText}>💰</Text>
               </View>
               <Text style={styles.infoValue}>{formatBudget(order.budget)}</Text>
-              <Text style={styles.infoLabel}>Бюджет</Text>
             </View>
 
             <View style={styles.infoCard}>
@@ -420,7 +422,6 @@ export const JobDetailsScreen: React.FC = () => {
                 <Text style={styles.iconText}>🏷️</Text>
               </View>
               <Text style={styles.infoValue}>{order.category}</Text>
-              <Text style={styles.infoLabel}>Категория</Text>
             </View>
 
             <View style={styles.infoCard}>
@@ -428,7 +429,6 @@ export const JobDetailsScreen: React.FC = () => {
                 <HomeIcon width={20} height={20} stroke={theme.colors.primary} />
               </View>
               <Text style={styles.infoValue}>{order.location}</Text>
-              <Text style={styles.infoLabel}>Район</Text>
             </View>
 
             <View style={styles.infoCard}>
@@ -436,7 +436,6 @@ export const JobDetailsScreen: React.FC = () => {
                 <CalendarDateIcon width={20} height={20} stroke={theme.colors.primary} />
               </View>
               <Text style={styles.infoValue}>{formatDate(order.serviceDate)}</Text>
-              <Text style={styles.infoLabel}>Дата</Text>
             </View>
           </View>
         </View>
@@ -570,6 +569,14 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
   },
+  priceContainer: {
+    alignItems: 'flex-end',
+  },
+  orderPrice: {
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.bold,
+    color: theme.colors.primary,
+  },
 
   // Title Section
   titleSection: {
@@ -678,32 +685,26 @@ const styles = StyleSheet.create({
     width: '47%',
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
+    padding: theme.spacing.sm,
     alignItems: 'center',
     marginBottom: theme.spacing.sm,
   },
   infoIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
   },
   iconText: {
-    fontSize: 20,
+    fontSize: 16,
   },
   infoValue: {
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  infoLabel: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
     textAlign: 'center',
   },
 
