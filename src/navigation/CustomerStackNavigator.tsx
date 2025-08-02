@@ -1,11 +1,12 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { CustomerTabNavigator } from './CustomerTabNavigator';
-import { OrderDetailsScreen, EditProfileScreen, NotificationsScreen, SupportScreen } from '../screens/customer';
+import { OrderDetailsScreen, EditProfileScreen, NotificationsScreen, SupportScreen, ApplicantsListScreen } from '../screens/customer';
 
 export type CustomerStackParamList = {
   MainTabs: undefined;
   OrderDetails: { orderId: string };
+  ApplicantsList: { orderId: string };
   EditProfile: undefined;
   Notifications: undefined;
   Support: undefined;
@@ -27,6 +28,13 @@ export function CustomerStackNavigator() {
       <Stack.Screen
         name="OrderDetails"
         component={OrderDetailsScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="ApplicantsList"
+        component={ApplicantsListScreen}
         options={{
           presentation: 'card',
         }}

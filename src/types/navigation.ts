@@ -22,6 +22,7 @@ export type AuthStackParamList = {
 export type CustomerStackParamList = {
   MainTabs: undefined;
   OrderDetails: { orderId: string };
+  ApplicantsList: { orderId: string };
   EditProfile: undefined;
   Notifications: undefined;
   Support: undefined;

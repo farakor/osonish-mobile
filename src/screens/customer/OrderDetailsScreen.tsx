@@ -270,6 +270,24 @@ export const OrderDetailsScreen: React.FC = () => {
     return budget.toLocaleString('ru-RU');
   };
 
+  const getApplicantStatusColor = (status: string): string => {
+    switch (status) {
+      case 'pending': return '#FFA500';
+      case 'accepted': return '#28A745';
+      case 'rejected': return '#DC3545';
+      default: return '#6C757D';
+    }
+  };
+
+  const getApplicantStatusText = (status: string): string => {
+    switch (status) {
+      case 'pending': return 'Ожидает';
+      case 'accepted': return 'Принят';
+      case 'rejected': return 'Отклонен';
+      default: return 'Неизвестно';
+    }
+  };
+
   const handleDeleteOrder = () => {
     Alert.alert(
       'Удалить заказ',
@@ -615,22 +633,80 @@ export const OrderDetailsScreen: React.FC = () => {
           <Text style={styles.detailsText}>{order.description}</Text>
         </View>
 
-        {/* Полный список откликов прямо на странице */}
+        {/* Краткий обзор откликов */}
         {applicants.length > 0 && (
           <View style={styles.applicantsSection}>
             <View style={styles.applicantsHeader}>
               <Text style={styles.applicantsTitle}>Отклики ({applicants.length})</Text>
-              <Text style={styles.applicantsSubtitle}>
-                {order?.workersNeeded && `Нужно выбрать: ${order.workersNeeded} исполнител${order.workersNeeded === 1 ? 'я' : 'ей'}`}
-              </Text>
+              {order?.workersNeeded && (
+                <View style={styles.progressInfo}>
+                  <Text style={styles.applicantsSubtitle}>
+                    Выбрано {acceptedApplicants.size} из {order.workersNeeded} исполнител{order.workersNeeded === 1 ? 'я' : 'ей'}
+                  </Text>
+                  <View style={styles.progressBarSmall}>
+                    <View
+                      style={[
+                        styles.progressFillSmall,
+                        { width: `${Math.min((acceptedApplicants.size / order.workersNeeded) * 100, 100)}%` }
+                      ]}
+                    />
+                  </View>
+                </View>
+              )}
             </View>
 
-            {/* Отображаем все отклики прямо здесь */}
-            {applicants.map((item) => (
-              <View key={item.id}>
-                {renderApplicant({ item })}
+            {/* Статистика по откликам */}
+            <View style={styles.applicantsStats}>
+              <View style={styles.statCard}>
+                <Text style={styles.statNumber}>{applicants.length}</Text>
+                <Text style={styles.statLabel}>Всего откликов</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Text style={styles.statNumber}>{applicants.filter(a => a.status === 'pending').length}</Text>
+                <Text style={styles.statLabel}>Ожидают</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Text style={styles.statNumber}>{applicants.filter(a => a.status === 'accepted').length}</Text>
+                <Text style={styles.statLabel}>Выбрано</Text>
+              </View>
+            </View>
+
+            {/* Последние отклики (первые 3) */}
+            {applicants.slice(0, 3).map((item) => (
+              <View key={item.id} style={styles.applicantPreview}>
+                <View style={styles.applicantPreviewHeader}>
+                  <Text style={styles.applicantPreviewName}>{item.workerName}</Text>
+                  <Text style={styles.applicantPreviewPrice}>{Math.round(item.proposedPrice || 0).toLocaleString()} сум</Text>
+                </View>
+                <View style={styles.applicantPreviewDetails}>
+                  <Text style={styles.applicantPreviewRating}>⭐ {item.rating?.toFixed(1) || '0.0'}</Text>
+                  <Text style={styles.applicantPreviewJobs}>• {item.completedJobs} работ</Text>
+                  <View style={[styles.applicantPreviewStatus, { backgroundColor: getApplicantStatusColor(item.status) }]}>
+                    <Text style={styles.applicantPreviewStatusText}>{getApplicantStatusText(item.status)}</Text>
+                  </View>
+                </View>
               </View>
             ))}
+
+            {/* Кнопка перехода к полному списку */}
+            <TouchableOpacity
+              style={styles.viewAllApplicantsButton}
+              onPress={() => navigation.navigate('ApplicantsList', { orderId: orderId })}
+            >
+              <Text style={styles.viewAllApplicantsButtonText}>
+                Посмотреть все отклики ({applicants.length})
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Если откликов нет */}
+        {applicants.length === 0 && !applicantsLoading && (
+          <View style={styles.noApplicantsSection}>
+            <Text style={styles.noApplicantsTitle}>Пока нет откликов</Text>
+            <Text style={styles.noApplicantsText}>
+              Исполнители еще не откликнулись на ваш заказ. Подождите немного или расширьте описание заказа.
+            </Text>
           </View>
         )}
       </ScrollView>
@@ -1328,5 +1404,108 @@ const styles = StyleSheet.create({
   },
   cancelButtonTextDisabled: {
     color: '#d1d5db',
+  },
+
+  // Стили для новой секции откликов
+  applicantsStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.md,
+    gap: theme.spacing.sm,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  statNumber: {
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.bold,
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  statLabel: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+  },
+  applicantPreviewDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  applicantPreviewJobs: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
+  },
+  applicantPreviewStatus: {
+    paddingHorizontal: theme.spacing.xs,
+    paddingVertical: 2,
+    borderRadius: theme.borderRadius.sm,
+    marginLeft: 'auto',
+  },
+  applicantPreviewStatusText: {
+    fontSize: theme.fonts.sizes.xs,
+    color: '#fff',
+    fontWeight: theme.fonts.weights.medium,
+  },
+  viewAllApplicantsButton: {
+    backgroundColor: theme.colors.primary,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+    marginTop: theme.spacing.sm,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  viewAllApplicantsButtonText: {
+    color: '#fff',
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
+  },
+  noApplicantsSection: {
+    backgroundColor: theme.colors.surface,
+    margin: theme.spacing.lg,
+    padding: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  noApplicantsTitle: {
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.sm,
+  },
+  noApplicantsText: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  progressInfo: {
+    marginTop: theme.spacing.xs,
+  },
+  progressBarSmall: {
+    height: 6,
+    backgroundColor: theme.colors.surface,
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginTop: theme.spacing.xs,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  progressFillSmall: {
+    height: '100%',
+    backgroundColor: theme.colors.primary,
+    borderRadius: 3,
   },
 }); 
