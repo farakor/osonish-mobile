@@ -16,10 +16,97 @@ import { theme } from '../../constants/theme';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { supabase } from '../../services/supabaseClient';
-import { WorkerApplication } from '../../types';
+import { WorkerApplication, Order } from '../../types';
+import { ModernOrderCard } from '../../components/cards';
+import { ModernActionButton } from '../../components/common';
 
 
 type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | 'completed';
+
+// Функция для преобразования статуса заявки в статус заказа для отображения
+const mapApplicationStatusToOrderStatus = (applicationStatus: ApplicationStatus): Order['status'] => {
+  switch (applicationStatus) {
+    case 'pending': return 'new';
+    case 'accepted': return 'in_progress';
+    case 'completed': return 'completed';
+    case 'rejected': return 'cancelled';
+    default: return 'new';
+  }
+};
+
+// Функция для преобразования WorkerApplication в Order формат
+const convertApplicationToOrder = (application: WorkerApplication): Order => {
+  return {
+    id: application.orderId,
+    title: application.orderTitle,
+    description: application.orderDescription,
+    category: application.orderCategory,
+    location: application.orderLocation,
+    budget: application.orderBudget,
+    workersNeeded: 1, // По умолчанию, так как эта информация не доступна в WorkerApplication
+    serviceDate: application.orderServiceDate,
+    photos: undefined,
+    // Используем статус заявки вместо статуса заказа
+    status: mapApplicationStatusToOrderStatus(application.status),
+    customerId: '', // Не доступно в WorkerApplication
+    applicantsCount: 0, // Для истории не важно
+    createdAt: application.appliedAt,
+    updatedAt: application.appliedAt,
+  };
+};
+
+// Отдельный компонент для карточки заявки
+const ApplicationCard: React.FC<{
+  application: WorkerApplication;
+  onAction: (applicationId: string, action: string, customerPhone?: string) => void;
+}> = ({ application, onAction }) => {
+  const order = convertApplicationToOrder(application);
+
+  const getActionButton = () => {
+    switch (application.status) {
+      case 'pending':
+        return (
+          <ModernActionButton
+            title="Отменить заявку"
+            onPress={() => onAction(application.id, 'cancel')}
+            variant="secondary"
+            size="small"
+          />
+        );
+      case 'accepted':
+      case 'completed':
+        return (
+          <ModernActionButton
+            title="Связаться"
+            onPress={() => onAction(application.id, 'contact', application.customerPhone)}
+            variant="primary"
+            size="small"
+          />
+        );
+      case 'rejected':
+        return (
+          <ModernActionButton
+            title="Отклонено"
+            onPress={undefined}
+            variant="disabled"
+            size="small"
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <ModernOrderCard
+      order={order}
+      onPress={() => { }} // Пустая функция, так как детальный экран не нужен для истории
+      showApplicantsCount={false}
+      showCreateTime={false}
+      actionButton={getActionButton()}
+    />
+  );
+};
 
 export const WorkerApplicationsScreen: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus | 'all'>('all');
@@ -105,37 +192,7 @@ export const WorkerApplicationsScreen: React.FC = () => {
     selectedStatus === 'all' || app.status === selectedStatus
   );
 
-  const getStatusColor = (status: ApplicationStatus) => {
-    switch (status) {
-      case 'pending': return '#FF9500';
-      case 'accepted': return theme.colors.primary;
-      case 'rejected': return '#FF3B30';
-      case 'completed': return '#6B7280';
-      default: return theme.colors.text.secondary;
-    }
-  };
 
-  const getStatusText = (status: ApplicationStatus) => {
-    switch (status) {
-      case 'pending': return 'Ожидание';
-      case 'accepted': return 'Принято';
-      case 'rejected': return 'Отклонено';
-      case 'completed': return 'Выполнено';
-      default: return status;
-    }
-  };
-
-  const formatBudget = (amount: number) => {
-    return `${amount.toLocaleString()} сум`;
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}.${month}.${year}`;
-  };
 
   const handleApplicationAction = async (applicationId: string, action: string, customerPhone?: string) => {
     console.log(`Action: ${action} for application: ${applicationId}`);
@@ -209,70 +266,10 @@ export const WorkerApplicationsScreen: React.FC = () => {
   );
 
   const renderApplicationCard = ({ item }: { item: WorkerApplication }) => (
-    <View style={styles.applicationCard}>
-      {/* Header with title, budget and status */}
-      <View style={styles.applicationHeader}>
-        <View style={styles.applicationInfo}>
-          <Text style={styles.jobTitle}>{item.orderTitle}</Text>
-          <Text style={styles.jobBudget}>{formatBudget(item.orderBudget)}</Text>
-        </View>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-          <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
-        </View>
-      </View>
-
-      {/* Category */}
-      <View style={styles.categoryContainer}>
-        <Text style={styles.jobCategory}>{item.orderCategory}</Text>
-      </View>
-
-      {/* Details in new layout */}
-      <View style={styles.applicationDetailsLayout}>
-        <View style={styles.locationCard}>
-          <View style={styles.detailValue}>
-            <Text style={styles.detailIcon}>📍</Text>
-            <Text style={styles.detailText}>{item.orderLocation}</Text>
-          </View>
-        </View>
-        <View style={styles.topRow}>
-          <View style={styles.detailCard}>
-            <View style={styles.detailValue}>
-              <Text style={styles.detailIcon}>📅</Text>
-              <Text style={styles.detailText}>{formatDate(item.orderServiceDate)}</Text>
-            </View>
-          </View>
-          <View style={styles.detailCard}>
-            <View style={styles.detailValue}>
-              <Text style={styles.detailIcon}>👤</Text>
-              <Text style={styles.detailText}>{item.customerName}</Text>
-            </View>
-          </View>
-        </View>
-
-      </View>
-
-
-
-      <View style={styles.applicationActions}>
-        {item.status === 'pending' && (
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={() => handleApplicationAction(item.id, 'cancel')}
-          >
-            <Text style={styles.cancelButtonText}>Отменить заявку</Text>
-          </TouchableOpacity>
-        )}
-
-        {(item.status === 'accepted' || item.status === 'completed') && (
-          <TouchableOpacity
-            style={styles.contactButton}
-            onPress={() => handleApplicationAction(item.id, 'contact', item.customerPhone)}
-          >
-            <Text style={styles.contactButtonText}>Связаться с заказчиком</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    </View>
+    <ApplicationCard
+      application={item}
+      onAction={handleApplicationAction}
+    />
   );
 
   return (
@@ -421,130 +418,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   applicationsListContent: {
-    paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.lg,
-  },
-  applicationCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  applicationHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: theme.spacing.md,
-  },
-  applicationInfo: {
-    flex: 1,
-    marginRight: theme.spacing.md,
-  },
-  jobTitle: {
-    fontSize: theme.fonts.sizes.lg,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
-  },
-  jobCategory: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.secondary,
-    fontWeight: theme.fonts.weights.medium,
-  },
-  statusBadge: {
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.sm,
-  },
-  statusText: {
-    fontSize: theme.fonts.sizes.xs,
-    color: theme.colors.white,
-    fontWeight: theme.fonts.weights.bold,
-  },
-  jobBudget: {
-    fontSize: theme.fonts.sizes.xl,
-    fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.primary,
-  },
-  categoryContainer: {
-    marginBottom: theme.spacing.md,
-  },
-  applicationDetailsLayout: {
-    marginBottom: theme.spacing.md,
-    gap: theme.spacing.sm,
-  },
-  locationCard: {
-    backgroundColor: theme.colors.background,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border + '30',
-  },
-  topRow: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-  },
-  bottomRow: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-  },
-
-  detailCard: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border + '30',
-  },
-  detailValue: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  detailIcon: {
-    fontSize: 14,
-    marginRight: theme.spacing.xs,
-  },
-  detailText: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.primary,
-    fontWeight: theme.fonts.weights.semiBold,
-    flex: 1,
-  },
-
-  applicationActions: {
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-    paddingTop: theme.spacing.md,
-  },
-  cancelButton: {
-    backgroundColor: '#FF3B30',
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.white,
-    fontWeight: theme.fonts.weights.semiBold,
-  },
-  contactButton: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
-  },
-  contactButtonText: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.white,
-    fontWeight: theme.fonts.weights.semiBold,
   },
   emptyState: {
     alignItems: 'center',

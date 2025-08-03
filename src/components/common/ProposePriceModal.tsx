@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   TextInput,
   SafeAreaView,
+  Animated,
 } from 'react-native';
 import { theme } from '../../constants/theme';
 
@@ -27,6 +28,83 @@ export const ProposePriceModal: React.FC<ProposePriceModalProps> = ({
 }) => {
   const [proposedPrice, setProposedPrice] = useState(originalPrice);
   const [message, setMessage] = useState('');
+  const [animationComplete, setAnimationComplete] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const modalTranslateY = useRef(new Animated.Value(400)).current;
+
+  // Обновляем proposedPrice когда изменяется originalPrice
+  useEffect(() => {
+    setProposedPrice(originalPrice);
+  }, [originalPrice]);
+
+  const handleAnimatedClose = (shouldResetMessage = true) => {
+    setIsClosing(true);
+    setAnimationComplete(false);
+
+    Animated.parallel([
+      Animated.timing(overlayOpacity, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.timing(modalTranslateY, {
+        toValue: 400,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setIsClosing(false);
+      // Сбрасываем сообщение только если это обычное закрытие
+      if (shouldResetMessage) {
+        setMessage('');
+      }
+      onClose();
+    });
+  };
+
+  useEffect(() => {
+    if (visible && !isClosing) {
+      // Сброс начальных значений перед анимацией
+      overlayOpacity.setValue(0);
+      modalTranslateY.setValue(400);
+      setAnimationComplete(false);
+
+      // Анимация появления
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.spring(modalTranslateY, {
+          toValue: 0,
+          tension: 60,
+          friction: 12,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        // Анимация завершена, активируем кнопки
+        setAnimationComplete(true);
+      });
+    } else if (!visible && !isClosing && (overlayOpacity as any)._value > 0) {
+      // Анимация скрытия только если модалка была видна и не закрывается программно
+      setAnimationComplete(false);
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(modalTranslateY, {
+          toValue: 400,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, isClosing]);
 
   const formatPrice = (price: number) => {
     return price.toLocaleString('uz-UZ');
@@ -42,30 +120,39 @@ export const ProposePriceModal: React.FC<ProposePriceModalProps> = ({
 
   const handleSubmit = () => {
     onSubmit(proposedPrice, message);
-    onClose();
+    // Сбрасываем сообщение после отправки и закрываем без повторного сброса
+    setMessage('');
+    handleAnimatedClose(false);
   };
 
   const handleClose = () => {
-    // Сбрасываем значения при закрытии
-    setProposedPrice(originalPrice);
-    setMessage('');
-    onClose();
+    // Используем анимированное закрытие для кнопки "Отмена"
+    handleAnimatedClose();
   };
 
   return (
     <Modal
       visible={visible}
-      animationType="slide"
       transparent={true}
       onRequestClose={handleClose}
     >
-      <View style={styles.overlay}>
+      <Animated.View style={[
+        styles.overlay,
+        {
+          opacity: overlayOpacity,
+        }
+      ]}>
         <SafeAreaView style={styles.container}>
-          <View style={styles.modalContent}>
+          <Animated.View style={[
+            styles.modalContent,
+            {
+              transform: [{ translateY: modalTranslateY }],
+            }
+          ]}>
             {/* Header */}
             <View style={styles.header}>
               <Text style={styles.title}>Отправить предложение</Text>
-              <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+              <TouchableOpacity onPress={handleAnimatedClose} style={styles.closeButton}>
                 <Text style={styles.closeButtonText}>✕</Text>
               </TouchableOpacity>
             </View>
@@ -80,13 +167,16 @@ export const ProposePriceModal: React.FC<ProposePriceModalProps> = ({
               <Text style={styles.sectionTitle}>Ваша цена</Text>
               <View style={styles.priceContainer}>
                 <TouchableOpacity
-                  style={styles.priceButton}
-                  onPress={decreasePrice}
-                  disabled={proposedPrice <= 50000}
+                  style={[
+                    styles.priceButton,
+                    !animationComplete && styles.buttonDisabled
+                  ]}
+                  onPress={animationComplete ? decreasePrice : undefined}
+                  disabled={!animationComplete || proposedPrice <= 50000}
                 >
                   <Text style={[
                     styles.priceButtonText,
-                    proposedPrice <= 50000 && styles.disabledButton
+                    (proposedPrice <= 50000 || !animationComplete) && styles.disabledButton
                   ]}>−</Text>
                 </TouchableOpacity>
 
@@ -98,10 +188,17 @@ export const ProposePriceModal: React.FC<ProposePriceModalProps> = ({
                 </View>
 
                 <TouchableOpacity
-                  style={styles.priceButton}
-                  onPress={increasePrice}
+                  style={[
+                    styles.priceButton,
+                    !animationComplete && styles.buttonDisabled
+                  ]}
+                  onPress={animationComplete ? increasePrice : undefined}
+                  disabled={!animationComplete}
                 >
-                  <Text style={styles.priceButtonText}>+</Text>
+                  <Text style={[
+                    styles.priceButtonText,
+                    !animationComplete && styles.disabledButton
+                  ]}>+</Text>
                 </TouchableOpacity>
               </View>
 
@@ -131,22 +228,36 @@ export const ProposePriceModal: React.FC<ProposePriceModalProps> = ({
             {/* Action buttons */}
             <View style={styles.actionButtons}>
               <TouchableOpacity
-                style={styles.submitButton}
-                onPress={handleSubmit}
+                style={[
+                  styles.submitButton,
+                  !animationComplete && styles.buttonDisabled
+                ]}
+                onPress={animationComplete ? handleSubmit : undefined}
+                disabled={!animationComplete}
               >
-                <Text style={styles.submitButtonText}>Откликнуться</Text>
+                <Text style={[
+                  styles.submitButtonText,
+                  !animationComplete && styles.disabledButtonText
+                ]}>Откликнуться</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={handleClose}
+                style={[
+                  styles.cancelButton,
+                  !animationComplete && styles.buttonDisabled
+                ]}
+                onPress={animationComplete ? handleClose : undefined}
+                disabled={!animationComplete}
               >
-                <Text style={styles.cancelButtonText}>Отмена</Text>
+                <Text style={[
+                  styles.cancelButtonText,
+                  !animationComplete && styles.disabledButtonText
+                ]}>Отмена</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </Animated.View>
         </SafeAreaView>
-      </View>
+      </Animated.View>
     </Modal>
   );
 };
@@ -301,5 +412,11 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 16,
     fontWeight: '600',
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  disabledButtonText: {
+    opacity: 0.7,
   },
 }); 

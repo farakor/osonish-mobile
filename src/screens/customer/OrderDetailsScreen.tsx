@@ -25,7 +25,7 @@ import CategoryIcon from '../../../assets/card-icons/category.svg';
 import BankNoteIcon from '../../../assets/card-icons/bank-note-01.svg';
 import UserIcon from '../../../assets/user-01.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import { HeaderWithBack } from '../../components/common';
+import { HeaderWithBack, MediaViewer } from '../../components/common';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { Order, Applicant, User } from '../../types';
@@ -35,6 +35,14 @@ const CARD_WIDTH = width - 48; // 24px margin on each side
 
 type OrderDetailsRouteProp = RouteProp<CustomerStackParamList, 'OrderDetails'>;
 type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
+
+// Вспомогательная функция для определения видео файлов
+const isVideoFile = (uri: string): boolean => {
+  return /\.(mp4|mov|avi|mkv|webm|m4v|3gp|flv|wmv)(\?|$)/i.test(uri) ||
+    uri.includes('video') ||
+    uri.includes('/video/') ||
+    uri.includes('_video_');
+};
 
 // Компонент для превью видео
 const VideoPreview: React.FC<{ uri: string }> = ({ uri }) => {
@@ -99,18 +107,22 @@ const ImageGallery: React.FC<{ photos: string[] }> = ({ photos }) => {
   const flatListRef = useRef<FlatList>(null);
 
   const renderPhoto = ({ item, index }: { item: string; index: number }) => {
-    const isVideo = /\.(mp4|mov|avi|mkv|webm|m4v|3gp|flv|wmv)(\?|$)/i.test(item) ||
-      item.includes('video') ||
-      item.includes('/video/') ||
-      item.includes('_video_');
+    const isVideo = isVideoFile(item);
 
     return (
       <View style={styles.photoContainer}>
-        {isVideo ? (
-          <VideoPreview uri={item} />
-        ) : (
-          <SafeImage uri={item} index={index} />
-        )}
+        <MediaViewer
+          uri={item}
+          isVideo={isVideo}
+          style={styles.mediaTouch}
+          allImages={photos}
+        >
+          {isVideo ? (
+            <VideoPreview uri={item} />
+          ) : (
+            <SafeImage uri={item} index={index} />
+          )}
+        </MediaViewer>
       </View>
     );
   };
@@ -1002,6 +1014,7 @@ const styles = StyleSheet.create({
   // Gallery Section
   gallerySection: {
     marginBottom: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
   },
   galleryContainer: {
     position: 'relative',
@@ -1009,7 +1022,6 @@ const styles = StyleSheet.create({
   photoContainer: {
     width: CARD_WIDTH,
     height: 240,
-    marginHorizontal: theme.spacing.lg,
     borderRadius: theme.borderRadius.lg,
     overflow: 'hidden',
     backgroundColor: theme.colors.surface,
@@ -1020,6 +1032,10 @@ const styles = StyleSheet.create({
   },
   mediaImageContainer: {
     position: 'relative',
+    width: '100%',
+    height: '100%',
+  },
+  mediaTouch: {
     width: '100%',
     height: '100%',
   },

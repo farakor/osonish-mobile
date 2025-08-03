@@ -123,15 +123,6 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
               {getCategoryIcon(order.category)}
             </Text>
           </View>
-        </View>
-
-        {/* Time and Status */}
-        <View style={styles.metaInfo}>
-          {showCreateTime && (
-            <Text style={styles.timeInfoText}>
-              {formatCreatedAt(order.createdAt)}
-            </Text>
-          )}
           <View style={[
             styles.statusPill,
             {
@@ -148,6 +139,15 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
             </Text>
           </View>
         </View>
+
+        {/* Time Info */}
+        {showCreateTime && (
+          <View style={styles.timeInfo}>
+            <Text style={styles.timeInfoText}>
+              {formatCreatedAt(order.createdAt)}
+            </Text>
+          </View>
+        )}
 
         {/* Title */}
         <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: theme.spacing.sm,
   },
@@ -259,17 +259,13 @@ const styles = StyleSheet.create({
   categoryIconText: {
     fontSize: 20,
   },
-  metaInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  timeInfo: {
     marginBottom: theme.spacing.sm,
   },
   timeInfoText: {
     fontSize: theme.fonts.sizes.sm,
     color: '#9AA0A6',
     fontWeight: theme.fonts.weights.regular,
-    flex: 1,
   },
   statusPill: {
     paddingHorizontal: theme.spacing.sm,

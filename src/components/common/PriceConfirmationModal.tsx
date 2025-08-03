@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Modal,
   View,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
+  Animated,
 } from 'react-native';
 import { theme } from '../../constants/theme';
 
@@ -26,6 +27,74 @@ export const PriceConfirmationModal: React.FC<PriceConfirmationModalProps> = ({
   orderPrice,
   orderTitle,
 }) => {
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const modalTranslateY = useRef(new Animated.Value(300)).current;
+  const [animationComplete, setAnimationComplete] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleAnimatedClose = () => {
+    setIsClosing(true);
+    setAnimationComplete(false);
+
+    Animated.parallel([
+      Animated.timing(overlayOpacity, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.timing(modalTranslateY, {
+        toValue: 300,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setIsClosing(false);
+      onClose();
+    });
+  };
+
+  useEffect(() => {
+    if (visible && !isClosing) {
+      // Сброс начальных значений перед анимацией
+      overlayOpacity.setValue(0);
+      modalTranslateY.setValue(300);
+      setAnimationComplete(false);
+
+      // Анимация появления с небольшой задержкой для overlay
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.spring(modalTranslateY, {
+          toValue: 0,
+          tension: 60,
+          friction: 12,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        // Анимация завершена, активируем кнопки
+        setAnimationComplete(true);
+      });
+    } else if (!visible && !isClosing && (overlayOpacity as any)._value > 0) {
+      // Анимация скрытия только если модалка была видна и не закрывается программно
+      setAnimationComplete(false);
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(modalTranslateY, {
+          toValue: 300,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, isClosing]);
+
   const formatPrice = (price: number) => {
     return price.toLocaleString('uz-UZ');
   };
@@ -33,17 +102,25 @@ export const PriceConfirmationModal: React.FC<PriceConfirmationModalProps> = ({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
-      presentationStyle="overFullScreen"
       transparent={true}
     >
-      <View style={styles.overlay}>
+      <Animated.View style={[
+        styles.overlay,
+        {
+          opacity: overlayOpacity,
+        }
+      ]}>
         <SafeAreaView style={styles.container}>
-          <View style={styles.modal}>
+          <Animated.View style={[
+            styles.modal,
+            {
+              transform: [{ translateY: modalTranslateY }],
+            }
+          ]}>
             {/* Header */}
             <View style={styles.header}>
               <Text style={styles.title}>Подтверждение отклика</Text>
-              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <TouchableOpacity style={styles.closeButton} onPress={handleAnimatedClose}>
                 <Text style={styles.closeButtonText}>✕</Text>
               </TouchableOpacity>
             </View>
@@ -71,22 +148,38 @@ export const PriceConfirmationModal: React.FC<PriceConfirmationModalProps> = ({
             {/* Action buttons */}
             <View style={styles.actionButtons}>
               <TouchableOpacity
-                style={[styles.button, styles.acceptButton]}
-                onPress={onAcceptPrice}
+                style={[
+                  styles.button,
+                  styles.acceptButton,
+                  !animationComplete && styles.buttonDisabled
+                ]}
+                onPress={animationComplete ? onAcceptPrice : undefined}
+                disabled={!animationComplete}
               >
-                <Text style={styles.acceptButtonText}>Согласен</Text>
+                <Text style={[
+                  styles.acceptButtonText,
+                  !animationComplete && styles.disabledButtonText
+                ]}>Согласен</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.button, styles.proposeButton]}
-                onPress={onProposePrice}
+                style={[
+                  styles.button,
+                  styles.proposeButton,
+                  !animationComplete && styles.buttonDisabled
+                ]}
+                onPress={animationComplete ? onProposePrice : undefined}
+                disabled={!animationComplete}
               >
-                <Text style={styles.proposeButtonText}>Предложить свою цену</Text>
+                <Text style={[
+                  styles.proposeButtonText,
+                  !animationComplete && styles.disabledButtonText
+                ]}>Предложить свою цену</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </Animated.View>
         </SafeAreaView>
-      </View>
+      </Animated.View>
     </Modal>
   );
 };
@@ -191,5 +284,11 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  disabledButtonText: {
+    opacity: 0.7,
   },
 }); 

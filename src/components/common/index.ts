@@ -12,3 +12,4 @@ export {
   AnimatedSummaryGrid,
 } from './AnimatedComponents';
 export { ModernActionButton } from './ModernActionButton';
+export { MediaViewer } from './MediaViewer';

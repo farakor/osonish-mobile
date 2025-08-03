@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     minHeight: 40,
   },
   buttonPrimary: {
-    backgroundColor: '#1F2937',
+    backgroundColor: theme.colors.primary,
   },
   buttonSecondary: {
     backgroundColor: '#F8F9FA',

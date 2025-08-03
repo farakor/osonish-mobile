@@ -10,16 +10,20 @@ import {
   Alert,
   FlatList,
   Dimensions,
+  Animated,
+  StatusBar,
 } from 'react-native';
 import { theme } from '../../constants';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { WorkerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import CalendarDateIcon from '../../../assets/calendar-date.svg';
+import CalendarIcon from '../../../assets/card-icons/calendar.svg';
+import LocationIcon from '../../../assets/card-icons/location.svg';
+import CategoryIcon from '../../../assets/card-icons/category.svg';
+import BankNoteIcon from '../../../assets/card-icons/bank-note-01.svg';
 import UserIcon from '../../../assets/user-01.svg';
-import HomeIcon from '../../../assets/home-02.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import { HeaderWithBack, PriceConfirmationModal, ProposePriceModal } from '../../components/common';
+import { HeaderWithBack, PriceConfirmationModal, ProposePriceModal, MediaViewer } from '../../components/common';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { Order, User } from '../../types';
@@ -30,19 +34,21 @@ const CARD_WIDTH = width - 48; // 24px margin on each side
 type JobDetailsRouteProp = RouteProp<WorkerStackParamList, 'JobDetails'>;
 type NavigationProp = NativeStackNavigationProp<WorkerStackParamList>;
 
-// Компонент для видео превью
-const VideoPreview: React.FC<{ uri: string }> = ({ uri }) => {
-  const player = useVideoPlayer(uri, player => {
-    player.loop = true;
-    player.play();
-  });
+// Вспомогательная функция для определения видео файлов
+const isVideoFile = (uri: string): boolean => {
+  return /\.(mp4|mov|avi|mkv|webm|m4v|3gp|flv|wmv)(\?|$)/i.test(uri) ||
+    uri.includes('video') ||
+    uri.includes('/video/') ||
+    uri.includes('_video_');
+};
 
+// Компонент для превью видео
+const VideoPreview: React.FC<{ uri: string }> = ({ uri }) => {
+  const player = useVideoPlayer(uri);
   return (
     <VideoView
-      style={styles.mediaImage}
       player={player}
-      allowsFullscreen
-      allowsPictureInPicture
+      style={styles.mediaImage}
       contentFit="cover"
       nativeControls={false}
     />
@@ -99,18 +105,22 @@ const ImageGallery: React.FC<{ photos: string[] }> = ({ photos }) => {
   const flatListRef = useRef<FlatList>(null);
 
   const renderPhoto = ({ item, index }: { item: string; index: number }) => {
-    const isVideo = /\.(mp4|mov|avi|mkv|webm|m4v|3gp|flv|wmv)(\?|$)/i.test(item) ||
-      item.includes('video') ||
-      item.includes('/video/') ||
-      item.includes('_video_');
+    const isVideo = isVideoFile(item);
 
     return (
       <View style={styles.photoContainer}>
-        {isVideo ? (
-          <VideoPreview uri={item} />
-        ) : (
-          <SafeImage uri={item} index={index} />
-        )}
+        <MediaViewer
+          uri={item}
+          isVideo={isVideo}
+          style={styles.mediaTouch}
+          allImages={photos}
+        >
+          {isVideo ? (
+            <VideoPreview uri={item} />
+          ) : (
+            <SafeImage uri={item} index={index} />
+          )}
+        </MediaViewer>
       </View>
     );
   };
@@ -198,6 +208,11 @@ export const JobDetailsScreen: React.FC = () => {
   const [customer, setCustomer] = useState<User | null>(null);
   const [priceConfirmationVisible, setPriceConfirmationVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+
+  // Анимация для sticky header
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const HEADER_HEIGHT = 100;
+  const STATUS_BAR_HEIGHT = StatusBar.currentHeight || 44; // 44 для iOS, currentHeight для Android
 
   // Загружаем заказ по ID
   useEffect(() => {
@@ -367,103 +382,141 @@ export const JobDetailsScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <HeaderWithBack />
-
-        {/* Customer Profile Section */}
-        <View style={styles.profileSection}>
-          <View style={styles.profileContainer}>
-            <View style={styles.avatarContainer}>
-              {customer?.profileImage ? (
-                <Image source={{ uri: customer.profileImage }} style={styles.avatar} />
-              ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <UserIcon width={24} height={24} stroke={theme.colors.text.secondary} />
-                </View>
-              )}
-            </View>
-            <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>
-                {customer ? `${customer.lastName} ${customer.firstName}` : 'Заказчик'}
-              </Text>
-              <Text style={styles.profileRole}>Заказчик</Text>
-            </View>
-            <View style={styles.priceContainer}>
-              <Text style={styles.orderPrice}>{formatBudget(order.budget)} сум</Text>
-            </View>
+      {/* Sticky Header */}
+      <Animated.View style={[styles.stickyHeader, {
+        paddingTop: STATUS_BAR_HEIGHT + theme.spacing.lg,
+        opacity: scrollY.interpolate({
+          inputRange: [0, HEADER_HEIGHT],
+          outputRange: [0, 1],
+          extrapolate: 'clamp',
+        }),
+      }]}>
+        <View style={styles.stickyHeaderContent}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.backButtonText}>←</Text>
+          </TouchableOpacity>
+          <View style={styles.stickyTitleContainer}>
+            <Text style={styles.stickyTitle} numberOfLines={1}>
+              {order?.title || 'Загрузка...'}
+            </Text>
+            <Text style={styles.stickyPrice}>
+              {order ? formatBudget(order.budget) + ' сум' : ''}
+            </Text>
+          </View>
+          <View style={styles.rightActionContainer}>
+            {/* Пустой контейнер для симметрии */}
           </View>
         </View>
+      </Animated.View>
 
-        {/* Order Title */}
-        <View style={styles.titleSection}>
-          <Text style={styles.orderTitle}>{order.title}</Text>
-        </View>
-
-        {/* Image Gallery */}
-        {order.photos && order.photos.length > 0 && (
-          <View style={styles.gallerySection}>
-            <ImageGallery photos={order.photos} />
-          </View>
-        )}
-
-        {/* Info Grid */}
-        <View style={styles.infoSection}>
-          <View style={styles.infoGrid}>
-            <View style={styles.infoCard}>
-              <View style={styles.infoIcon}>
-                <Text style={styles.iconText}>💰</Text>
-              </View>
-              <Text style={styles.infoValue}>{formatBudget(order.budget)}</Text>
-            </View>
-
-            <View style={styles.infoCard}>
-              <View style={styles.infoIcon}>
-                <Text style={styles.iconText}>🏷️</Text>
-              </View>
-              <Text style={styles.infoValue}>{order.category}</Text>
-            </View>
-
-            <View style={styles.infoCard}>
-              <View style={styles.infoIcon}>
-                <HomeIcon width={20} height={20} stroke={theme.colors.primary} />
-              </View>
-              <Text style={styles.infoValue}>{order.location}</Text>
-            </View>
-
-            <View style={styles.infoCard}>
-              <View style={styles.infoIcon}>
-                <CalendarDateIcon width={20} height={20} stroke={theme.colors.primary} />
-              </View>
-              <Text style={styles.infoValue}>{formatDate(order.serviceDate)}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Details Section */}
-        <View style={styles.detailsSection}>
-          <Text style={styles.detailsTitle}>Детали</Text>
-          <Text style={styles.detailsText}>{order.description}</Text>
-        </View>
-      </ScrollView>
-
-      {/* Bottom Action Button */}
-      <View style={styles.bottomSection}>
-        <TouchableOpacity
-          style={[
-            styles.applyButton,
-            hasApplied && styles.appliedButton
-          ]}
-          onPress={hasApplied ? undefined : handleApplyToJob}
-          disabled={hasApplied}
+      <View style={styles.contentContainer}>
+        <Animated.ScrollView
+          showsVerticalScrollIndicator={false}
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: false }
+          )}
+          scrollEventThrottle={16}
         >
-          <Text style={[
-            styles.applyButtonText,
-            hasApplied && styles.appliedButtonText
-          ]}>
-            {hasApplied ? 'Отклик отправлен' : 'Подать заявку'}
-          </Text>
-        </TouchableOpacity>
+          {/* Regular Header */}
+          <HeaderWithBack />
+
+          {/* Customer Profile Section */}
+          <View style={styles.profileSection}>
+            <View style={styles.profileContainer}>
+              <View style={styles.avatarContainer}>
+                {customer?.profileImage ? (
+                  <Image source={{ uri: customer.profileImage }} style={styles.avatar} />
+                ) : (
+                  <View style={styles.avatarPlaceholder}>
+                    <UserIcon width={24} height={24} stroke={theme.colors.text.secondary} />
+                  </View>
+                )}
+              </View>
+              <View style={styles.profileInfo}>
+                <Text style={styles.profileName}>
+                  {customer ? `${customer.lastName} ${customer.firstName}` : 'Заказчик'}
+                </Text>
+                <Text style={styles.profileRole}>Заказчик</Text>
+              </View>
+              <View style={styles.priceContainer}>
+                <Text style={styles.orderPrice}>{formatBudget(order.budget)} сум</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Order Title */}
+          <View style={styles.titleSection}>
+            <Text style={styles.orderTitle}>{order.title}</Text>
+          </View>
+
+          {/* Image Gallery */}
+          {order.photos && order.photos.length > 0 && (
+            <View style={styles.gallerySection}>
+              <ImageGallery photos={order.photos} />
+            </View>
+          )}
+
+          {/* Info Grid */}
+          <View style={styles.infoSection}>
+            <View style={styles.infoGrid}>
+              <View style={styles.infoCard}>
+                <View style={styles.infoIcon}>
+                  <BankNoteIcon width={20} height={20} color="#679B00" />
+                </View>
+                <Text style={styles.infoValue}>{formatBudget(order.budget)}</Text>
+              </View>
+
+              <View style={styles.infoCard}>
+                <View style={styles.infoIcon}>
+                  <CategoryIcon width={20} height={20} color="#679B00" />
+                </View>
+                <Text style={styles.infoValue}>{order.category}</Text>
+              </View>
+
+              <View style={styles.infoCard}>
+                <View style={styles.infoIcon}>
+                  <LocationIcon width={20} height={20} color="#679B00" />
+                </View>
+                <Text style={styles.infoValue}>{order.location}</Text>
+              </View>
+
+              <View style={styles.infoCard}>
+                <View style={styles.infoIcon}>
+                  <CalendarIcon width={20} height={20} color="#679B00" />
+                </View>
+                <Text style={styles.infoValue}>{formatDate(order.serviceDate)}</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Details Section */}
+          <View style={styles.detailsSection}>
+            <Text style={styles.detailsTitle}>Детали</Text>
+            <Text style={styles.detailsText}>{order.description}</Text>
+          </View>
+        </Animated.ScrollView>
+
+        {/* Fixed Bottom Section */}
+        <View style={styles.fixedBottomSection}>
+          <TouchableOpacity
+            style={[
+              styles.applyButton,
+              hasApplied && styles.appliedButton
+            ]}
+            onPress={hasApplied ? undefined : handleApplyToJob}
+            disabled={hasApplied}
+          >
+            <Text style={[
+              styles.applyButtonText,
+              hasApplied && styles.appliedButtonText
+            ]}>
+              {hasApplied ? 'Отклик отправлен' : 'Подать заявку'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Модалка подтверждения цены */}
@@ -593,6 +646,7 @@ const styles = StyleSheet.create({
   // Gallery Section
   gallerySection: {
     marginBottom: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
   },
   galleryContainer: {
     position: 'relative',
@@ -600,7 +654,6 @@ const styles = StyleSheet.create({
   photoContainer: {
     width: CARD_WIDTH,
     height: 240,
-    marginHorizontal: theme.spacing.lg,
     borderRadius: theme.borderRadius.lg,
     overflow: 'hidden',
     backgroundColor: theme.colors.surface,
@@ -611,6 +664,10 @@ const styles = StyleSheet.create({
   },
   mediaImageContainer: {
     position: 'relative',
+    width: '100%',
+    height: '100%',
+  },
+  mediaTouch: {
     width: '100%',
     height: '100%',
   },
@@ -679,15 +736,14 @@ const styles = StyleSheet.create({
   infoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    gap: theme.spacing.md, // Одинаковые отступы между карточками
   },
   infoCard: {
-    width: '47%',
+    flexBasis: '47%', // Используем flexBasis для точной сетки 2x2
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.sm,
+    padding: theme.spacing.md,
     alignItems: 'center',
-    marginBottom: theme.spacing.sm,
   },
   infoIcon: {
     width: 32,
@@ -725,24 +781,45 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 
-  // Bottom Section
-  bottomSection: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.lg,
+  // Content Container and Scroll Styles
+  contentContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 120, // Достаточный отступ снизу для избежания перекрытия с кнопкой
+  },
+
+  // Fixed Bottom Section
+  fixedBottomSection: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     backgroundColor: theme.colors.background,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    paddingBottom: theme.spacing.lg,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
+    elevation: 8,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   applyButton: {
     backgroundColor: theme.colors.primary,
     borderRadius: theme.borderRadius.lg,
     paddingVertical: theme.spacing.md,
     alignItems: 'center',
-    shadowColor: theme.colors.shadow,
+    shadowColor: theme.colors.primary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
   },
   appliedButton: {
     backgroundColor: theme.colors.surface,
@@ -751,10 +828,69 @@ const styles = StyleSheet.create({
   },
   applyButtonText: {
     fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.semiBold,
+    fontWeight: theme.fonts.weights.bold,
     color: theme.colors.white,
+    textAlign: 'center',
   },
   appliedButtonText: {
     color: theme.colors.text.secondary,
+  },
+
+  // Sticky Header Styles
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    backgroundColor: theme.colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  stickyHeaderContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
+    minHeight: 60,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backButtonText: {
+    fontSize: theme.fonts.sizes.xl,
+    color: theme.colors.text.primary,
+  },
+  stickyTitleContainer: {
+    flex: 1,
+    marginHorizontal: theme.spacing.md,
+    alignItems: 'center',
+  },
+  stickyTitle: {
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.text.primary,
+    textAlign: 'center',
+  },
+  stickyPrice: {
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.bold,
+    color: theme.colors.primary,
+    textAlign: 'center',
+    marginTop: 2,
+  },
+  rightActionContainer: {
+    width: 40, // Такая же ширина как у кнопки назад для симметрии
   },
 }); 
