@@ -423,6 +423,12 @@ export class OrderService {
       const applicantId = this.generateApplicantId();
       const currentTime = new Date().toISOString();
 
+      // Получаем реальные данные о работнике (рейтинг и количество работ)
+      const [workerRating, completedJobsCount] = await Promise.all([
+        this.getWorkerRating(authState.user.id),
+        this.getWorkerCompletedJobsCount(authState.user.id)
+      ]);
+
       // Создаем отклик в Supabase
       const { error } = await supabase
         .from('applicants')
@@ -432,8 +438,8 @@ export class OrderService {
           worker_id: authState.user.id,
           worker_name: `${authState.user.firstName} ${authState.user.lastName}`,
           worker_phone: authState.user.phone,
-          rating: 4.5, // Default rating for new workers
-          completed_jobs: 0, // Default for new workers
+          rating: workerRating?.averageRating || null, // Реальный рейтинг или null
+          completed_jobs: completedJobsCount, // Реальное количество завершенных работ
           message: request.message || '',
           proposed_price: request.proposedPrice,
           applied_at: currentTime,
@@ -571,6 +577,12 @@ export class OrderService {
         customersMap.set(customer.id, customer);
       });
 
+      // Получаем актуальные данные о рейтинге и количестве работ
+      const [workerRating, completedJobsCount] = await Promise.all([
+        this.getWorkerRating(authState.user.id),
+        this.getWorkerCompletedJobsCount(authState.user.id)
+      ]);
+
       const applications: WorkerApplication[] = data.map((item: any) => {
         const order = item.orders;
         const customer = customersMap.get(order.customer_id);
@@ -595,8 +607,8 @@ export class OrderService {
           orderStatus: order.status,
           customerName: customer ? `${customer.first_name} ${customer.last_name}` : 'Заказчик',
           customerPhone: customer?.phone || '',
-          rating: item.rating,
-          completedJobs: item.completed_jobs,
+          rating: workerRating?.averageRating || null, // Реальный рейтинг
+          completedJobs: completedJobsCount, // Реальное количество работ
           message: item.message,
           proposedPrice: item.proposed_price,
           appliedAt: item.applied_at,
@@ -651,22 +663,32 @@ export class OrderService {
         return [];
       }
 
-      const applicants: Applicant[] = data.map((item: any) => ({
-        id: item.id,
-        orderId: item.order_id,
-        workerId: item.worker_id,
-        workerName: item.worker_name,
-        workerPhone: item.worker_phone,
-        rating: item.rating,
-        completedJobs: item.completed_jobs,
-        message: item.message,
-        proposedPrice: item.proposed_price,
-        appliedAt: item.applied_at,
-        status: item.status as 'pending' | 'accepted' | 'rejected' | 'completed'
-      }));
+      // Для каждого исполнителя получаем актуальные данные о рейтинге и количестве работ
+      const applicantsWithRealData = await Promise.all(
+        data.map(async (item: any) => {
+          const [workerRating, completedJobsCount] = await Promise.all([
+            this.getWorkerRating(item.worker_id),
+            this.getWorkerCompletedJobsCount(item.worker_id)
+          ]);
 
-      console.log(`[OrderService] Загружено ${applicants.length} откликов для заказа ${orderId}`);
-      return applicants;
+          return {
+            id: item.id,
+            orderId: item.order_id,
+            workerId: item.worker_id,
+            workerName: item.worker_name,
+            workerPhone: item.worker_phone,
+            rating: workerRating?.averageRating || null, // Реальный рейтинг
+            completedJobs: completedJobsCount, // Реальное количество работ
+            message: item.message,
+            proposedPrice: item.proposed_price,
+            appliedAt: item.applied_at,
+            status: item.status as 'pending' | 'accepted' | 'rejected' | 'completed'
+          };
+        })
+      );
+
+      console.log(`[OrderService] Загружено ${applicantsWithRealData.length} откликов для заказа ${orderId} с актуальными данными`);
+      return applicantsWithRealData;
     } catch (error) {
       console.error('[OrderService] Ошибка получения откликов:', error);
       return [];
@@ -930,20 +952,32 @@ export class OrderService {
 
       if (!data) return [];
 
-      return data.map((item: any) => ({
-        id: item.id,
-        orderId: item.order_id,
-        workerId: item.worker_id,
-        workerName: `${item.worker.first_name} ${item.worker.last_name}`,
-        workerPhone: item.worker.phone,
-        rating: item.rating,
-        completedJobs: item.completed_jobs,
-        avatar: item.worker.profile_image,
-        message: item.message,
-        proposedPrice: item.proposed_price,
-        appliedAt: item.applied_at,
-        status: item.status as 'pending' | 'accepted' | 'rejected' | 'completed'
-      }));
+      // Для каждого исполнителя получаем актуальные данные
+      const workersWithRealData = await Promise.all(
+        data.map(async (item: any) => {
+          const [workerRating, completedJobsCount] = await Promise.all([
+            this.getWorkerRating(item.worker_id),
+            this.getWorkerCompletedJobsCount(item.worker_id)
+          ]);
+
+          return {
+            id: item.id,
+            orderId: item.order_id,
+            workerId: item.worker_id,
+            workerName: `${item.worker.first_name} ${item.worker.last_name}`,
+            workerPhone: item.worker.phone,
+            rating: workerRating?.averageRating || null, // Реальный рейтинг
+            completedJobs: completedJobsCount, // Реальное количество работ
+            avatar: item.worker.profile_image,
+            message: item.message,
+            proposedPrice: item.proposed_price,
+            appliedAt: item.applied_at,
+            status: item.status as 'pending' | 'accepted' | 'rejected' | 'completed'
+          };
+        })
+      );
+
+      return workersWithRealData;
     } catch (error) {
       console.error('[OrderService] Ошибка получения принятых исполнителей:', error);
       return [];
@@ -1096,6 +1130,29 @@ export class OrderService {
     } catch (error) {
       console.error('[OrderService] Ошибка получения рейтинга:', error);
       return null;
+    }
+  }
+
+  /**
+   * Получить количество завершенных работ исполнителя
+   */
+  async getWorkerCompletedJobsCount(workerId: string): Promise<number> {
+    try {
+      const { data, error } = await supabase
+        .from('applicants')
+        .select('id')
+        .eq('worker_id', workerId)
+        .eq('status', 'completed');
+
+      if (error) {
+        console.error('[OrderService] Ошибка получения количества завершенных работ:', error);
+        return 0;
+      }
+
+      return data?.length || 0;
+    } catch (error) {
+      console.error('[OrderService] Ошибка получения количества завершенных работ:', error);
+      return 0;
     }
   }
 

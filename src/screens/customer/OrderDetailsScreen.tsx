@@ -536,7 +536,7 @@ export const OrderDetailsScreen: React.FC = () => {
             </View>
             <View style={styles.applicantStats}>
               <Text style={[styles.applicantRating, isRejected && styles.rejectedText]}>
-                ⭐ {item.rating?.toFixed(1) || '4.5'}
+                ⭐ {item.rating ? item.rating.toFixed(1) : 'Нет рейтинга'}
               </Text>
               <Text style={[styles.applicantJobs, isRejected && styles.rejectedText]}>
                 • {item.completedJobs || 0} заказов
@@ -786,21 +786,7 @@ export const OrderDetailsScreen: React.FC = () => {
                 )}
               </View>
 
-              {/* Статистика по откликам */}
-              <View style={styles.applicantsStats}>
-                <View style={styles.statCard}>
-                  <Text style={styles.statNumber}>{applicants.length}</Text>
-                  <Text style={styles.statLabel}>Всего откликов</Text>
-                </View>
-                <View style={styles.statCard}>
-                  <Text style={styles.statNumber}>{applicants.filter(a => a.status === 'pending').length}</Text>
-                  <Text style={styles.statLabel}>Ожидают</Text>
-                </View>
-                <View style={styles.statCard}>
-                  <Text style={styles.statNumber}>{applicants.filter(a => a.status === 'accepted').length}</Text>
-                  <Text style={styles.statLabel}>Выбрано</Text>
-                </View>
-              </View>
+
 
               {/* Последние отклики (первые 3) */}
               {applicants.slice(0, 3).map((item) => (
@@ -810,8 +796,10 @@ export const OrderDetailsScreen: React.FC = () => {
                     <Text style={styles.applicantPreviewPrice}>{Math.round(item.proposedPrice || 0).toLocaleString()} сум</Text>
                   </View>
                   <View style={styles.applicantPreviewDetails}>
-                    <Text style={styles.applicantPreviewRating}>⭐ {item.rating?.toFixed(1) || '0.0'}</Text>
-                    <Text style={styles.applicantPreviewJobs}>• {item.completedJobs} работ</Text>
+                    <Text style={styles.applicantPreviewRating}>
+                      ⭐ {item.rating ? item.rating.toFixed(1) : 'Нет рейтинга'}
+                    </Text>
+                    <Text style={styles.applicantPreviewJobs}>• {item.completedJobs || 0} работ</Text>
                     <View style={[styles.applicantPreviewStatus, { backgroundColor: getApplicantStatusColor(item.status) }]}>
                       <Text style={styles.applicantPreviewStatusText}>{getApplicantStatusText(item.status)}</Text>
                     </View>
@@ -1545,33 +1533,7 @@ const styles = StyleSheet.create({
     color: '#d1d5db',
   },
 
-  // Стили для новой секции откликов
-  applicantsStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: theme.spacing.md,
-    gap: theme.spacing.sm,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  statNumber: {
-    fontSize: theme.fonts.sizes.lg,
-    fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.xs,
-  },
-  statLabel: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
-  },
+
   applicantPreviewDetails: {
     flexDirection: 'row',
     alignItems: 'center',
