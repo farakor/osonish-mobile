@@ -16,7 +16,8 @@ import { theme } from '../../constants/theme';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { Order } from '../../types';
-import { PriceConfirmationModal, ProposePriceModal } from '../../components/common';
+import { PriceConfirmationModal, ProposePriceModal, ModernActionButton } from '../../components/common';
+import { ModernOrderCard } from '../../components/cards';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { WorkerStackParamList } from '../../types/navigation';
@@ -30,114 +31,24 @@ const JobCard: React.FC<{
   hasApplied?: boolean;
   navigation: WorkerNavigationProp;
 }> = ({ item, onApply, hasApplied = false, navigation }) => {
-  const [customerName, setCustomerName] = useState('Заказчик');
-
-  const getCustomerName = async (customerId: string) => {
-    try {
-      console.log(`[JobCard] Поиск заказчика с ID: ${customerId}`);
-
-      // Используем новый метод поиска пользователя
-      const customer = await authService.findUserById(customerId);
-
-      if (customer) {
-        const formattedName = `${customer.lastName} ${customer.firstName.charAt(0)}.`;
-        console.log(`[JobCard] Найден заказчик: ${formattedName}`);
-        return formattedName;
-      } else {
-        console.log(`[JobCard] Заказчик с ID ${customerId} не найден`);
-        return 'Заказчик';
-      }
-    } catch (error) {
-      console.error('[JobCard] Ошибка получения имени заказчика:', error);
-      return 'Заказчик';
-    }
-  };
-
-  const formatBudget = (amount: number) => {
-    return `${amount.toLocaleString()} сум`;
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}.${month}.${year}`;
-  };
-
-  // Загружаем имя заказчика
-  useEffect(() => {
-    getCustomerName(item.customerId).then(setCustomerName);
-  }, [item.customerId]);
+  const actionButton = (
+    <ModernActionButton
+      title={hasApplied ? 'Отклик отправлен' : 'Откликнуться'}
+      onPress={hasApplied ? undefined : () => onApply(item.id)}
+      disabled={hasApplied}
+      variant={hasApplied ? 'disabled' : 'primary'}
+      size="small"
+    />
+  );
 
   return (
-    <TouchableOpacity
-      style={styles.jobCard}
-      activeOpacity={0.8}
+    <ModernOrderCard
+      order={item}
       onPress={() => navigation.navigate('JobDetails', { orderId: item.id })}
-    >
-      {/* Header with title and budget */}
-      <View style={styles.jobHeader}>
-        <Text style={styles.jobTitle}>{item.title}</Text>
-        <Text style={styles.jobBudget}>{formatBudget(item.budget)}</Text>
-      </View>
-
-      {/* Category */}
-      <View style={styles.categoryContainer}>
-        <Text style={styles.jobCategory}>{item.category}</Text>
-      </View>
-
-      {/* Description */}
-      <Text style={styles.jobDescription} numberOfLines={2}>
-        {item.description}
-      </Text>
-
-      {/* Details in new layout */}
-      <View style={styles.jobDetailsLayout}>
-        <View style={styles.locationCard}>
-          <View style={styles.detailValue}>
-            <Text style={styles.detailIcon}>📍</Text>
-            <Text style={styles.detailText}>{item.location}</Text>
-          </View>
-        </View>
-        <View style={styles.bottomRow}>
-          <View style={styles.detailCard}>
-            <View style={styles.detailValue}>
-              <Text style={styles.detailIcon}>⏰</Text>
-              <Text style={styles.detailText}>{formatDate(item.serviceDate)}</Text>
-            </View>
-          </View>
-          <View style={styles.detailCard}>
-            <View style={styles.detailValue}>
-              <Text style={styles.detailIcon}>👤</Text>
-              <Text style={styles.detailText}>{customerName}</Text>
-            </View>
-          </View>
-        </View>
-      </View>
-
-      {/* Footer */}
-      <View style={styles.jobFooter}>
-        <Text style={styles.applicantsText}>
-          {item.applicantsCount} заявок
-        </Text>
-        <TouchableOpacity
-          style={[
-            styles.applyButton,
-            hasApplied && styles.appliedButton
-          ]}
-          onPress={hasApplied ? undefined : () => onApply(item.id)}
-          disabled={hasApplied}
-        >
-          <Text style={[
-            styles.applyButtonText,
-            hasApplied && styles.appliedButtonText
-          ]}>
-            {hasApplied ? 'Отклик отправлен' : 'Откликнуться'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
+      showApplicantsCount={false}
+      showCreateTime={false}
+      actionButton={actionButton}
+    />
   );
 };
 
@@ -595,7 +506,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   jobsListContent: {
-    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.sm,
   },
   jobCard: {
     backgroundColor: theme.colors.surface,

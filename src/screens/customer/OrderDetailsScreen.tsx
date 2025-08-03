@@ -12,14 +12,18 @@ import {
   Modal,
   Dimensions,
   Pressable,
+  Animated,
+  StatusBar,
 } from 'react-native';
 import { theme } from '../../constants';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import CalendarDateIcon from '../../../assets/calendar-date.svg';
+import CalendarIcon from '../../../assets/card-icons/calendar.svg';
+import LocationIcon from '../../../assets/card-icons/location.svg';
+import CategoryIcon from '../../../assets/card-icons/category.svg';
+import BankNoteIcon from '../../../assets/card-icons/bank-note-01.svg';
 import UserIcon from '../../../assets/user-01.svg';
-import HomeIcon from '../../../assets/home-02.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { HeaderWithBack } from '../../components/common';
 import { orderService } from '../../services/orderService';
@@ -195,6 +199,11 @@ export const OrderDetailsScreen: React.FC = () => {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [applicantsLoading, setApplicantsLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  // Анимация для sticky header
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const HEADER_HEIGHT = 100;
+  const STATUS_BAR_HEIGHT = StatusBar.currentHeight || 44; // 44 для iOS, currentHeight для Android
 
   // Состояния для подтверждения выбора исполнителя
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -615,13 +624,49 @@ export const OrderDetailsScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Sticky Header */}
+      <Animated.View style={[styles.stickyHeader, {
+        paddingTop: STATUS_BAR_HEIGHT + theme.spacing.lg, // Увеличил отступ от статус бара
+        opacity: scrollY.interpolate({
+          inputRange: [0, HEADER_HEIGHT],
+          outputRange: [0, 1],
+          extrapolate: 'clamp',
+        }),
+      }]}>
+        <View style={styles.stickyHeaderContent}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.backButtonText}>←</Text>
+          </TouchableOpacity>
+          <View style={styles.stickyTitleContainer}>
+            <Text style={styles.stickyTitle} numberOfLines={1}>
+              {order?.title || 'Загрузка...'}
+            </Text>
+            <Text style={styles.stickyPrice}>
+              {order ? formatBudget(order.budget) + ' сум' : ''}
+            </Text>
+          </View>
+          {order?.status === 'in_progress' && (
+            <TouchableOpacity onPress={handleCompleteOrder}>
+              <Text style={[styles.rightActionText, { color: '#DC2626' }]}>
+                {isCompletingOrder ? 'Завершаем...' : 'Завершить'}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </Animated.View>
+
       <View style={styles.contentContainer}>
-        <ScrollView
+        <Animated.ScrollView
           showsVerticalScrollIndicator={false}
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: false }
+          )}
+          scrollEventThrottle={16}
         >
-          {/* Header */}
+          {/* Regular Header */}
           <HeaderWithBack
             rightAction={
               order?.status === 'in_progress' ? {
@@ -673,28 +718,28 @@ export const OrderDetailsScreen: React.FC = () => {
             <View style={styles.infoGrid}>
               <View style={styles.infoCard}>
                 <View style={styles.infoIcon}>
-                  <Text style={styles.iconText}>💰</Text>
+                  <BankNoteIcon width={20} height={20} color="#679B00" />
                 </View>
                 <Text style={styles.infoValue}>{formatBudget(order.budget)}</Text>
               </View>
 
               <View style={styles.infoCard}>
                 <View style={styles.infoIcon}>
-                  <Text style={styles.iconText}>🏷️</Text>
+                  <CategoryIcon width={20} height={20} color="#679B00" />
                 </View>
                 <Text style={styles.infoValue}>{order.category}</Text>
               </View>
 
               <View style={styles.infoCard}>
                 <View style={styles.infoIcon}>
-                  <HomeIcon width={20} height={20} stroke={theme.colors.primary} />
+                  <LocationIcon width={20} height={20} color="#679B00" />
                 </View>
                 <Text style={styles.infoValue}>{order.location}</Text>
               </View>
 
               <View style={styles.infoCard}>
                 <View style={styles.infoIcon}>
-                  <CalendarDateIcon width={20} height={20} stroke={theme.colors.primary} />
+                  <CalendarIcon width={20} height={20} color="#679B00" />
                 </View>
                 <Text style={styles.infoValue}>{formatDate(order.serviceDate)}</Text>
               </View>
@@ -773,7 +818,7 @@ export const OrderDetailsScreen: React.FC = () => {
               </Text>
             </View>
           )}
-        </ScrollView>
+        </Animated.ScrollView>
 
         {/* Закрепленная кнопка внизу - показываем только если есть отклики */}
         {applicants.length > 0 && (
@@ -1043,15 +1088,14 @@ const styles = StyleSheet.create({
   infoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    gap: theme.spacing.md, // Одинаковые отступы между карточками
   },
   infoCard: {
-    width: '47%',
+    flexBasis: '47%', // Используем flexBasis для точной сетки 2x2
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.sm,
+    padding: theme.spacing.md,
     alignItems: 'center',
-    marginBottom: theme.spacing.sm,
   },
   infoIcon: {
     width: 32,
@@ -1065,6 +1109,8 @@ const styles = StyleSheet.create({
   iconText: {
     fontSize: 16,
   },
+
+
   infoValue: {
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
@@ -1630,5 +1676,64 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.bold,
     textAlign: 'center',
+  },
+
+  // Sticky Header Styles
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    backgroundColor: theme.colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  stickyHeaderContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
+    minHeight: 60,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backButtonText: {
+    fontSize: theme.fonts.sizes.xl,
+    color: theme.colors.text.primary,
+  },
+  stickyTitleContainer: {
+    flex: 1,
+    marginHorizontal: theme.spacing.md,
+    alignItems: 'center',
+  },
+  stickyTitle: {
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.text.primary,
+    textAlign: 'center',
+  },
+  stickyPrice: {
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.bold,
+    color: theme.colors.primary,
+    textAlign: 'center',
+    marginTop: 2,
+  },
+  rightActionText: {
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.medium,
   },
 }); 

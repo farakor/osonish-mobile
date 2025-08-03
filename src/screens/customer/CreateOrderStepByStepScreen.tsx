@@ -71,10 +71,6 @@ const VideoPreview: React.FC<{ uri: string }> = ({ uri }) => {
         style={styles.mediaImage}
         contentFit="cover"
         nativeControls={false}
-        onError={(error) => {
-          console.error('[VideoPreview] Ошибка VideoView:', error);
-          setHasError(true);
-        }}
       />
     );
   } catch (error) {
@@ -115,9 +111,22 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
   const [location, setLocation] = useState('');
   const [animationResetKey, setAnimationResetKey] = useState(0);
 
+  // Состояния фокуса для полей ввода
+  const [titleFocused, setTitleFocused] = useState(false);
+  const [descriptionFocused, setDescriptionFocused] = useState(false);
+  const [locationFocused, setLocationFocused] = useState(false);
+  const [budgetFocused, setBudgetFocused] = useState(false);
+
   const navigation = useNavigation();
 
   const totalSteps = 9;
+
+  // Функция для получения стиля поля ввода с учетом фокуса
+  const getInputStyle = (isFocused: boolean, isTextArea: boolean = false) => [
+    styles.stepInput,
+    isTextArea && styles.textArea,
+    isFocused && styles.stepInputFocused,
+  ];
 
   // Показываем только 6 категорий
   const categories = [
@@ -222,8 +231,8 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
         size: asset.fileSize || 0,
       }));
 
-      const currentTotalSize = mediaFiles.reduce((sum: number, file) => sum + file.size, 0);
-      const newTotalSize = newFiles.reduce((sum: number, file) => sum + file.size, 0);
+      const currentTotalSize = mediaFiles.reduce((sum: number, file: { uri: string; type: 'image' | 'video'; name: string; size: number }) => sum + file.size, 0);
+      const newTotalSize = newFiles.reduce((sum: number, file: { uri: string; type: 'image' | 'video'; name: string; size: number }) => sum + file.size, 0);
       const maxTotalSize = 50 * 1024 * 1024; // 50 МБ
 
       if (currentTotalSize + newTotalSize > maxTotalSize) {
@@ -246,6 +255,32 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
 
   const removeMedia = (index: number) => {
     setMediaFiles(files => files.filter((_, i) => i !== index));
+  };
+
+  // Проверка валидности текущего шага без показа Alert'ов
+  const isCurrentStepValid = (): boolean => {
+    switch (currentStep) {
+      case 1: // Название
+        return title.trim().length > 0;
+      case 2: // Категория
+        return category.length > 0;
+      case 3: // Описание
+        return description.trim().length > 0;
+      case 4: // Местоположение
+        return location.trim().length > 0;
+      case 5: // Бюджет
+        return budget.trim().length > 0;
+      case 6: // Количество работников
+        return !!workersCount && !isNaN(parseInt(workersCount)) && parseInt(workersCount) >= 1;
+      case 7: // Дата
+        return selectedDate !== null;
+      case 8: // Медиа (необязательно)
+        return true;
+      case 9: // Подтверждение
+        return true;
+      default:
+        return true;
+    }
   };
 
   const validateCurrentStep = (): boolean => {
@@ -446,7 +481,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
     } catch (error) {
       console.error('[CreateOrder] ❌ Общая ошибка создания заказа:', error);
       console.log('[CreateOrder] 📱 Показываем Alert об общей ошибке...');
-      Alert.alert('Ошибка', `Не удалось создать заказ: ${error.message || error}`);
+      Alert.alert('Ошибка', `Не удалось создать заказ: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       console.log('[CreateOrder] 🏁 ЗАВЕРШЕНИЕ handleSubmit - сбрасываем флаги...');
       setIsLoading(false);
@@ -483,15 +518,17 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 <Text style={styles.stepSubtitle}>Кратко опишите, что нужно сделать</Text>
               </AnimatedField>
 
-              <AnimatedField isActive={currentStep === 1} delay={400} resetKey={`${animationResetKey}-step-1`}>
+              <AnimatedField isActive={currentStep === 1} delay={200} resetKey={`${animationResetKey}-step-1`}>
                 <View style={styles.inputContainer}>
                   <TextInput
-                    style={styles.stepInput}
+                    style={getInputStyle(titleFocused)}
                     value={title}
                     onChangeText={setTitle}
                     placeholder="Например: Уборка квартиры"
                     placeholderTextColor={theme.colors.text.secondary}
                     autoFocus
+                    onFocus={() => setTitleFocused(true)}
+                    onBlur={() => setTitleFocused(false)}
                   />
                 </View>
               </AnimatedField>
@@ -534,10 +571,10 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 <Text style={styles.stepSubtitle}>Опишите детали работы, требования и пожелания</Text>
               </AnimatedField>
 
-              <AnimatedField isActive={currentStep === 3} delay={400} resetKey={`${animationResetKey}-step-3`}>
+              <AnimatedField isActive={currentStep === 3} delay={200} resetKey={`${animationResetKey}-step-3`}>
                 <View style={styles.inputContainer}>
                   <TextInput
-                    style={[styles.stepInput, styles.textArea]}
+                    style={getInputStyle(descriptionFocused, true)}
                     value={description}
                     onChangeText={setDescription}
                     placeholder="Подробно опишите, что нужно сделать, какие материалы использовать, сколько времени займет работа..."
@@ -546,6 +583,8 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                     numberOfLines={6}
                     textAlignVertical="top"
                     autoFocus
+                    onFocus={() => setDescriptionFocused(true)}
+                    onBlur={() => setDescriptionFocused(false)}
                   />
                 </View>
               </AnimatedField>
@@ -565,15 +604,17 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 <Text style={styles.stepSubtitle}>Укажите адрес или район</Text>
               </AnimatedField>
 
-              <AnimatedField isActive={currentStep === 4} delay={400} resetKey={`${animationResetKey}-step-4`}>
+              <AnimatedField isActive={currentStep === 4} delay={200} resetKey={`${animationResetKey}-step-4`}>
                 <View style={styles.inputContainer}>
                   <TextInput
-                    style={styles.stepInput}
+                    style={getInputStyle(locationFocused)}
                     value={location}
                     onChangeText={setLocation}
                     placeholder="Например: Ташкент, Юнусабад, ул. Амира Темура 15"
                     placeholderTextColor={theme.colors.text.secondary}
                     autoFocus
+                    onFocus={() => setLocationFocused(true)}
+                    onBlur={() => setLocationFocused(false)}
                   />
                 </View>
               </AnimatedField>
@@ -593,17 +634,19 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 <Text style={styles.stepSubtitle}>Сколько готовы заплатить за одного работника?</Text>
               </AnimatedField>
 
-              <AnimatedField isActive={currentStep === 5} delay={400} resetKey={`${animationResetKey}-step-5`}>
+              <AnimatedField isActive={currentStep === 5} delay={200} resetKey={`${animationResetKey}-step-5`}>
                 <View style={styles.inputContainer}>
                   <Text style={styles.fieldLabel}>Сумма за одного работника</Text>
                   <TextInput
-                    style={styles.stepInput}
+                    style={getInputStyle(budgetFocused)}
                     value={formatBudgetInput(budget)}
                     onChangeText={text => setBudget(formatBudgetInput(text))}
                     placeholder="100 000"
                     placeholderTextColor={theme.colors.text.secondary}
                     keyboardType="numeric"
                     autoFocus
+                    onFocus={() => setBudgetFocused(true)}
+                    onBlur={() => setBudgetFocused(false)}
                   />
                 </View>
               </AnimatedField>
@@ -623,13 +666,13 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 <Text style={styles.stepSubtitle}>Выберите количество работников для выполнения задачи</Text>
               </AnimatedField>
 
-              <AnimatedField isActive={currentStep === 6} delay={400} resetKey={`${animationResetKey}-step-6`}>
+              <AnimatedField isActive={currentStep === 6} delay={200} resetKey={`${animationResetKey}-step-6`}>
                 <View style={styles.inputContainer}>
                   <Text style={styles.fieldLabel}>Количество работников</Text>
                 </View>
               </AnimatedField>
 
-              <AnimatedInteractiveContainer isActive={currentStep === 6} delay={600} resetKey={`${animationResetKey}-step-6`}>
+              <AnimatedInteractiveContainer isActive={currentStep === 6} delay={250} resetKey={`${animationResetKey}-step-6`}>
                 <View style={styles.workersContainer}>
                   <TouchableOpacity
                     style={styles.workersButton}
@@ -670,7 +713,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 <Text style={styles.stepSubtitle}>Выберите удобную дату</Text>
               </AnimatedField>
 
-              <AnimatedInteractiveContainer isActive={currentStep === 7} delay={400} resetKey={`${animationResetKey}-step-7`}>
+              <AnimatedInteractiveContainer isActive={currentStep === 7} delay={200} resetKey={`${animationResetKey}-step-7`}>
                 <View style={styles.inputContainer}>
                   <TouchableOpacity
                     style={styles.dateSelector}
@@ -702,10 +745,10 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 <Text style={styles.stepSubtitle}>Это поможет исполнителям лучше понять задачу</Text>
               </AnimatedField>
 
-              <AnimatedField isActive={currentStep === 8} delay={400} resetKey={`${animationResetKey}-step-8`}>
+              <AnimatedField isActive={currentStep === 8} delay={200} resetKey={`${animationResetKey}-step-8`}>
                 <View style={styles.mediaContainer}>
                   {mediaFiles.map((file, idx) => (
-                    <AnimatedField key={file.uri} isActive={currentStep === 8} delay={600 + idx * 100} resetKey={`${animationResetKey}-${file.uri}`}>
+                    <AnimatedField key={file.uri} isActive={currentStep === 8} delay={250 + idx * 50} resetKey={`${animationResetKey}-${file.uri}`}>
                       <View style={styles.mediaItem}>
                         {file.type === 'image' ? (
                           <Image source={{ uri: file.uri }} style={styles.mediaImage} resizeMode="cover" />
@@ -719,7 +762,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                     </AnimatedField>
                   ))}
                   {mediaFiles.length < 5 && (
-                    <AnimatedInteractiveContainer isActive={currentStep === 8} delay={800} resetKey={`${animationResetKey}-step-8`}>
+                    <AnimatedInteractiveContainer isActive={currentStep === 8} delay={300} resetKey={`${animationResetKey}-step-8`}>
                       <TouchableOpacity style={styles.addMediaButton} onPress={pickMedia}>
                         <ImageIcon width={32} height={32} stroke={theme.colors.primary} />
                         <Text style={styles.addMediaText}>Добавить</Text>
@@ -729,7 +772,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 </View>
               </AnimatedField>
               {mediaError && (
-                <AnimatedField isActive={currentStep === 8} delay={500} resetKey={`${animationResetKey}-step-8`}>
+                <AnimatedField isActive={currentStep === 8} delay={200} resetKey={`${animationResetKey}-step-8`}>
                   <Text style={styles.mediaError}>{mediaError}</Text>
                 </AnimatedField>
               )}
@@ -751,16 +794,32 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
 
               <View style={styles.summaryContainer}>
                 <AnimatedSummaryGrid
-                  items={[
-                    { label: "Название", value: title },
-                    { label: "Категория", value: category },
-                    { label: "Описание", value: description },
-                    { label: "Местоположение", value: location },
-                    { label: "Бюджет", value: `${formatBudgetInput(budget)} сум/чел` },
-                    { label: "Работников", value: `${workersCount} человек` },
-                    { label: "Дата", value: formatDate(selectedDate) },
-                    ...(mediaFiles.length > 0 ? [{ label: "Медиа файлы", value: `${mediaFiles.length} файла` }] : [])
-                  ]}
+                  items={(() => {
+                    if (mediaFiles.length > 0) {
+                      // Если есть медиа файлы, размещаем их в паре с датой
+                      return [
+                        { label: "Название", value: title },
+                        { label: "Категория", value: category },
+                        { label: "Описание", value: description },
+                        { label: "Местоположение", value: location },
+                        { label: "Бюджет", value: `${formatBudgetInput(budget)} сум/чел` },
+                        { label: "Работников", value: `${workersCount} человек` },
+                        { label: "Медиа файлы", value: `${mediaFiles.length} файла` },
+                        { label: "Дата", value: formatDate(selectedDate) }
+                      ];
+                    } else {
+                      // Если нет медиа файлов
+                      return [
+                        { label: "Название", value: title },
+                        { label: "Категория", value: category },
+                        { label: "Описание", value: description },
+                        { label: "Местоположение", value: location },
+                        { label: "Бюджет", value: `${formatBudgetInput(budget)} сум/чел` },
+                        { label: "Работников", value: `${workersCount} человек` },
+                        { label: "Дата", value: formatDate(selectedDate) }
+                      ];
+                    }
+                  })()}
                   isActive={currentStep === 9}
                   resetKey={`${animationResetKey}-step-9`}
                 />
@@ -810,7 +869,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 variant="secondary"
                 onPress={prevStep}
                 isVisible={currentStep > 1}
-                delay={1200}
+                delay={0}
                 resetKey={`${animationResetKey}-step-${currentStep}`}
               >
                 <Text style={styles.secondaryButtonText}>Назад</Text>
@@ -820,22 +879,24 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
             <View style={styles.navigationSpacer} />
 
             {currentStep < totalSteps ? (
-              <AnimatedNavigationButton
-                variant="primary"
-                onPress={nextStep}
-                isVisible={currentStep < totalSteps}
-                delay={1300}
-                resetKey={`${animationResetKey}-step-${currentStep}`}
-              >
-                <Text style={styles.primaryButtonText}>Далее</Text>
-              </AnimatedNavigationButton>
+              isCurrentStepValid() && (
+                <AnimatedNavigationButton
+                  variant="primary"
+                  onPress={nextStep}
+                  isVisible={currentStep < totalSteps && isCurrentStepValid()}
+                  delay={0}
+                  resetKey={`${animationResetKey}-step-${currentStep}`}
+                >
+                  <Text style={styles.primaryButtonText}>Далее</Text>
+                </AnimatedNavigationButton>
+              )
             ) : (
               <AnimatedNavigationButton
                 variant="primary"
                 onPress={handleSubmit}
                 disabled={isLoading || isUploadingMedia}
                 isVisible={currentStep === totalSteps}
-                delay={1300}
+                delay={0}
                 resetKey={`${animationResetKey}-step-${currentStep}`}
               >
                 <Text style={styles.primaryButtonText}>
@@ -976,6 +1037,14 @@ const styles = StyleSheet.create({
       android: 'Roboto',
     }),
   },
+  stepInputFocused: {
+    borderColor: theme.colors.primary,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
   textArea: {
     height: 120,
     paddingTop: theme.spacing.lg,
@@ -1111,7 +1180,7 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.sm,
   },
   summaryContainer: {
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: 0,
     marginTop: theme.spacing.md,
     marginBottom: theme.spacing.md,
   },

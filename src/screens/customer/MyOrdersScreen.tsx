@@ -15,6 +15,7 @@ import { CustomerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { orderService } from '../../services/orderService';
 import { Order } from '../../types';
+import { ModernOrderCard } from '../../components/cards';
 
 
 type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
@@ -118,54 +119,12 @@ export const MyOrdersScreen: React.FC = () => {
     : allOrders.filter((order: Order) => order.status === activeTab);
 
   const renderOrder = ({ item }: { item: Order }) => (
-    <TouchableOpacity
-      style={styles.orderCard}
-      activeOpacity={0.8}
+    <ModernOrderCard
+      order={item}
       onPress={() => navigation.navigate('OrderDetails', { orderId: item.id })}
-    >
-      {/* Header with title and budget */}
-      <View style={styles.orderHeader}>
-        <Text style={styles.orderTitle}>{item.title}</Text>
-        <Text style={styles.orderBudget}>{formatBudget(item.budget)} сум</Text>
-      </View>
-
-      {/* Category */}
-      <View style={styles.categoryContainer}>
-        <Text style={styles.orderCategory}>{item.category}</Text>
-      </View>
-
-      {/* Details in new layout */}
-      <View style={styles.orderDetailsLayout}>
-        <View style={styles.locationCard}>
-          <View style={styles.detailValue}>
-            <Text style={styles.detailIcon}>📍</Text>
-            <Text style={styles.detailText}>{item.location}</Text>
-          </View>
-        </View>
-        <View style={styles.bottomRow}>
-          <View style={styles.detailCard}>
-            <View style={styles.detailValue}>
-              <Text style={styles.detailIcon}>📅</Text>
-              <Text style={styles.detailText}>{formatDate(item.serviceDate)}</Text>
-            </View>
-          </View>
-          <View style={styles.detailCard}>
-            <View style={styles.detailValue}>
-              <Text style={styles.detailIcon}>📝</Text>
-              <Text style={styles.detailText}>{item.applicantsCount} заявок</Text>
-            </View>
-          </View>
-        </View>
-      </View>
-
-      {/* Footer */}
-      <View style={styles.orderFooter}>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-          <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
-        </View>
-        <Text style={styles.orderTime}>Создан {formatCreatedAt(item.createdAt)}</Text>
-      </View>
-    </TouchableOpacity>
+      showApplicantsCount={true}
+      showCreateTime={true}
+    />
   );
 
   return (
@@ -208,7 +167,7 @@ export const MyOrdersScreen: React.FC = () => {
             onPress={() => setActiveTab('completed')}
           >
             <Text style={[styles.tabText, activeTab === 'completed' && styles.activeTabText]}>
-              Завершенные
+              Заверш.
             </Text>
           </TouchableOpacity>
         </View>
@@ -309,7 +268,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.semiBold,
   },
   ordersList: {
-    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.sm,
     paddingBottom: theme.spacing.xl,
   },
   orderCard: {

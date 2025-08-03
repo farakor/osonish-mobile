@@ -11,3 +11,4 @@ export {
   AnimatedLoadingIndicator,
   AnimatedSummaryGrid,
 } from './AnimatedComponents';
+export { ModernActionButton } from './ModernActionButton';

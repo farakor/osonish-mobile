@@ -50,7 +50,20 @@ export const CreateOrderScreen: React.FC = () => {
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [location, setLocation] = useState('');
 
+  // Состояния фокуса для полей ввода
+  const [titleFocused, setTitleFocused] = useState(false);
+  const [descriptionFocused, setDescriptionFocused] = useState(false);
+  const [locationFocused, setLocationFocused] = useState(false);
+  const [budgetFocused, setBudgetFocused] = useState(false);
+
   const navigation = useNavigation();
+
+  // Функция для получения стиля поля ввода с учетом фокуса
+  const getInputStyle = (isFocused: boolean, isTextArea: boolean = false) => [
+    styles.input,
+    isTextArea && styles.textArea,
+    isFocused && styles.inputFocused,
+  ];
 
   // УДАЛЕНО: // Создаём массив videoPlayers для всех mediaFiles (только для видео)
   // const videoPlayers = mediaFiles.map(file =>
@@ -202,6 +215,19 @@ export const CreateOrderScreen: React.FC = () => {
     setMediaFiles(files => files.filter((_, i) => i !== index));
   };
 
+  // Проверка заполнения всех обязательных полей
+  const isFormValid = (): boolean => {
+    return (
+      title.trim().length > 0 &&
+      description.trim().length > 0 &&
+      category.length > 0 &&
+      budget.trim().length > 0 &&
+      selectedDate !== null &&
+      location.trim().length > 0 &&
+      !!workersCount && !isNaN(parseInt(workersCount)) && parseInt(workersCount) >= 1
+    );
+  };
+
   const handleSubmit = async () => {
     if (!title.trim() || !description.trim() || !category || !budget.trim() || !selectedDate || !location.trim()) {
       Alert.alert('Ошибка', 'Заполните все обязательные поля, включая местоположение и дату выполнения');
@@ -310,11 +336,13 @@ export const CreateOrderScreen: React.FC = () => {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Название заказа <Text style={styles.required}>*</Text></Text>
               <TextInput
-                style={styles.input}
+                style={getInputStyle(titleFocused)}
                 value={title}
                 onChangeText={setTitle}
                 placeholder="Например: Уборка квартиры"
                 placeholderTextColor={theme.colors.text.secondary}
+                onFocus={() => setTitleFocused(true)}
+                onBlur={() => setTitleFocused(false)}
               />
             </View>
 
@@ -346,7 +374,7 @@ export const CreateOrderScreen: React.FC = () => {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Описание <Text style={styles.required}>*</Text></Text>
               <TextInput
-                style={[styles.input, styles.textArea]}
+                style={getInputStyle(descriptionFocused, true)}
                 value={description}
                 onChangeText={setDescription}
                 placeholder="Подробно опишите, что нужно сделать..."
@@ -354,6 +382,8 @@ export const CreateOrderScreen: React.FC = () => {
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
+                onFocus={() => setDescriptionFocused(true)}
+                onBlur={() => setDescriptionFocused(false)}
               />
             </View>
 
@@ -361,11 +391,13 @@ export const CreateOrderScreen: React.FC = () => {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Местоположение <Text style={styles.required}>*</Text></Text>
               <TextInput
-                style={styles.input}
+                style={getInputStyle(locationFocused)}
                 value={location}
                 onChangeText={setLocation}
                 placeholder="Например: Ташкент, Юнусабад"
                 placeholderTextColor={theme.colors.text.secondary}
+                onFocus={() => setLocationFocused(true)}
+                onBlur={() => setLocationFocused(false)}
               />
             </View>
 
@@ -373,12 +405,14 @@ export const CreateOrderScreen: React.FC = () => {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Сумма за одного работника <Text style={styles.required}>*</Text></Text>
               <TextInput
-                style={styles.input}
+                style={getInputStyle(budgetFocused)}
                 value={formatBudgetInput(budget)}
                 onChangeText={text => setBudget(formatBudgetInput(text))}
                 placeholder="100 000"
                 placeholderTextColor={theme.colors.text.secondary}
                 keyboardType="numeric"
+                onFocus={() => setBudgetFocused(true)}
+                onBlur={() => setBudgetFocused(false)}
               />
             </View>
 
@@ -469,7 +503,7 @@ export const CreateOrderScreen: React.FC = () => {
         </ScrollView>
 
         {/* Fixed Submit Button */}
-        {!showDatePicker && (
+        {!showDatePicker && isFormValid() && (
           <View style={styles.fixedButtonContainer}>
             <TouchableOpacity
               style={[styles.submitButton, (isLoading || isUploadingMedia) && styles.submitButtonDisabled]}
@@ -558,6 +592,14 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
+  },
+  inputFocused: {
+    borderColor: theme.colors.primary,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   textArea: {
     height: 100,

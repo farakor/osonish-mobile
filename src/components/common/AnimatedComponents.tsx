@@ -462,7 +462,7 @@ export const AnimatedCategoryGrid: React.FC<{
               selectedCategory={selectedCategory}
               onSelectCategory={onSelectCategory}
               isActive={isActive}
-              delay={(rowIndex * 3 + index) * 100 + 300}
+              delay={(rowIndex * 3 + index) * 50 + 150}
               resetKey={resetKey}
             />
           ))}
@@ -597,33 +597,33 @@ export const AnimatedSummaryItem: React.FC<{
   const scale = useSharedValue(0.9);
   const prevResetKey = useRef(resetKey);
   const hasAnimated = useRef(false);
-  const delay = index * 100 + 400;
+  const delay = index * 50 + 200;
 
   // Получаем иконку и цвет в зависимости от типа поля
   const getIconAndColor = (label: string) => {
     switch (label.toLowerCase()) {
       case 'название':
-        return { icon: '', color: theme.colors.text.primary, bgColor: `${theme.colors.primary}15` };
+        return { icon: '📝', color: theme.colors.text.primary, iconBg: '#E8F5E8' };
       case 'категория':
-        return { icon: '', color: theme.colors.text.primary, bgColor: `${theme.colors.primary}15` };
+        return { icon: '🏷️', color: theme.colors.text.primary, iconBg: '#F0E8FF' };
       case 'описание':
-        return { icon: '', color: theme.colors.text.primary, bgColor: `${theme.colors.primary}15` };
+        return { icon: '📄', color: theme.colors.text.primary, iconBg: '#E8F3FF' };
       case 'местоположение':
-        return { icon: '', color: theme.colors.text.primary, bgColor: `${theme.colors.primary}15` };
+        return { icon: '📍', color: theme.colors.text.primary, iconBg: '#FFE8E8' };
       case 'бюджет':
-        return { icon: '', color: theme.colors.primary, bgColor: `${theme.colors.primary}15` };
+        return { icon: '💰', color: theme.colors.primary, iconBg: '#E8F5E8' };
       case 'работников':
-        return { icon: '', color: theme.colors.text.primary, bgColor: `${theme.colors.primary}15` };
+        return { icon: '👥', color: theme.colors.text.primary, iconBg: '#FFF3E8' };
       case 'дата':
-        return { icon: '', color: theme.colors.text.primary, bgColor: `${theme.colors.primary}15` };
+        return { icon: '📅', color: theme.colors.text.primary, iconBg: '#F8E8FF' };
       case 'медиа файлы':
-        return { icon: '', color: theme.colors.text.primary, bgColor: `${theme.colors.primary}15` };
+        return { icon: '🖼️', color: theme.colors.text.primary, iconBg: '#E8FFE8' };
       default:
-        return { icon: '', color: theme.colors.text.primary, bgColor: `${theme.colors.primary}15` };
+        return { icon: '📋', color: theme.colors.text.primary, iconBg: '#F5F5F5' };
     }
   };
 
-  const { icon, color, bgColor } = getIconAndColor(label);
+  const { icon, color, iconBg } = getIconAndColor(label);
 
   useEffect(() => {
     // Принудительный сброс при изменении resetKey
@@ -671,10 +671,10 @@ export const AnimatedSummaryItem: React.FC<{
         <Text style={styles.summaryLabel}>{label}</Text>
         <Text
           style={[
-            isFullWidth ? styles.summaryValueLarge : styles.summaryValue,
+            styles.summaryValue,
             { color: color }
           ]}
-          numberOfLines={isFullWidth && label.toLowerCase() === 'описание' ? 2 : (isFullWidth ? 3 : 2)}
+          numberOfLines={isFullWidth && label.toLowerCase() === 'описание' ? 2 : (isFullWidth ? 3 : 1)}
           ellipsizeMode="tail"
         >
           {value}
@@ -690,9 +690,13 @@ export const AnimatedSummaryGrid: React.FC<{
   isActive: boolean;
   resetKey?: string | number;
 }> = ({ items, isActive, resetKey = '' }) => {
-  // Находим описание для полноширинного отображения
+  // Находим элементы для полноширинного отображения
   const descriptionItem = items.find(item => item.label.toLowerCase() === 'описание');
-  const otherItems = items.filter(item => item.label.toLowerCase() !== 'описание');
+  const dateItem = items.find(item => item.label.toLowerCase() === 'дата');
+  const otherItems = items.filter(item =>
+    item.label.toLowerCase() !== 'описание' &&
+    item.label.toLowerCase() !== 'дата'
+  );
 
   // Разбиваем остальные элементы на пары для двухколоночного layout
   const rows = [];
@@ -725,7 +729,7 @@ export const AnimatedSummaryGrid: React.FC<{
         <View
           key={`row-${rowIndex}`}
           style={[
-            styles.summaryRow,
+            styles.summaryRowGrid,
             rowIndex === rows.length - 1 && { marginBottom: 0 }
           ]}
         >
@@ -743,6 +747,21 @@ export const AnimatedSummaryGrid: React.FC<{
           {row.length === 1 && <View style={styles.summaryPlaceholder} />}
         </View>
       ))}
+
+      {/* Дата в отдельной полноширинной карточке */}
+      {dateItem && (
+        <View style={styles.summaryFullWidthRow}>
+          <AnimatedSummaryItem
+            key={`${dateItem.label}-${resetKey}`}
+            label={dateItem.label}
+            value={dateItem.value}
+            index={(descriptionItem ? 1 : 0) + rows.length * 2}
+            isActive={isActive}
+            resetKey={resetKey}
+            isFullWidth={true}
+          />
+        </View>
+      )}
     </View>
   );
 };
@@ -892,42 +911,51 @@ const styles = StyleSheet.create({
   },
   // Стили для компактных summary карточек
   summaryItemCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.background,
+    borderRadius: 0,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderColor: '#F0F0F0',
     flex: 1,
-    minHeight: 70,
+    minHeight: 56,
   },
-  // Стили для полноширинных карточек (описание)
+  // Стили для полноширинных карточек (только описание)
   summaryItemCardFullWidth: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.xl,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.background,
+    borderRadius: 0,
+    paddingVertical: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderColor: '#F0F0F0',
     width: '100%',
-    minHeight: 90,
+    minHeight: 72,
   },
 
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.spacing.sm,
+  },
+  summaryIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 1,
+  },
+  summaryIconText: {
+    fontSize: 14,
+  },
   summaryContent: {
     flex: 1,
+    paddingTop: 0,
   },
   summaryLabel: {
     fontSize: 11,
     color: theme.colors.text.secondary,
-    marginBottom: 4,
+    marginBottom: 3,
     fontWeight: theme.fonts.weights.medium,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
@@ -936,17 +964,19 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.sm,
     fontWeight: theme.fonts.weights.semiBold,
     lineHeight: 18,
+    color: theme.colors.text.primary,
   },
   summaryValueLarge: {
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
-    lineHeight: 22,
+    lineHeight: 20,
+    color: theme.colors.text.primary,
   },
   // Стили для компактной сетки
   summaryGrid: {
-    // gap управляется через marginBottom в строках
+    paddingTop: theme.spacing.sm,
   },
-  summaryRow: {
+  summaryRowGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: theme.spacing.sm,
