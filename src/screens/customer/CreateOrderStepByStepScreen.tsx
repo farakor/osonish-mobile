@@ -11,7 +11,6 @@ import {
   Image,
   Dimensions,
   KeyboardAvoidingView,
-  ScrollView,
   ActivityIndicator,
   Modal,
 } from 'react-native';
@@ -40,7 +39,7 @@ import {
   AnimatedCategoryGrid,
   AnimatedNavigationButton,
   AnimatedInteractiveContainer,
-  AnimatedSummaryItem,
+  AnimatedSummaryGrid,
 } from '../../components/common/AnimatedComponents';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -741,9 +740,9 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
       case 9:
         return (
           <AnimatedStepContainer isActive={currentStep === 9} direction="right">
-            <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
+            <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 9} delay={0} resetKey={`${animationResetKey}-step-9`}>
-                <Text style={styles.stepTitle}>Все готово!</Text>
+                <Text style={styles.stepTitle}>🎉 Все готово!</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 9} delay={150} resetKey={`${animationResetKey}-step-9`}>
@@ -751,73 +750,22 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
               </AnimatedField>
 
               <View style={styles.summaryContainer}>
-                <AnimatedSummaryItem
-                  label="Название"
-                  value={title}
-                  index={0}
+                <AnimatedSummaryGrid
+                  items={[
+                    { label: "Название", value: title },
+                    { label: "Категория", value: category },
+                    { label: "Описание", value: description },
+                    { label: "Местоположение", value: location },
+                    { label: "Бюджет", value: `${formatBudgetInput(budget)} сум/чел` },
+                    { label: "Работников", value: `${workersCount} человек` },
+                    { label: "Дата", value: formatDate(selectedDate) },
+                    ...(mediaFiles.length > 0 ? [{ label: "Медиа файлы", value: `${mediaFiles.length} файла` }] : [])
+                  ]}
                   isActive={currentStep === 9}
                   resetKey={`${animationResetKey}-step-9`}
                 />
-
-                <AnimatedSummaryItem
-                  label="Категория"
-                  value={category}
-                  index={1}
-                  isActive={currentStep === 9}
-                  resetKey={`${animationResetKey}-step-9`}
-                />
-
-                <AnimatedSummaryItem
-                  label="Описание"
-                  value={description}
-                  index={2}
-                  isActive={currentStep === 9}
-                  resetKey={`${animationResetKey}-step-9`}
-                />
-
-                <AnimatedSummaryItem
-                  label="Местоположение"
-                  value={location}
-                  index={3}
-                  isActive={currentStep === 9}
-                  resetKey={`${animationResetKey}-step-9`}
-                />
-
-                <AnimatedSummaryItem
-                  label="Бюджет"
-                  value={`${formatBudgetInput(budget)} сум за работника`}
-                  index={4}
-                  isActive={currentStep === 9}
-                  resetKey={`${animationResetKey}-step-9`}
-                />
-
-                <AnimatedSummaryItem
-                  label="Работников"
-                  value={`${workersCount} человек`}
-                  index={5}
-                  isActive={currentStep === 9}
-                  resetKey={`${animationResetKey}-step-9`}
-                />
-
-                <AnimatedSummaryItem
-                  label="Дата"
-                  value={formatDate(selectedDate)}
-                  index={6}
-                  isActive={currentStep === 9}
-                  resetKey={`${animationResetKey}-step-9`}
-                />
-
-                {mediaFiles.length > 0 && (
-                  <AnimatedSummaryItem
-                    label="Медиа файлы"
-                    value={`${mediaFiles.length} файла`}
-                    index={7}
-                    isActive={currentStep === 9}
-                    resetKey={`${animationResetKey}-step-9`}
-                  />
-                )}
               </View>
-            </ScrollView>
+            </View>
           </AnimatedStepContainer>
         );
 
@@ -891,7 +839,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 resetKey={`${animationResetKey}-step-${currentStep}`}
               >
                 <Text style={styles.primaryButtonText}>
-                  {isUploadingMedia ? 'Загружаем...' : isLoading ? 'Создаем...' : 'Опубликовать'}
+                  {isUploadingMedia ? '⏳ Загружаем...' : isLoading ? '🚀 Создаем...' : '✨ Опубликовать'}
                 </Text>
               </AnimatedNavigationButton>
             )}
@@ -1046,9 +994,8 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   categoriesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.md,
+    paddingVertical: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
   },
   workersContainer: {
     flexDirection: 'row',
@@ -1164,27 +1111,9 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.sm,
   },
   summaryContainer: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
-  },
-  summaryItem: {
+    paddingHorizontal: theme.spacing.md,
+    marginTop: theme.spacing.md,
     marginBottom: theme.spacing.md,
-    paddingBottom: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  summaryLabel: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.xs,
-    fontWeight: theme.fonts.weights.medium,
-  },
-  summaryValue: {
-    fontSize: theme.fonts.sizes.md,
-    color: theme.colors.text.primary,
-    fontWeight: theme.fonts.weights.medium,
   },
   navigation: {
     flexDirection: 'row',

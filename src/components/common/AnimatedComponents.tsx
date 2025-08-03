@@ -445,18 +445,28 @@ export const AnimatedCategoryGrid: React.FC<{
   isActive: boolean;
   resetKey?: string | number;
 }> = ({ categories, selectedCategory, onSelectCategory, isActive, resetKey = '' }) => {
+  // Разбиваем категории на строки по 3 элемента
+  const rows = [];
+  for (let i = 0; i < categories.length; i += 3) {
+    rows.push(categories.slice(i, i + 3));
+  }
+
   return (
     <View style={styles.categoriesGrid}>
-      {categories.map((cat, index) => (
-        <AnimatedCategoryItem
-          key={`${cat.label}-${resetKey}`}
-          category={cat}
-          selectedCategory={selectedCategory}
-          onSelectCategory={onSelectCategory}
-          isActive={isActive}
-          delay={index * 100 + 300}
-          resetKey={resetKey}
-        />
+      {rows.map((row, rowIndex) => (
+        <View key={`row-${rowIndex}`} style={styles.categoryRow}>
+          {row.map((cat, index) => (
+            <AnimatedCategoryItem
+              key={`${cat.label}-${resetKey}`}
+              category={cat}
+              selectedCategory={selectedCategory}
+              onSelectCategory={onSelectCategory}
+              isActive={isActive}
+              delay={(rowIndex * 3 + index) * 100 + 300}
+              resetKey={resetKey}
+            />
+          ))}
+        </View>
       ))}
     </View>
   );
@@ -580,13 +590,40 @@ export const AnimatedSummaryItem: React.FC<{
   index: number;
   isActive: boolean;
   resetKey?: string | number;
-}> = ({ label, value, index, isActive, resetKey = '' }) => {
+  isFullWidth?: boolean;
+}> = ({ label, value, index, isActive, resetKey = '', isFullWidth = false }) => {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(30);
   const scale = useSharedValue(0.9);
   const prevResetKey = useRef(resetKey);
   const hasAnimated = useRef(false);
   const delay = index * 100 + 400;
+
+  // Получаем иконку и цвет в зависимости от типа поля
+  const getIconAndColor = (label: string) => {
+    switch (label.toLowerCase()) {
+      case 'название':
+        return { icon: '', color: theme.colors.text.primary, bgColor: `${theme.colors.primary}15` };
+      case 'категория':
+        return { icon: '', color: theme.colors.text.primary, bgColor: `${theme.colors.primary}15` };
+      case 'описание':
+        return { icon: '', color: theme.colors.text.primary, bgColor: `${theme.colors.primary}15` };
+      case 'местоположение':
+        return { icon: '', color: theme.colors.text.primary, bgColor: `${theme.colors.primary}15` };
+      case 'бюджет':
+        return { icon: '', color: theme.colors.primary, bgColor: `${theme.colors.primary}15` };
+      case 'работников':
+        return { icon: '', color: theme.colors.text.primary, bgColor: `${theme.colors.primary}15` };
+      case 'дата':
+        return { icon: '', color: theme.colors.text.primary, bgColor: `${theme.colors.primary}15` };
+      case 'медиа файлы':
+        return { icon: '', color: theme.colors.text.primary, bgColor: `${theme.colors.primary}15` };
+      default:
+        return { icon: '', color: theme.colors.text.primary, bgColor: `${theme.colors.primary}15` };
+    }
+  };
+
+  const { icon, color, bgColor } = getIconAndColor(label);
 
   useEffect(() => {
     // Принудительный сброс при изменении resetKey
@@ -626,10 +663,87 @@ export const AnimatedSummaryItem: React.FC<{
   }));
 
   return (
-    <Animated.View style={[styles.summaryItem, animatedStyle]}>
-      <Text style={styles.summaryLabel}>{label}</Text>
-      <Text style={styles.summaryValue}>{value}</Text>
+    <Animated.View style={[
+      isFullWidth ? styles.summaryItemCardFullWidth : styles.summaryItemCard,
+      animatedStyle
+    ]}>
+      <View style={styles.summaryContent}>
+        <Text style={styles.summaryLabel}>{label}</Text>
+        <Text
+          style={[
+            isFullWidth ? styles.summaryValueLarge : styles.summaryValue,
+            { color: color }
+          ]}
+          numberOfLines={isFullWidth && label.toLowerCase() === 'описание' ? 2 : (isFullWidth ? 3 : 2)}
+          ellipsizeMode="tail"
+        >
+          {value}
+        </Text>
+      </View>
     </Animated.View>
+  );
+};
+
+// Профессиональная сетка summary элементов с адаптивным layout
+export const AnimatedSummaryGrid: React.FC<{
+  items: Array<{ label: string; value: string }>;
+  isActive: boolean;
+  resetKey?: string | number;
+}> = ({ items, isActive, resetKey = '' }) => {
+  // Находим описание для полноширинного отображения
+  const descriptionItem = items.find(item => item.label.toLowerCase() === 'описание');
+  const otherItems = items.filter(item => item.label.toLowerCase() !== 'описание');
+
+  // Разбиваем остальные элементы на пары для двухколоночного layout
+  const rows = [];
+  for (let i = 0; i < otherItems.length; i += 2) {
+    rows.push(otherItems.slice(i, i + 2));
+  }
+
+  return (
+    <View style={styles.summaryGrid}>
+      {/* Описание в отдельной полноширинной карточке */}
+      {descriptionItem && (
+        <View style={[
+          styles.summaryFullWidthRow,
+          otherItems.length === 0 && { marginBottom: 0 }
+        ]}>
+          <AnimatedSummaryItem
+            key={`${descriptionItem.label}-${resetKey}`}
+            label={descriptionItem.label}
+            value={descriptionItem.value}
+            index={0}
+            isActive={isActive}
+            resetKey={resetKey}
+            isFullWidth={true}
+          />
+        </View>
+      )}
+
+      {/* Остальные элементы в двухколоночном формате */}
+      {rows.map((row, rowIndex) => (
+        <View
+          key={`row-${rowIndex}`}
+          style={[
+            styles.summaryRow,
+            rowIndex === rows.length - 1 && { marginBottom: 0 }
+          ]}
+        >
+          {row.map((item, index) => (
+            <AnimatedSummaryItem
+              key={`${item.label}-${resetKey}`}
+              label={item.label}
+              value={item.value}
+              index={(descriptionItem ? 1 : 0) + rowIndex * 2 + index}
+              isActive={isActive}
+              resetKey={resetKey}
+              isFullWidth={false}
+            />
+          ))}
+          {row.length === 1 && <View style={styles.summaryPlaceholder} />}
+        </View>
+      ))}
+    </View>
   );
 };
 
@@ -691,8 +805,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
+    padding: theme.spacing.md,
     alignItems: 'center',
+    justifyContent: 'center',
+    width: 120,
+    height: 120,
+    marginHorizontal: 8,
+    marginVertical: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -705,21 +824,28 @@ const styles = StyleSheet.create({
   },
   categoryEmoji: {
     fontSize: 32,
-    marginBottom: theme.spacing.sm,
+    marginBottom: 6,
+    textAlign: 'center',
   },
   categoryLabel: {
-    fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.medium,
+    fontSize: 12,
+    fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
+    textAlign: 'center',
+    lineHeight: 14,
   },
   categoryLabelSelected: {
     color: theme.colors.white,
   },
   categoriesGrid: {
+    paddingVertical: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
+  },
+  categoryRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: theme.spacing.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
   },
   loadingContainer: {
     position: 'absolute',
@@ -763,5 +889,73 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
     fontWeight: theme.fonts.weights.medium,
+  },
+  // Стили для компактных summary карточек
+  summaryItemCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    flex: 1,
+    minHeight: 70,
+  },
+  // Стили для полноширинных карточек (описание)
+  summaryItemCardFullWidth: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.xl,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    width: '100%',
+    minHeight: 90,
+  },
+
+  summaryContent: {
+    flex: 1,
+  },
+  summaryLabel: {
+    fontSize: 11,
+    color: theme.colors.text.secondary,
+    marginBottom: 4,
+    fontWeight: theme.fonts.weights.medium,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  summaryValue: {
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.semiBold,
+    lineHeight: 18,
+  },
+  summaryValueLarge: {
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
+    lineHeight: 22,
+  },
+  // Стили для компактной сетки
+  summaryGrid: {
+    // gap управляется через marginBottom в строках
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+  },
+  summaryFullWidthRow: {
+    marginBottom: theme.spacing.sm,
+  },
+  summaryPlaceholder: {
+    flex: 1,
   },
 });

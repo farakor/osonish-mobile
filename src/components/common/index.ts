@@ -9,4 +9,5 @@ export {
   AnimatedStepContainer,
   AnimatedCategoryCard,
   AnimatedLoadingIndicator,
+  AnimatedSummaryGrid,
 } from './AnimatedComponents';
