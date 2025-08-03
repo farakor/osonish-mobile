@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { AppNavigator } from './src/navigation';
+import { OrdersProvider } from './src/hooks';
 
 // Инициализация сервисов
 import { initSMSService } from './src/services/smsService';
@@ -32,9 +33,9 @@ export default function App() {
   }, []);
 
   return (
-    <>
+    <OrdersProvider>
       <StatusBar style="auto" />
       <AppNavigator />
-    </>
+    </OrdersProvider>
   );
 }

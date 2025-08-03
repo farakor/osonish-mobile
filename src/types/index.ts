@@ -98,11 +98,11 @@ export interface Applicant {
   workerId: string;
   workerName: string;
   workerPhone: string;
-  rating?: number;
-  completedJobs?: number;
+  rating: number | null;
+  completedJobs: number;
   avatar?: string;
   message?: string;
-  proposedPrice?: number; // предложенная цена исполнителя
+  proposedPrice: number; // предложенная цена исполнителя
   appliedAt: string;
   status: 'pending' | 'accepted' | 'rejected' | 'completed';
 }

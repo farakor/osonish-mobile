@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,8 @@ import type { CustomerTabParamList, CustomerStackParamList } from '../../types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import FilePlusIcon from '../../../assets/file-plus-03_2.svg';
 import { orderService } from '../../services/orderService';
+import { authService } from '../../services/authService';
+import { supabase } from '../../services/supabaseClient';
 import { Order } from '../../types';
 import { ModernOrderCard } from '../../components/cards';
 
@@ -54,7 +56,69 @@ export const CustomerHomeScreen: React.FC = () => {
     }, [loadNewOrders])
   );
 
+  // Real-time обновления для заказов пользователя
+  useEffect(() => {
+    const authState = authService.getAuthState();
+    if (!authState.isAuthenticated || !authState.user) {
+      return;
+    }
 
+    console.log('[CustomerHomeScreen] Подключаем real-time обновления заказов');
+
+    const ordersSubscription = supabase
+      .channel('customer_orders_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `customer_id=eq.${authState.user.id}`
+        },
+        (payload: any) => {
+          console.log('[CustomerHomeScreen] Real-time изменение заказов:', payload);
+          loadNewOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('[CustomerHomeScreen] Отключаем real-time обновления заказов');
+      ordersSubscription.unsubscribe();
+    };
+  }, [loadNewOrders]);
+
+  // Real-time обновления для откликов (влияют на счетчик откликов в заказах)
+  useEffect(() => {
+    const authState = authService.getAuthState();
+    if (!authState.isAuthenticated || !authState.user) {
+      return;
+    }
+
+    console.log('[CustomerHomeScreen] Подключаем real-time обновления откликов');
+
+    const applicantsSubscription = supabase
+      .channel('customer_applicants_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'applicants'
+        },
+        (payload: any) => {
+          console.log('[CustomerHomeScreen] Real-time изменение откликов:', payload);
+          // Обновляем заказы чтобы увидеть изменения в счетчике откликов
+          loadNewOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('[CustomerHomeScreen] Отключаем real-time обновления откликов');
+      applicantsSubscription.unsubscribe();
+    };
+  }, [loadNewOrders]);
 
   const handleOrderPress = (orderId: string) => {
     navigation.navigate('OrderDetails', { orderId });

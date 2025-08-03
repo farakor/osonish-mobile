@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,11 @@ import {
   StatusBar,
   Modal,
 } from 'react-native';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../constants';
 import { authService } from '../../services/authService';
 import { orderService } from '../../services/orderService';
+import { supabase } from '../../services/supabaseClient';
 import { HeaderWithBack } from '../../components/common';
 import type { CustomerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -43,7 +44,8 @@ export const ApplicantsListScreen: React.FC = () => {
     loadData();
   }, [orderId]);
 
-  const loadData = async (isRefresh = false) => {
+  // Создаем функцию для переиспользования
+  const loadData = useCallback(async (isRefresh = false) => {
     try {
       if (isRefresh) {
         setIsRefreshing(true);
@@ -74,7 +76,79 @@ export const ApplicantsListScreen: React.FC = () => {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  };
+  }, [orderId]);
+
+  // Обновляем данные при возврате на экран
+  useFocusEffect(
+    useCallback(() => {
+      console.log('[ApplicantsListScreen] 🔄 useFocusEffect: перезагружаем данные');
+      loadData(true);
+    }, [loadData])
+  );
+
+  // Real-time обновления для заказа
+  useEffect(() => {
+    const authState = authService.getAuthState();
+    if (!authState.isAuthenticated || !authState.user || !orderId) {
+      return;
+    }
+
+    console.log('[ApplicantsListScreen] Подключаем real-time обновления заказа');
+
+    const orderSubscription = supabase
+      .channel('applicants_order_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `id=eq.${orderId}`
+        },
+        (payload: any) => {
+          console.log('[ApplicantsListScreen] Real-time изменение заказа:', payload);
+          loadData(true);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('[ApplicantsListScreen] Отключаем real-time обновления заказа');
+      orderSubscription.unsubscribe();
+    };
+  }, [orderId, loadData]);
+
+  // Real-time обновления для откликов
+  useEffect(() => {
+    const authState = authService.getAuthState();
+    if (!authState.isAuthenticated || !authState.user || !orderId) {
+      return;
+    }
+
+    console.log('[ApplicantsListScreen] Подключаем real-time обновления откликов');
+
+    const applicantsSubscription = supabase
+      .channel('applicants_list_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'applicants',
+          filter: `order_id=eq.${orderId}`
+        },
+        (payload: any) => {
+          console.log('[ApplicantsListScreen] Real-time изменение откликов:', payload);
+          loadData(true);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('[ApplicantsListScreen] Отключаем real-time обновления откликов');
+      applicantsSubscription.unsubscribe();
+    };
+  }, [orderId, loadData]);
 
   const formatBudget = (budget: number): string => {
     return `${budget.toLocaleString()} сум`;
@@ -200,7 +274,7 @@ export const ApplicantsListScreen: React.FC = () => {
           <View style={styles.applicantInfo}>
             <Text style={styles.applicantName}>{item.workerName}</Text>
             <View style={styles.ratingContainer}>
-              <Text style={styles.ratingText}>⭐ {item.rating.toFixed(1)}</Text>
+              <Text style={styles.ratingText}>⭐ {item.rating ? item.rating.toFixed(1) : 'Нет рейтинга'}</Text>
               <Text style={styles.jobsText}>• {item.completedJobs} работ</Text>
             </View>
           </View>

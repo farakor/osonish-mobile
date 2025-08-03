@@ -14,6 +14,8 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { orderService } from '../../services/orderService';
+import { authService } from '../../services/authService';
+import { supabase } from '../../services/supabaseClient';
 import { Order } from '../../types';
 import { ModernOrderCard } from '../../components/cards';
 
@@ -53,6 +55,70 @@ export const MyOrdersScreen: React.FC = () => {
       loadOrders();
     }, [loadOrders])
   );
+
+  // Real-time обновления для заказов пользователя
+  useEffect(() => {
+    const authState = authService.getAuthState();
+    if (!authState.isAuthenticated || !authState.user) {
+      return;
+    }
+
+    console.log('[MyOrdersScreen] Подключаем real-time обновления заказов');
+
+    const ordersSubscription = supabase
+      .channel('my_orders_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `customer_id=eq.${authState.user.id}`
+        },
+        (payload: any) => {
+          console.log('[MyOrdersScreen] Real-time изменение заказов:', payload);
+          loadOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('[MyOrdersScreen] Отключаем real-time обновления заказов');
+      ordersSubscription.unsubscribe();
+    };
+  }, [loadOrders]);
+
+  // Real-time обновления для откликов (влияют на статус заказов)
+  useEffect(() => {
+    const authState = authService.getAuthState();
+    if (!authState.isAuthenticated || !authState.user) {
+      return;
+    }
+
+    console.log('[MyOrdersScreen] Подключаем real-time обновления откликов');
+
+    const applicantsSubscription = supabase
+      .channel('my_orders_applicants_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'applicants'
+        },
+        (payload: any) => {
+          console.log('[MyOrdersScreen] Real-time изменение откликов:', payload);
+          // Обновляем заказы чтобы увидеть изменения в статусе
+          loadOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('[MyOrdersScreen] Отключаем real-time обновления откликов');
+      applicantsSubscription.unsubscribe();
+    };
+  }, [loadOrders]);
 
   const getStatusColor = (status: Order['status']) => {
     switch (status) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { theme } from '../../constants';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import CalendarIcon from '../../../assets/card-icons/calendar.svg';
@@ -28,6 +28,7 @@ import { VideoView, useVideoPlayer } from 'expo-video';
 import { HeaderWithBack, MediaViewer } from '../../components/common';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
+import { supabase } from '../../services/supabaseClient';
 import { Order, Applicant, User } from '../../types';
 
 const { width } = Dimensions.get('window');
@@ -279,7 +280,121 @@ export const OrderDetailsScreen: React.FC = () => {
     loadApplicants();
   }, [orderId]);
 
+  // Создаем функции для переиспользования
+  const loadOrderData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const orderData = await orderService.getOrderById(orderId);
+      setOrder(orderData);
 
+      // Получаем информацию о текущем пользователе
+      const authState = authService.getAuthState();
+      if (authState.user) {
+        setCurrentUser(authState.user);
+      }
+    } catch (error) {
+      console.error('[OrderDetailsScreen] Ошибка загрузки заказа:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [orderId]);
+
+  const loadApplicantsData = useCallback(async () => {
+    if (!orderId) return;
+
+    try {
+      setApplicantsLoading(true);
+      const orderApplicants = await orderService.getApplicantsForOrder(orderId);
+      setApplicants(orderApplicants);
+
+      // Инициализируем список принятых исполнителей
+      const accepted = new Set(
+        orderApplicants
+          .filter(applicant => applicant.status === 'accepted')
+          .map(applicant => applicant.id)
+      );
+      setAcceptedApplicants(accepted);
+
+      console.log(`[OrderDetailsScreen] Загружено ${orderApplicants.length} откликов для заказа ${orderId}, принято: ${accepted.size}`);
+    } catch (error) {
+      console.error('[OrderDetailsScreen] Ошибка загрузки откликов:', error);
+    } finally {
+      setApplicantsLoading(false);
+    }
+  }, [orderId]);
+
+  // Обновляем данные при возврате на экран
+  useFocusEffect(
+    useCallback(() => {
+      console.log('[OrderDetailsScreen] 🔄 useFocusEffect: перезагружаем данные');
+      loadOrderData();
+      loadApplicantsData();
+    }, [loadOrderData, loadApplicantsData])
+  );
+
+  // Real-time обновления для заказа
+  useEffect(() => {
+    const authState = authService.getAuthState();
+    if (!authState.isAuthenticated || !authState.user || !orderId) {
+      return;
+    }
+
+    console.log('[OrderDetailsScreen] Подключаем real-time обновления заказа');
+
+    const orderSubscription = supabase
+      .channel('order_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `id=eq.${orderId}`
+        },
+        (payload: any) => {
+          console.log('[OrderDetailsScreen] Real-time изменение заказа:', payload);
+          loadOrderData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('[OrderDetailsScreen] Отключаем real-time обновления заказа');
+      orderSubscription.unsubscribe();
+    };
+  }, [orderId, loadOrderData]);
+
+  // Real-time обновления для откликов
+  useEffect(() => {
+    const authState = authService.getAuthState();
+    if (!authState.isAuthenticated || !authState.user || !orderId) {
+      return;
+    }
+
+    console.log('[OrderDetailsScreen] Подключаем real-time обновления откликов');
+
+    const applicantsSubscription = supabase
+      .channel('applicants_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'applicants',
+          filter: `order_id=eq.${orderId}`
+        },
+        (payload: any) => {
+          console.log('[OrderDetailsScreen] Real-time изменение откликов:', payload);
+          loadApplicantsData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('[OrderDetailsScreen] Отключаем real-time обновления откликов');
+      applicantsSubscription.unsubscribe();
+    };
+  }, [orderId, loadApplicantsData]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
