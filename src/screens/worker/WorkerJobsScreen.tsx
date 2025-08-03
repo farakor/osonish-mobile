@@ -15,6 +15,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../constants/theme';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
+import { locationService, LocationCoords } from '../../services/locationService';
 import { Order } from '../../types';
 import { PriceConfirmationModal, ProposePriceModal, ModernActionButton } from '../../components/common';
 import { ModernOrderCard } from '../../components/cards';
@@ -30,7 +31,8 @@ const JobCard: React.FC<{
   onApply: (orderId: string) => void;
   hasApplied?: boolean;
   navigation: WorkerNavigationProp;
-}> = ({ item, onApply, hasApplied = false, navigation }) => {
+  userLocation?: LocationCoords;
+}> = ({ item, onApply, hasApplied = false, navigation, userLocation }) => {
   const actionButton = (
     <ModernActionButton
       title={hasApplied ? 'Отклик отправлен' : 'Откликнуться'}
@@ -48,6 +50,7 @@ const JobCard: React.FC<{
       showApplicantsCount={false}
       showCreateTime={false}
       actionButton={actionButton}
+      userLocation={userLocation}
     />
   );
 };
@@ -64,6 +67,7 @@ const WorkerJobsScreen: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [userApplications, setUserApplications] = useState<Set<string>>(new Set());
+  const [userLocation, setUserLocation] = useState<LocationCoords | null>(null);
 
   // Функция загрузки заказов
   const loadOrders = async (isRefresh = false) => {
@@ -94,10 +98,25 @@ const WorkerJobsScreen: React.FC = () => {
     }
   };
 
-  // Загружаем заказы при первом открытии экрана
+  // Загружаем заказы и местоположение при первом открытии экрана
   useEffect(() => {
     loadOrders();
     console.log('[WorkerJobsScreen] Используем только Supabase');
+
+    // Получаем местоположение пользователя
+    const getUserLocation = async () => {
+      try {
+        const coords = await locationService.getCurrentLocation();
+        if (coords) {
+          setUserLocation(coords);
+          console.log('[WorkerJobsScreen] Местоположение пользователя получено:', coords);
+        }
+      } catch (error) {
+        console.log('[WorkerJobsScreen] Не удалось получить местоположение:', error);
+      }
+    };
+
+    getUserLocation();
   }, []);
 
   // Real-time обновления временно отключены
@@ -283,6 +302,7 @@ const WorkerJobsScreen: React.FC = () => {
         onApply={handleApplyToJob}
         hasApplied={hasApplied}
         navigation={navigation}
+        userLocation={userLocation}
       />
     );
   };

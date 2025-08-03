@@ -51,6 +51,8 @@ export interface Database {
           description: string;
           category: string;
           location: string;
+          latitude: number | null;
+          longitude: number | null;
           budget: number;
           workers_needed: number;
           service_date: string;
@@ -67,6 +69,8 @@ export interface Database {
           description: string;
           category: string;
           location: string;
+          latitude?: number | null;
+          longitude?: number | null;
           budget: number;
           workers_needed: number;
           service_date: string;
@@ -83,6 +87,8 @@ export interface Database {
           description?: string;
           category?: string;
           location?: string;
+          latitude?: number | null;
+          longitude?: number | null;
           budget?: number;
           workers_needed?: number;
           service_date?: string;

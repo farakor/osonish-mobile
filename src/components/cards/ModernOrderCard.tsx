@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { theme } from '../../constants/theme';
 import { Order } from '../../types';
+import { locationService, LocationCoords } from '../../services/locationService';
 
 // SVG импорты
 import CalendarIcon from '../../../assets/card-icons/calendar.svg';
@@ -20,6 +21,7 @@ interface ModernOrderCardProps {
   showApplicantsCount?: boolean;
   showCreateTime?: boolean;
   actionButton?: React.ReactNode;
+  userLocation?: LocationCoords; // Местоположение пользователя для расчета дистанции
 }
 
 export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
@@ -28,6 +30,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
   showApplicantsCount = true,
   showCreateTime = true,
   actionButton,
+  userLocation,
 }) => {
   const formatBudget = (amount: number) => {
     return `${amount.toLocaleString('ru-RU')} сум`;
@@ -109,6 +112,24 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
     return categoryMap[category] || '✨';
   };
 
+  // Функция для получения строки с адресом и дистанцией
+  const getLocationText = () => {
+    // Если у пользователя и заказа есть координаты, показываем дистанцию
+    if (userLocation && order.latitude && order.longitude) {
+      const distance = locationService.calculateDistance(
+        userLocation.latitude,
+        userLocation.longitude,
+        order.latitude,
+        order.longitude
+      );
+      const formattedDistance = locationService.formatDistance(distance);
+      return `${order.location} (${formattedDistance})`;
+    }
+
+    // Иначе показываем только адрес
+    return order.location;
+  };
+
   return (
     <TouchableOpacity
       style={styles.cardContainer}
@@ -175,7 +196,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
                   style={styles.detailIcon}
                 />
               </View>
-              <Text style={styles.detailText}>{order.location}</Text>
+              <Text style={styles.detailText}>{getLocationText()}</Text>
             </View>
           </View>
           <View style={styles.detailsRow}>

@@ -26,6 +26,7 @@ import { VideoView, useVideoPlayer } from 'expo-video';
 import { HeaderWithBack, PriceConfirmationModal, ProposePriceModal, MediaViewer } from '../../components/common';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
+import { locationService, LocationCoords } from '../../services/locationService';
 import { Order, User } from '../../types';
 
 const { width } = Dimensions.get('window');
@@ -208,6 +209,7 @@ export const JobDetailsScreen: React.FC = () => {
   const [customer, setCustomer] = useState<User | null>(null);
   const [priceConfirmationVisible, setPriceConfirmationVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [userLocation, setUserLocation] = useState<LocationCoords | null>(null);
 
   // Анимация для sticky header
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -242,6 +244,21 @@ export const JobDetailsScreen: React.FC = () => {
     };
 
     loadOrder();
+
+    // Получаем местоположение пользователя
+    const getUserLocation = async () => {
+      try {
+        const coords = await locationService.getCurrentLocation();
+        if (coords) {
+          setUserLocation(coords);
+          console.log('[JobDetailsScreen] Местоположение пользователя получено:', coords);
+        }
+      } catch (error) {
+        console.log('[JobDetailsScreen] Не удалось получить местоположение:', error);
+      }
+    };
+
+    getUserLocation();
   }, [orderId]);
 
   const formatDate = (dateString: string) => {
@@ -480,7 +497,19 @@ export const JobDetailsScreen: React.FC = () => {
                 <View style={styles.infoIcon}>
                   <LocationIcon width={20} height={20} color="#679B00" />
                 </View>
-                <Text style={styles.infoValue}>{order.location}</Text>
+                <Text style={styles.infoValue}>
+                  {userLocation && order.latitude && order.longitude ?
+                    `${order.location} (${locationService.formatDistance(
+                      locationService.calculateDistance(
+                        userLocation.latitude,
+                        userLocation.longitude,
+                        order.latitude,
+                        order.longitude
+                      )
+                    )})` :
+                    order.location
+                  }
+                </Text>
               </View>
 
               <View style={styles.infoCard}>

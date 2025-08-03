@@ -30,6 +30,7 @@ import { VideoView, useVideoPlayer } from 'expo-video';
 import ImageIcon from '../../../assets/image-03.svg';
 import { orderService } from '../../services/orderService';
 import { mediaService } from '../../services/mediaService';
+import { locationService, LocationCoords } from '../../services/locationService';
 import { CreateOrderRequest } from '../../types';
 import { useNavigation } from '@react-navigation/native';
 import {
@@ -109,7 +110,12 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
   const [mediaFiles, setMediaFiles] = useState<Array<{ uri: string; type: 'image' | 'video'; name: string; size: number }>>([]);
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [location, setLocation] = useState('');
+  const [coordinates, setCoordinates] = useState<LocationCoords | null>(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [animationResetKey, setAnimationResetKey] = useState(0);
+
+  // Ref для поля местоположения
+  const locationInputRef = useRef<any>(null);
 
   // Состояния фокуса для полей ввода
   const [titleFocused, setTitleFocused] = useState(false);
@@ -120,6 +126,11 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
   const navigation = useNavigation();
 
   const totalSteps = 9;
+
+  // Отладка изменений location
+  useEffect(() => {
+    console.log('[CreateOrderStepByStep] 📍 location изменилось:', location);
+  }, [location]);
 
   // Функция для получения стиля поля ввода с учетом фокуса
   const getInputStyle = (isFocused: boolean, isTextArea: boolean = false) => [
@@ -255,6 +266,70 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
 
   const removeMedia = (index: number) => {
     setMediaFiles(files => files.filter((_, i) => i !== index));
+  };
+
+  // Функция получения текущего местоположения
+  const getCurrentLocation = async () => {
+    try {
+      console.log('[getCurrentLocation] 🚀 Начинаем получение местоположения...');
+      setIsGettingLocation(true);
+
+      const coords = await locationService.getCurrentLocation();
+      console.log('[getCurrentLocation] 📍 Получены координаты:', coords);
+
+      if (coords) {
+        setCoordinates(coords);
+        console.log('[getCurrentLocation] ✅ Координаты сохранены в состоянии');
+
+        // Получаем адрес по координатам
+        console.log('[getCurrentLocation] 🔄 Начинаем геокодирование...');
+        const geocodeResult = await locationService.reverseGeocode(coords.latitude, coords.longitude);
+        console.log('[getCurrentLocation] 🏠 Результат геокодирования:', geocodeResult);
+
+        if (geocodeResult) {
+          console.log('[getCurrentLocation] 📝 Устанавливаем адрес:', geocodeResult.address);
+
+          // Убираем фокус с поля перед обновлением
+          if (locationInputRef.current) {
+            locationInputRef.current.blur();
+          }
+
+          // Даем время полю потерять фокус, затем обновляем значение
+          setTimeout(() => {
+            setLocation(geocodeResult.address);
+            console.log('[getCurrentLocation] ✅ setLocation() вызван с адресом');
+          }, 100);
+        } else {
+          const coordsString = `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
+          console.log('[getCurrentLocation] 📝 Устанавливаем координаты как строку:', coordsString);
+
+          // Убираем фокус с поля перед обновлением
+          if (locationInputRef.current) {
+            locationInputRef.current.blur();
+          }
+
+          // Даем время полю потерять фокус, затем обновляем значение
+          setTimeout(() => {
+            setLocation(coordsString);
+            console.log('[getCurrentLocation] ✅ setLocation() вызван с координатами');
+          }, 100);
+        }
+
+        Alert.alert('Успешно!', 'Местоположение определено');
+      } else {
+        console.log('[getCurrentLocation] ❌ Координаты не получены');
+        Alert.alert(
+          'Ошибка',
+          'Не удалось определить местоположение. Проверьте настройки геолокации в устройстве.'
+        );
+      }
+    } catch (error) {
+      console.error('[getCurrentLocation] ❌ Ошибка получения местоположения:', error);
+      Alert.alert('Ошибка', 'Произошла ошибка при определении местоположения');
+    } finally {
+      console.log('[getCurrentLocation] 🏁 Завершение получения местоположения');
+      setIsGettingLocation(false);
+    }
   };
 
   // Проверка валидности текущего шага без показа Alert'ов
@@ -417,6 +492,8 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
         description: description.trim(),
         category,
         location: location.trim(),
+        latitude: coordinates?.latitude,
+        longitude: coordinates?.longitude,
         budget: parseFloat(budget.replace(/[^\d]/g, '')),
         workersNeeded: parseInt(workersCount),
         serviceDate: selectedDate!.toISOString(),
@@ -455,6 +532,8 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                   setWorkersCount('1');
                   setSelectedDate(null);
                   setLocation('');
+                  setCoordinates(null);
+                  setIsGettingLocation(false);
                   setMediaFiles([]);
                   setMediaError('');
                   setCurrentStep(1);
@@ -607,15 +686,29 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
               <AnimatedField isActive={currentStep === 4} delay={200} resetKey={`${animationResetKey}-step-4`}>
                 <View style={styles.inputContainer}>
                   <TextInput
+                    ref={locationInputRef}
+                    key={`location-input-${location}`}
                     style={getInputStyle(locationFocused)}
                     value={location}
                     onChangeText={setLocation}
                     placeholder="Например: Ташкент, Юнусабад, ул. Амира Темура 15"
                     placeholderTextColor={theme.colors.text.secondary}
-                    autoFocus
                     onFocus={() => setLocationFocused(true)}
                     onBlur={() => setLocationFocused(false)}
                   />
+                  <TouchableOpacity
+                    style={styles.locationButton}
+                    onPress={() => {
+                      console.log('[Button] 🔘 Кнопка геолокации нажата');
+                      getCurrentLocation();
+                    }}
+                    disabled={isGettingLocation}
+                  >
+                    <Text style={styles.locationButtonText}>
+                      {isGettingLocation ? '📍 Определение...' : '📍 Мое местоположение'}
+                    </Text>
+                  </TouchableOpacity>
+
                 </View>
               </AnimatedField>
             </View>
@@ -1297,5 +1390,23 @@ const styles = StyleSheet.create({
   videoErrorText: {
     fontSize: 32,
     opacity: 0.5,
+  },
+  locationButton: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    alignItems: 'center',
+    marginTop: theme.spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  locationButtonText: {
+    color: theme.colors.white,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.medium,
   },
 });

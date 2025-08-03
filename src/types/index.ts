@@ -57,6 +57,8 @@ export interface Order {
   description: string;
   category: string;
   location: string;
+  latitude?: number; // широта для расчета дистанции
+  longitude?: number; // долгота для расчета дистанции
   budget: number; // изменил на number для удобства вычислений
   workersNeeded: number;
   serviceDate: string; // ISO date string
@@ -74,6 +76,8 @@ export interface CreateOrderRequest {
   description: string;
   category: string;
   location: string;
+  latitude?: number; // широта места выполнения заказа
+  longitude?: number; // долгота места выполнения заказа
   budget: number;
   workersNeeded: number;
   serviceDate: string;

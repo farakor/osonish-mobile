@@ -19,6 +19,7 @@ import { VideoView, useVideoPlayer } from 'expo-video';
 import ImageIcon from '../../../assets/image-03.svg';
 import { orderService } from '../../services/orderService';
 import { mediaService } from '../../services/mediaService';
+import { locationService, LocationCoords } from '../../services/locationService';
 import { CreateOrderRequest } from '../../types';
 import { useNavigation } from '@react-navigation/native';
 
@@ -49,6 +50,8 @@ export const CreateOrderScreen: React.FC = () => {
   const [mediaFiles, setMediaFiles] = useState<Array<{ uri: string; type: 'image' | 'video'; name: string; size: number }>>([]);
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [location, setLocation] = useState('');
+  const [coordinates, setCoordinates] = useState<LocationCoords | null>(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   // Состояния фокуса для полей ввода
   const [titleFocused, setTitleFocused] = useState(false);
@@ -112,6 +115,38 @@ export const CreateOrderScreen: React.FC = () => {
     // Форматируем с пробелами
     return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   }
+
+  // Функция получения текущего местоположения
+  const getCurrentLocation = async () => {
+    try {
+      setIsGettingLocation(true);
+
+      const coords = await locationService.getCurrentLocation();
+      if (coords) {
+        setCoordinates(coords);
+
+        // Получаем адрес по координатам
+        const geocodeResult = await locationService.reverseGeocode(coords.latitude, coords.longitude);
+        if (geocodeResult) {
+          setLocation(geocodeResult.address);
+        } else {
+          setLocation(`${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`);
+        }
+
+        Alert.alert('Успешно!', 'Местоположение определено');
+      } else {
+        Alert.alert(
+          'Ошибка',
+          'Не удалось определить местоположение. Проверьте настройки геолокации в устройстве.'
+        );
+      }
+    } catch (error) {
+      console.error('Ошибка получения местоположения:', error);
+      Alert.alert('Ошибка', 'Произошла ошибка при определении местоположения');
+    } finally {
+      setIsGettingLocation(false);
+    }
+  };
 
   // Функция выбора фото/видео с логами и проверкой разрешений
   const pickMedia = async () => {
@@ -272,6 +307,8 @@ export const CreateOrderScreen: React.FC = () => {
         description: description.trim(),
         category,
         location: location.trim(),
+        latitude: coordinates?.latitude,
+        longitude: coordinates?.longitude,
         budget: parseFloat(budget.replace(/[^\d]/g, '')), // убираем форматирование и преобразуем в число
         workersNeeded: parseInt(workersCount),
         serviceDate: selectedDate!.toISOString(),
@@ -399,6 +436,15 @@ export const CreateOrderScreen: React.FC = () => {
                 onFocus={() => setLocationFocused(true)}
                 onBlur={() => setLocationFocused(false)}
               />
+              <TouchableOpacity
+                style={styles.locationButton}
+                onPress={getCurrentLocation}
+                disabled={isGettingLocation}
+              >
+                <Text style={styles.locationButtonText}>
+                  {isGettingLocation ? '📍 Определение...' : '📍 Мое местоположение'}
+                </Text>
+              </TouchableOpacity>
             </View>
 
             {/* Budget */}
@@ -845,5 +891,23 @@ const styles = StyleSheet.create({
     color: theme.colors.error || 'red',
     fontSize: 12,
     marginTop: 4,
+  },
+  locationButton: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    alignItems: 'center',
+    marginTop: theme.spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  locationButtonText: {
+    color: theme.colors.white,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.medium,
   },
 }); 
