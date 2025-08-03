@@ -191,14 +191,16 @@ export class LocationService {
    * Форматирование расстояния для отображения
    */
   formatDistance(distanceKm: number): string {
-    if (distanceKm < 0.1) {
-      return 'рядом';
-    } else if (distanceKm < 1) {
+    if (distanceKm < 1) {
+      // Показываем в метрах для расстояний меньше 1 км
       const meters = Math.round(distanceKm * 1000);
-      return `${meters} м`;
+      // Для очень маленьких расстояний показываем минимум 10м
+      return `${Math.max(meters, 10)} м`;
     } else if (distanceKm < 10) {
-      return `${distanceKm} км`;
+      // Округляем до одного знака после запятой для расстояний от 1 до 10 км
+      return `${Math.round(distanceKm * 10) / 10} км`;
     } else {
+      // Округляем до целого числа для больших расстояний
       return `${Math.round(distanceKm)} км`;
     }
   }

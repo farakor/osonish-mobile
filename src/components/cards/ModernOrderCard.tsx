@@ -22,6 +22,7 @@ interface ModernOrderCardProps {
   showCreateTime?: boolean;
   actionButton?: React.ReactNode;
   userLocation?: LocationCoords; // Местоположение пользователя для расчета дистанции
+  workerView?: boolean; // Режим отображения для исполнителей
 }
 
 export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
@@ -31,6 +32,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
   showCreateTime = true,
   actionButton,
   userLocation,
+  workerView = false,
 }) => {
   const formatBudget = (amount: number) => {
     return `${amount.toLocaleString('ru-RU')} сум`;
@@ -177,52 +179,114 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
 
         {/* Details Grid */}
         <View style={styles.detailsGrid}>
-          <View style={styles.detailsRow}>
-            <View style={styles.detailItem}>
-              <View style={styles.iconWrapper}>
-                <CalendarIcon
-                  width={20}
-                  height={20}
-                  style={styles.detailIcon}
-                />
-              </View>
-              <Text style={styles.detailText}>{formatDate(order.serviceDate)}</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <View style={styles.iconWrapper}>
-                <LocationIcon
-                  width={20}
-                  height={20}
-                  style={styles.detailIcon}
-                />
-              </View>
-              <Text style={styles.detailText}>{getLocationText()}</Text>
-            </View>
-          </View>
-          <View style={styles.detailsRow}>
-            <View style={styles.detailItem}>
-              <View style={styles.iconWrapper}>
-                <CategoryIcon
-                  width={20}
-                  height={20}
-                  style={styles.detailIcon}
-                />
-              </View>
-              <Text style={styles.detailText}>{order.category}</Text>
-            </View>
-            {showApplicantsCount && (
-              <View style={styles.detailItem}>
-                <View style={styles.iconWrapper}>
-                  <OtklikiIcon
-                    width={20}
-                    height={20}
-                    style={styles.detailIcon}
-                  />
+          {workerView ? (
+            <>
+              {/* Режим для исполнителей */}
+              {/* Первая строка: Дата + Категория */}
+              <View style={styles.detailsRow}>
+                <View style={styles.detailItem}>
+                  <View style={styles.iconWrapper}>
+                    <CalendarIcon
+                      width={20}
+                      height={20}
+                      style={styles.detailIcon}
+                    />
+                  </View>
+                  <Text style={styles.detailText}>{formatDate(order.serviceDate)}</Text>
                 </View>
-                <Text style={styles.detailText}>{order.applicantsCount} заявок</Text>
+                <View style={styles.detailItem}>
+                  <View style={styles.iconWrapper}>
+                    <CategoryIcon
+                      width={20}
+                      height={20}
+                      style={styles.detailIcon}
+                    />
+                  </View>
+                  <Text style={styles.detailText}>{order.category}</Text>
+                </View>
               </View>
-            )}
-          </View>
+
+              {/* Вторая строка: Локация на всю ширину */}
+              <View style={styles.detailsRow}>
+                <View style={styles.detailItemFullWidth}>
+                  <View style={styles.iconWrapper}>
+                    <LocationIcon
+                      width={20}
+                      height={20}
+                      style={styles.detailIcon}
+                    />
+                  </View>
+                  <Text style={styles.detailText}>{getLocationText()}</Text>
+                </View>
+              </View>
+
+              {/* Третья строка: Заявки (если показывается) */}
+              {showApplicantsCount && (
+                <View style={styles.detailsRow}>
+                  <View style={styles.detailItem}>
+                    <View style={styles.iconWrapper}>
+                      <OtklikiIcon
+                        width={20}
+                        height={20}
+                        style={styles.detailIcon}
+                      />
+                    </View>
+                    <Text style={styles.detailText}>{order.applicantsCount} заявок</Text>
+                  </View>
+                </View>
+              )}
+            </>
+          ) : (
+            <>
+              {/* Режим для заказчиков */}
+              <View style={styles.detailsRow}>
+                <View style={styles.detailItem}>
+                  <View style={styles.iconWrapper}>
+                    <CalendarIcon
+                      width={20}
+                      height={20}
+                      style={styles.detailIcon}
+                    />
+                  </View>
+                  <Text style={styles.detailText}>{formatDate(order.serviceDate)}</Text>
+                </View>
+                <View style={styles.detailItem}>
+                  <View style={styles.iconWrapper}>
+                    <LocationIcon
+                      width={20}
+                      height={20}
+                      style={styles.detailIcon}
+                    />
+                  </View>
+                  <Text style={styles.detailText}>{getLocationText()}</Text>
+                </View>
+              </View>
+              <View style={styles.detailsRow}>
+                <View style={styles.detailItem}>
+                  <View style={styles.iconWrapper}>
+                    <CategoryIcon
+                      width={20}
+                      height={20}
+                      style={styles.detailIcon}
+                    />
+                  </View>
+                  <Text style={styles.detailText}>{order.category}</Text>
+                </View>
+                {showApplicantsCount && (
+                  <View style={styles.detailItem}>
+                    <View style={styles.iconWrapper}>
+                      <OtklikiIcon
+                        width={20}
+                        height={20}
+                        style={styles.detailIcon}
+                      />
+                    </View>
+                    <Text style={styles.detailText}>{order.applicantsCount} заявок</Text>
+                  </View>
+                )}
+              </View>
+            </>
+          )}
         </View>
 
 
@@ -318,6 +382,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: theme.spacing.xs,
+  },
+  detailItemFullWidth: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xs,
+    width: '100%',
   },
   iconWrapper: {
     marginRight: theme.spacing.sm,

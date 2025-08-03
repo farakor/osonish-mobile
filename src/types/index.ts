@@ -133,6 +133,8 @@ export interface WorkerApplication {
   orderCategory: string;
   orderDescription: string;
   orderLocation: string;
+  orderLatitude?: number;
+  orderLongitude?: number;
   orderBudget: number;
   orderServiceDate: string;
   orderStatus: Order['status'];

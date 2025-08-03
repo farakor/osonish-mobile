@@ -51,6 +51,7 @@ const JobCard: React.FC<{
       showCreateTime={false}
       actionButton={actionButton}
       userLocation={userLocation}
+      workerView={true}
     />
   );
 };
@@ -67,7 +68,7 @@ const WorkerJobsScreen: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [userApplications, setUserApplications] = useState<Set<string>>(new Set());
-  const [userLocation, setUserLocation] = useState<LocationCoords | null>(null);
+  const [userLocation, setUserLocation] = useState<LocationCoords | undefined>(undefined);
 
   // Функция загрузки заказов
   const loadOrders = async (isRefresh = false) => {

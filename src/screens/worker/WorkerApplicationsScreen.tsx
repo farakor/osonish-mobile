@@ -11,17 +11,21 @@ import {
   RefreshControl,
   Linking,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants/theme';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
+import { locationService, LocationCoords } from '../../services/locationService';
 import { supabase } from '../../services/supabaseClient';
 import { WorkerApplication, Order } from '../../types';
+import { WorkerStackParamList } from '../../types/navigation';
 import { ModernOrderCard } from '../../components/cards';
 import { ModernActionButton } from '../../components/common';
 
 
 type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | 'completed';
+type WorkerNavigationProp = NativeStackNavigationProp<WorkerStackParamList>;
 
 // Функция для преобразования статуса заявки в статус заказа для отображения
 const mapApplicationStatusToOrderStatus = (applicationStatus: ApplicationStatus): Order['status'] => {
@@ -42,6 +46,8 @@ const convertApplicationToOrder = (application: WorkerApplication): Order => {
     description: application.orderDescription,
     category: application.orderCategory,
     location: application.orderLocation,
+    latitude: application.orderLatitude,
+    longitude: application.orderLongitude,
     budget: application.orderBudget,
     workersNeeded: 1, // По умолчанию, так как эта информация не доступна в WorkerApplication
     serviceDate: application.orderServiceDate,
@@ -59,7 +65,9 @@ const convertApplicationToOrder = (application: WorkerApplication): Order => {
 const ApplicationCard: React.FC<{
   application: WorkerApplication;
   onAction: (applicationId: string, action: string, customerPhone?: string) => void;
-}> = ({ application, onAction }) => {
+  userLocation?: LocationCoords;
+  navigation: WorkerNavigationProp;
+}> = ({ application, onAction, userLocation, navigation }) => {
   const order = convertApplicationToOrder(application);
 
   const getActionButton = () => {
@@ -100,19 +108,23 @@ const ApplicationCard: React.FC<{
   return (
     <ModernOrderCard
       order={order}
-      onPress={() => { }} // Пустая функция, так как детальный экран не нужен для истории
+      onPress={() => navigation.navigate('JobDetails', { orderId: application.orderId })}
       showApplicantsCount={false}
       showCreateTime={false}
       actionButton={getActionButton()}
+      workerView={true}
+      userLocation={userLocation}
     />
   );
 };
 
 export const WorkerApplicationsScreen: React.FC = () => {
+  const navigation = useNavigation<WorkerNavigationProp>();
   const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus | 'all'>('all');
   const [applications, setApplications] = useState<WorkerApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [userLocation, setUserLocation] = useState<LocationCoords | undefined>(undefined);
 
   // Функция загрузки заявок
   const loadApplications = async (isRefresh = false) => {
@@ -138,6 +150,21 @@ export const WorkerApplicationsScreen: React.FC = () => {
   // Загружаем заявки при первом открытии экрана
   useEffect(() => {
     loadApplications();
+
+    // Получаем местоположение пользователя
+    const getUserLocation = async () => {
+      try {
+        const coords = await locationService.getCurrentLocation();
+        if (coords) {
+          setUserLocation(coords);
+          console.log('[WorkerApplicationsScreen] Местоположение пользователя получено:', coords);
+        }
+      } catch (error) {
+        console.log('[WorkerApplicationsScreen] Не удалось получить местоположение:', error);
+      }
+    };
+
+    getUserLocation();
   }, []);
 
   // Обновляем данные когда экран получает фокус
@@ -269,6 +296,8 @@ export const WorkerApplicationsScreen: React.FC = () => {
     <ApplicationCard
       application={item}
       onAction={handleApplicationAction}
+      userLocation={userLocation}
+      navigation={navigation}
     />
   );
 
