@@ -6,6 +6,7 @@ import { OrdersProvider } from './src/hooks';
 // Инициализация сервисов
 import { initSMSService } from './src/services/smsService';
 import { authService } from './src/services/authService';
+import { notificationService } from './src/services/notificationService';
 
 // Подключаем тестовые утилиты в dev режиме
 if (__DEV__) {
@@ -22,6 +23,9 @@ export default function App() {
 
         // Инициализируем сервис авторизации
         await authService.init();
+
+        // Инициализируем сервис уведомлений
+        await notificationService.init();
 
         console.log('Сервисы успешно инициализированы');
       } catch (error) {

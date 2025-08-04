@@ -104,12 +104,8 @@ export const CustomerProfileScreen: React.FC = () => {
       const completedOrders = orders.filter(order => order.status === 'completed').length;
       const activeOrders = orders.filter(order => order.status === 'active').length;
 
-      // Расчет рейтинга на основе завершенных заказов (простая формула)
+      // У заказчиков нет рейтинга
       let averageRating = 0;
-      if (completedOrders > 0) {
-        averageRating = Math.min(5.0, 4.5 + (completedOrders * 0.1));
-        averageRating = Number(averageRating.toFixed(1));
-      }
 
       // Расчет месяцев на платформе
       const authState = authService.getAuthState();
@@ -189,18 +185,12 @@ export const CustomerProfileScreen: React.FC = () => {
       onPress: () => navigation.navigate('MyOrders' as never),
     },
     {
-      id: 'rating',
-      value: stats.averageRating.toString(),
-      label: 'Рейтинг',
-      color: theme.colors.success,
-    },
-    {
       id: 'experience',
       value: stats.monthsOnPlatform > 12
         ? `${Math.floor(stats.monthsOnPlatform / 12)} г`
         : `${stats.monthsOnPlatform} мес`,
       label: 'На платформе',
-      color: theme.colors.secondary,
+      color: theme.colors.primary,
     },
   ];
 
@@ -310,22 +300,12 @@ export const CustomerProfileScreen: React.FC = () => {
             </Text>
             <Text style={styles.userPhone}>{user.phone}</Text>
             <View style={styles.roleContainer}>
-              <Text style={styles.userRole}>Заказчик</Text>
               {user.isVerified && (
                 <View style={styles.verifiedBadge}>
                   <Text style={styles.verifiedText}>✓ Верифицирован</Text>
                 </View>
               )}
             </View>
-            {stats.averageRating > 0 && (
-              <View style={styles.ratingContainer}>
-                <Text style={styles.ratingStars}>⭐</Text>
-                <Text style={styles.ratingText}>{stats.averageRating}</Text>
-                <Text style={styles.ratingCount}>
-                  ({stats.completedOrders} заказ{stats.completedOrders === 1 ? '' : stats.completedOrders < 5 ? 'а' : 'ов'})
-                </Text>
-              </View>
-            )}
           </View>
 
           {/* Main Stats - Three Cards in Row */}

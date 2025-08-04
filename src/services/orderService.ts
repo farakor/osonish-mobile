@@ -1,5 +1,6 @@
 import { Order, CreateOrderRequest, CreateOrderResponse, Applicant, CreateApplicantRequest, WorkerApplication, Review, CreateReviewRequest, WorkerRating } from '../types';
 import { authService } from './authService';
+import { notificationService } from './notificationService';
 import { supabase, Database } from './supabaseClient';
 
 export class OrderService {
@@ -115,6 +116,11 @@ export class OrderService {
           console.log(`  ${index + 1}. ${url}`);
         });
       }
+
+      // Отправляем уведомления всем исполнителям о новом заказе
+      this.sendNewOrderNotifications(newOrder).catch(error => {
+        console.error('[OrderService] ❌ Ошибка отправки уведомлений о новом заказе:', error);
+      });
 
       return {
         success: true,
@@ -456,6 +462,11 @@ export class OrderService {
       // Увеличиваем счетчик откликов
       await this.incrementApplicantsCount(request.orderId);
 
+      // Отправляем уведомление заказчику о новом отклике
+      this.sendNewApplicationNotification(request.orderId, authState.user).catch(error => {
+        console.error('[OrderService] ❌ Ошибка отправки уведомления о новом отклике:', error);
+      });
+
       console.log(`[OrderService] ✅ Отклик создан для заказа ${request.orderId}`);
       return true;
     } catch (error) {
@@ -756,6 +767,13 @@ export class OrderService {
         return false;
       }
 
+      // Отправляем уведомление исполнителю если его выбрали
+      if (status === 'accepted') {
+        this.sendWorkerSelectedNotification(applicantId).catch(error => {
+          console.error('[OrderService] ❌ Ошибка отправки уведомления о выборе исполнителя:', error);
+        });
+      }
+
       console.log(`[OrderService] Статус отклика ${applicantId} обновлен на ${status}`);
       return true;
     } catch (error) {
@@ -917,6 +935,11 @@ export class OrderService {
         console.error('[OrderService] Ошибка обновления статуса откликов:', applicantsError);
         // Не возвращаем false, так как основная операция прошла успешно
       }
+
+      // Отправляем уведомления принятым исполнителям о завершении заказа
+      this.sendOrderCompletedNotifications(orderId).catch(error => {
+        console.error('[OrderService] ❌ Ошибка отправки уведомлений о завершении заказа:', error);
+      });
 
       console.log('[OrderService] ✅ Заказ успешно завершен');
       return true;
@@ -1185,6 +1208,215 @@ export class OrderService {
     } catch (error) {
       console.error('[OrderService] Ошибка получения заработка:', error);
       return 0;
+    }
+  }
+
+  /**
+   * Отправка уведомлений всем исполнителям о новом заказе
+   */
+  private async sendNewOrderNotifications(order: Order): Promise<void> {
+    try {
+      console.log('[OrderService] 📤 Отправляем уведомления о новом заказе...');
+
+      // Получаем всех исполнителей из базы данных
+      const { data: workers, error } = await supabase
+        .from('users')
+        .select('id')
+        .eq('role', 'worker');
+
+      if (error) {
+        console.error('[OrderService] ❌ Ошибка получения списка исполнителей:', error);
+        return;
+      }
+
+      if (!workers || workers.length === 0) {
+        console.log('[OrderService] ⚠️ Нет исполнителей для уведомления');
+        return;
+      }
+
+      const workerIds = workers.map(worker => worker.id);
+      const title = 'Новый заказ!';
+      const body = `${order.title} - ${order.budget} сом в ${order.location}`;
+      const data = {
+        orderId: order.id,
+        orderTitle: order.title,
+        orderBudget: order.budget,
+        orderLocation: order.location,
+        type: 'new_order'
+      };
+
+      // Отправляем уведомления
+      const sentCount = await notificationService.sendNotificationToUsers(
+        workerIds,
+        title,
+        body,
+        data,
+        'new_order'
+      );
+
+      console.log(`[OrderService] ✅ Отправлено ${sentCount} уведомлений о новом заказе`);
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка отправки уведомлений о новом заказе:', error);
+    }
+  }
+
+  /**
+   * Отправка уведомления заказчику о новом отклике
+   */
+  private async sendNewApplicationNotification(orderId: string, worker: any): Promise<void> {
+    try {
+      console.log('[OrderService] 📤 Отправляем уведомление о новом отклике...');
+
+      // Получаем данные заказа и заказчика
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select('id, title, customer_id')
+        .eq('id', orderId)
+        .single();
+
+      if (orderError || !orderData) {
+        console.error('[OrderService] ❌ Ошибка получения данных заказа:', orderError);
+        return;
+      }
+
+      const title = 'Новый отклик на ваш заказ!';
+      const body = `${worker.firstName} ${worker.lastName} откликнулся на "${orderData.title}"`;
+      const data = {
+        orderId: orderData.id,
+        orderTitle: orderData.title,
+        workerId: worker.id,
+        workerName: `${worker.firstName} ${worker.lastName}`,
+        type: 'new_application'
+      };
+
+      // Отправляем уведомление заказчику
+      const sent = await notificationService.sendNotificationToUser(
+        orderData.customer_id,
+        title,
+        body,
+        data,
+        'new_application'
+      );
+
+      if (sent) {
+        console.log('[OrderService] ✅ Уведомление о новом отклике отправлено заказчику');
+      }
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка отправки уведомления о новом отклике:', error);
+    }
+  }
+
+  /**
+   * Отправка уведомления исполнителю о выборе
+   */
+  private async sendWorkerSelectedNotification(applicantId: string): Promise<void> {
+    try {
+      console.log('[OrderService] 📤 Отправляем уведомление о выборе исполнителя...');
+
+      // Получаем данные отклика, заказа и исполнителя
+      const { data: applicantData, error: applicantError } = await supabase
+        .from('applicants')
+        .select(`
+          id,
+          worker_id,
+          order_id,
+          orders!inner(id, title, budget, location, customer_id)
+        `)
+        .eq('id', applicantId)
+        .single();
+
+      if (applicantError || !applicantData) {
+        console.error('[OrderService] ❌ Ошибка получения данных отклика:', applicantError);
+        return;
+      }
+
+      const order = applicantData.orders;
+      const title = 'Вас выбрали для выполнения заказа!';
+      const body = `Поздравляем! Вас выбрали для заказа "${order.title}" за ${order.budget} сом`;
+      const data = {
+        orderId: order.id,
+        orderTitle: order.title,
+        orderBudget: order.budget,
+        orderLocation: order.location,
+        applicantId: applicantData.id,
+        type: 'worker_selected'
+      };
+
+      // Отправляем уведомление исполнителю
+      const sent = await notificationService.sendNotificationToUser(
+        applicantData.worker_id,
+        title,
+        body,
+        data,
+        'order_update'
+      );
+
+      if (sent) {
+        console.log('[OrderService] ✅ Уведомление о выборе отправлено исполнителю');
+      }
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка отправки уведомления о выборе исполнителя:', error);
+    }
+  }
+
+  /**
+   * Отправка уведомлений о завершении заказа
+   */
+  private async sendOrderCompletedNotifications(orderId: string): Promise<void> {
+    try {
+      console.log('[OrderService] 📤 Отправляем уведомления о завершении заказа...');
+
+      // Получаем данные заказа и принятых исполнителей
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select('id, title, budget')
+        .eq('id', orderId)
+        .single();
+
+      if (orderError || !orderData) {
+        console.error('[OrderService] ❌ Ошибка получения данных заказа:', orderError);
+        return;
+      }
+
+      // Получаем принятых исполнителей
+      const { data: acceptedApplicants, error: applicantsError } = await supabase
+        .from('applicants')
+        .select('worker_id')
+        .eq('order_id', orderId)
+        .eq('status', 'completed');
+
+      if (applicantsError) {
+        console.error('[OrderService] ❌ Ошибка получения принятых исполнителей:', applicantsError);
+        return;
+      }
+
+      if (!acceptedApplicants || acceptedApplicants.length === 0) {
+        console.log('[OrderService] ⚠️ Нет принятых исполнителей для уведомления');
+        return;
+      }
+
+      const workerIds = acceptedApplicants.map(applicant => applicant.worker_id);
+      const title = 'Заказ завершен!';
+      const body = `Заказ "${orderData.title}" успешно завершен. Спасибо за отличную работу!`;
+      const data = {
+        orderId: orderData.id,
+        orderTitle: orderData.title,
+        orderBudget: orderData.budget,
+        type: 'order_completed'
+      };
+
+      // Отправляем уведомления
+      const sentCount = await notificationService.sendNotificationToUsers(
+        workerIds,
+        title,
+        body,
+        data,
+        'order_completed'
+      );
+
+      console.log(`[OrderService] ✅ Отправлено ${sentCount} уведомлений о завершении заказа`);
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка отправки уведомлений о завершении заказа:', error);
     }
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,35 +8,95 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
 import { HeaderWithBack } from '../../components/common';
+import { notificationService, NotificationSettings } from '../../services/notificationService';
+import { authService } from '../../services/authService';
 
 export const NotificationsScreen: React.FC = () => {
   const navigation = useNavigation();
 
-  const [allNotificationsEnabled, setAllNotificationsEnabled] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
+  const [settings, setSettings] = useState<NotificationSettings>({
+    allNotificationsEnabled: true,
+    newOrdersEnabled: true,
+    newApplicationsEnabled: true,
+    orderUpdatesEnabled: true,
+    orderCompletedEnabled: true,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const toggleAllNotifications = () => {
-    setAllNotificationsEnabled(prev => !prev);
-  };
+  useEffect(() => {
+    loadNotificationSettings();
+  }, []);
 
-  const handleSaveSettings = async () => {
-    setIsLoading(true);
-
+  const loadNotificationSettings = async () => {
     try {
-      // TODO: API запрос для сохранения настроек уведомлений
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setIsLoading(true);
+      const authState = authService.getAuthState();
 
-      Alert.alert('Успешно', 'Настройки уведомлений сохранены');
+      if (!authState.isAuthenticated || !authState.user) {
+        Alert.alert('Ошибка', 'Пользователь не авторизован');
+        return;
+      }
+
+      const userSettings = await notificationService.getUserNotificationSettings(authState.user.id);
+      setSettings(userSettings);
     } catch (error) {
-      Alert.alert('Ошибка', 'Не удалось сохранить настройки. Попробуйте еще раз.');
+      console.error('Ошибка загрузки настроек уведомлений:', error);
+      Alert.alert('Ошибка', 'Не удалось загрузить настройки уведомлений');
     } finally {
       setIsLoading(false);
     }
   };
+
+  const updateSetting = (key: keyof NotificationSettings, value: boolean) => {
+    setSettings(prev => ({
+      ...prev,
+      [key]: value,
+      // Если отключаем все уведомления, отключаем и все подкатегории
+      ...(key === 'allNotificationsEnabled' && !value ? {
+        newOrdersEnabled: false,
+        newApplicationsEnabled: false,
+        orderUpdatesEnabled: false,
+        orderCompletedEnabled: false,
+      } : {})
+    }));
+  };
+
+  const handleSaveSettings = async () => {
+    setIsSaving(true);
+
+    try {
+      const success = await notificationService.updateNotificationSettings(settings);
+
+      if (success) {
+        Alert.alert('Успешно', 'Настройки уведомлений сохранены');
+      } else {
+        Alert.alert('Ошибка', 'Не удалось сохранить настройки. Попробуйте еще раз.');
+      }
+    } catch (error) {
+      console.error('Ошибка сохранения настроек:', error);
+      Alert.alert('Ошибка', 'Произошла ошибка при сохранении настроек');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <HeaderWithBack title="Уведомления" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.loadingText}>Загружаем настройки...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -52,7 +112,7 @@ export const NotificationsScreen: React.FC = () => {
           <View style={styles.summaryContent}>
             <Text style={styles.summaryTitle}>Настройки уведомлений</Text>
             <Text style={styles.summaryDescription}>
-              Уведомления {allNotificationsEnabled ? 'включены' : 'отключены'}
+              Уведомления {settings.allNotificationsEnabled ? 'включены' : 'отключены'}
             </Text>
           </View>
         </View>
@@ -72,16 +132,110 @@ export const NotificationsScreen: React.FC = () => {
               </View>
             </View>
             <Switch
-              value={allNotificationsEnabled}
-              onValueChange={toggleAllNotifications}
+              value={settings.allNotificationsEnabled}
+              onValueChange={(value) => updateSetting('allNotificationsEnabled', value)}
               trackColor={{
                 false: theme.colors.border,
                 true: `${theme.colors.primary}40`
               }}
-              thumbColor={allNotificationsEnabled ? theme.colors.primary : theme.colors.text.secondary}
+              thumbColor={settings.allNotificationsEnabled ? theme.colors.primary : theme.colors.text.secondary}
               ios_backgroundColor={theme.colors.border}
             />
           </View>
+        </View>
+
+        {/* Detailed Notification Settings */}
+        {settings.allNotificationsEnabled && (
+          <View style={styles.detailedSettings}>
+            <Text style={styles.sectionTitle}>Типы уведомлений</Text>
+
+            <View style={styles.notificationItem}>
+              <View style={styles.notificationLeft}>
+                <View style={styles.notificationIcon}>
+                  <Text style={styles.notificationIconText}>📝</Text>
+                </View>
+                <View style={styles.notificationContent}>
+                  <Text style={styles.notificationTitle}>Новые отклики</Text>
+                  <Text style={styles.notificationDescription}>
+                    Уведомления о новых откликах на ваши заказы
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={settings.newApplicationsEnabled}
+                onValueChange={(value) => updateSetting('newApplicationsEnabled', value)}
+                trackColor={{
+                  false: theme.colors.border,
+                  true: `${theme.colors.primary}40`
+                }}
+                thumbColor={settings.newApplicationsEnabled ? theme.colors.primary : theme.colors.text.secondary}
+                ios_backgroundColor={theme.colors.border}
+              />
+            </View>
+
+            <View style={styles.notificationItem}>
+              <View style={styles.notificationLeft}>
+                <View style={styles.notificationIcon}>
+                  <Text style={styles.notificationIconText}>📋</Text>
+                </View>
+                <View style={styles.notificationContent}>
+                  <Text style={styles.notificationTitle}>Обновления заказов</Text>
+                  <Text style={styles.notificationDescription}>
+                    Изменения статуса ваших заказов
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={settings.orderUpdatesEnabled}
+                onValueChange={(value) => updateSetting('orderUpdatesEnabled', value)}
+                trackColor={{
+                  false: theme.colors.border,
+                  true: `${theme.colors.primary}40`
+                }}
+                thumbColor={settings.orderUpdatesEnabled ? theme.colors.primary : theme.colors.text.secondary}
+                ios_backgroundColor={theme.colors.border}
+              />
+            </View>
+
+            <View style={styles.notificationItem}>
+              <View style={styles.notificationLeft}>
+                <View style={styles.notificationIcon}>
+                  <Text style={styles.notificationIconText}>✅</Text>
+                </View>
+                <View style={styles.notificationContent}>
+                  <Text style={styles.notificationTitle}>Завершение заказов</Text>
+                  <Text style={styles.notificationDescription}>
+                    Уведомления о завершении ваших заказов
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={settings.orderCompletedEnabled}
+                onValueChange={(value) => updateSetting('orderCompletedEnabled', value)}
+                trackColor={{
+                  false: theme.colors.border,
+                  true: `${theme.colors.primary}40`
+                }}
+                thumbColor={settings.orderCompletedEnabled ? theme.colors.primary : theme.colors.text.secondary}
+                ios_backgroundColor={theme.colors.border}
+              />
+            </View>
+          </View>
+        )}
+
+        {/* Save Button */}
+        <View style={styles.saveButtonContainer}>
+          <TouchableOpacity
+            style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
+            onPress={handleSaveSettings}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <ActivityIndicator size="small" color={theme.colors.surface} />
+            ) : (
+              <Text style={styles.saveButtonText}>Сохранить настройки</Text>
+            )}
+          </TouchableOpacity>
         </View>
 
         {/* Info Section */}
@@ -241,5 +395,30 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
+  },
+  loadingText: {
+    marginTop: theme.spacing.md,
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.text.secondary,
+  },
+  detailedSettings: {
+    paddingHorizontal: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
+  },
+  sectionTitle: {
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.md,
+  },
+  saveButtonContainer: {
+    paddingHorizontal: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
   },
 }); 

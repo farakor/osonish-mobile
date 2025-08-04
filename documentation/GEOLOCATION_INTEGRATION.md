@@ -35,7 +35,7 @@ ADD COLUMN longitude DECIMAL(11, 8);
 #### Сервисы:
 - `src/services/locationService.ts` - новый сервис для геолокации
 - `src/services/orderService.ts` - обновлен для работы с координатами
-- `src/services/supabaseClient.template.ts` - обновлена схема БД
+- `src/services/supabaseClient.ts` - обновлена схема БД
 
 #### Типы:
 - `src/types/index.ts` - добавлены поля `latitude` и `longitude`
