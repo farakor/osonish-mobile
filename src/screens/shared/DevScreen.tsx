@@ -13,6 +13,7 @@ import { theme } from '../../constants';
 import { clearAllUserData, getDataStats } from '../../utils/clearAllData';
 import { authService } from '../../services/authService';
 import { orderService } from '../../services/orderService';
+import { notificationService } from '../../services/notificationService';
 
 export function DevScreen() {
   const [isLoading, setIsLoading] = useState(false);
@@ -104,6 +105,55 @@ export function DevScreen() {
     }
   };
 
+  const handleDiagnosePushNotifications = async () => {
+    setIsLoading(true);
+    try {
+      console.log('\n🔍 Запуск диагностики push уведомлений из DevScreen...');
+      await notificationService.diagnosePushNotifications();
+      Alert.alert('Диагностика завершена', 'Проверьте консоль для подробностей');
+    } catch (error) {
+      Alert.alert('Ошибка', 'Не удалось выполнить диагностику');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTestPushNotification = async () => {
+    setIsLoading(true);
+    try {
+      console.log('\n🧪 Запуск тестирования push уведомлений из DevScreen...');
+      const success = await notificationService.testPushNotification();
+      Alert.alert(
+        success ? 'Тест завершен' : 'Тест не удался',
+        success
+          ? 'Уведомление отправлено. Если не получили, проверьте настройки устройства.'
+          : 'Не удалось отправить тестовое уведомление. Проверьте консоль.'
+      );
+    } catch (error) {
+      Alert.alert('Ошибка', 'Не удалось выполнить тест');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRefreshPushToken = async () => {
+    setIsLoading(true);
+    try {
+      console.log('\n🔄 Обновление push токена из DevScreen...');
+      const success = await notificationService.refreshPushToken();
+      Alert.alert(
+        success ? 'Токен обновлен' : 'Ошибка обновления',
+        success
+          ? 'Push токен успешно обновлен'
+          : 'Не удалось обновить push токен. Проверьте консоль.'
+      );
+    } catch (error) {
+      Alert.alert('Ошибка', 'Не удалось обновить токен');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
@@ -163,6 +213,44 @@ export function DevScreen() {
               )}
             </View>
           )}
+        </View>
+
+        {/* Диагностика уведомлений */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Диагностика уведомлений</Text>
+          <TouchableOpacity
+            style={[styles.button, styles.diagnosisButton]}
+            onPress={handleDiagnosePushNotifications}
+            disabled={isLoading}
+          >
+            <Text style={styles.buttonText}>
+              {isLoading ? 'Проверяем...' : '🔍 Диагностика push уведомлений'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, styles.testButton]}
+            onPress={handleTestPushNotification}
+            disabled={isLoading}
+          >
+            <Text style={styles.buttonText}>
+              {isLoading ? 'Тестируем...' : '🧪 Отправить тестовое уведомление'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, styles.refreshButton]}
+            onPress={handleRefreshPushToken}
+            disabled={isLoading}
+          >
+            <Text style={styles.buttonText}>
+              {isLoading ? 'Обновляем...' : '🔄 Обновить push токен'}
+            </Text>
+          </TouchableOpacity>
+
+          <Text style={styles.warningText}>
+            💡 Если уведомления не приходят, сначала запустите диагностику
+          </Text>
         </View>
 
         {/* Тестовые данные */}
@@ -246,6 +334,15 @@ const styles = StyleSheet.create({
   },
   clearButton: {
     backgroundColor: theme.colors.error,
+  },
+  diagnosisButton: {
+    backgroundColor: '#9C88FF',
+  },
+  testButton: {
+    backgroundColor: '#FF9500',
+  },
+  refreshButton: {
+    backgroundColor: '#007AFF',
   },
   buttonText: {
     color: '#FFFFFF',

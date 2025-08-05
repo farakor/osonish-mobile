@@ -347,13 +347,7 @@ export const EditProfileScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          {/* User Role Info */}
-          <View style={styles.roleInfo}>
-            <Text style={styles.roleTitle}>Роль: Исполнитель</Text>
-            <Text style={styles.roleDescription}>
-              Вы можете принимать заказы и зарабатывать на выполнении различных задач
-            </Text>
-          </View>
+
         </View>
       </ScrollView>
 
@@ -571,25 +565,7 @@ const styles = StyleSheet.create({
   datePlaceholder: {
     color: theme.colors.text.secondary,
   },
-  roleInfo: {
-    backgroundColor: theme.colors.primary + '10',
-    borderWidth: 1,
-    borderColor: theme.colors.primary + '30',
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    marginTop: theme.spacing.md,
-  },
-  roleTitle: {
-    fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.xs,
-  },
-  roleDescription: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
-    lineHeight: 20,
-  },
+
   saveSection: {
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.lg,

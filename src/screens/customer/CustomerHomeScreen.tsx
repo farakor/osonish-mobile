@@ -14,8 +14,10 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CustomerTabParamList, CustomerStackParamList } from '../../types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import FilePlusIcon from '../../../assets/file-plus-03_2.svg';
+import NotificationIcon from '../../../assets/notification-message.svg';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
+import { notificationService } from '../../services/notificationService';
 import { supabase } from '../../services/supabaseClient';
 import { Order } from '../../types';
 import { ModernOrderCard } from '../../components/cards';
@@ -27,14 +29,22 @@ export const CustomerHomeScreen: React.FC = () => {
   const [newOrders, setNewOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const navigation = useNavigation<BottomTabNavigationProp<CustomerTabParamList> & NativeStackNavigationProp<CustomerStackParamList>>();
 
-  // Функция для загрузки новых заказов
+  // Функция для загрузки новых заказов и уведомлений
   const loadNewOrders = useCallback(async () => {
     try {
       setIsLoading(true);
       const orders = await orderService.getUserNewOrders();
       setNewOrders(orders);
+
+      // Загружаем количество непрочитанных уведомлений
+      const authState = authService.getAuthState();
+      if (authState.isAuthenticated && authState.user) {
+        const count = await notificationService.getUnreadNotificationsCount(authState.user.id);
+        setUnreadCount(count);
+      }
     } catch (error) {
       console.error('Ошибка загрузки заказов:', error);
     } finally {
@@ -128,6 +138,10 @@ export const CustomerHomeScreen: React.FC = () => {
     navigation.navigate('CreateOrder');
   };
 
+  const handleNotificationsPress = () => {
+    navigation.navigate('NotificationsList');
+  };
+
 
 
   const renderOrderCard = ({ item }: { item: Order }) => (
@@ -159,15 +173,31 @@ export const CustomerHomeScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.content}>
-        {/* Content Header */}
-        <View style={styles.contentHeader}>
-          <Text style={styles.greeting}>Мои заказы</Text>
-          <Text style={styles.subtitle}>
-            {newOrders.length > 0
-              ? `У вас ${newOrders.length} новых заказа`
-              : 'Создайте свой первый заказ'
-            }
-          </Text>
+        {/* Header with notifications */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.greeting}>Мои заказы</Text>
+            <Text style={styles.subtitle}>
+              {newOrders.length > 0
+                ? `У вас ${newOrders.length} новых заказа`
+                : 'Создайте свой первый заказ'
+              }
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.notificationButton}
+            onPress={handleNotificationsPress}
+            activeOpacity={0.8}
+          >
+            <NotificationIcon width={24} height={24} style={styles.notificationIcon} />
+            {unreadCount > 0 && (
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationBadgeText}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
 
         {/* Quick Create Button */}
@@ -229,9 +259,16 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl,
-    paddingBottom: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
+    backgroundColor: theme.colors.background,
+  },
+  headerLeft: {
+    flex: 1,
   },
   greeting: {
     fontSize: theme.fonts.sizes.xxl,
@@ -331,5 +368,46 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
     textAlign: 'center',
+  },
+  notificationButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    position: 'relative',
+    shadowColor: theme.colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  notificationIcon: {
+    opacity: 0.7,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    backgroundColor: theme.colors.primary,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: theme.colors.background,
+  },
+  notificationBadgeText: {
+    color: theme.colors.white,
+    fontSize: 11,
+    fontWeight: theme.fonts.weights.bold,
+    lineHeight: 16,
   },
 }); 

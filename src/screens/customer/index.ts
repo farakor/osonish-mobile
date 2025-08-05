@@ -5,6 +5,7 @@ export { MyOrdersScreen } from './MyOrdersScreen';
 export { CustomerProfileScreen } from './CustomerProfileScreen';
 export { EditProfileScreen } from './EditProfileScreen';
 export { NotificationsScreen } from './NotificationsScreen';
+export { NotificationsListScreen } from './NotificationsListScreen';
 export { SupportScreen } from './SupportScreen';
 export { OrderDetailsScreen } from './OrderDetailsScreen';
 export { ApplicantsListScreen } from './ApplicantsListScreen';

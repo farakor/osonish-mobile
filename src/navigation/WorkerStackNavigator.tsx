@@ -1,7 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { WorkerTabNavigator } from './WorkerTabNavigator';
-import { EditProfileScreen, JobDetailsScreen, NotificationsScreen, SupportScreen } from '../screens/worker';
+import { EditProfileScreen, JobDetailsScreen, NotificationsScreen, NotificationsListScreen, SupportScreen } from '../screens/worker';
 import { WorkerStackParamList } from '../types/navigation';
 
 const Stack = createNativeStackNavigator<WorkerStackParamList>();
@@ -34,6 +34,13 @@ export function WorkerStackNavigator() {
       <Stack.Screen
         name="Notifications"
         component={NotificationsScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="NotificationsList"
+        component={NotificationsListScreen}
         options={{
           presentation: 'card',
         }}

@@ -4,4 +4,5 @@ export { WorkerProfileScreen } from './WorkerProfileScreen';
 export { EditProfileScreen } from './EditProfileScreen';
 export { JobDetailsScreen } from './JobDetailsScreen';
 export { NotificationsScreen } from './NotificationsScreen';
+export { NotificationsListScreen } from './NotificationsListScreen';
 export { SupportScreen } from './SupportScreen'; 

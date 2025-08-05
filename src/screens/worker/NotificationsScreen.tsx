@@ -74,7 +74,12 @@ export const NotificationsScreen: React.FC = () => {
       const success = await notificationService.updateNotificationSettings(settings);
 
       if (success) {
-        Alert.alert('Успешно', 'Настройки уведомлений сохранены');
+        Alert.alert('Успешно', 'Настройки уведомлений сохранены', [
+          {
+            text: 'OK',
+            onPress: () => navigation.goBack(),
+          },
+        ]);
       } else {
         Alert.alert('Ошибка', 'Не удалось сохранить настройки. Попробуйте еще раз.');
       }
@@ -223,20 +228,7 @@ export const NotificationsScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Save Button */}
-        <View style={styles.saveButtonContainer}>
-          <TouchableOpacity
-            style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
-            onPress={handleSaveSettings}
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              <ActivityIndicator size="small" color={theme.colors.surface} />
-            ) : (
-              <Text style={styles.saveButtonText}>Сохранить настройки</Text>
-            )}
-          </TouchableOpacity>
-        </View>
+
 
         {/* Info Section */}
         <View style={styles.infoSection}>
@@ -417,8 +409,5 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.md,
   },
-  saveButtonContainer: {
-    paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
-  },
+
 }); 

@@ -28,6 +28,7 @@ export type CustomerStackParamList = {
   Rating: { orderId: string; acceptedWorkers: Applicant[] };
   EditProfile: undefined;
   Notifications: undefined;
+  NotificationsList: undefined;
   Support: undefined;
 };
 
@@ -43,6 +44,7 @@ export type WorkerStackParamList = {
   JobDetails: { orderId: string };
   EditProfile: undefined;
   Notifications: undefined;
+  NotificationsList: undefined;
   Support: undefined;
 };
 

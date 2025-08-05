@@ -218,12 +218,24 @@ class AuthService {
         if (authResult.data?.user) {
           console.log('[AuthService] ✅ Новая Auth учетная запись создана:', authResult.data.user.id);
         }
+
+        // Если пользователь уже зарегистрирован, пропускаем создание Auth сессии
+        if (authResult.error?.message?.includes('User already registered')) {
+          console.log('[AuthService] 💡 Пользователь уже зарегистрирован в Supabase Auth, пропускаем создание сессии');
+          console.log('[AuthService] 💡 Будем использовать анонимную загрузку для медиафайлов');
+          return;
+        }
       } else if (authResult.data?.user) {
         console.log('[AuthService] ✅ Вход выполнен с существующей Auth учетной записью:', authResult.data.user.id);
       }
 
       if (authResult.error) {
-        console.error('[AuthService] ❌ Ошибка Supabase Auth:', authResult.error.message);
+        // Если это не критическая ошибка, продолжаем с fallback
+        if (!authResult.error.message?.includes('User already registered')) {
+          console.error('[AuthService] ❌ Ошибка Supabase Auth:', authResult.error.message);
+        } else {
+          console.log('[AuthService] 💡 Попытка создания Auth сессии завершена');
+        }
         console.log('[AuthService] 💡 Используем fallback к анонимной загрузке');
         return;
       }

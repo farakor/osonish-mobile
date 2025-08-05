@@ -15,6 +15,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../constants/theme';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
+import { notificationService } from '../../services/notificationService';
 import { locationService, LocationCoords } from '../../services/locationService';
 import { Order } from '../../types';
 import { PriceConfirmationModal, ProposePriceModal, ModernActionButton } from '../../components/common';
@@ -22,6 +23,7 @@ import { ModernOrderCard } from '../../components/cards';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { WorkerStackParamList } from '../../types/navigation';
+import NotificationIcon from '../../../assets/notification-message.svg';
 
 type WorkerNavigationProp = NativeStackNavigationProp<WorkerStackParamList>;
 
@@ -69,6 +71,7 @@ const WorkerJobsScreen: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [userApplications, setUserApplications] = useState<Set<string>>(new Set());
   const [userLocation, setUserLocation] = useState<LocationCoords | undefined>(undefined);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Функция загрузки заказов
   const loadOrders = async (isRefresh = false) => {
@@ -90,6 +93,13 @@ const WorkerJobsScreen: React.FC = () => {
 
       setOrders(availableOrders);
       setUserApplications(applications);
+
+      // Загружаем количество непрочитанных уведомлений
+      const authState = authService.getAuthState();
+      if (authState.isAuthenticated && authState.user) {
+        const count = await notificationService.getUnreadNotificationsCount(authState.user.id);
+        setUnreadCount(count);
+      }
     } catch (error) {
       console.error('Ошибка загрузки заказов:', error);
       Alert.alert('Ошибка', 'Не удалось загрузить заказы');
@@ -295,6 +305,10 @@ const WorkerJobsScreen: React.FC = () => {
     }
   };
 
+  const handleNotificationsPress = () => {
+    navigation.navigate('NotificationsList');
+  };
+
   const renderJobCard = ({ item }: { item: Order }) => {
     const hasApplied = userApplications.has(item.id);
     return (
@@ -325,11 +339,28 @@ const WorkerJobsScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.content}>
-        <View style={styles.contentHeader}>
-          <Text style={styles.title}>Доступные заказы</Text>
-          <Text style={styles.subtitle}>
-            {orders.length > 0 ? `Найдено ${orders.length} заказов` : 'Новых заказов пока нет'}
-          </Text>
+        {/* Header with notifications */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.title}>Доступные заказы</Text>
+            <Text style={styles.subtitle}>
+              {orders.length > 0 ? `Найдено ${orders.length} заказов` : 'Новых заказов пока нет'}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.notificationButton}
+            onPress={handleNotificationsPress}
+            activeOpacity={0.8}
+          >
+            <NotificationIcon width={24} height={24} style={styles.notificationIcon} />
+            {unreadCount > 0 && (
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationBadgeText}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
 
         <View style={styles.searchContainer}>
@@ -454,6 +485,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
+  },
+  headerLeft: {
+    flex: 1,
   },
   title: {
     fontSize: theme.fonts.sizes.xxl,
@@ -647,6 +689,47 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 24,
+  },
+  notificationButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    position: 'relative',
+    shadowColor: theme.colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  notificationIcon: {
+    opacity: 0.7,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    backgroundColor: theme.colors.primary,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: theme.colors.background,
+  },
+  notificationBadgeText: {
+    color: theme.colors.white,
+    fontSize: 11,
+    fontWeight: theme.fonts.weights.bold,
+    lineHeight: 16,
   },
 });
 
