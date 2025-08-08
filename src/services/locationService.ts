@@ -1,4 +1,5 @@
 import * as Location from 'expo-location';
+import { API_CONFIG } from '../config/api';
 
 export interface LocationCoords {
   latitude: number;
@@ -21,6 +22,8 @@ export class LocationService {
   private static instance: LocationService;
   private currentLocation: LocationCoords | null = null;
   private permissionGranted: boolean = false;
+
+
 
   public static getInstance(): LocationService {
     if (!LocationService.instance) {
@@ -100,11 +103,21 @@ export class LocationService {
 
   /**
    * Обратное геокодирование - получение адреса по координатам
+   * Использует Yandex Geocoder API для более точных результатов в Узбекистане
    */
   async reverseGeocode(latitude: number, longitude: number): Promise<ReverseGeocodeResult | null> {
     try {
       console.log('[LocationService] 🔄 Обратное геокодирование:', { latitude, longitude });
 
+      // Сначала пробуем Yandex Geocoder API
+      const yandexResult = await this.reverseGeocodeYandex(latitude, longitude);
+      if (yandexResult) {
+        console.log('[LocationService] ✅ Адрес получен через Yandex:', yandexResult.address);
+        return yandexResult;
+      }
+
+      // Fallback на Expo Location если Yandex недоступен
+      console.log('[LocationService] ⚠️ Yandex недоступен, используем Expo Location');
       const results = await Location.reverseGeocodeAsync({
         latitude,
         longitude
@@ -121,7 +134,7 @@ export class LocationService {
           country: result.country || undefined
         };
 
-        console.log('[LocationService] ✅ Адрес получен:', address);
+        console.log('[LocationService] ✅ Адрес получен через Expo:', address);
         return geocodeResult;
       }
 
@@ -220,6 +233,100 @@ export class LocationService {
   }
 
   // Приватные методы
+
+  /**
+   * Обратное геокодирование через Yandex Geocoder API
+   */
+  private async reverseGeocodeYandex(latitude: number, longitude: number): Promise<ReverseGeocodeResult | null> {
+    try {
+      // Проверяем наличие API ключа
+      if (!API_CONFIG.YANDEX_GEOCODER_API_KEY || API_CONFIG.YANDEX_GEOCODER_API_KEY === 'YOUR_YANDEX_API_KEY_HERE') {
+        console.log('[LocationService] ⚠️ Yandex API ключ не установлен. Установите ключ в src/config/api.ts');
+        return null;
+      }
+
+      // Yandex Geocoder API endpoint с API ключом
+      const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${API_CONFIG.YANDEX_GEOCODER_API_KEY}&geocode=${longitude},${latitude}&format=json&results=1&lang=ru_RU`;
+
+      console.log('[LocationService] 🔄 Запрос к Yandex Geocoder (с API ключом):', url.replace(API_CONFIG.YANDEX_GEOCODER_API_KEY, 'API_KEY_HIDDEN'));
+
+      // Создаем AbortController для таймаута
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        console.log('[LocationService] ⚠️ Yandex API вернул ошибку:', response.status);
+        return null;
+      }
+
+      const data = await response.json();
+      console.log('[LocationService] 📥 Ответ Yandex API получен');
+
+      // Парсим ответ Yandex API
+      const geoObjectCollection = data?.response?.GeoObjectCollection;
+      const geoObjects = geoObjectCollection?.featureMember;
+
+      if (geoObjects && geoObjects.length > 0) {
+        const geoObject = geoObjects[0].GeoObject;
+        const metaData = geoObject.metaDataProperty.GeocoderMetaData;
+
+        // Получаем полный адрес - пробуем разные варианты
+        const fullAddress = metaData.text || metaData.AddressDetails?.Country?.AddressLine || geoObject.name || 'Неизвестный адрес';
+
+        console.log('[LocationService] 📍 Извлеченный адрес:', fullAddress);
+
+        // Парсим компоненты адреса
+        const addressComponents = metaData.Address?.Components || [];
+        let city = '';
+        let region = '';
+        let country = '';
+
+        addressComponents.forEach((component: any) => {
+          switch (component.kind) {
+            case 'locality':
+              city = component.name;
+              break;
+            case 'province':
+              region = component.name;
+              break;
+            case 'country':
+              country = component.name;
+              break;
+          }
+        });
+
+        const result: ReverseGeocodeResult = {
+          address: fullAddress,
+          city: city || undefined,
+          region: region || undefined,
+          country: country || undefined
+        };
+
+        console.log('[LocationService] ✅ Yandex геокодирование успешно:', result);
+        return result;
+      }
+
+      console.log('[LocationService] ⚠️ Yandex API не вернул результатов');
+      return null;
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        console.log('[LocationService] ⏰ Yandex API таймаут (5 сек)');
+      } else {
+        console.error('[LocationService] ❌ Ошибка Yandex геокодирования:', error);
+      }
+      return null;
+    }
+  }
 
   private toRadians(degrees: number): number {
     return degrees * (Math.PI / 180);

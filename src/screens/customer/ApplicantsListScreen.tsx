@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,9 @@ import {
   StatusBar,
   Modal,
   Linking,
+  Image,
+  Pressable,
+  Animated,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../constants';
@@ -17,6 +20,7 @@ import { authService } from '../../services/authService';
 import { orderService } from '../../services/orderService';
 import { supabase } from '../../services/supabaseClient';
 import { HeaderWithBack } from '../../components/common';
+import UserIcon from '../../../assets/user-01.svg';
 import type { CustomerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StyleSheet } from 'react-native';
@@ -40,6 +44,9 @@ export const ApplicantsListScreen: React.FC = () => {
   const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
   const [acceptedApplicants, setAcceptedApplicants] = useState<Set<string>>(new Set());
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Анимация для карточек откликов
+  const animatedCards = useRef<{ [key: string]: Animated.Value }>({}).current;
 
   useEffect(() => {
     loadData();
@@ -281,71 +288,229 @@ export const ApplicantsListScreen: React.FC = () => {
   };
 
   const renderApplicant = ({ item }: { item: Applicant }) => {
-    const isAccepted = acceptedApplicants.has(item.id);
+    const formatAppliedAt = (dateString: string) => {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+      if (diffHours < 1) {
+        const diffMins = Math.floor(diffMs / (1000 * 60));
+        return `${diffMins} мин назад`;
+      } else if (diffHours < 24) {
+        return `${diffHours} ч назад`;
+      } else {
+        const diffDays = Math.floor(diffHours / 24);
+        return `${diffDays} дн назад`;
+      }
+    };
+
+    const formatPrice = (price: number) => {
+      return price.toLocaleString('ru-RU');
+    };
+
+    const isAccepted = item.status === 'accepted';
     const isRejected = item.status === 'rejected';
+    const isPending = item.status === 'pending';
+
+    // Инициализируем анимацию для карточки если её еще нет
+    if (!animatedCards[item.id]) {
+      animatedCards[item.id] = new Animated.Value(0);
+      // Запускаем анимацию появления
+      Animated.timing(animatedCards[item.id], {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }).start();
+    }
+
+    const animatedStyle = {
+      opacity: animatedCards[item.id],
+      transform: [
+        {
+          translateY: animatedCards[item.id].interpolate({
+            inputRange: [0, 1],
+            outputRange: [20, 0],
+          }),
+        },
+        {
+          scale: animatedCards[item.id].interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.95, 1],
+          }),
+        },
+      ],
+    };
 
     return (
-      <View style={styles.applicantCard}>
-        {/* Header с именем и статусом */}
-        <View style={styles.applicantHeader}>
-          <View style={styles.applicantInfo}>
-            <Text style={styles.applicantName}>{item.workerName}</Text>
-            <View style={styles.ratingContainer}>
-              <Text style={styles.ratingText}>⭐ {item.rating ? item.rating.toFixed(1) : 'Нет рейтинга'}</Text>
-              <Text style={styles.jobsText}>• {item.completedJobs} работ</Text>
+      <Animated.View style={[
+        styles.modernApplicantCard,
+        isAccepted && styles.modernAcceptedCard,
+        isRejected && styles.modernRejectedCard,
+        animatedStyle
+      ]}>
+        {/* Градиентная полоса статуса - только для принятых и отклоненных */}
+        {isAccepted && <View style={styles.modernStatusBarAccepted} />}
+        {isRejected && <View style={styles.modernStatusBarRejected} />}
+
+        {/* Основное содержимое */}
+        <View style={styles.modernCardContent}>
+          {/* Заголовок с аватаром */}
+          <View style={styles.modernApplicantHeader}>
+            {/* Аватар исполнителя */}
+            <View style={styles.modernAvatarContainer}>
+              {item.avatar ? (
+                <Image source={{ uri: item.avatar }} style={styles.modernAvatar} />
+              ) : (
+                <View style={styles.modernAvatarPlaceholder}>
+                  <UserIcon width={20} height={20} stroke={theme.colors.text.secondary} />
+                </View>
+              )}
+              {/* Рейтинг бейдж на аватаре */}
+              <View style={styles.modernRatingBadge}>
+                <Text style={styles.modernRatingText}>
+                  {item.rating ? item.rating.toFixed(1) : '—'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Информация исполнителя */}
+            <View style={styles.modernApplicantInfo}>
+              <View style={styles.modernNameRow}>
+                <Text style={[styles.modernApplicantName, isRejected && styles.rejectedText]}>
+                  {item.workerName}
+                </Text>
+
+                <View style={styles.modernNameActions}>
+                  <TouchableOpacity
+                    style={styles.reviewsButton}
+                    onPress={() => navigation.navigate('WorkerProfile', {
+                      workerId: item.workerId,
+                      workerName: item.workerName
+                    })}
+                  >
+                    <Text style={styles.reviewsButtonText}>Отзывы</Text>
+                  </TouchableOpacity>
+
+                  {isAccepted && (
+                    <View style={styles.modernSelectedBadge}>
+                      <Text style={styles.modernSelectedBadgeText}>✓ ВЫБРАН</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              <View style={styles.modernStatsRow}>
+                <View style={styles.modernStatItem}>
+                  <Text style={styles.modernStatIcon}>💼</Text>
+                  <Text style={[styles.modernStatText, isRejected && styles.rejectedText]}>
+                    {item.completedJobs || 0} заказов
+                  </Text>
+                </View>
+              </View>
+
+              {/* Время отклика */}
+              <View style={styles.modernTimeRow}>
+                <Text style={styles.modernStatIcon}>🕒</Text>
+                <Text style={[styles.modernStatText, isRejected && styles.rejectedText]}>
+                  {formatAppliedAt(item.appliedAt)}
+                </Text>
+              </View>
+            </View>
+
+            {/* Статус точка */}
+            <View style={styles.modernStatusContainer}>
+              {!isAccepted && !isRejected && (
+                <View style={styles.modernPendingDot} />
+              )}
             </View>
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-            <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
-          </View>
-        </View>
 
-        {/* Предложенная цена */}
-        <View style={styles.priceContainer}>
-          <Text style={styles.priceLabel}>Предложенная цена:</Text>
-          <Text style={styles.priceValue}>{formatBudget(item.proposedPrice)}</Text>
-        </View>
+          {/* Предложенная цена */}
+          {item.proposedPrice && (
+            <View style={[
+              styles.modernPriceContainer,
+              isAccepted && styles.modernPriceContainerAccepted
+            ]}>
+              <View style={styles.modernPriceHeader}>
+                <Text style={[styles.modernPriceLabel, isRejected && styles.rejectedText]}>
+                  Предложенная цена
+                </Text>
+                {order && item.proposedPrice !== order.budget && (
+                  <View style={[
+                    styles.modernPriceDiffBadge,
+                    { backgroundColor: item.proposedPrice > order.budget ? '#FFE6E6' : '#E6F7F6' }
+                  ]}>
+                    <Text style={[
+                      styles.modernPriceDiffText,
+                      { color: item.proposedPrice > order.budget ? '#FF4444' : '#4ECDC4' }
+                    ]}>
+                      {item.proposedPrice > order.budget ? '+' : ''}{formatPrice(item.proposedPrice - order.budget)}
+                    </Text>
+                  </View>
+                )}
+              </View>
+              <Text style={[
+                styles.modernPriceValue,
+                isAccepted && styles.modernPriceValueAccepted,
+                isRejected && styles.rejectedText
+              ]}>
+                {formatPrice(item.proposedPrice)} сум
+              </Text>
+            </View>
+          )}
 
-        {/* Сообщение от исполнителя */}
-        {item.message && (
-          <View style={styles.messageContainer}>
-            <Text style={styles.messageLabel}>Сообщение:</Text>
-            <Text style={styles.messageText}>{item.message}</Text>
-          </View>
-        )}
+          {/* Комментарий исполнителя */}
+          {item.message && item.message.trim() && (
+            <View style={styles.modernMessageContainer}>
+              <Text style={[styles.modernMessageLabel, isRejected && styles.rejectedText]}>
+                💬 Комментарий
+              </Text>
+              <Text style={[styles.modernMessageText, isRejected && styles.rejectedText]}>
+                {item.message}
+              </Text>
+            </View>
+          )}
 
-        {/* Время подачи заявки */}
-        <Text style={styles.appliedTime}>Подал заявку: {formatDate(item.appliedAt)}</Text>
-
-        {/* Кнопка выбора исполнителя */}
-        {item.status === 'pending' && (
-          <TouchableOpacity
-            style={styles.selectButton}
-            onPress={() => handleSelectApplicant(item)}
-          >
-            <Text style={styles.selectButtonText}>Выбрать исполнителя</Text>
-          </TouchableOpacity>
-        )}
-
-        {isAccepted && (
-          <View style={styles.acceptedContainer}>
-            <Text style={styles.acceptedText}>✅ Выбран для выполнения заказа</Text>
-
-            {/* Контактная информация для принятого исполнителя */}
-            {item.workerPhone && (
-              <View style={styles.contactInfo}>
-                <Text style={styles.phoneNumber}>📞 {item.workerPhone}</Text>
+          {/* Контактная информация для принятого исполнителя */}
+          {isAccepted && item.workerPhone && (
+            <View style={styles.modernContactInfo}>
+              <View style={styles.modernContactHeader}>
+                <Text style={styles.modernContactLabel}>📞 Контакты</Text>
+              </View>
+              <View style={styles.modernContactRow}>
+                <Text style={styles.modernPhoneNumber}>{item.workerPhone}</Text>
                 <TouchableOpacity
-                  style={styles.callButton}
+                  style={styles.modernCallButton}
                   onPress={() => handleCallWorker(item.workerPhone, item.workerName)}
                 >
-                  <Text style={styles.callButtonText}>Позвонить</Text>
+                  <Text style={styles.modernCallButtonText}>Позвонить</Text>
                 </TouchableOpacity>
               </View>
-            )}
-          </View>
-        )}
-      </View>
+            </View>
+          )}
+
+          {/* Кнопки действий - показываем только для pending заявок */}
+          {isPending && (
+            <View style={styles.modernApplicantActions}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.modernAcceptButton,
+                  {
+                    opacity: pressed ? 0.8 : 1,
+                    transform: pressed ? [{ scale: 0.98 }] : [{ scale: 1 }],
+                  }
+                ]}
+                onPress={() => handleSelectApplicant(item)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                android_ripple={{ color: 'rgba(255, 255, 255, 0.3)' }}
+              >
+                <Text style={styles.modernAcceptButtonText}>✓ Принять исполнителя</Text>
+              </Pressable>
+            </View>
+          )}
+        </View>
+      </Animated.View>
     );
   };
 
@@ -757,5 +922,298 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.sm,
     fontWeight: theme.fonts.weights.medium,
     color: theme.colors.surface,
+  },
+
+  // Современные стили для откликов
+  modernApplicantCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    marginBottom: theme.spacing.lg,
+    overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F0F2F5',
+  },
+  modernAcceptedCard: {
+    borderColor: '#679B00',
+    borderWidth: 2,
+    backgroundColor: '#FAFFFE',
+  },
+  modernRejectedCard: {
+    opacity: 0.7,
+    backgroundColor: '#F8F9FA',
+  },
+  modernStatusBarAccepted: {
+    height: 4,
+    backgroundColor: '#679B00',
+  },
+  modernStatusBarRejected: {
+    height: 4,
+    backgroundColor: '#FF6B6B',
+  },
+  modernCardContent: {
+    padding: 16,
+    minHeight: 140,
+  },
+  modernApplicantHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  modernAvatarContainer: {
+    position: 'relative',
+    marginRight: 12,
+  },
+  modernAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: theme.colors.surface,
+  },
+  modernAvatarPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F0F2F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+  },
+  modernRatingBadge: {
+    position: 'absolute',
+    bottom: -6,
+    right: -6,
+    backgroundColor: '#679B00',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    minWidth: 24,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  modernRatingText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  modernApplicantInfo: {
+    flex: 1,
+    marginRight: 8,
+  },
+  modernNameRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  modernNameActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  reviewsButton: {
+    backgroundColor: '#F0F2F5',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  reviewsButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: theme.colors.primary,
+  },
+  modernApplicantName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    lineHeight: 22,
+    flex: 1,
+    marginRight: 8,
+  },
+  modernSelectedBadge: {
+    backgroundColor: '#679B00',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    marginLeft: 8,
+  },
+  modernSelectedBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  modernStatsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  modernStatItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  modernStatIcon: {
+    fontSize: 12,
+    marginRight: 4,
+  },
+  modernStatText: {
+    fontSize: 13,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  modernTimeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  modernStatusContainer: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  modernPendingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FFA726',
+  },
+  modernPriceContainer: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  modernPriceContainerAccepted: {
+    backgroundColor: '#F0FDFA',
+    borderColor: '#679B00',
+  },
+  modernPriceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  modernPriceLabel: {
+    fontSize: 13,
+    color: '#64748B',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  modernPriceDiffBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  modernPriceDiffText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  modernPriceValue: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#1A1A1A',
+    letterSpacing: -0.5,
+  },
+  modernPriceValueAccepted: {
+    color: '#679B00',
+  },
+  modernMessageContainer: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: '#679B00',
+  },
+  modernMessageLabel: {
+    fontSize: 13,
+    color: '#64748B',
+    fontWeight: '600',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  modernMessageText: {
+    fontSize: 15,
+    color: '#374151',
+    lineHeight: 22,
+    fontWeight: '400',
+  },
+  modernContactInfo: {
+    backgroundColor: '#F0FDF4',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+  },
+  modernContactHeader: {
+    marginBottom: 12,
+  },
+  modernContactLabel: {
+    fontSize: 13,
+    color: '#059669',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  modernContactRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  modernPhoneNumber: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  modernCallButton: {
+    backgroundColor: '#10B981',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    elevation: 2,
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  modernCallButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  modernApplicantActions: {
+    marginTop: 4,
+  },
+  modernAcceptButton: {
+    backgroundColor: '#679B00',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#679B00',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+  },
+  modernAcceptButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  rejectedText: {
+    color: '#9ca3af',
   },
 });

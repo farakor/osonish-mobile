@@ -8,6 +8,7 @@ import {
   Alert,
   ScrollView,
   Image,
+  TextInput,
 } from 'react-native';
 import { theme } from '../../constants';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -47,6 +48,10 @@ interface WorkerRatingState {
   [workerId: string]: number;
 }
 
+interface WorkerCommentsState {
+  [workerId: string]: string;
+}
+
 const getInitials = (fullName?: string): string => {
   if (!fullName) return 'У';
   const names = fullName.trim().split(' ');
@@ -58,10 +63,12 @@ const getInitials = (fullName?: string): string => {
 interface WorkerRatingCardProps {
   worker: Applicant;
   rating: number;
+  comment: string;
   onRatingChange: (rating: number) => void;
+  onCommentChange: (comment: string) => void;
 }
 
-const WorkerRatingCard: React.FC<WorkerRatingCardProps> = ({ worker, rating, onRatingChange }) => {
+const WorkerRatingCard: React.FC<WorkerRatingCardProps> = ({ worker, rating, comment, onRatingChange, onCommentChange }) => {
   const getRatingText = (rating: number): string => {
     switch (rating) {
       case 1:
@@ -119,6 +126,24 @@ const WorkerRatingCard: React.FC<WorkerRatingCardProps> = ({ worker, rating, onR
           {getRatingText(rating)}
         </Text>
       </View>
+
+      {/* Поле для комментария */}
+      <View style={styles.commentSection}>
+        <Text style={styles.commentLabel}>Комментарий (необязательно)</Text>
+        <TextInput
+          style={styles.commentInput}
+          placeholder="Расскажите о качестве работы исполнителя..."
+          placeholderTextColor="#9CA3AF"
+          value={comment}
+          onChangeText={onCommentChange}
+          multiline
+          numberOfLines={3}
+          maxLength={500}
+        />
+        <Text style={styles.commentCounter}>
+          {comment.length}/500
+        </Text>
+      </View>
     </View>
   );
 };
@@ -129,6 +154,7 @@ export const RatingScreen: React.FC = () => {
   const { orderId, acceptedWorkers } = route.params;
 
   const [ratings, setRatings] = useState<WorkerRatingState>({});
+  const [comments, setComments] = useState<WorkerCommentsState>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleRatingChange = (workerId: string, rating: number) => {
@@ -138,11 +164,22 @@ export const RatingScreen: React.FC = () => {
     }));
   };
 
+  const handleCommentChange = (workerId: string, comment: string) => {
+    setComments(prev => ({
+      ...prev,
+      [workerId]: comment
+    }));
+  };
+
   const handleSubmitReviews = async () => {
     // Получаем только те отзывы, где есть рейтинг > 0
     const reviewsToSubmit = Object.entries(ratings)
       .filter(([_, rating]) => rating > 0)
-      .map(([workerId, rating]) => ({ workerId, rating }));
+      .map(([workerId, rating]) => ({
+        workerId,
+        rating,
+        comment: comments[workerId] || undefined
+      }));
 
     console.log('[RatingScreen] Отправляем отзывы:', {
       orderId,
@@ -240,7 +277,9 @@ export const RatingScreen: React.FC = () => {
               key={worker.workerId}
               worker={worker}
               rating={ratings[worker.workerId] || 0}
+              comment={comments[worker.workerId] || ''}
               onRatingChange={(rating) => handleRatingChange(worker.workerId, rating)}
+              onCommentChange={(comment) => handleCommentChange(worker.workerId, comment)}
             />
           ))}
 
@@ -448,5 +487,34 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
     lineHeight: 20,
+  },
+  commentSection: {
+    marginTop: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F2F5',
+  },
+  commentLabel: {
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.sm,
+  },
+  commentInput: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.text.primary,
+    textAlignVertical: 'top',
+    backgroundColor: '#FAFBFC',
+    minHeight: 80,
+  },
+  commentCounter: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
+    textAlign: 'right',
+    marginTop: theme.spacing.xs,
   },
 });

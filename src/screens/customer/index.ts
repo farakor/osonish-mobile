@@ -9,4 +9,5 @@ export { NotificationsListScreen } from './NotificationsListScreen';
 export { SupportScreen } from './SupportScreen';
 export { OrderDetailsScreen } from './OrderDetailsScreen';
 export { ApplicantsListScreen } from './ApplicantsListScreen';
+export { WorkerProfileScreen } from './WorkerProfileScreen';
 export { RatingScreen } from './RatingScreen'; 

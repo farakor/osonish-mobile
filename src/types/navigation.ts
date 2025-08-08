@@ -25,6 +25,7 @@ export type CustomerStackParamList = {
   MainTabs: undefined;
   OrderDetails: { orderId: string };
   ApplicantsList: { orderId: string };
+  WorkerProfile: { workerId: string; workerName: string };
   Rating: { orderId: string; acceptedWorkers: Applicant[] };
   EditProfile: undefined;
   Notifications: undefined;

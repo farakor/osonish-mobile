@@ -2,7 +2,7 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { CustomerStackParamList } from '../types/navigation';
 import { CustomerTabNavigator } from './CustomerTabNavigator';
-import { OrderDetailsScreen, EditProfileScreen, NotificationsScreen, NotificationsListScreen, SupportScreen, ApplicantsListScreen, RatingScreen } from '../screens/customer';
+import { OrderDetailsScreen, EditProfileScreen, NotificationsScreen, NotificationsListScreen, SupportScreen, ApplicantsListScreen, RatingScreen, WorkerProfileScreen } from '../screens/customer';
 
 const Stack = createNativeStackNavigator<CustomerStackParamList>();
 
@@ -27,6 +27,13 @@ export function CustomerStackNavigator() {
       <Stack.Screen
         name="ApplicantsList"
         component={ApplicantsListScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="WorkerProfile"
+        component={WorkerProfileScreen}
         options={{
           presentation: 'card',
         }}

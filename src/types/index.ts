@@ -171,3 +171,28 @@ export interface WorkerRating {
   averageRating: number;
   totalReviews: number;
 }
+
+export interface Review {
+  id: string;
+  orderId: string;
+  workerId: string;
+  customerId: string;
+  customerName: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+  orderTitle?: string;
+}
+
+export interface WorkerProfile {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  profileImage?: string;
+  averageRating: number;
+  totalReviews: number;
+  completedJobs: number;
+  joinedAt: string;
+  reviews: Review[];
+}

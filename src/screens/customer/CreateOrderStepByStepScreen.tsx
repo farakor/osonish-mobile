@@ -28,6 +28,7 @@ import CalendarDateIcon from '../../../assets/calendar-date.svg';
 import * as ImagePicker from 'expo-image-picker';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import ImageIcon from '../../../assets/image-03.svg';
+
 import { orderService } from '../../services/orderService';
 import { mediaService } from '../../services/mediaService';
 import { locationService, LocationCoords } from '../../services/locationService';
@@ -113,6 +114,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
   const [coordinates, setCoordinates] = useState<LocationCoords | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [animationResetKey, setAnimationResetKey] = useState(0);
+  const [locationUpdateKey, setLocationUpdateKey] = useState(0);
 
   // Ref для поля местоположения
   const locationInputRef = useRef<any>(null);
@@ -288,31 +290,19 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
 
         if (geocodeResult) {
           console.log('[getCurrentLocation] 📝 Устанавливаем адрес:', geocodeResult.address);
+          setLocation(geocodeResult.address);
+          console.log('[getCurrentLocation] ✅ setLocation() вызван с адресом');
 
-          // Убираем фокус с поля перед обновлением
-          if (locationInputRef.current) {
-            locationInputRef.current.blur();
-          }
-
-          // Даем время полю потерять фокус, затем обновляем значение
-          setTimeout(() => {
-            setLocation(geocodeResult.address);
-            console.log('[getCurrentLocation] ✅ setLocation() вызван с адресом');
-          }, 100);
+          // Принудительно обновляем компонент TextInput
+          setLocationUpdateKey(prev => prev + 1);
         } else {
           const coordsString = `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
           console.log('[getCurrentLocation] 📝 Устанавливаем координаты как строку:', coordsString);
+          setLocation(coordsString);
+          console.log('[getCurrentLocation] ✅ setLocation() вызван с координатами');
 
-          // Убираем фокус с поля перед обновлением
-          if (locationInputRef.current) {
-            locationInputRef.current.blur();
-          }
-
-          // Даем время полю потерять фокус, затем обновляем значение
-          setTimeout(() => {
-            setLocation(coordsString);
-            console.log('[getCurrentLocation] ✅ setLocation() вызван с координатами');
-          }, 100);
+          // Принудительно обновляем компонент TextInput
+          setLocationUpdateKey(prev => prev + 1);
         }
 
         Alert.alert('Успешно!', 'Местоположение определено');
@@ -687,7 +677,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 <View style={styles.inputContainer}>
                   <TextInput
                     ref={locationInputRef}
-                    key={`location-input-${location}`}
+                    key={`location-input-${locationUpdateKey}`}
                     style={getInputStyle(locationFocused)}
                     value={location}
                     onChangeText={setLocation}
@@ -1394,9 +1384,10 @@ const styles = StyleSheet.create({
   locationButton: {
     backgroundColor: theme.colors.primary,
     borderRadius: theme.borderRadius.md,
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: theme.spacing.lg,
     paddingHorizontal: theme.spacing.md,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: theme.spacing.md,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
