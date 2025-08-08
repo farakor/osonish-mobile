@@ -71,6 +71,12 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
           color: '#10B981',
           backgroundColor: '#D1FAE5',
         };
+      case 'response_received':
+        return {
+          text: 'Отклик получен',
+          color: '#3B82F6',
+          backgroundColor: '#DBEAFE',
+        };
       case 'in_progress':
         return {
           text: 'В работе',

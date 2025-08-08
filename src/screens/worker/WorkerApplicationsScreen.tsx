@@ -9,7 +9,6 @@ import {
   FlatList,
   Alert,
   RefreshControl,
-  Linking,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -64,7 +63,7 @@ const convertApplicationToOrder = (application: WorkerApplication): Order => {
 // Отдельный компонент для карточки заявки
 const ApplicationCard: React.FC<{
   application: WorkerApplication;
-  onAction: (applicationId: string, action: string, customerPhone?: string) => void;
+  onAction: (applicationId: string, action: string) => void;
   userLocation?: LocationCoords;
   navigation: WorkerNavigationProp;
 }> = ({ application, onAction, userLocation, navigation }) => {
@@ -82,12 +81,20 @@ const ApplicationCard: React.FC<{
           />
         );
       case 'accepted':
+        return (
+          <ModernActionButton
+            title="Принято"
+            onPress={undefined}
+            variant="success"
+            size="small"
+          />
+        );
       case 'completed':
         return (
           <ModernActionButton
-            title="Связаться"
-            onPress={() => onAction(application.id, 'contact', application.customerPhone)}
-            variant="primary"
+            title="Завершено"
+            onPress={undefined}
+            variant="success"
             size="small"
           />
         );
@@ -120,7 +127,7 @@ const ApplicationCard: React.FC<{
 
 export const WorkerApplicationsScreen: React.FC = () => {
   const navigation = useNavigation<WorkerNavigationProp>();
-  const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus | 'all'>('all');
+  const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus>('pending');
   const [applications, setApplications] = useState<WorkerApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -208,20 +215,19 @@ export const WorkerApplicationsScreen: React.FC = () => {
   }, []);
 
   const statusFilters = [
-    { key: 'all', label: 'Все', emoji: '📋', count: applications.length },
-    { key: 'pending', label: 'Ожидание', emoji: '⏳', count: applications.filter(a => a.status === 'pending').length },
-    { key: 'accepted', label: 'Принято', emoji: '✅', count: applications.filter(a => a.status === 'accepted').length },
-    { key: 'completed', label: 'Выполнено', emoji: '🎉', count: applications.filter(a => a.status === 'completed').length },
-    { key: 'rejected', label: 'Отклонено', emoji: '❌', count: applications.filter(a => a.status === 'rejected').length },
+    { key: 'pending', label: 'Ожидание', count: applications.filter(a => a.status === 'pending').length },
+    { key: 'accepted', label: 'Принято', count: applications.filter(a => a.status === 'accepted').length },
+    { key: 'completed', label: 'Выполнено', count: applications.filter(a => a.status === 'completed').length },
+    { key: 'rejected', label: 'Отклонено', count: applications.filter(a => a.status === 'rejected').length },
   ];
 
   const filteredApplications = applications.filter(app =>
-    selectedStatus === 'all' || app.status === selectedStatus
+    app.status === selectedStatus
   );
 
 
 
-  const handleApplicationAction = async (applicationId: string, action: string, customerPhone?: string) => {
+  const handleApplicationAction = async (applicationId: string, action: string) => {
     console.log(`Action: ${action} for application: ${applicationId}`);
 
     if (action === 'cancel') {
@@ -250,20 +256,6 @@ export const WorkerApplicationsScreen: React.FC = () => {
           }
         ]
       );
-    } else if (action === 'contact' && customerPhone) {
-      Alert.alert(
-        'Связаться с заказчиком',
-        `Позвонить по номеру ${customerPhone}?`,
-        [
-          { text: 'Отмена', style: 'cancel' },
-          {
-            text: 'Позвонить',
-            onPress: () => {
-              Linking.openURL(`tel:${customerPhone}`);
-            }
-          }
-        ]
-      );
     }
   };
 
@@ -271,23 +263,16 @@ export const WorkerApplicationsScreen: React.FC = () => {
     <TouchableOpacity
       key={filter.key}
       style={[
-        styles.filterChip,
-        selectedStatus === filter.key && styles.filterChipActive
+        styles.tab,
+        selectedStatus === filter.key && styles.activeTab
       ]}
       onPress={() => setSelectedStatus(filter.key)}
     >
-      <Text style={styles.filterEmoji}>{filter.emoji}</Text>
       <Text style={[
-        styles.filterChipText,
-        selectedStatus === filter.key && styles.filterChipTextActive
+        styles.tabText,
+        selectedStatus === filter.key && styles.activeTabText
       ]}>
-        {filter.label}
-      </Text>
-      <Text style={[
-        styles.filterChipCount,
-        selectedStatus === filter.key && styles.filterChipCountActive
-      ]}>
-        ({filter.count})
+        {filter.label} ({filter.count})
       </Text>
     </TouchableOpacity>
   );
@@ -311,13 +296,13 @@ export const WorkerApplicationsScreen: React.FC = () => {
           </Text>
         </View>
 
-        {/* Улучшенная карусель статусов */}
-        <View style={styles.filtersSection}>
+        {/* Tabs */}
+        <View style={styles.tabsContainer}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            style={styles.filtersContainer}
-            contentContainerStyle={styles.filtersContent}
+            style={styles.tabs}
+            contentContainerStyle={styles.tabsContent}
           >
             {statusFilters.map(renderStatusFilter)}
           </ScrollView>
@@ -347,9 +332,7 @@ export const WorkerApplicationsScreen: React.FC = () => {
               <Text style={styles.emptyStateText}>
                 {isLoading
                   ? 'Загружаем ваши заявки...'
-                  : selectedStatus === 'all'
-                    ? 'Вы еще не подавали заявки на заказы'
-                    : `Нет заявок со статусом "${statusFilters.find(f => f.key === selectedStatus)?.label}"`
+                  : `Нет заявок со статусом "${statusFilters.find(f => f.key === selectedStatus)?.label}"`
                 }
               </Text>
             </View>
@@ -385,62 +368,34 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     lineHeight: 20,
   },
-  filtersSection: {
+  tabsContainer: {
     marginBottom: theme.spacing.lg,
   },
-  filtersContainer: {
+  tabs: {
     paddingHorizontal: theme.spacing.lg,
   },
-  filtersContent: {
+  tabsContent: {
     paddingRight: theme.spacing.lg,
   },
-  filterChip: {
-    backgroundColor: theme.colors.surface,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    marginRight: theme.spacing.sm,
+  tab: {
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
     alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 110,
-    minHeight: 90,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+    minWidth: 120,
+    marginRight: theme.spacing.sm,
   },
-  filterChipActive: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
-    shadowColor: theme.colors.primary,
-    shadowOpacity: 0.2,
+  activeTab: {
+    borderBottomColor: theme.colors.primary,
   },
-  filterEmoji: {
-    fontSize: 28,
-    marginBottom: theme.spacing.xs,
-  },
-  filterChipText: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.primary,
-    fontWeight: theme.fonts.weights.medium,
-    textAlign: 'center',
-    marginBottom: theme.spacing.xs,
-  },
-  filterChipTextActive: {
-    color: theme.colors.white,
-    fontWeight: theme.fonts.weights.semiBold,
-  },
-  filterChipCount: {
-    fontSize: theme.fonts.sizes.xs,
+  tabText: {
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
     fontWeight: theme.fonts.weights.medium,
-    textAlign: 'center',
   },
-  filterChipCountActive: {
-    color: theme.colors.white,
+  activeTabText: {
+    color: theme.colors.primary,
     fontWeight: theme.fonts.weights.semiBold,
   },
   applicationsList: {

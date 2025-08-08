@@ -14,6 +14,7 @@ import {
   Pressable,
   Animated,
   StatusBar,
+  Linking,
 } from 'react-native';
 import { theme } from '../../constants';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
@@ -536,6 +537,22 @@ export const OrderDetailsScreen: React.FC = () => {
   };
 
   // Завершить заказ
+  const handleCallWorker = (workerPhone: string, workerName: string) => {
+    Alert.alert(
+      'Позвонить исполнителю',
+      `Позвонить ${workerName} по номеру ${workerPhone}?`,
+      [
+        { text: 'Отмена', style: 'cancel' },
+        {
+          text: 'Позвонить',
+          onPress: () => {
+            Linking.openURL(`tel:${workerPhone}`);
+          }
+        }
+      ]
+    );
+  };
+
   const handleCompleteOrder = async () => {
     if (!order || isCompletingOrder) return;
 
@@ -693,6 +710,19 @@ export const OrderDetailsScreen: React.FC = () => {
             <Text style={[styles.messageText, isRejected && styles.rejectedText]}>
               {item.message}
             </Text>
+          </View>
+        )}
+
+        {/* Контактная информация для принятого исполнителя */}
+        {isAccepted && item.workerPhone && (
+          <View style={styles.contactInfo}>
+            <Text style={styles.phoneNumber}>📞 {item.workerPhone}</Text>
+            <TouchableOpacity
+              style={styles.callButton}
+              onPress={() => handleCallWorker(item.workerPhone, item.workerName)}
+            >
+              <Text style={styles.callButtonText}>Позвонить</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -1828,5 +1858,33 @@ const styles = StyleSheet.create({
   rightActionText: {
     fontSize: theme.fonts.sizes.sm,
     fontWeight: theme.fonts.weights.medium,
+  },
+  contactInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    backgroundColor: `${theme.colors.success}10`,
+    borderRadius: theme.borderRadius.sm,
+  },
+  phoneNumber: {
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.medium,
+    color: theme.colors.text.primary,
+    flex: 1,
+  },
+  callButton: {
+    backgroundColor: theme.colors.success,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.sm,
+    marginLeft: theme.spacing.sm,
+  },
+  callButtonText: {
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.medium,
+    color: theme.colors.surface,
   },
 }); 

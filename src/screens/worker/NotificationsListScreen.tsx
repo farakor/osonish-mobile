@@ -185,37 +185,11 @@ export const NotificationsListScreen: React.FC = () => {
     </View>
   );
 
-  const handleAddTestNotification = async () => {
-    try {
-      const success = await notificationService.addTestNotification();
-      if (success) {
-        // Обновляем список уведомлений
-        await loadNotifications();
-        Alert.alert('Успешно', 'Тестовое уведомление добавлено в локальный кэш');
-      } else {
-        Alert.alert('Ошибка', 'Не удалось добавить тестовое уведомление');
-      }
-    } catch (error) {
-      console.error('Ошибка добавления тестового уведомления:', error);
-      Alert.alert('Ошибка', 'Произошла ошибка при добавлении тестового уведомления');
-    }
-  };
-
   const renderHeader = () => {
     const hasUnreadNotifications = notifications.some(item => !item.isRead);
 
     return (
       <View style={styles.headerActions}>
-        {/* Кнопка для тестирования локального кэша */}
-        <TouchableOpacity
-          style={[styles.markAllButton, { backgroundColor: `${theme.colors.primary}20` }]}
-          onPress={handleAddTestNotification}
-        >
-          <Text style={[styles.markAllButtonText, { color: theme.colors.primary }]}>
-            🧪 Добавить тестовое уведомление
-          </Text>
-        </TouchableOpacity>
-
         {hasUnreadNotifications && (
           <TouchableOpacity
             style={styles.markAllButton}

@@ -63,7 +63,7 @@ export interface Order {
   workersNeeded: number;
   serviceDate: string; // ISO date string
   photos?: string[]; // массив URL фотографий
-  status: 'new' | 'in_progress' | 'completed' | 'cancelled';
+  status: 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled';
   customerId: string;
   applicantsCount: number;
   createdAt: string; // ISO date string

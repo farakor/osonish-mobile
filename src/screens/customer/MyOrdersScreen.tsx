@@ -24,7 +24,7 @@ type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
 
 export const MyOrdersScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
-  const [activeTab, setActiveTab] = useState<'all' | 'new' | 'in_progress' | 'completed'>('all');
+  const [activeTab, setActiveTab] = useState<'response_received' | 'in_progress' | 'completed'>('response_received');
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -124,6 +124,8 @@ export const MyOrdersScreen: React.FC = () => {
     switch (status) {
       case 'new':
         return theme.colors.primary;
+      case 'response_received':
+        return '#10B981'; // зеленый цвет для статуса "отклик получен"
       case 'in_progress':
         return '#FFA500';
       case 'completed':
@@ -139,6 +141,8 @@ export const MyOrdersScreen: React.FC = () => {
     switch (status) {
       case 'new':
         return 'Новый';
+      case 'response_received':
+        return 'Отклик получен';
       case 'in_progress':
         return 'В работе';
       case 'completed':
@@ -180,9 +184,7 @@ export const MyOrdersScreen: React.FC = () => {
   };
 
   // Фильтрация заказов по активной вкладке
-  const filteredOrders = activeTab === 'all'
-    ? allOrders
-    : allOrders.filter((order: Order) => order.status === activeTab);
+  const filteredOrders = allOrders.filter((order: Order) => order.status === activeTab);
 
   const renderOrder = ({ item }: { item: Order }) => (
     <ModernOrderCard
@@ -203,39 +205,47 @@ export const MyOrdersScreen: React.FC = () => {
         </View>
 
         {/* Tabs */}
-        <View style={styles.tabs}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'all' && styles.activeTab]}
-            onPress={() => setActiveTab('all')}
+        <View style={styles.tabsContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.tabs}
+            contentContainerStyle={styles.tabsContent}
           >
-            <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>
-              Все
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'new' && styles.activeTab]}
-            onPress={() => setActiveTab('new')}
-          >
-            <Text style={[styles.tabText, activeTab === 'new' && styles.activeTabText]}>
-              Новые
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'in_progress' && styles.activeTab]}
-            onPress={() => setActiveTab('in_progress')}
-          >
-            <Text style={[styles.tabText, activeTab === 'in_progress' && styles.activeTabText]}>
-              В работе
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'completed' && styles.activeTab]}
-            onPress={() => setActiveTab('completed')}
-          >
-            <Text style={[styles.tabText, activeTab === 'completed' && styles.activeTabText]}>
-              Заверш.
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'response_received' && styles.activeTab]}
+              onPress={() => setActiveTab('response_received')}
+            >
+              <Text
+                numberOfLines={1}
+                style={[styles.tabText, activeTab === 'response_received' && styles.activeTabText]}
+              >
+                Отклик получен
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'in_progress' && styles.activeTab]}
+              onPress={() => setActiveTab('in_progress')}
+            >
+              <Text
+                numberOfLines={1}
+                style={[styles.tabText, activeTab === 'in_progress' && styles.activeTabText]}
+              >
+                В работе
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'completed' && styles.activeTab]}
+              onPress={() => setActiveTab('completed')}
+            >
+              <Text
+                numberOfLines={1}
+                style={[styles.tabText, activeTab === 'completed' && styles.activeTabText]}
+              >
+                Завершенные
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
         </View>
 
         {/* Orders List */}
@@ -263,20 +273,18 @@ export const MyOrdersScreen: React.FC = () => {
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateIcon}>📋</Text>
             <Text style={styles.emptyStateTitle}>
-              {activeTab === 'all'
-                ? 'Заказов пока нет'
-                : activeTab === 'active'
-                  ? 'Нет активных заказов'
-                  : 'Нет завершенных заказов'
-              }
+              {activeTab === 'response_received'
+                ? 'Нет заказов с откликами'
+                : activeTab === 'in_progress'
+                  ? 'Нет заказов в работе'
+                  : 'Нет завершенных заказов'}
             </Text>
             <Text style={styles.emptyStateText}>
-              {activeTab === 'all'
-                ? 'Создайте свой первый заказ, чтобы найти исполнителя'
-                : activeTab === 'active'
-                  ? 'Все ваши заказы завершены или отменены'
-                  : 'У вас пока нет завершенных заказов'
-              }
+              {activeTab === 'response_received'
+                ? 'Когда исполнители откликнутся, заказы появятся здесь'
+                : activeTab === 'in_progress'
+                  ? 'Все ваши заказы ожидают принятия или завершены'
+                  : 'У вас пока нет завершенных заказов'}
             </Text>
           </View>
         )}
@@ -310,13 +318,20 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
   },
   tabs: {
-    flexDirection: 'row',
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.none,
     marginBottom: theme.spacing.lg,
   },
+  tabsContainer: {
+    paddingHorizontal: theme.spacing.none,
+  },
+  tabsContent: {
+    paddingHorizontal: theme.spacing.lg,
+    gap: theme.spacing.md,
+  },
   tab: {
-    flex: 1,
+    flexShrink: 0,
     paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
     alignItems: 'center',
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',

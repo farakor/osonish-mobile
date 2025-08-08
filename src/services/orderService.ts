@@ -162,7 +162,7 @@ export class OrderService {
         workersNeeded: item.workers_needed,
         serviceDate: item.service_date,
         photos: item.photos || [],
-        status: item.status as 'new' | 'in_progress' | 'completed' | 'cancelled',
+        status: item.status as 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled',
         customerId: item.customer_id,
         applicantsCount: item.applicants_count,
         createdAt: item.created_at,
@@ -211,7 +211,7 @@ export class OrderService {
         workersNeeded: item.workers_needed,
         serviceDate: item.service_date,
         photos: item.photos || [],
-        status: item.status as 'new' | 'in_progress' | 'completed' | 'cancelled',
+        status: item.status as 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled',
         customerId: item.customer_id,
         applicantsCount: item.applicants_count,
         createdAt: item.created_at,
@@ -254,7 +254,7 @@ export class OrderService {
         workersNeeded: item.workers_needed,
         serviceDate: item.service_date,
         photos: item.photos || [],
-        status: item.status as 'new' | 'in_progress' | 'completed' | 'cancelled',
+        status: item.status as 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled',
         customerId: item.customer_id,
         applicantsCount: item.applicants_count,
         createdAt: item.created_at,
@@ -300,7 +300,8 @@ export class OrderService {
   }
 
   /**
-   * Получение новых заказов для текущего пользователя (заказчика)
+   * Получение новых заказов и заказов с откликами для текущего пользователя (заказчика)
+   * Включает заказы со статусами 'new' и 'response_received'
    */
   async getUserNewOrders(): Promise<Order[]> {
     try {
@@ -314,7 +315,7 @@ export class OrderService {
         .from('orders')
         .select('*')
         .eq('customer_id', authState.user.id)
-        .eq('status', 'new')
+        .in('status', ['new', 'response_received'])
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -334,7 +335,7 @@ export class OrderService {
         workersNeeded: item.workers_needed,
         serviceDate: item.service_date,
         photos: item.photos || [],
-        status: item.status as 'new' | 'in_progress' | 'completed' | 'cancelled',
+        status: item.status as 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled',
         customerId: item.customer_id,
         applicantsCount: item.applicants_count,
         createdAt: item.created_at,
@@ -461,6 +462,14 @@ export class OrderService {
 
       // Увеличиваем счетчик откликов
       await this.incrementApplicantsCount(request.orderId);
+
+      // Проверяем, первый ли это отклик для заказа
+      const applicantsCount = await this.getApplicantsCount(request.orderId);
+      if (applicantsCount === 1) {
+        // Если это первый отклик, меняем статус заказа на 'response_received'
+        await this.updateOrderStatus(request.orderId, 'response_received');
+        console.log(`[OrderService] ✅ Статус заказа ${request.orderId} изменен на 'response_received' - получен первый отклик`);
+      }
 
       // Отправляем уведомление заказчику о новом отклике
       this.sendNewApplicationNotification(request.orderId, authState.user).catch(error => {
@@ -617,7 +626,7 @@ export class OrderService {
           orderServiceDate: order.service_date,
           orderStatus: order.status,
           customerName: customer ? `${customer.first_name} ${customer.last_name}` : 'Заказчик',
-          customerPhone: customer?.phone || '',
+          customerPhone: '', // Номер телефона заказчика больше не передается исполнителю
           rating: workerRating?.averageRating || null, // Реальный рейтинг
           completedJobs: completedJobsCount, // Реальное количество работ
           message: item.message,
@@ -665,7 +674,15 @@ export class OrderService {
     try {
       const { data, error } = await supabase
         .from('applicants')
-        .select('*')
+        .select(`
+          *,
+          worker:worker_id (
+            id,
+            first_name,
+            last_name,
+            phone
+          )
+        `)
         .eq('order_id', orderId)
         .order('applied_at', { ascending: false });
 
@@ -682,12 +699,16 @@ export class OrderService {
             this.getWorkerCompletedJobsCount(item.worker_id)
           ]);
 
+          const worker = item.worker;
+          const workerName = worker ? `${worker.first_name} ${worker.last_name}` : item.worker_name;
+          const workerPhone = worker?.phone || item.worker_phone;
+
           return {
             id: item.id,
             orderId: item.order_id,
             workerId: item.worker_id,
-            workerName: item.worker_name,
-            workerPhone: item.worker_phone,
+            workerName: workerName,
+            workerPhone: workerPhone,
             rating: workerRating?.averageRating || null, // Реальный рейтинг
             completedJobs: completedJobsCount, // Реальное количество работ
             message: item.message,
@@ -718,8 +739,8 @@ export class OrderService {
         return false;
       }
 
-      // Проверяем только заказы со статусом 'new'
-      if (order.status !== 'new') {
+      // Проверяем только заказы со статусами 'new' и 'response_received'
+      if (order.status !== 'new' && order.status !== 'response_received') {
         console.log(`[OrderService] Заказ ${orderId} уже имеет статус ${order.status}, пропускаем обновление`);
         return true;
       }
@@ -828,6 +849,29 @@ export class OrderService {
       }
     } catch (error) {
       console.error('[OrderService] Ошибка вызова функции увеличения счетчика:', error);
+    }
+  }
+
+  /**
+   * Получение количества откликов для заказа
+   */
+  private async getApplicantsCount(orderId: string): Promise<number> {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('applicants_count')
+        .eq('id', orderId)
+        .single();
+
+      if (error) {
+        console.error('[OrderService] Ошибка получения счетчика откликов:', error);
+        return 0;
+      }
+
+      return data?.applicants_count || 0;
+    } catch (error) {
+      console.error('[OrderService] Ошибка получения счетчика откликов:', error);
+      return 0;
     }
   }
 
@@ -1358,6 +1402,8 @@ export class OrderService {
       console.error('[OrderService] ❌ Ошибка отправки уведомления о выборе исполнителя:', error);
     }
   }
+
+
 
   /**
    * Отправка уведомлений о завершении заказа
