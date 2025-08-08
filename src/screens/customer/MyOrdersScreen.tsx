@@ -24,7 +24,7 @@ type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
 
 export const MyOrdersScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
-  const [activeTab, setActiveTab] = useState<'response_received' | 'in_progress' | 'completed'>('response_received');
+
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -183,8 +183,8 @@ export const MyOrdersScreen: React.FC = () => {
     }
   };
 
-  // Фильтрация заказов по активной вкладке
-  const filteredOrders = allOrders.filter((order: Order) => order.status === activeTab);
+  // Фильтрация заказов - показываем только завершенные
+  const filteredOrders = allOrders.filter((order: Order) => order.status === 'completed');
 
   const renderOrder = ({ item }: { item: Order }) => (
     <ModernOrderCard
@@ -204,49 +204,7 @@ export const MyOrdersScreen: React.FC = () => {
           <Text style={styles.subtitle}>Отслеживайте свои заказы</Text>
         </View>
 
-        {/* Tabs */}
-        <View style={styles.tabsContainer}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.tabs}
-            contentContainerStyle={styles.tabsContent}
-          >
-            <TouchableOpacity
-              style={[styles.tab, activeTab === 'response_received' && styles.activeTab]}
-              onPress={() => setActiveTab('response_received')}
-            >
-              <Text
-                numberOfLines={1}
-                style={[styles.tabText, activeTab === 'response_received' && styles.activeTabText]}
-              >
-                Отклик получен
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tab, activeTab === 'in_progress' && styles.activeTab]}
-              onPress={() => setActiveTab('in_progress')}
-            >
-              <Text
-                numberOfLines={1}
-                style={[styles.tabText, activeTab === 'in_progress' && styles.activeTabText]}
-              >
-                В работе
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tab, activeTab === 'completed' && styles.activeTab]}
-              onPress={() => setActiveTab('completed')}
-            >
-              <Text
-                numberOfLines={1}
-                style={[styles.tabText, activeTab === 'completed' && styles.activeTabText]}
-              >
-                Завершенные
-              </Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
+
 
         {/* Orders List */}
         {isLoading && allOrders.length === 0 ? (
@@ -273,18 +231,10 @@ export const MyOrdersScreen: React.FC = () => {
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateIcon}>📋</Text>
             <Text style={styles.emptyStateTitle}>
-              {activeTab === 'response_received'
-                ? 'Нет заказов с откликами'
-                : activeTab === 'in_progress'
-                  ? 'Нет заказов в работе'
-                  : 'Нет завершенных заказов'}
+              Нет завершенных заказов
             </Text>
             <Text style={styles.emptyStateText}>
-              {activeTab === 'response_received'
-                ? 'Когда исполнители откликнутся, заказы появятся здесь'
-                : activeTab === 'in_progress'
-                  ? 'Все ваши заказы ожидают принятия или завершены'
-                  : 'У вас пока нет завершенных заказов'}
+              У вас пока нет завершенных заказов
             </Text>
           </View>
         )}

@@ -8,6 +8,7 @@ import { initSMSService } from './src/services/smsService';
 import { authService } from './src/services/authService';
 import { notificationService } from './src/services/notificationService';
 
+
 // Подключаем тестовые утилиты в dev режиме
 if (__DEV__) {
   import('./src/utils/testingHelpers');

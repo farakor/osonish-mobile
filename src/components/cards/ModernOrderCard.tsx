@@ -68,14 +68,14 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
       case 'new':
         return {
           text: 'Новый',
-          color: '#10B981',
-          backgroundColor: '#D1FAE5',
+          color: theme.colors.primary,
+          backgroundColor: theme.colors.primary + '20',
         };
       case 'response_received':
         return {
           text: 'Отклик получен',
-          color: '#3B82F6',
-          backgroundColor: '#DBEAFE',
+          color: '#FFFFFF',
+          backgroundColor: theme.colors.primary,
         };
       case 'in_progress':
         return {
@@ -144,7 +144,12 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
       activeOpacity={0.7}
       onPress={onPress}
     >
-      <View style={styles.card}>
+      <View
+        style={[
+          styles.card,
+          order.status === 'response_received' && styles.cardResponseReceived,
+        ]}
+      >
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.categoryIcon}>
@@ -333,6 +338,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F0F0F0',
   },
+  cardResponseReceived: {
+    // светлее, чем фон badge (#D1FAE5)
+    backgroundColor: '#ECFDF5',
+    // рамка в основном зеленом цвете
+    borderColor: theme.colors.primary,
+    borderWidth: 0.5,
+    // легкий glow в зеленом цвете
+    shadowColor: '#10B981',
+    shadowOpacity: 0.14,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 0 },
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -359,13 +376,13 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.regular,
   },
   statusPill: {
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: 12,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: 16,
     alignSelf: 'flex-end',
   },
   statusPillText: {
-    fontSize: theme.fonts.sizes.xs,
+    fontSize: theme.fonts.sizes.sm,
     fontWeight: theme.fonts.weights.semiBold,
   },
   title: {

@@ -23,7 +23,7 @@ import CategoryIcon from '../../../assets/card-icons/category.svg';
 import BankNoteIcon from '../../../assets/card-icons/bank-note-01.svg';
 import UserIcon from '../../../assets/user-01.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import { HeaderWithBack, PriceConfirmationModal, ProposePriceModal, MediaViewer } from '../../components/common';
+import { HeaderWithBack, PriceConfirmationModal, ProposePriceModal, MediaViewer, OrderLocationMap } from '../../components/common';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { locationService, LocationCoords } from '../../services/locationService';
@@ -210,6 +210,7 @@ export const JobDetailsScreen: React.FC = () => {
   const [priceConfirmationVisible, setPriceConfirmationVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [userLocation, setUserLocation] = useState<LocationCoords | null>(null);
+  const [mapCoords, setMapCoords] = useState<LocationCoords | null>(null);
 
   // Анимация для sticky header
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -223,6 +224,21 @@ export const JobDetailsScreen: React.FC = () => {
         setIsLoading(true);
         const orderData = await orderService.getOrderById(orderId);
         setOrder(orderData);
+
+        // Если в заказе нет координат, пробуем получить их по адресу
+        if (orderData && (!orderData.latitude || !orderData.longitude) && orderData.location) {
+          try {
+            const coords = await locationService.geocodeAddress(orderData.location);
+            if (coords) {
+              setMapCoords(coords);
+            }
+          } catch (geoErr) {
+            console.log('[JobDetailsScreen] Не удалось геокодировать адрес заказа:', geoErr);
+          }
+        } else if (orderData && orderData.latitude && orderData.longitude) {
+          // При наличии координат очищаем возможные старые значения
+          setMapCoords(null);
+        }
 
         // Проверяем, откликнулся ли пользователь
         const applied = await orderService.hasUserAppliedToOrder(orderId);
@@ -273,6 +289,11 @@ export const JobDetailsScreen: React.FC = () => {
   const formatBudget = (budget: number) => {
     return budget.toLocaleString('ru-RU');
   };
+
+  // Координаты для карты: берем из заказа, иначе из геокодирования
+  const effectiveLatitude: number | undefined = order?.latitude ?? mapCoords?.latitude;
+  const effectiveLongitude: number | undefined = order?.longitude ?? mapCoords?.longitude;
+  const hasMapCoords = typeof effectiveLatitude === 'number' && typeof effectiveLongitude === 'number';
 
   const handleApplyToJob = async () => {
     try {
@@ -520,6 +541,16 @@ export const JobDetailsScreen: React.FC = () => {
               </View>
             </View>
           </View>
+
+          {/* Location Map Section */}
+          {hasMapCoords && (
+            <OrderLocationMap
+              latitude={effectiveLatitude as number}
+              longitude={effectiveLongitude as number}
+              address={order.location}
+              title="Куда ехать"
+            />
+          )}
 
           {/* Details Section */}
           <View style={styles.detailsSection}>

@@ -300,8 +300,8 @@ export class OrderService {
   }
 
   /**
-   * Получение новых заказов и заказов с откликами для текущего пользователя (заказчика)
-   * Включает заказы со статусами 'new' и 'response_received'
+   * Получение активных заказов для текущего пользователя (заказчика)
+   * Включает все заказы кроме завершенных
    */
   async getUserNewOrders(): Promise<Order[]> {
     try {
@@ -315,7 +315,7 @@ export class OrderService {
         .from('orders')
         .select('*')
         .eq('customer_id', authState.user.id)
-        .in('status', ['new', 'response_received'])
+        .neq('status', 'completed')
         .order('created_at', { ascending: false });
 
       if (error) {

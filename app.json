@@ -59,6 +59,9 @@
           "defaultChannel": "default",
           "sounds": []
         }
+      ],
+      [
+        "expo-location"
       ]
     ]
   }

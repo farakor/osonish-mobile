@@ -26,7 +26,7 @@ import CategoryIcon from '../../../assets/card-icons/category.svg';
 import BankNoteIcon from '../../../assets/card-icons/bank-note-01.svg';
 import UserIcon from '../../../assets/user-01.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import { HeaderWithBack, MediaViewer } from '../../components/common';
+import { HeaderWithBack, MediaViewer, OrderLocationMap } from '../../components/common';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { supabase } from '../../services/supabaseClient';
@@ -902,6 +902,16 @@ export const OrderDetailsScreen: React.FC = () => {
               </View>
             </View>
           </View>
+
+          {/* Location Map Section */}
+          {order.latitude && order.longitude && (
+            <OrderLocationMap
+              latitude={order.latitude}
+              longitude={order.longitude}
+              address={order.location}
+              title="Куда ехать"
+            />
+          )}
 
           {/* Details Section */}
           <View style={styles.detailsSection}>

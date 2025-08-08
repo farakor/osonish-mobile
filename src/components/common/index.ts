@@ -13,3 +13,4 @@ export {
 } from './AnimatedComponents';
 export { ModernActionButton } from './ModernActionButton';
 export { MediaViewer } from './MediaViewer';
+export { OrderLocationMap } from './OrderLocationMap';
