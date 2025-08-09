@@ -10,13 +10,15 @@ import {
   RefreshControl,
   Alert,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
-import { HeaderWithBack } from '../../components/common';
+import { HeaderWithBack, StarIcon } from '../../components/common';
 import { WorkerProfile, Review } from '../../types';
 import { CustomerStackParamList } from '../../types/navigation';
+import { orderService } from '../../services/orderService';
 import UserIcon from '../../../assets/user-01.svg';
 
 type WorkerProfileNavigationProp = NativeStackNavigationProp<CustomerStackParamList, 'WorkerProfile'>;
@@ -33,60 +35,21 @@ export const WorkerProfileScreen: React.FC = () => {
 
   const loadWorkerProfile = async () => {
     try {
-      // TODO: Заменить на реальный API вызов
-      // const profile = await orderService.getWorkerProfile(workerId);
+      console.log(`[WorkerProfileScreen] 📋 Загружаем профиль исполнителя ${workerId}...`);
 
-      // Мок данных для демонстрации
-      const mockProfile: WorkerProfile = {
-        id: workerId,
-        firstName: workerName.split(' ')[0] || 'Имя',
-        lastName: workerName.split(' ')[1] || 'Фамилия',
-        phone: '+998901234567',
-        profileImage: undefined,
-        averageRating: 4.3,
-        totalReviews: 15,
-        completedJobs: 29,
-        joinedAt: '2023-01-15T00:00:00Z',
-        reviews: [
-          {
-            id: '1',
-            orderId: 'order1',
-            workerId: workerId,
-            customerId: 'customer1',
-            customerName: 'Анна Петрова',
-            rating: 5,
-            comment: 'Отличная работа! Быстро и качественно выполнил ремонт крана. Рекомендую!',
-            createdAt: '2024-01-15T10:30:00Z',
-            orderTitle: 'Ремонт крана в ванной'
-          },
-          {
-            id: '2',
-            orderId: 'order2',
-            workerId: workerId,
-            customerId: 'customer2',
-            customerName: 'Дмитрий Иванов',
-            rating: 4,
-            comment: 'Хорошо выполнил работу, но немного задержался по времени.',
-            createdAt: '2024-01-10T14:20:00Z',
-            orderTitle: 'Установка светильника'
-          },
-          {
-            id: '3',
-            orderId: 'order3',
-            workerId: workerId,
-            customerId: 'customer3',
-            customerName: 'Мария Сидорова',
-            rating: 5,
-            comment: 'Профессиональный подход, качественные материалы. Очень довольна результатом!',
-            createdAt: '2024-01-05T16:45:00Z',
-            orderTitle: 'Замена розеток'
-          }
-        ]
-      };
+      // Загружаем реальные данные профиля исполнителя
+      const profile = await orderService.getWorkerProfile(workerId);
 
-      setWorkerProfile(mockProfile);
+      if (profile) {
+        console.log(`[WorkerProfileScreen] ✅ Профиль загружен: ${profile.firstName} ${profile.lastName}`);
+        console.log(`[WorkerProfileScreen] 📊 Статистика: ${profile.completedJobs} работ, ${profile.totalReviews} отзывов, рейтинг ${profile.averageRating}`);
+        setWorkerProfile(profile);
+      } else {
+        console.warn(`[WorkerProfileScreen] ⚠️ Профиль исполнителя ${workerId} не найден`);
+        Alert.alert('Ошибка', 'Профиль исполнителя не найден');
+      }
     } catch (error) {
-      console.error('Ошибка загрузки профиля исполнителя:', error);
+      console.error('[WorkerProfileScreen] ❌ Ошибка загрузки профиля исполнителя:', error);
       Alert.alert('Ошибка', 'Не удалось загрузить профиль исполнителя');
     } finally {
       setIsLoading(false);
@@ -122,9 +85,12 @@ export const WorkerProfileScreen: React.FC = () => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
       stars.push(
-        <Text key={i} style={i <= rating ? styles.starFilled : styles.starEmpty}>
-          ⭐
-        </Text>
+        <View key={i} style={styles.starContainer}>
+          <StarIcon
+            filled={i <= rating}
+            size={16}
+          />
+        </View>
       );
     }
     return stars;
@@ -158,6 +124,7 @@ export const WorkerProfileScreen: React.FC = () => {
         <SafeAreaView style={styles.content}>
           <HeaderWithBack title="Профиль исполнителя" />
           <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={theme.colors.primary} />
             <Text style={styles.loadingText}>Загружаем профиль...</Text>
           </View>
         </SafeAreaView>
@@ -204,11 +171,13 @@ export const WorkerProfileScreen: React.FC = () => {
                     <UserIcon width={40} height={40} stroke={theme.colors.text.secondary} />
                   </View>
                 )}
-                <View style={styles.ratingBadge}>
-                  <Text style={styles.ratingText}>
-                    {workerProfile.averageRating.toFixed(1)}
-                  </Text>
-                </View>
+                {workerProfile.averageRating > 0 && (
+                  <View style={styles.ratingBadge}>
+                    <Text style={styles.ratingText}>
+                      {workerProfile.averageRating.toFixed(1)}
+                    </Text>
+                  </View>
+                )}
               </View>
 
               <View style={styles.profileInfo}>
@@ -232,7 +201,9 @@ export const WorkerProfileScreen: React.FC = () => {
                 <Text style={styles.statLabel}>Отзывов</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={styles.statValue}>{workerProfile.averageRating.toFixed(1)}</Text>
+                <Text style={styles.statValue}>
+                  {workerProfile.averageRating > 0 ? workerProfile.averageRating.toFixed(1) : '—'}
+                </Text>
                 <Text style={styles.statLabel}>Рейтинг</Text>
               </View>
             </View>
@@ -283,6 +254,7 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
+    marginTop: theme.spacing.md,
   },
   errorContainer: {
     flex: 1,
@@ -429,13 +401,8 @@ const styles = StyleSheet.create({
   reviewRating: {
     flexDirection: 'row',
   },
-  starFilled: {
-    fontSize: 16,
-    color: '#FFC107',
-  },
-  starEmpty: {
-    fontSize: 16,
-    color: '#E5E7EB',
+  starContainer: {
+    marginRight: 2,
   },
   reviewOrderTitle: {
     fontSize: 14,

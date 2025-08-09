@@ -184,7 +184,7 @@ export const ApplicantsListScreen: React.FC = () => {
   const getStatusText = (status: string): string => {
     switch (status) {
       case 'pending': return 'Ожидает';
-      case 'accepted': return 'Принят';
+      case 'accepted': return 'Выбран';
       case 'rejected': return 'Отклонен';
       default: return 'Неизвестно';
     }
@@ -349,8 +349,7 @@ export const ApplicantsListScreen: React.FC = () => {
         isRejected && styles.modernRejectedCard,
         animatedStyle
       ]}>
-        {/* Градиентная полоса статуса - только для принятых и отклоненных */}
-        {isAccepted && <View style={styles.modernStatusBarAccepted} />}
+        {/* Градиентная полоса статуса - только для отклоненных */}
         {isRejected && <View style={styles.modernStatusBarRejected} />}
 
         {/* Основное содержимое */}
@@ -360,7 +359,14 @@ export const ApplicantsListScreen: React.FC = () => {
             {/* Аватар исполнителя */}
             <View style={styles.modernAvatarContainer}>
               {item.avatar ? (
-                <Image source={{ uri: item.avatar }} style={styles.modernAvatar} />
+                <Image
+                  source={{ uri: item.avatar }}
+                  style={styles.modernAvatar}
+                  resizeMode="cover"
+                  onError={() => {
+                    console.log('[ApplicantsListScreen] Ошибка загрузки аватара:', item.avatar);
+                  }}
+                />
               ) : (
                 <View style={styles.modernAvatarPlaceholder}>
                   <UserIcon width={20} height={20} stroke={theme.colors.text.secondary} />
@@ -418,12 +424,7 @@ export const ApplicantsListScreen: React.FC = () => {
               </View>
             </View>
 
-            {/* Статус точка */}
-            <View style={styles.modernStatusContainer}>
-              {!isAccepted && !isRejected && (
-                <View style={styles.modernPendingDot} />
-              )}
-            </View>
+
           </View>
 
           {/* Предложенная цена */}
@@ -476,7 +477,7 @@ export const ApplicantsListScreen: React.FC = () => {
           {isAccepted && item.workerPhone && (
             <View style={styles.modernContactInfo}>
               <View style={styles.modernContactHeader}>
-                <Text style={styles.modernContactLabel}>📞 Контакты</Text>
+                <Text style={styles.modernContactLabel}>Контакты</Text>
               </View>
               <View style={styles.modernContactRow}>
                 <Text style={styles.modernPhoneNumber}>{item.workerPhone}</Text>
@@ -533,26 +534,20 @@ export const ApplicantsListScreen: React.FC = () => {
       <SafeAreaView style={styles.content}>
         <HeaderWithBack title={`Отклики (${applicants.length})`} />
 
-        {/* Информация о заказе */}
-        {order && (
-          <View style={styles.orderInfoContainer}>
-            <Text style={styles.orderTitle}>{order.title}</Text>
-            <Text style={styles.orderBudget}>{formatBudget(order.budget)}</Text>
-            {order.workersNeeded && (
-              <View style={styles.progressContainer}>
-                <Text style={styles.workersNeeded}>
-                  Выбрано {acceptedApplicants.size} из {order.workersNeeded} исполнител{order.workersNeeded === 1 ? 'я' : 'ей'}
-                </Text>
-                <View style={styles.progressBar}>
-                  <View
-                    style={[
-                      styles.progressFill,
-                      { width: `${Math.min((acceptedApplicants.size / order.workersNeeded) * 100, 100)}%` }
-                    ]}
-                  />
-                </View>
-              </View>
-            )}
+        {/* Прогресс выбора исполнителей */}
+        {order && order.workersNeeded && (
+          <View style={styles.progressOnlyContainer}>
+            <Text style={styles.workersNeededLarge}>
+              Выбрано {acceptedApplicants.size} из {order.workersNeeded} исполнител{order.workersNeeded === 1 ? 'я' : 'ей'}
+            </Text>
+            <View style={styles.progressBarLarge}>
+              <View
+                style={[
+                  styles.progressFillLarge,
+                  { width: `${Math.min((acceptedApplicants.size / order.workersNeeded) * 100, 100)}%` }
+                ]}
+              />
+            </View>
           </View>
         )}
 
@@ -645,44 +640,36 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
   },
-  orderInfoContainer: {
-    padding: theme.spacing.md,
+  progressOnlyContainer: {
+    padding: theme.spacing.lg,
     backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
   },
-  orderTitle: {
+  workersNeededLarge: {
     fontSize: theme.fonts.sizes.lg,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
+    marginBottom: theme.spacing.md,
+    textAlign: 'center',
   },
-  orderBudget: {
-    fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.xs,
-  },
-  workersNeeded: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.sm,
-  },
-  progressContainer: {
-    marginTop: theme.spacing.sm,
-  },
-  progressBar: {
-    height: 8,
-    backgroundColor: theme.colors.surface,
-    borderRadius: 4,
+  progressBarLarge: {
+    height: 16,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
-  progressFill: {
+  progressFillLarge: {
     height: '100%',
     backgroundColor: theme.colors.primary,
-    borderRadius: 4,
+    borderRadius: 8,
   },
   applicantsList: {
     flex: 1,
@@ -947,10 +934,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
     backgroundColor: '#F8F9FA',
   },
-  modernStatusBarAccepted: {
-    height: 4,
-    backgroundColor: '#679B00',
-  },
+
   modernStatusBarRejected: {
     height: 4,
     backgroundColor: '#FF6B6B',
@@ -973,6 +957,7 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     backgroundColor: theme.colors.surface,
+    overflow: 'hidden',
   },
   modernAvatarPlaceholder: {
     width: 48,
@@ -1019,14 +1004,17 @@ const styles = StyleSheet.create({
   },
   reviewsButton: {
     backgroundColor: '#F0F2F5',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    minHeight: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   reviewsButtonText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
     color: theme.colors.primary,
   },
@@ -1074,16 +1062,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 4,
   },
-  modernStatusContainer: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-  },
-  modernPendingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FFA726',
-  },
+
   modernPriceContainer: {
     backgroundColor: '#F8FAFC',
     borderRadius: 10,
@@ -1093,7 +1072,7 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   modernPriceContainerAccepted: {
-    backgroundColor: '#F0FDFA',
+    backgroundColor: '#FFFFFF',
     borderColor: '#679B00',
   },
   modernPriceHeader: {
@@ -1150,19 +1129,22 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   modernContactInfo: {
-    backgroundColor: '#F0FDF4',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: '#679B00',
   },
   modernContactHeader: {
-    marginBottom: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   modernContactLabel: {
     fontSize: 13,
-    color: '#059669',
+    color: '#64748B',
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -1178,20 +1160,23 @@ const styles = StyleSheet.create({
     color: '#1F2937',
   },
   modernCallButton: {
-    backgroundColor: '#10B981',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    elevation: 2,
-    shadowColor: '#10B981',
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.lg,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 40,
+    shadowColor: theme.colors.primary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
+    elevation: 2,
   },
   modernCallButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.medium,
+    color: theme.colors.white,
   },
   modernApplicantActions: {
     marginTop: 4,

@@ -16,6 +16,7 @@ import { theme } from '../../constants';
 import { StatItem } from '../../components/common';
 import { authService } from '../../services/authService';
 import { orderService } from '../../services/orderService';
+import { StarIcon } from '../../components/common';
 import { User } from '../../types';
 import UserEditIcon from '../../../assets/user-edit.svg';
 import NotificationMessageIcon from '../../../assets/notification-message.svg';
@@ -345,7 +346,7 @@ export const WorkerProfileScreen: React.FC = () => {
             </View>
             {stats.rating > 0 && (
               <View style={styles.ratingContainer}>
-                <Text style={styles.ratingStars}>⭐</Text>
+                <StarIcon filled={true} size={16} />
                 <Text style={styles.ratingText}>{stats.rating}</Text>
                 <Text style={styles.ratingCount}>
                   ({stats.totalReviews} отзыв{stats.totalReviews === 1 ? '' : stats.totalReviews < 5 ? 'а' : 'ов'})
@@ -558,10 +559,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: theme.spacing.sm,
-  },
-  ratingStars: {
-    fontSize: 16,
-    marginRight: theme.spacing.xs,
+    gap: theme.spacing.xs,
   },
   ratingText: {
     fontSize: theme.fonts.sizes.md,

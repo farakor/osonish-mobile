@@ -11,7 +11,7 @@ import {
   LoginSmsVerificationScreen,
   RegistrationScreen,
   SmsVerificationScreen,
-  ProfileInfoScreen,
+  ProfileInfoStepByStepScreen,
   RoleSelectionScreen
 } from '../screens/auth';
 import { CustomerStackNavigator } from './CustomerStackNavigator';
@@ -54,7 +54,7 @@ export function AppNavigator() {
         />
         <Stack.Screen
           name="ProfileInfo"
-          component={ProfileInfoScreen}
+          component={ProfileInfoStepByStepScreen}
         />
         <Stack.Screen
           name="RoleSelection"

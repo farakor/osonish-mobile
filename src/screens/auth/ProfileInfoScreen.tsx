@@ -18,6 +18,8 @@ import { theme } from '../../constants';
 import type { RootStackParamList } from '../../types';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
+import Svg, { Path } from 'react-native-svg';
+import { PrivacyPolicyModal } from '../../components/common';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -34,6 +36,7 @@ export function ProfileInfoScreen() {
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     if (Platform.OS === 'android') {
@@ -132,7 +135,15 @@ export function ProfileInfoScreen() {
             ) : (
               <View style={styles.photoPlaceholder}>
                 <View style={styles.photoIcon}>
-                  <Text style={styles.photoIconText}>👤</Text>
+                  <Svg width={32} height={32} viewBox="0 0 18 20" fill="none">
+                    <Path
+                      d="M17 19C17 17.6044 17 16.9067 16.8278 16.3389C16.44 15.0605 15.4395 14.06 14.1611 13.6722C13.5933 13.5 12.8956 13.5 11.5 13.5H6.5C5.10444 13.5 4.40665 13.5 3.83886 13.6722C2.56045 14.06 1.56004 15.0605 1.17224 16.3389C1 16.9067 1 17.6044 1 19M13.5 5.5C13.5 7.98528 11.4853 10 9 10C6.51472 10 4.5 7.98528 4.5 5.5C4.5 3.01472 6.51472 1 9 1C11.4853 1 13.5 3.01472 13.5 5.5Z"
+                      stroke="#999"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </Svg>
                 </View>
                 <View style={styles.addPhotoButton}>
                   <Text style={styles.addPhotoButtonText}>+</Text>
@@ -212,19 +223,31 @@ export function ProfileInfoScreen() {
           {/* Privacy Agreement */}
           <View style={styles.privacySection}>
             <TouchableOpacity
-              style={styles.checkbox}
-              onPress={() => setPrivacyAccepted(!privacyAccepted)}
+              style={styles.privacyDocumentButton}
+              onPress={() => setShowPrivacyModal(true)}
             >
-              <View style={[styles.checkboxBox, privacyAccepted && styles.checkboxChecked]}>
-                {privacyAccepted && (
-                  <Text style={styles.checkboxTick}>✓</Text>
-                )}
+              <Text style={styles.privacyDocumentIcon}>📄</Text>
+              <View style={styles.privacyDocumentContent}>
+                <Text style={styles.privacyDocumentTitle}>Согласие на обработку персональных данных</Text>
               </View>
-              <Text style={styles.privacyText}>
-                Согласен с обработкой персональных данных{'\n'}
-                <Text style={styles.privacyLink}>Согласно закону о ПД РУЗ ****</Text>
-              </Text>
+              <Text style={styles.privacyDocumentArrow}>›</Text>
             </TouchableOpacity>
+
+            <View style={styles.privacyCheckboxContainer}>
+              <TouchableOpacity
+                style={styles.privacyCheckbox}
+                onPress={() => setPrivacyAccepted(!privacyAccepted)}
+              >
+                <View style={[styles.privacyCheckboxBox, privacyAccepted && styles.privacyCheckboxChecked]}>
+                  {privacyAccepted && (
+                    <Text style={styles.privacyCheckboxTick}>✓</Text>
+                  )}
+                </View>
+                <Text style={styles.privacyCheckboxText}>
+                  Согласен с обработкой персональных данных
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -232,9 +255,9 @@ export function ProfileInfoScreen() {
       {/* Submit Button */}
       <View style={styles.submitSection}>
         <TouchableOpacity
-          style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
+          style={[styles.submitButton, (isLoading || !privacyAccepted) && styles.submitButtonDisabled]}
           onPress={handleSubmit}
-          disabled={isLoading}
+          disabled={isLoading || !privacyAccepted}
         >
           <Text style={styles.submitButtonText}>
             {isLoading ? 'Сохраняем...' : 'Готово'}
@@ -266,6 +289,14 @@ export function ProfileInfoScreen() {
           />
         </View>
       )}
+
+      {/* Privacy Policy Modal */}
+      <PrivacyPolicyModal
+        visible={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+        onAccept={() => { }}
+        privacyAccepted={privacyAccepted}
+      />
     </SafeAreaView>
   );
 }
@@ -431,11 +462,47 @@ const styles = StyleSheet.create({
   privacySection: {
     marginTop: theme.spacing.lg,
   },
-  checkbox: {
+  privacyDocumentButton: {
+    backgroundColor: theme.colors.surface,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  privacyDocumentIcon: {
+    fontSize: 24,
+    marginRight: theme.spacing.md,
+  },
+  privacyDocumentContent: {
+    flex: 1,
+  },
+  privacyDocumentTitle: {
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.text.primary,
+    marginBottom: 4,
+  },
+  privacyDocumentSubtitle: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
+    lineHeight: 18,
+  },
+  privacyDocumentArrow: {
+    fontSize: 20,
+    color: theme.colors.text.secondary,
+    marginLeft: theme.spacing.sm,
+  },
+  privacyCheckboxContainer: {
+    marginTop: theme.spacing.md,
+  },
+  privacyCheckbox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
-  checkboxBox: {
+  privacyCheckboxBox: {
     width: 20,
     height: 20,
     borderWidth: 2,
@@ -446,24 +513,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 2,
   },
-  checkboxChecked: {
+  privacyCheckboxChecked: {
     backgroundColor: theme.colors.primary,
     borderColor: theme.colors.primary,
   },
-  checkboxTick: {
+  privacyCheckboxTick: {
     color: theme.colors.white,
     fontSize: 12,
     fontWeight: 'bold',
   },
-  privacyText: {
+  privacyCheckboxText: {
     flex: 1,
     fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.primary,
     lineHeight: 18,
-  },
-  privacyLink: {
-    color: theme.colors.primary,
-    textDecorationLine: 'underline',
   },
   submitSection: {
     paddingHorizontal: theme.spacing.lg,

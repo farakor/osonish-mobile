@@ -30,10 +30,10 @@ const stats: StatItem[] = [
   },
   {
     id: 'rating',
-    icon: '⭐',
+    icon: '★',
     value: '4.8',
     label: 'Рейтинг',
-    color: '#FF9500',
+    color: '#FDB022',
   },
 ];
 

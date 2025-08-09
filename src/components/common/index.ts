@@ -2,6 +2,8 @@ export { HeaderWithBack } from './HeaderWithBack';
 export { PriceConfirmationModal } from './PriceConfirmationModal';
 export { StatsWidget } from './StatsWidget';
 export { ProposePriceModal } from './ProposePriceModal';
+export { PrivacyPolicyModal } from './PrivacyPolicyModal';
+export { StarIcon } from './StarIcon';
 export type { StatItem } from './StatsWidget';
 export {
   AnimatedButton,

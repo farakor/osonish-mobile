@@ -1,4 +1,4 @@
-import { Order, CreateOrderRequest, CreateOrderResponse, Applicant, CreateApplicantRequest, WorkerApplication, Review, CreateReviewRequest, WorkerRating } from '../types';
+import { Order, CreateOrderRequest, CreateOrderResponse, Applicant, CreateApplicantRequest, WorkerApplication, Review, CreateReviewRequest, WorkerRating, WorkerProfile } from '../types';
 import { authService } from './authService';
 import { notificationService } from './notificationService';
 import { supabase, Database } from './supabaseClient';
@@ -680,7 +680,8 @@ export class OrderService {
             id,
             first_name,
             last_name,
-            phone
+            phone,
+            profile_image
           )
         `)
         .eq('order_id', orderId)
@@ -702,6 +703,7 @@ export class OrderService {
           const worker = item.worker;
           const workerName = worker ? `${worker.first_name} ${worker.last_name}` : item.worker_name;
           const workerPhone = worker?.phone || item.worker_phone;
+          const workerAvatar = worker?.profile_image || null;
 
           return {
             id: item.id,
@@ -709,6 +711,7 @@ export class OrderService {
             workerId: item.worker_id,
             workerName: workerName,
             workerPhone: workerPhone,
+            avatar: workerAvatar,
             rating: workerRating?.averageRating || null, // Реальный рейтинг
             completedJobs: completedJobsCount, // Реальное количество работ
             message: item.message,
@@ -1097,7 +1100,10 @@ export class OrderService {
         created_at: new Date().toISOString()
       };
 
-      console.log('[OrderService] Создаем отзыв с данными:', reviewData);
+      console.log('[OrderService] 📝 Создаем отзыв с данными:', {
+        ...reviewData,
+        comment: reviewData.comment ? `"${reviewData.comment}"` : 'NULL (без комментария)'
+      });
 
       const { data, error } = await supabase
         .from('reviews')
@@ -1105,7 +1111,7 @@ export class OrderService {
         .select();
 
       if (error) {
-        console.error('[OrderService] Ошибка создания отзыва:', {
+        console.error('[OrderService] ❌ Ошибка создания отзыва:', {
           error,
           code: error.code,
           message: error.message,
@@ -1115,7 +1121,14 @@ export class OrderService {
         return false;
       }
 
-      console.log('[OrderService] ✅ Отзыв создан:', data);
+      console.log('[OrderService] ✅ Отзыв создан в Supabase:', {
+        id: data[0]?.id,
+        orderId: data[0]?.order_id,
+        workerId: data[0]?.worker_id,
+        rating: data[0]?.rating,
+        comment: data[0]?.comment ? `"${data[0].comment}"` : 'NULL (без комментария)',
+        createdAt: data[0]?.created_at
+      });
 
       console.log('[OrderService] ✅ Отзыв успешно создан');
       return true;
@@ -1463,6 +1476,127 @@ export class OrderService {
       console.log(`[OrderService] ✅ Отправлено ${sentCount} уведомлений о завершении заказа`);
     } catch (error) {
       console.error('[OrderService] ❌ Ошибка отправки уведомлений о завершении заказа:', error);
+    }
+  }
+
+  /**
+   * Получить полный профиль исполнителя с отзывами
+   */
+  async getWorkerProfile(workerId: string): Promise<WorkerProfile | null> {
+    try {
+      console.log(`[OrderService] 📋 Загружаем профиль исполнителя ${workerId}...`);
+      console.log(`[OrderService] 🔍 Будем искать отзывы для worker_id: ${workerId}`);
+
+      // Получаем основную информацию о пользователе
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', workerId)
+        .eq('role', 'worker')
+        .single();
+
+      if (userError || !userData) {
+        console.error('[OrderService] ❌ Исполнитель не найден:', userError);
+        return null;
+      }
+
+      // Получаем рейтинг и количество отзывов
+      const workerRating = await this.getWorkerRating(workerId);
+
+      // Получаем количество завершенных работ
+      const completedJobs = await this.getWorkerCompletedJobsCount(workerId);
+
+      // Получаем отзывы для исполнителя (сначала основные данные)
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('worker_id', workerId)
+        .order('created_at', { ascending: false });
+
+      let reviews: Review[] = [];
+      if (!reviewsError && reviewsData && reviewsData.length > 0) {
+        console.log(`[OrderService] 📋 Загружено ${reviewsData.length} отзывов из Supabase`);
+
+        // Получаем уникальные ID заказчиков и заказов для дополнительной информации
+        const customerIds = [...new Set(reviewsData.map(review => review.customer_id))];
+        const orderIds = [...new Set(reviewsData.map(review => review.order_id))];
+
+        // Загружаем информацию о заказчиках
+        let customersMap = new Map();
+        if (customerIds.length > 0) {
+          const { data: customers } = await supabase
+            .from('users')
+            .select('id, first_name, last_name')
+            .in('id', customerIds);
+
+          if (customers) {
+            customers.forEach(customer => {
+              customersMap.set(customer.id, `${customer.first_name} ${customer.last_name}`);
+            });
+          }
+        }
+
+        // Загружаем информацию о заказах
+        let ordersMap = new Map();
+        if (orderIds.length > 0) {
+          const { data: orders } = await supabase
+            .from('orders')
+            .select('id, title')
+            .in('id', orderIds);
+
+          if (orders) {
+            orders.forEach(order => {
+              ordersMap.set(order.id, order.title);
+            });
+          }
+        }
+
+        reviews = reviewsData.map((item: any) => ({
+          id: item.id,
+          orderId: item.order_id,
+          customerId: item.customer_id,
+          workerId: item.worker_id,
+          customerName: customersMap.get(item.customer_id) || 'Заказчик',
+          rating: item.rating,
+          comment: item.comment,
+          createdAt: item.created_at,
+          orderTitle: ordersMap.get(item.order_id)
+        }));
+
+        console.log(`[OrderService] 📋 Обработанные отзывы:`,
+          reviews.map(review => ({
+            id: review.id,
+            rating: review.rating,
+            comment: review.comment ? `"${review.comment}"` : 'NULL (без комментария)',
+            customerName: review.customerName,
+            orderTitle: review.orderTitle || 'Без названия'
+          }))
+        );
+      } else {
+        console.log(`[OrderService] ⚠️ Нет отзывов для исполнителя ${workerId}`,
+          reviewsError ? `Ошибка: ${reviewsError.message}` : 'Данных нет');
+      }
+
+      const workerProfile: WorkerProfile = {
+        id: userData.id,
+        firstName: userData.first_name,
+        lastName: userData.last_name,
+        phone: userData.phone,
+        profileImage: userData.profile_image,
+        averageRating: workerRating?.averageRating || 0,
+        totalReviews: workerRating?.totalReviews || 0,
+        completedJobs,
+        joinedAt: userData.created_at,
+        reviews
+      };
+
+      console.log(`[OrderService] ✅ Профиль исполнителя загружен: ${workerProfile.firstName} ${workerProfile.lastName}`);
+      console.log(`[OrderService] 📊 Статистика: ${completedJobs} работ, ${workerProfile.totalReviews} отзывов, рейтинг ${workerProfile.averageRating}`);
+
+      return workerProfile;
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка получения профиля исполнителя:', error);
+      return null;
     }
   }
 }

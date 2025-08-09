@@ -5,4 +5,5 @@ export { LoginSmsVerificationScreen } from './LoginSmsVerificationScreen';
 export { RegistrationScreen } from './RegistrationScreen';
 export { SmsVerificationScreen } from './SmsVerificationScreen';
 export { ProfileInfoScreen } from './ProfileInfoScreen';
+export { ProfileInfoStepByStepScreen } from './ProfileInfoStepByStepScreen';
 export { RoleSelectionScreen } from './RoleSelectionScreen'; 

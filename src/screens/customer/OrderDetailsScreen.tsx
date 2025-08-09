@@ -425,7 +425,7 @@ export const OrderDetailsScreen: React.FC = () => {
   const getApplicantStatusText = (status: string): string => {
     switch (status) {
       case 'pending': return 'Ожидает';
-      case 'accepted': return 'Принят';
+      case 'accepted': return 'Выбран';
       case 'rejected': return 'Отклонен';
       default: return 'Неизвестно';
     }
@@ -1072,33 +1072,18 @@ export const OrderDetailsScreen: React.FC = () => {
                         <View style={styles.modernPreviewInfo}>
                           <View style={styles.modernPreviewNameRow}>
                             <Text style={styles.modernPreviewName}>{item.workerName}</Text>
-                            <TouchableOpacity
-                              style={styles.modernPreviewReviewsButton}
-                              onPress={() => navigation.navigate('WorkerProfile', {
-                                workerId: item.workerId,
-                                workerName: item.workerName
-                              })}
-                            >
-                              <Text style={styles.modernPreviewReviewsText}>Отзывы</Text>
-                            </TouchableOpacity>
                           </View>
-                          <View style={styles.modernPreviewStats}>
-                            <Text style={styles.modernPreviewJobs}>• {item.completedJobs || 0} работ</Text>
-                          </View>
+                          {item.status === 'accepted' && (
+                            <View style={styles.modernPreviewSelectedBadge}>
+                              <Text style={styles.modernPreviewSelectedBadgeText}>✓ ВЫБРАН</Text>
+                            </View>
+                          )}
                         </View>
 
                         <View style={styles.modernPreviewPriceContainer}>
                           <Text style={styles.modernPreviewPrice}>
                             {Math.round(item.proposedPrice || 0).toLocaleString()} сум
                           </Text>
-                          <View style={[
-                            styles.modernPreviewStatusBadge,
-                            { backgroundColor: getApplicantStatusColor(item.status) }
-                          ]}>
-                            <Text style={styles.modernPreviewStatusText}>
-                              {getApplicantStatusText(item.status)}
-                            </Text>
-                          </View>
                         </View>
                       </View>
                     </View>
@@ -1856,10 +1841,12 @@ const styles = StyleSheet.create({
   modernPreviewContent: {
     padding: 16,
     minHeight: 100,
+    justifyContent: 'center',
   },
   modernPreviewHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   modernPreviewAvatarContainer: {
     position: 'relative',
@@ -1902,6 +1889,7 @@ const styles = StyleSheet.create({
   modernPreviewInfo: {
     flex: 1,
     marginRight: 8,
+    justifyContent: 'center',
   },
   modernPreviewNameRow: {
     flexDirection: 'row',
@@ -1917,57 +1905,32 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 6,
   },
-  modernPreviewReviewsButton: {
-    backgroundColor: '#F0F2F5',
+  modernPreviewSelectedBadge: {
+    backgroundColor: '#679B00',
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    paddingVertical: 3,
+    borderRadius: 12,
+    marginTop: 4,
+    alignSelf: 'flex-start',
   },
-  modernPreviewReviewsText: {
+  modernPreviewSelectedBadgeText: {
     fontSize: 10,
-    fontWeight: '600',
-    color: theme.colors.primary,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
-  modernPreviewStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  modernPreviewRating: {
-    fontSize: 12,
-    color: '#6B7280',
-    fontWeight: '500',
-    marginRight: 8,
-  },
-  modernPreviewJobs: {
-    fontSize: 12,
-    color: '#6B7280',
-    fontWeight: '500',
-  },
+
   modernPreviewPriceContainer: {
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modernPreviewPrice: {
     fontSize: 18,
     fontWeight: '800',
     color: '#679B00',
-    marginBottom: 4,
+    textAlign: 'center',
   },
-  modernPreviewStatusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-    minWidth: 60,
-    alignItems: 'center',
-  },
-  modernPreviewStatusText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
+
   applicantHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',

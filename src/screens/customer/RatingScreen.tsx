@@ -15,6 +15,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { orderService } from '../../services/orderService';
+import { StarIcon } from '../../components/common';
 import { Applicant } from '../../types';
 
 type RatingRouteProp = RouteProp<CustomerStackParamList, 'Rating'>;
@@ -35,9 +36,10 @@ const StarRating: React.FC<StarRatingProps> = ({ rating, onRatingChange, size = 
           onPress={() => onRatingChange(star)}
           style={styles.starButton}
         >
-          <Text style={[styles.star, { fontSize: size }]}>
-            {star <= rating ? '⭐' : '☆'}
-          </Text>
+          <StarIcon
+            filled={star <= rating}
+            size={size}
+          />
         </TouchableOpacity>
       ))}
     </View>
@@ -198,12 +200,20 @@ export const RatingScreen: React.FC = () => {
       let failCount = 0;
 
       // Отправляем отзывы по одному
-      for (const { workerId, rating } of reviewsToSubmit) {
+      for (const { workerId, rating, comment } of reviewsToSubmit) {
         try {
+          console.log(`[RatingScreen] 📝 Отправляем отзыв для исполнителя ${workerId}:`, {
+            orderId,
+            workerId,
+            rating,
+            comment: comment ? `"${comment}"` : 'без комментария'
+          });
+
           const success = await orderService.createReview({
             orderId,
             workerId,
             rating,
+            comment,
           });
 
           if (success) {
@@ -432,9 +442,6 @@ const styles = StyleSheet.create({
   },
   starButton: {
     paddingHorizontal: theme.spacing.xs,
-  },
-  star: {
-    color: '#FFD700',
   },
   ratingText: {
     fontSize: theme.fonts.sizes.sm,
