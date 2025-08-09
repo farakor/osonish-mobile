@@ -219,7 +219,7 @@ export const WorkerProfileScreen: React.FC = () => {
       icon: '',
       value: stats.rating.toString(),
       label: 'Рейтинг',
-      color: theme.colors.success,
+      color: theme.colors.primary,
     },
     {
       id: 'experience',
@@ -228,7 +228,7 @@ export const WorkerProfileScreen: React.FC = () => {
         ? `${Math.floor(stats.monthsOnPlatform / 12)} г`
         : `${stats.monthsOnPlatform} мес`,
       label: 'На платформе',
-      color: theme.colors.secondary,
+      color: theme.colors.primary,
     },
   ];
 
@@ -336,14 +336,11 @@ export const WorkerProfileScreen: React.FC = () => {
               {user.middleName && ` ${user.middleName}`}
             </Text>
             <Text style={styles.userPhone}>{user.phone}</Text>
-            <View style={styles.roleContainer}>
-              <Text style={styles.userRole}>Исполнитель</Text>
-              {user.isVerified && (
-                <View style={styles.verifiedBadge}>
-                  <Text style={styles.verifiedText}>✓ Верифицирован</Text>
-                </View>
-              )}
-            </View>
+            {user.isVerified && (
+              <View style={styles.verifiedBadge}>
+                <Text style={styles.verifiedText}>✓ Верифицирован</Text>
+              </View>
+            )}
             {stats.rating > 0 && (
               <View style={styles.ratingContainer}>
                 <StarIcon filled={true} size={16} />
@@ -532,23 +529,13 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing.sm,
   },
-  roleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  userRole: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.secondary,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    fontWeight: theme.fonts.weights.semiBold,
-  },
+
   verifiedBadge: {
     backgroundColor: theme.colors.success + '20',
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
     borderRadius: theme.borderRadius.sm,
+    marginTop: theme.spacing.sm,
   },
   verifiedText: {
     fontSize: theme.fonts.sizes.xs,
@@ -564,7 +551,7 @@ const styles = StyleSheet.create({
   ratingText: {
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.warning,
+    color: '#FDB022',
     marginRight: theme.spacing.xs,
   },
   ratingCount: {
