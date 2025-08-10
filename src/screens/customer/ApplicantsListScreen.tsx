@@ -19,7 +19,7 @@ import { theme } from '../../constants';
 import { authService } from '../../services/authService';
 import { orderService } from '../../services/orderService';
 import { supabase } from '../../services/supabaseClient';
-import { HeaderWithBack } from '../../components/common';
+import { HeaderWithBack, StarIcon } from '../../components/common';
 import UserIcon from '../../../assets/user-01.svg';
 import type { CustomerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -383,9 +383,16 @@ export const ApplicantsListScreen: React.FC = () => {
             {/* Информация исполнителя */}
             <View style={styles.modernApplicantInfo}>
               <View style={styles.modernNameRow}>
-                <Text style={[styles.modernApplicantName, isRejected && styles.rejectedText]}>
-                  {item.workerName}
-                </Text>
+                <View style={styles.nameWithBadge}>
+                  <Text style={[styles.modernApplicantName, isRejected && styles.rejectedText]}>
+                    {item.workerName}
+                  </Text>
+                  {isAccepted && (
+                    <View style={styles.verifiedBadge}>
+                      <Text style={styles.verifiedIcon}>✓</Text>
+                    </View>
+                  )}
+                </View>
 
                 <View style={styles.modernNameActions}>
                   <TouchableOpacity
@@ -395,24 +402,13 @@ export const ApplicantsListScreen: React.FC = () => {
                       workerName: item.workerName
                     })}
                   >
-                    <Text style={styles.reviewsButtonText}>Отзывы</Text>
-                  </TouchableOpacity>
-
-                  {isAccepted && (
-                    <View style={styles.modernSelectedBadge}>
-                      <Text style={styles.modernSelectedBadgeText}>✓ ВЫБРАН</Text>
+                    <View style={styles.reviewsButtonContent}>
+                      <StarIcon filled={true} size={14} color="#FDB022" />
+                      <Text style={styles.reviewsButtonText}>Отзывы</Text>
                     </View>
-                  )}
+                  </TouchableOpacity>
                 </View>
-              </View>
 
-              <View style={styles.modernStatsRow}>
-                <View style={styles.modernStatItem}>
-                  <Text style={styles.modernStatIcon}>💼</Text>
-                  <Text style={[styles.modernStatText, isRejected && styles.rejectedText]}>
-                    {item.completedJobs || 0} заказов
-                  </Text>
-                </View>
               </View>
 
               {/* Время отклика */}
@@ -490,6 +486,8 @@ export const ApplicantsListScreen: React.FC = () => {
               </View>
             </View>
           )}
+
+
 
           {/* Кнопки действий - показываем только для pending заявок */}
           {isPending && (
@@ -995,15 +993,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 2,
   },
   modernNameActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
+
   reviewsButton: {
-    backgroundColor: '#F0F2F5',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
@@ -1013,35 +1012,48 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  reviewsButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   reviewsButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: theme.colors.primary,
+    color: '#FDB022',
+  },
+  nameWithBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
   },
   modernApplicantName: {
     fontSize: 18,
     fontWeight: '700',
     color: '#1A1A1A',
     lineHeight: 22,
-    flex: 1,
-    marginRight: 8,
   },
-  modernSelectedBadge: {
+  verifiedBadge: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: '#679B00',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 12,
-    marginLeft: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 6,
   },
-  modernSelectedBadgeText: {
-    fontSize: 10,
+  verifiedIcon: {
+    fontSize: 12,
     fontWeight: '800',
     color: '#FFFFFF',
-    letterSpacing: 0.5,
   },
+
+
   modernStatsRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 2,
   },
   modernStatItem: {
     flexDirection: 'row',
@@ -1060,7 +1072,7 @@ const styles = StyleSheet.create({
   modernTimeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 2,
   },
 
   modernPriceContainer: {
@@ -1069,11 +1081,11 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#E5E7EB',
   },
   modernPriceContainerAccepted: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#679B00',
+    borderColor: '#E5E7EB',
   },
   modernPriceHeader: {
     flexDirection: 'row',
@@ -1134,7 +1146,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#679B00',
+    borderColor: '#E5E7EB',
   },
   modernContactHeader: {
     flexDirection: 'row',

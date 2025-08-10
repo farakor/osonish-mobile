@@ -20,7 +20,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import CalendarIcon from '../../../assets/card-icons/calendar.svg';
 import LocationIcon from '../../../assets/card-icons/location.svg';
 import CategoryIcon from '../../../assets/card-icons/category.svg';
-import BankNoteIcon from '../../../assets/card-icons/bank-note-01.svg';
 import UserIcon from '../../../assets/user-01.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { HeaderWithBack, PriceConfirmationModal, ProposePriceModal, MediaViewer, OrderLocationMap } from '../../components/common';
@@ -500,13 +499,7 @@ export const JobDetailsScreen: React.FC = () => {
           {/* Info Grid */}
           <View style={styles.infoSection}>
             <View style={styles.infoGrid}>
-              <View style={styles.infoCard}>
-                <View style={styles.infoIcon}>
-                  <BankNoteIcon width={20} height={20} color="#679B00" />
-                </View>
-                <Text style={styles.infoValue}>{formatBudget(order.budget)}</Text>
-              </View>
-
+              {/* Верхний ряд: Категория и Дата */}
               <View style={styles.infoCard}>
                 <View style={styles.infoIcon}>
                   <CategoryIcon width={20} height={20} color="#679B00" />
@@ -515,6 +508,14 @@ export const JobDetailsScreen: React.FC = () => {
               </View>
 
               <View style={styles.infoCard}>
+                <View style={styles.infoIcon}>
+                  <CalendarIcon width={20} height={20} color="#679B00" />
+                </View>
+                <Text style={styles.infoValue}>{formatDate(order.serviceDate)}</Text>
+              </View>
+
+              {/* Нижний ряд: Адрес на всю ширину */}
+              <View style={styles.infoCardFullWidth}>
                 <View style={styles.infoIcon}>
                   <LocationIcon width={20} height={20} color="#679B00" />
                 </View>
@@ -532,14 +533,13 @@ export const JobDetailsScreen: React.FC = () => {
                   }
                 </Text>
               </View>
-
-              <View style={styles.infoCard}>
-                <View style={styles.infoIcon}>
-                  <CalendarIcon width={20} height={20} color="#679B00" />
-                </View>
-                <Text style={styles.infoValue}>{formatDate(order.serviceDate)}</Text>
-              </View>
             </View>
+          </View>
+
+          {/* Details Section */}
+          <View style={styles.detailsSection}>
+            <Text style={styles.detailsTitle}>Детали</Text>
+            <Text style={styles.detailsText}>{order.description}</Text>
           </View>
 
           {/* Location Map Section */}
@@ -551,12 +551,6 @@ export const JobDetailsScreen: React.FC = () => {
               title="Куда ехать"
             />
           )}
-
-          {/* Details Section */}
-          <View style={styles.detailsSection}>
-            <Text style={styles.detailsTitle}>Детали</Text>
-            <Text style={styles.detailsText}>{order.description}</Text>
-          </View>
         </Animated.ScrollView>
 
         {/* Fixed Bottom Section */}
@@ -800,6 +794,13 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     flexBasis: '47%', // Используем flexBasis для точной сетки 2x2
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    alignItems: 'center',
+  },
+  infoCardFullWidth: {
+    flexBasis: '100%', // Карточка на всю ширину
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.md,

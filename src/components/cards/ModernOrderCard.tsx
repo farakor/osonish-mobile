@@ -152,10 +152,13 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
       >
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.categoryIcon}>
-            <Text style={styles.categoryIconText}>
-              {getCategoryIcon(order.category)}
-            </Text>
+          <View style={styles.categoryIconContainer}>
+            <View style={styles.categoryIcon}>
+              <Text style={styles.categoryIconText}>
+                {getCategoryIcon(order.category)}
+              </Text>
+            </View>
+            <Text style={styles.categoryText}>{order.category}</Text>
           </View>
           <View style={[
             styles.statusPill,
@@ -193,7 +196,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
           {workerView ? (
             <>
               {/* Режим для исполнителей */}
-              {/* Первая строка: Дата + Категория */}
+              {/* Первая строка: Только Дата */}
               <View style={styles.detailsRow}>
                 <View style={styles.detailItem}>
                   <View style={styles.iconWrapper}>
@@ -204,16 +207,6 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
                     />
                   </View>
                   <Text style={styles.detailText}>{formatDate(order.serviceDate)}</Text>
-                </View>
-                <View style={styles.detailItem}>
-                  <View style={styles.iconWrapper}>
-                    <CategoryIcon
-                      width={20}
-                      height={20}
-                      style={styles.detailIcon}
-                    />
-                  </View>
-                  <Text style={styles.detailText}>{order.category}</Text>
                 </View>
               </View>
 
@@ -250,6 +243,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
           ) : (
             <>
               {/* Режим для заказчиков */}
+              {/* Первая строка: Дата + Количество заявок */}
               <View style={styles.detailsRow}>
                 <View style={styles.detailItem}>
                   <View style={styles.iconWrapper}>
@@ -260,28 +254,6 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
                     />
                   </View>
                   <Text style={styles.detailText}>{formatDate(order.serviceDate)}</Text>
-                </View>
-                <View style={styles.detailItem}>
-                  <View style={styles.iconWrapper}>
-                    <LocationIcon
-                      width={20}
-                      height={20}
-                      style={styles.detailIcon}
-                    />
-                  </View>
-                  <Text style={styles.detailText}>{getLocationText()}</Text>
-                </View>
-              </View>
-              <View style={styles.detailsRow}>
-                <View style={styles.detailItem}>
-                  <View style={styles.iconWrapper}>
-                    <CategoryIcon
-                      width={20}
-                      height={20}
-                      style={styles.detailIcon}
-                    />
-                  </View>
-                  <Text style={styles.detailText}>{order.category}</Text>
                 </View>
                 {showApplicantsCount && (
                   <View style={styles.detailItem}>
@@ -295,6 +267,20 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
                     <Text style={styles.detailText}>{order.applicantsCount} заявок</Text>
                   </View>
                 )}
+              </View>
+
+              {/* Вторая строка: Локация на всю ширину */}
+              <View style={styles.detailsRow}>
+                <View style={styles.detailItemFullWidth}>
+                  <View style={styles.iconWrapper}>
+                    <LocationIcon
+                      width={20}
+                      height={20}
+                      style={styles.detailIcon}
+                    />
+                  </View>
+                  <Text style={styles.detailText}>{getLocationText()}</Text>
+                </View>
               </View>
             </>
           )}
@@ -356,6 +342,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: theme.spacing.sm,
   },
+  categoryIconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
   categoryIcon: {
     width: 40,
     height: 40,
@@ -363,9 +354,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: theme.spacing.sm,
   },
   categoryIconText: {
     fontSize: 20,
+  },
+  categoryText: {
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.medium,
+    color: theme.colors.text.primary,
+    flex: 1,
   },
   timeInfo: {
     marginBottom: theme.spacing.sm,
