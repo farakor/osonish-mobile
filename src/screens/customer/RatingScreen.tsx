@@ -131,7 +131,7 @@ const WorkerRatingCard: React.FC<WorkerRatingCardProps> = ({ worker, rating, com
 
       {/* Поле для комментария */}
       <View style={styles.commentSection}>
-        <Text style={styles.commentLabel}>Комментарий (необязательно)</Text>
+        <Text style={styles.commentLabel}>Комментарий</Text>
         <TextInput
           style={styles.commentInput}
           placeholder="Расскажите о качестве работы исполнителя..."
@@ -173,6 +173,9 @@ export const RatingScreen: React.FC = () => {
     }));
   };
 
+  // Проверяем, есть ли хотя бы одна оценка
+  const hasAnyRating = Object.values(ratings).some(rating => rating > 0);
+
   const handleSubmitReviews = async () => {
     // Получаем только те отзывы, где есть рейтинг > 0
     const reviewsToSubmit = Object.entries(ratings)
@@ -189,8 +192,8 @@ export const RatingScreen: React.FC = () => {
     });
 
     if (reviewsToSubmit.length === 0) {
-      // Если ни одного отзыва не оставлено, просто завершаем без сообщения
-      navigation.navigate('MainTabs' as any);
+      // Показываем сообщение о необходимости оценки
+      Alert.alert('Оценка обязательна', 'Пожалуйста, оцените работу хотя бы одного исполнителя');
       return;
     }
 
@@ -276,8 +279,7 @@ export const RatingScreen: React.FC = () => {
           <View style={styles.headerSection}>
             <Text style={styles.title}>Как прошла работа?</Text>
             <Text style={styles.subtitle}>
-              Оцените работу каждого исполнителя{'\n'}
-              <Text style={styles.optional}>(оценка необязательна)</Text>
+              Оцените работу каждого исполнителя
             </Text>
           </View>
 
@@ -293,14 +295,6 @@ export const RatingScreen: React.FC = () => {
             />
           ))}
 
-
-
-          {/* Информационное сообщение */}
-          <View style={styles.infoSection}>
-            <Text style={styles.infoText}>
-              💡 Ваши отзывы помогают другим заказчикам выбрать исполнителя и повышают качество услуг
-            </Text>
-          </View>
         </View>
       </ScrollView>
 
@@ -309,14 +303,14 @@ export const RatingScreen: React.FC = () => {
         <TouchableOpacity
           style={[
             styles.fixedButton,
-            isSubmitting && styles.fixedButtonDisabled,
+            (isSubmitting || !hasAnyRating) && styles.fixedButtonDisabled,
           ]}
           onPress={handleSubmitReviews}
-          disabled={isSubmitting}
+          disabled={isSubmitting || !hasAnyRating}
         >
           <Text style={[
             styles.fixedButtonText,
-            isSubmitting && styles.fixedButtonTextDisabled,
+            (isSubmitting || !hasAnyRating) && styles.fixedButtonTextDisabled,
           ]}>
             {isSubmitting ? 'Отправляем...' : 'Готово'}
           </Text>
@@ -368,10 +362,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
-  optional: {
-    fontStyle: 'italic',
-    color: theme.colors.text.secondary,
-  },
+
   workerCard: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
@@ -482,18 +473,6 @@ const styles = StyleSheet.create({
   },
   fixedButtonTextDisabled: {
     color: theme.colors.background,
-  },
-  infoSection: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    borderLeftWidth: 4,
-    borderLeftColor: theme.colors.primary,
-  },
-  infoText: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
-    lineHeight: 20,
   },
   commentSection: {
     marginTop: theme.spacing.lg,

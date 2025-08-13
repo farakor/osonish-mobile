@@ -871,8 +871,12 @@ export const OrderDetailsScreen: React.FC = () => {
             </Text>
           </View>
           {order?.status === 'in_progress' && (
-            <TouchableOpacity onPress={handleCompleteOrder}>
-              <Text style={[styles.rightActionText, { color: '#DC2626' }]}>
+            <TouchableOpacity
+              style={styles.completeButton}
+              onPress={handleCompleteOrder}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.completeButtonText}>
                 {isCompletingOrder ? 'Завершаем...' : 'Завершить'}
               </Text>
             </TouchableOpacity>
@@ -896,7 +900,9 @@ export const OrderDetailsScreen: React.FC = () => {
             rightAction={
               order?.status === 'in_progress' ? {
                 text: isCompletingOrder ? 'Завершаем...' : 'Завершить',
-                color: '#DC2626', // Красный цвет
+                color: '#FFFFFF', // Белый текст
+                backgroundColor: '#DC2626', // Красный фон
+                buttonStyle: true, // Включаем кнопочный стиль
                 onPress: handleCompleteOrder,
               } : undefined
             }
@@ -2364,6 +2370,28 @@ const styles = StyleSheet.create({
   backButtonText: {
     fontSize: theme.fonts.sizes.xl,
     color: theme.colors.text.primary,
+  },
+  completeButton: {
+    minWidth: 40,
+    height: 40,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: 20,
+    backgroundColor: '#DC2626', // красный фон
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  completeButtonText: {
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.medium,
+    color: '#FFFFFF', // белый текст
   },
   stickyTitleContainer: {
     flex: 1,

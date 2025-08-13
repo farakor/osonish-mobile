@@ -8,6 +8,8 @@ interface HeaderWithBackProps {
   rightAction?: {
     text: string;
     color?: string;
+    backgroundColor?: string;
+    buttonStyle?: boolean; // новый параметр для кнопочного стиля
     onPress: () => void;
   };
   backAction?: () => void;
@@ -37,10 +39,19 @@ export const HeaderWithBack: React.FC<HeaderWithBackProps> = ({
       {title && <Text style={styles.headerTitle}>{title}</Text>}
 
       {rightAction ? (
-        <TouchableOpacity onPress={rightAction.onPress}>
+        <TouchableOpacity
+          style={rightAction.buttonStyle ? [
+            styles.rightActionButton,
+            { backgroundColor: rightAction.backgroundColor || '#DC2626' }
+          ] : undefined}
+          onPress={rightAction.onPress}
+          activeOpacity={0.8}
+        >
           <Text style={[
-            styles.rightActionText,
-            { color: rightAction.color || theme.colors.primary }
+            rightAction.buttonStyle ? styles.rightActionButtonText : styles.rightActionText,
+            rightAction.buttonStyle
+              ? { color: rightAction.color || '#FFFFFF' }
+              : { color: rightAction.color || theme.colors.primary }
           ]}>
             {rightAction.text}
           </Text>
@@ -81,6 +92,27 @@ const styles = StyleSheet.create({
   rightActionText: {
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.medium,
+  },
+  rightActionButton: {
+    minWidth: 40,
+    height: 40,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  rightActionButtonText: {
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.medium,
+    color: '#FFFFFF',
   },
   placeholder: {
     width: 40,

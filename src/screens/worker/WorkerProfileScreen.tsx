@@ -362,9 +362,6 @@ export const WorkerProfileScreen: React.FC = () => {
                 <Text style={styles.earningsValue}>{formatEarnings(stats.earnings)}</Text>
                 <Text style={styles.earningsLabel}>Заработано</Text>
               </View>
-              <View style={styles.earningsBadge}>
-                <Text style={styles.earningsBadgeText}>+{stats.completedJobs}</Text>
-              </View>
             </View>
           </View>
 
@@ -674,17 +671,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
     fontWeight: theme.fonts.weights.medium,
   },
-  earningsBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-  },
-  earningsBadgeText: {
-    color: theme.colors.white,
-    fontSize: theme.fonts.sizes.sm,
-    fontWeight: theme.fonts.weights.semiBold,
-  },
+
 
   // Main Stats Styles
   mainStatsContainer: {
