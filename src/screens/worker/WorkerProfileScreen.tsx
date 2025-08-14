@@ -392,7 +392,7 @@ export const WorkerProfileScreen: React.FC = () => {
                 style={styles.modernEarningsWidget}
               >
                 <View style={styles.earningsMainContent}>
-                  <Text style={styles.earningsTitle}>Доступно</Text>
+                  <Text style={styles.earningsTitle}>Заработано</Text>
                   <Text style={styles.modernEarningsValue}>{formatEarnings(stats.earnings)}</Text>
                   {stats.earningsChange !== undefined && (
                     <View style={styles.earningsChangeContainer}>

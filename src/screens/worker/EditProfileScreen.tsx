@@ -245,7 +245,7 @@ export const EditProfileScreen: React.FC = () => {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backButtonText}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
+        <Text style={styles.headerTitle}>Редактировать профиль</Text>
         <View style={styles.headerRight} />
       </View>
 
@@ -270,124 +270,86 @@ export const EditProfileScreen: React.FC = () => {
 
         {/* Form Fields */}
         <View style={styles.form}>
-          {/* Full Name */}
+          {/* Phone Number (non-editable) */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Full Name</Text>
+            <Text style={styles.label}>Номер телефона</Text>
             <View style={styles.inputContainer}>
               <TextInput
-                style={styles.input}
-                value={`${firstName} ${lastName}`}
-                onChangeText={(text) => {
-                  const names = text.split(' ');
-                  setFirstName(names[0] || '');
-                  setLastName(names.slice(1).join(' ') || '');
-                }}
-                placeholder="M Rabbi Rezwan"
+                style={[styles.input, styles.inputDisabled]}
+                value={user.phone}
+                editable={false}
+                placeholder="+998 90 123 45 67"
                 placeholderTextColor="#C7C7CC"
               />
-              <TouchableOpacity style={styles.inputIcon}>
-                <Text style={styles.inputIconText}>✏️</Text>
-              </TouchableOpacity>
             </View>
           </View>
 
-          {/* Nickname */}
+          {/* Last Name */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nickname</Text>
+            <Text style={styles.label}>Фамилия</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                value={lastName}
+                onChangeText={setLastName}
+                placeholder="Иванов"
+                placeholderTextColor="#C7C7CC"
+              />
+            </View>
+          </View>
+
+          {/* First Name */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Имя</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                value={firstName}
+                onChangeText={setFirstName}
+                placeholder="Иван"
+                placeholderTextColor="#C7C7CC"
+              />
+            </View>
+          </View>
+
+          {/* Middle Name */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Отчество</Text>
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.input}
                 value={middleName}
                 onChangeText={setMiddleName}
-                placeholder="Rabbi"
+                placeholder="Иванович"
                 placeholderTextColor="#C7C7CC"
               />
-              <TouchableOpacity style={styles.inputIcon}>
-                <Text style={styles.inputIconText}>✏️</Text>
-              </TouchableOpacity>
             </View>
           </View>
 
-          {/* Email */}
+          {/* Birth Date */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                value={user.phone}
-                editable={false}
-                placeholder="rabbirezwan07@gmail.com"
-                placeholderTextColor="#C7C7CC"
-              />
-              <TouchableOpacity style={styles.inputIcon}>
-                <Text style={styles.inputIconText}>✉️</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Phone */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Phone</Text>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                value={user.phone}
-                editable={false}
-                placeholder="+880 1756179879"
-                placeholderTextColor="#C7C7CC"
-              />
-              <TouchableOpacity style={styles.inputIcon}>
-                <Text style={styles.inputIconText}>📞</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Address */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Address</Text>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                value="Tashkent, Ring Road, 218 home"
-                placeholder="USA, Ring Road, 218 home"
-                placeholderTextColor="#C7C7CC"
-              />
-              <TouchableOpacity style={styles.inputIcon}>
-                <Text style={styles.inputIconText}>🌍</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Occupation */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Occupation</Text>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                value="Worker"
-                placeholder="Student"
-                placeholderTextColor="#C7C7CC"
-              />
-              <TouchableOpacity style={styles.inputIcon}>
-                <Text style={styles.inputIconText}>💼</Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.label}>Дата рождения</Text>
+            <TouchableOpacity
+              style={styles.inputContainer}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text style={[styles.input, styles.dateInput]}>
+                {birthDate ? formatDate(birthDate) : 'Выберите дату рождения'}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
 
-      {/* Bottom Buttons */}
+      {/* Bottom Button */}
       <View style={styles.bottomSection}>
-        <TouchableOpacity style={styles.discardButton}>
-          <Text style={styles.discardButtonText}>Discard</Text>
-        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.saveButton, (isSaving || !hasChanges()) && styles.saveButtonDisabled]}
           onPress={handleSave}
           disabled={isSaving || !hasChanges()}
         >
           <Text style={styles.saveButtonText}>
-            {isUploadingImage ? 'Загружаем...' : isSaving ? 'Сохраняем...' : 'Save'}
+            {isUploadingImage ? 'Загружаем...' : isSaving ? 'Сохраняем...' : 'Сохранить'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -569,52 +531,41 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
     paddingRight: 12,
   },
-  inputIcon: {
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
+  inputDisabled: {
+    color: '#8E8E93',
+    backgroundColor: 'transparent',
   },
-  inputIconText: {
-    fontSize: 16,
+  dateInput: {
+    paddingVertical: 16,
   },
 
   // Bottom Section
   bottomSection: {
-    flexDirection: 'row',
     paddingHorizontal: 20,
     paddingVertical: 20,
-    gap: 12,
     backgroundColor: '#F8F9FA',
   },
-  discardButton: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-  },
-  discardButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#8E8E93',
-  },
   saveButton: {
-    flex: 1,
     backgroundColor: '#679B00',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
+    shadowColor: '#679B00',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
   },
   saveButtonDisabled: {
     backgroundColor: '#C7C7CC',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   saveButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#FFFFFF',
+    textAlign: 'center',
   },
 
   // Date Picker
