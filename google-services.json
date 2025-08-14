@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "416617595886",
+    "project_id": "osonish-mobile",
+    "storage_bucket": "osonish-mobile.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:416617595886:android:69297fd1ce7a83f30404ff",
+        "android_client_info": {
+          "package_name": "com.farakor.osonishmobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAfT2LkFCGZFf-Rx_9Of49ejwlIPpnwsKM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

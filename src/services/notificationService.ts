@@ -47,6 +47,7 @@ export interface PushToken {
   token: string;
   deviceType: 'ios' | 'android' | 'web';
   deviceId?: string;
+  createdAt?: string;
 }
 
 class NotificationService {
@@ -359,18 +360,31 @@ class NotificationService {
         return true; // Возвращаем true, чтобы не блокировать работу приложения
       }
 
-      // Отправляем уведомления
-      const promises = tokens.map(token =>
-        this.sendPushNotification(token.token, title, body, data)
-      );
+      // 🔧 ИСПРАВЛЕНИЕ: Используем только САМЫЙ НОВЫЙ токен для предотвращения дублирования
+      // Если у пользователя несколько токенов, отправляем только на последний (самый актуальный)
+      const latestToken = tokens[tokens.length - 1];
+      console.log(`[NotificationService] 🎯 Найдено ${tokens.length} токенов, используем самый новый: ${latestToken.token.substring(0, 20)}...`);
 
-      const results = await Promise.allSettled(promises);
-      const successCount = results.filter(result => result.status === 'fulfilled').length;
+      if (tokens.length > 1) {
+        console.log(`[NotificationService] ⚠️ Обнаружено ${tokens.length} токенов у пользователя. Возможно нужна очистка старых токенов.`);
+      }
+
+      // Отправляем уведомление только на один (самый новый) токен
+      await this.sendPushNotification(latestToken.token, title, body, data);
+      const successCount = 1;
 
       // Сохраняем лог уведомления
       await this.logNotification(userId, title, body, data, notificationType);
 
       console.log(`[NotificationService] 📤 Отправлено ${successCount}/${tokens.length} уведомлений пользователю: ${userId}`);
+
+      // Автоматически очищаем старые токены если их много
+      if (tokens.length > 1) {
+        this.cleanupOldTokensForUser(userId).catch(error => {
+          console.error('[NotificationService] ⚠️ Ошибка очистки старых токенов:', error);
+        });
+      }
+
       return successCount > 0;
     } catch (error) {
       console.error('[NotificationService] ❌ Ошибка отправки уведомления:', error);
@@ -434,9 +448,10 @@ class NotificationService {
     try {
       const { data, error } = await supabase
         .from('push_tokens')
-        .select('token, device_type, device_id')
+        .select('token, device_type, device_id, created_at')
         .eq('user_id', userId)
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .order('created_at', { ascending: true }); // Сортируем по дате создания
 
       if (error) {
         console.error('[NotificationService] ❌ Ошибка получения токенов:', error);
@@ -446,11 +461,57 @@ class NotificationService {
       return data.map(item => ({
         token: item.token,
         deviceType: item.device_type as 'ios' | 'android' | 'web',
-        deviceId: item.device_id
+        deviceId: item.device_id,
+        createdAt: item.created_at
       }));
     } catch (error) {
       console.error('[NotificationService] ❌ Ошибка получения токенов:', error);
       return [];
+    }
+  }
+
+  /**
+   * Очистка старых токенов для пользователя (оставляем только самый новый)
+   */
+  private async cleanupOldTokensForUser(userId: string): Promise<void> {
+    try {
+      console.log(`[NotificationService] 🧹 Очищаем старые токены для пользователя: ${userId}`);
+
+      const { data: tokens, error: selectError } = await supabase
+        .from('push_tokens')
+        .select('id, token, created_at')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .order('created_at', { ascending: true });
+
+      if (selectError) {
+        console.error('[NotificationService] ❌ Ошибка получения токенов для очистки:', selectError);
+        return;
+      }
+
+      if (!tokens || tokens.length <= 1) {
+        console.log('[NotificationService] ✅ У пользователя нет лишних токенов');
+        return;
+      }
+
+      // Оставляем только самый новый токен, остальные деактивируем
+      const tokensToDeactivate = tokens.slice(0, -1); // Все кроме последнего
+      const tokenIds = tokensToDeactivate.map(t => t.id);
+
+      console.log(`[NotificationService] 🗑️ Деактивируем ${tokenIds.length} старых токенов`);
+
+      const { error: updateError } = await supabase
+        .from('push_tokens')
+        .update({ is_active: false })
+        .in('id', tokenIds);
+
+      if (updateError) {
+        console.error('[NotificationService] ❌ Ошибка деактивации старых токенов:', updateError);
+      } else {
+        console.log(`[NotificationService] ✅ Успешно деактивировано ${tokenIds.length} старых токенов`);
+      }
+    } catch (error) {
+      console.error('[NotificationService] ❌ Ошибка очистки старых токенов:', error);
     }
   }
 

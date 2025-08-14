@@ -5,6 +5,7 @@ import { supabase, Database } from './supabaseClient';
 
 export class OrderService {
   private static instance: OrderService;
+  private notifiedOrders: Set<string> = new Set(); // Дедупликация уведомлений по orderId
 
   static getInstance(): OrderService {
     if (!OrderService.instance) {
@@ -46,6 +47,9 @@ export class OrderService {
    */
   async createOrder(request: CreateOrderRequest): Promise<CreateOrderResponse> {
     try {
+      console.log('[OrderService] 🔨 Создание заказа:', request.title);
+      console.log('[OrderService] 🕒 Время создания:', new Date().toISOString());
+
       const authState = authService.getAuthState();
       if (!authState.isAuthenticated || !authState.user) {
         return {
@@ -55,6 +59,7 @@ export class OrderService {
       }
 
       const orderId = this.generateOrderId();
+      console.log('[OrderService] 🆔 Сгенерированный ID заказа:', orderId);
       const currentTime = new Date().toISOString();
 
       // Создаем заказ в Supabase
@@ -118,6 +123,7 @@ export class OrderService {
       }
 
       // Отправляем уведомления всем исполнителям о новом заказе
+      console.log('[OrderService] 🚀 Инициируем отправку уведомлений для заказа:', newOrder.id);
       this.sendNewOrderNotifications(newOrder).catch(error => {
         console.error('[OrderService] ❌ Ошибка отправки уведомлений о новом заказе:', error);
       });
@@ -1273,7 +1279,18 @@ export class OrderService {
    */
   private async sendNewOrderNotifications(order: Order): Promise<void> {
     try {
-      console.log('[OrderService] 📤 Отправляем уведомления о новом заказе...');
+      console.log('[OrderService] 📤 Отправляем уведомления о новом заказе:', order.id);
+      console.log('[OrderService] 🕒 Время вызова:', new Date().toISOString());
+
+      // 🔧 ДЕДУПЛИКАЦИЯ: Проверяем, не отправляли ли уже уведомления для этого заказа
+      if (this.notifiedOrders.has(order.id)) {
+        console.log('[OrderService] ⚠️ Уведомления для заказа', order.id, 'уже отправлены, пропускаем');
+        return;
+      }
+
+      // Помечаем заказ как уведомленный
+      this.notifiedOrders.add(order.id);
+      console.log('[OrderService] ✅ Заказ', order.id, 'добавлен в список уведомленных');
 
       // Получаем всех исполнителей из базы данных
       const { data: workers, error } = await supabase
@@ -1314,7 +1331,24 @@ export class OrderService {
       console.log(`[OrderService] ✅ Отправлено ${sentCount} уведомлений о новом заказе`);
     } catch (error) {
       console.error('[OrderService] ❌ Ошибка отправки уведомлений о новом заказе:', error);
+      // В случае ошибки убираем заказ из кэша чтобы можно было повторить попытку
+      this.notifiedOrders.delete(order.id);
     }
+  }
+
+  /**
+   * Очистка кэша уведомленных заказов (для отладки или перезапуска)
+   */
+  public clearNotificationCache(): void {
+    console.log('[OrderService] 🧹 Очищаем кэш уведомленных заказов');
+    this.notifiedOrders.clear();
+  }
+
+  /**
+   * Получение списка уведомленных заказов (для отладки)
+   */
+  public getNotifiedOrders(): string[] {
+    return Array.from(this.notifiedOrders);
   }
 
   /**
