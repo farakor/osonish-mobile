@@ -238,136 +238,158 @@ export const EditProfileScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+      <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
 
       {/* Header */}
-      <HeaderWithBack title="Редактировать профиль" />
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.backButtonText}>‹</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Edit Profile</Text>
+        <View style={styles.headerRight} />
+      </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-
         {/* Profile Photo Section */}
         <View style={styles.photoSection}>
-          <TouchableOpacity style={styles.photoContainer} onPress={pickImage}>
+          <View style={styles.photoContainer}>
             {profileImage ? (
               <Image source={{ uri: profileImage }} style={styles.profileImage} />
             ) : (
-              <View style={styles.photoPlaceholder}>
+              <View style={styles.avatar}>
                 <Text style={styles.avatarText}>
                   {getInitials()}
                 </Text>
-                <View style={styles.editPhotoButton}>
-                  <Text style={styles.editPhotoButtonText}>✏️</Text>
-                </View>
               </View>
             )}
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.changePhotoButton} onPress={pickImage}>
-            <Text style={styles.changePhotoText}>Изменить фото</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={styles.editPhotoButton} onPress={pickImage}>
+              <Text style={styles.editPhotoIcon}>+</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Form Fields */}
         <View style={styles.form}>
-          {/* Phone Number (read-only) */}
+          {/* Full Name */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Номер телефона</Text>
-            <View style={styles.phoneContainer}>
+            <Text style={styles.label}>Full Name</Text>
+            <View style={styles.inputContainer}>
               <TextInput
-                style={[styles.input, styles.phoneInput]}
-                value={user.phone}
-                editable={false}
-                placeholder="Номер телефона"
-                placeholderTextColor={theme.colors.text.secondary}
+                style={styles.input}
+                value={`${firstName} ${lastName}`}
+                onChangeText={(text) => {
+                  const names = text.split(' ');
+                  setFirstName(names[0] || '');
+                  setLastName(names.slice(1).join(' ') || '');
+                }}
+                placeholder="M Rabbi Rezwan"
+                placeholderTextColor="#C7C7CC"
               />
-              <View style={styles.phoneVerified}>
-                <Text style={styles.verifiedText}>✓ Подтвержден</Text>
-              </View>
+              <TouchableOpacity style={styles.inputIcon}>
+                <Text style={styles.inputIconText}>✏️</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
-          {/* Last Name */}
+          {/* Nickname */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              Фамилия <Text style={styles.required}>*</Text>
-            </Text>
-            <TextInput
-              style={styles.input}
-              value={lastName}
-              onChangeText={setLastName}
-              placeholder="Введите фамилию"
-              placeholderTextColor={theme.colors.text.secondary}
-              maxLength={50}
-            />
+            <Text style={styles.label}>Nickname</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                value={middleName}
+                onChangeText={setMiddleName}
+                placeholder="Rabbi"
+                placeholderTextColor="#C7C7CC"
+              />
+              <TouchableOpacity style={styles.inputIcon}>
+                <Text style={styles.inputIconText}>✏️</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
-          {/* First Name */}
+          {/* Email */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              Имя <Text style={styles.required}>*</Text>
-            </Text>
-            <TextInput
-              style={styles.input}
-              value={firstName}
-              onChangeText={setFirstName}
-              placeholder="Введите имя"
-              placeholderTextColor={theme.colors.text.secondary}
-              maxLength={50}
-            />
+            <Text style={styles.label}>Email</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                value={user.phone}
+                editable={false}
+                placeholder="rabbirezwan07@gmail.com"
+                placeholderTextColor="#C7C7CC"
+              />
+              <TouchableOpacity style={styles.inputIcon}>
+                <Text style={styles.inputIconText}>✉️</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
-          {/* Middle Name */}
+          {/* Phone */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Отчество</Text>
-            <TextInput
-              style={styles.input}
-              value={middleName}
-              onChangeText={setMiddleName}
-              placeholder="Введите отчество (необязательно)"
-              placeholderTextColor={theme.colors.text.secondary}
-              maxLength={50}
-            />
+            <Text style={styles.label}>Phone</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                value={user.phone}
+                editable={false}
+                placeholder="+880 1756179879"
+                placeholderTextColor="#C7C7CC"
+              />
+              <TouchableOpacity style={styles.inputIcon}>
+                <Text style={styles.inputIconText}>📞</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
-          {/* Birth Date */}
+          {/* Address */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              Дата рождения <Text style={styles.required}>*</Text>
-            </Text>
-            <TouchableOpacity
-              style={styles.dateInput}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Text style={styles.calendarIcon}>📅</Text>
-              <Text style={[
-                styles.dateText,
-                !birthDate && styles.datePlaceholder
-              ]}>
-                {formatDate(birthDate) || 'Выберите дату'}
-              </Text>
-            </TouchableOpacity>
+            <Text style={styles.label}>Address</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                value="Tashkent, Ring Road, 218 home"
+                placeholder="USA, Ring Road, 218 home"
+                placeholderTextColor="#C7C7CC"
+              />
+              <TouchableOpacity style={styles.inputIcon}>
+                <Text style={styles.inputIconText}>🌍</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
-
+          {/* Occupation */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Occupation</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                value="Worker"
+                placeholder="Student"
+                placeholderTextColor="#C7C7CC"
+              />
+              <TouchableOpacity style={styles.inputIcon}>
+                <Text style={styles.inputIconText}>💼</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </ScrollView>
 
-      {/* Save Button */}
-      <View style={styles.saveSection}>
+      {/* Bottom Buttons */}
+      <View style={styles.bottomSection}>
+        <TouchableOpacity style={styles.discardButton}>
+          <Text style={styles.discardButtonText}>Discard</Text>
+        </TouchableOpacity>
         <TouchableOpacity
-          style={[
-            styles.saveButton,
-            (isSaving || !hasChanges()) && styles.saveButtonDisabled
-          ]}
+          style={[styles.saveButton, (isSaving || !hasChanges()) && styles.saveButtonDisabled]}
           onPress={handleSave}
           disabled={isSaving || !hasChanges()}
         >
           <Text style={styles.saveButtonText}>
-            {isUploadingImage ? 'Загружаем фото...' : isSaving ? 'Сохраняем...' : 'Сохранить изменения'}
+            {isUploadingImage ? 'Загружаем...' : isSaving ? 'Сохраняем...' : 'Save'}
           </Text>
         </TouchableOpacity>
-        {!hasChanges() && (
-          <Text style={styles.noChangesText}>Нет изменений для сохранения</Text>
-        )}
       </View>
 
       {/* Date Picker */}
@@ -401,7 +423,7 @@ export const EditProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F8F9FA',
   },
   loadingContainer: {
     flex: 1,
@@ -436,174 +458,176 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
   },
+
+  // Header
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#F8F9FA',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backButtonText: {
+    fontSize: 24,
+    color: '#1A1A1A',
+    fontWeight: '300',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
+  },
+  headerRight: {
+    width: 40,
+  },
+
   scrollView: {
     flex: 1,
   },
+
+  // Photo Section
   photoSection: {
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
+    paddingVertical: 30,
   },
   photoContainer: {
-    marginBottom: theme.spacing.md,
-    position: 'relative',
-  },
-  photoPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: theme.colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
     position: 'relative',
   },
   profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+  },
+  avatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#679B00',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatarText: {
-    fontSize: 32,
-    fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.white,
+    fontSize: 40,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   editPhotoButton: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: theme.colors.surface,
+    bottom: 5,
+    right: 5,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#679B00',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: theme.colors.background,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
   },
-  editPhotoButtonText: {
+  editPhotoIcon: {
     fontSize: 16,
-  },
-  changePhotoButton: {
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-  },
-  changePhotoText: {
-    fontSize: theme.fonts.sizes.md,
-    color: theme.colors.primary,
-    fontWeight: theme.fonts.weights.medium,
-  },
-  form: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
-  },
-  inputGroup: {
-    marginBottom: theme.spacing.lg,
-  },
-  label: {
-    fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
-  },
-  required: {
-    color: theme.colors.error,
-    fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.semiBold,
-  },
-  input: {
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
-    fontSize: theme.fonts.sizes.md,
-    color: theme.colors.text.primary,
-  },
-  phoneContainer: {
-    position: 'relative',
-  },
-  phoneInput: {
-    backgroundColor: theme.colors.border + '20',
-    color: theme.colors.text.secondary,
-    paddingRight: 120,
-  },
-  phoneVerified: {
-    position: 'absolute',
-    right: theme.spacing.sm,
-    top: '50%',
-    transform: [{ translateY: -10 }],
-    backgroundColor: theme.colors.success + '20',
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.sm,
-  },
-  verifiedText: {
-    fontSize: theme.fonts.sizes.xs,
-    color: theme.colors.success,
-    fontWeight: theme.fonts.weights.medium,
-  },
-  dateInput: {
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  calendarIcon: {
-    fontSize: 18,
-    marginRight: theme.spacing.sm,
-  },
-  dateText: {
-    fontSize: theme.fonts.sizes.md,
-    color: theme.colors.text.primary,
-  },
-  datePlaceholder: {
-    color: theme.colors.text.secondary,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
 
-  saveSection: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.lg,
-    backgroundColor: theme.colors.background,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
+  // Form
+  form: {
+    paddingHorizontal: 20,
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1A1A1A',
+    marginBottom: 8,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: '#1A1A1A',
+    paddingRight: 12,
+  },
+  inputIcon: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inputIconText: {
+    fontSize: 16,
+  },
+
+  // Bottom Section
+  bottomSection: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    gap: 12,
+    backgroundColor: '#F8F9FA',
+  },
+  discardButton: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  discardButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#8E8E93',
   },
   saveButton: {
-    backgroundColor: theme.colors.primary,
-    borderRadius: theme.borderRadius.md,
-    paddingVertical: theme.spacing.md,
+    flex: 1,
+    backgroundColor: '#679B00',
+    borderRadius: 12,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginTop: theme.spacing.md,
   },
   saveButtonDisabled: {
-    backgroundColor: theme.colors.text.secondary,
+    backgroundColor: '#C7C7CC',
   },
   saveButtonText: {
-    color: theme.colors.white,
-    fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.semiBold,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
-  noChangesText: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
-    marginTop: theme.spacing.sm,
-  },
+
+  // Date Picker
   datePickerContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: theme.colors.surface,
-    borderTopLeftRadius: theme.borderRadius.lg,
-    borderTopRightRadius: theme.borderRadius.lg,
-    paddingTop: theme.spacing.md,
-    paddingBottom: Platform.OS === 'ios' ? theme.spacing.xl : 0,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingTop: 16,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
@@ -613,18 +637,18 @@ const styles = StyleSheet.create({
   datePickerHeader: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    paddingHorizontal: theme.spacing.md,
-    paddingBottom: theme.spacing.sm,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   doneButton: {
-    backgroundColor: theme.colors.primary,
-    borderRadius: theme.borderRadius.sm,
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
+    backgroundColor: '#679B00',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
   doneButtonText: {
-    color: theme.colors.white,
-    fontSize: theme.fonts.sizes.sm,
-    fontWeight: theme.fonts.weights.semiBold,
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
 }); 

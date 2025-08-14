@@ -11,6 +11,7 @@ import {
   RefreshControl,
   Image,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../constants';
 import { StatItem } from '../../components/common';
@@ -21,6 +22,8 @@ import { User } from '../../types';
 import UserEditIcon from '../../../assets/user-edit.svg';
 import NotificationMessageIcon from '../../../assets/notification-message.svg';
 import LifeBuoyIcon from '../../../assets/life-buoy-02.svg';
+import LogOutIcon from '../../../assets/log-out-03.svg';
+import { Ionicons } from '@expo/vector-icons';
 
 interface ProfileOption {
   id: string;
@@ -36,6 +39,7 @@ interface WorkerStats {
   monthsOnPlatform: number;
   activeApplications: number;
   earnings: number;
+  earningsChange?: number; // Процентное изменение заработка
 }
 
 export const WorkerProfileScreen: React.FC = () => {
@@ -43,13 +47,17 @@ export const WorkerProfileScreen: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Цвет для элементов выхода
+  const logoutColor = '#FF3B30';
   const [stats, setStats] = useState<WorkerStats>({
     completedJobs: 0,
     rating: 0,
     totalReviews: 0,
     monthsOnPlatform: 0,
     activeApplications: 0,
-    earnings: 0
+    earnings: 0,
+    earningsChange: 12.8 // Заглушка для демонстрации
   });
 
   useEffect(() => {
@@ -310,37 +318,53 @@ export const WorkerProfileScreen: React.FC = () => {
             />
           }
         >
-          {/* Content Header */}
-          <View style={styles.contentHeader}>
-            <Text style={styles.title}>Профиль</Text>
-            <Text style={styles.subtitle}>
-              {stats.activeApplications > 0 && (
-                `${stats.activeApplications} активных откликов`
-              )}
-            </Text>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Профиль</Text>
+            <View style={styles.headerRight} />
           </View>
 
-          {/* Profile Info */}
-          <View style={styles.profileInfo}>
-            {user.profileImage ? (
-              <Image source={{ uri: user.profileImage }} style={styles.profileImage} />
-            ) : (
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {getInitials(user.firstName, user.lastName)}
-                </Text>
-              </View>
-            )}
-            <Text style={styles.userName}>
-              {user.firstName} {user.lastName}
-              {user.middleName && ` ${user.middleName}`}
-            </Text>
+          {/* Profile Section with Gradient */}
+          <LinearGradient
+            colors={['#679B00', '#5A8A00', '#4A7A00']}
+            style={styles.profileSection}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            {/* Background Pattern */}
+            <View style={styles.patternBackground}>
+              <Ionicons name="hammer-outline" size={48} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon1} />
+              <Ionicons name="build-outline" size={44} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon2} />
+              <Ionicons name="construct-outline" size={40} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon3} />
+              <Ionicons name="hardware-chip-outline" size={38} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon4} />
+              <Ionicons name="flash-outline" size={46} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon5} />
+              <Ionicons name="settings-outline" size={42} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon6} />
+              <Ionicons name="hammer-outline" size={40} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon7} />
+              <Ionicons name="build-outline" size={38} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon8} />
+            </View>
+
+            <View style={styles.profileImageContainer}>
+              {user.profileImage ? (
+                <Image source={{ uri: user.profileImage }} style={styles.profileImage} />
+              ) : (
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {getInitials(user.firstName, user.lastName)}
+                  </Text>
+                </View>
+              )}
+            </View>
+            <View style={styles.userNameContainer}>
+              <Text style={styles.userName}>
+                {user.firstName} {user.lastName}
+              </Text>
+              {user.isVerified && (
+                <View style={styles.verifiedCheckmark}>
+                  <Text style={styles.checkmarkIcon}>✓</Text>
+                </View>
+              )}
+            </View>
             <Text style={styles.userPhone}>{user.phone}</Text>
-            {user.isVerified && (
-              <View style={styles.verifiedBadge}>
-                <Text style={styles.verifiedText}>✓ Верифицирован</Text>
-              </View>
-            )}
             {stats.rating > 0 && (
               <View style={styles.ratingContainer}>
                 <StarIcon filled={true} size={16} />
@@ -350,73 +374,104 @@ export const WorkerProfileScreen: React.FC = () => {
                 </Text>
               </View>
             )}
-          </View>
+          </LinearGradient>
 
-          {/* Earnings Widget - Full Width */}
+          {/* Modern Earnings Widget */}
           <View style={styles.earningsContainer}>
-            <View style={styles.earningsWidget}>
-              <View style={styles.earningsIconContainer}>
-                <Text style={styles.earningsIcon}>💰</Text>
-              </View>
-              <View style={styles.earningsTextContainer}>
-                <Text style={styles.earningsValue}>{formatEarnings(stats.earnings)}</Text>
-                <Text style={styles.earningsLabel}>Заработано</Text>
-              </View>
-            </View>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => {
+                // TODO: Навигация к детальному экрану доходов
+                console.log('Открыть детали доходов');
+              }}
+            >
+              <LinearGradient
+                colors={['#FFE066', '#FFCC33']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.modernEarningsWidget}
+              >
+                <View style={styles.earningsMainContent}>
+                  <Text style={styles.earningsTitle}>Доступно</Text>
+                  <Text style={styles.modernEarningsValue}>{formatEarnings(stats.earnings)}</Text>
+                  {stats.earningsChange !== undefined && (
+                    <View style={styles.earningsChangeContainer}>
+                      <Text style={styles.earningsChangeIcon}>
+                        {stats.earningsChange >= 0 ? '📈' : '📉'}
+                      </Text>
+                      <Text style={styles.earningsChangeText}>
+                        {stats.earningsChange >= 0 ? '+' : ''}{stats.earningsChange.toFixed(1)}%
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.expandArrowContainer}>
+                  <Text style={styles.expandArrow}>↗</Text>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
 
           {/* Main Stats - Three Cards in Row */}
           <View style={styles.mainStatsContainer}>
-            {mainStatsData.map((stat) => (
-              <TouchableOpacity
-                key={stat.id}
-                style={styles.statCard}
-                onPress={stat.onPress}
-                activeOpacity={stat.onPress ? 0.7 : 1}
-                disabled={!stat.onPress}
-              >
-                <Text style={[styles.statValue, { color: stat.color }]}>
-                  {stat.value}
-                </Text>
-                <Text style={styles.statLabel}>{stat.label}</Text>
-              </TouchableOpacity>
-            ))}
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{stats.completedJobs}</Text>
+              <Text style={styles.statLabel}>Заказов</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{stats.rating}</Text>
+              <Text style={styles.statLabel}>Рейтинг</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>
+                {stats.monthsOnPlatform > 12
+                  ? `${Math.floor(stats.monthsOnPlatform / 12)} г`
+                  : `${stats.monthsOnPlatform} мес`}
+              </Text>
+              <Text style={styles.statLabel}>На платформе</Text>
+            </View>
           </View>
 
-          {/* Profile Options */}
-          <View style={styles.profileOptions}>
-            <Text style={styles.sectionTitle}>Настройки</Text>
-            {profileOptions.map((option) => (
-              <TouchableOpacity
-                key={option.id}
-                style={styles.optionItem}
-                onPress={option.action}
-                activeOpacity={0.7}
-              >
-                <View style={styles.optionLeft}>
-                  {typeof option.icon === 'string' ? (
-                    <Text style={styles.optionIcon}>{option.icon}</Text>
-                  ) : (
-                    <View style={styles.optionIcon}>{option.icon}</View>
-                  )}
-                  <Text style={styles.optionTitle}>{option.title}</Text>
+          {/* Menu Options */}
+          <View style={styles.menuSection}>
+            <TouchableOpacity style={styles.menuItem} onPress={handleEditProfile}>
+              <View style={styles.menuLeft}>
+                <View style={styles.menuIconContainer}>
+                  <UserEditIcon width={20} height={20} />
                 </View>
-                <Text style={styles.optionArrow}>›</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+                <Text style={styles.menuText}>Редактировать профиль</Text>
+              </View>
+              <Text style={styles.menuArrow}>›</Text>
+            </TouchableOpacity>
 
-          {/* Logout Button */}
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Text style={styles.logoutText}>Выйти из аккаунта</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={styles.menuItem} onPress={handleNotifications}>
+              <View style={styles.menuLeft}>
+                <View style={styles.menuIconContainer}>
+                  <NotificationMessageIcon width={20} height={20} />
+                </View>
+                <Text style={styles.menuText}>Уведомления</Text>
+              </View>
+              <Text style={styles.menuArrow}>›</Text>
+            </TouchableOpacity>
 
-          {/* App Info */}
-          <View style={styles.appInfo}>
-            <Text style={styles.appVersion}>Osonish v1.0.0</Text>
-            <Text style={styles.appDescription}>
-              Marketplace для поиска исполнителей в Узбекистане
-            </Text>
+            <TouchableOpacity style={styles.menuItem} onPress={handleSupport}>
+              <View style={styles.menuLeft}>
+                <View style={styles.menuIconContainer}>
+                  <LifeBuoyIcon width={20} height={20} />
+                </View>
+                <Text style={styles.menuText}>Поддержка</Text>
+              </View>
+              <Text style={styles.menuArrow}>›</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={[styles.menuItem, styles.logoutMenuItem]} onPress={handleLogout}>
+              <View style={styles.menuLeft}>
+                <View style={styles.menuIconContainer}>
+                  <LogOutIcon width={20} height={20} color={logoutColor} />
+                </View>
+                <Text style={[styles.menuText, styles.logoutText]}>Выйти</Text>
+              </View>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -427,7 +482,7 @@ export const WorkerProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F8F9FA',
   },
   content: {
     flex: 1,
@@ -463,252 +518,335 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
   },
-  contentHeader: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.lg,
-    paddingBottom: theme.spacing.md,
-    backgroundColor: theme.colors.background,
-  },
-  title: {
-    fontSize: theme.fonts.sizes.xxl,
-    fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
-  },
-  subtitle: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
-    marginTop: theme.spacing.xs,
-  },
-  profileInfo: {
+
+  // New Header Styles
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: theme.spacing.xl,
-    paddingHorizontal: theme.spacing.lg,
-    backgroundColor: theme.colors.surface,
-    marginHorizontal: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    marginBottom: theme.spacing.lg,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 20,
   },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: theme.colors.primary,
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#1A1A1A',
+  },
+  headerRight: {
+    width: 40,
+  },
+
+  // Profile Section with Gradient
+  profileSection: {
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.spacing.md,
+    paddingTop: 30,
+    paddingBottom: 60,
+    paddingHorizontal: 20,
+    marginBottom: -30, // Negative margin to allow overlap
+    position: 'relative',
+    overflow: 'hidden',
+  },
+
+  // Background Pattern
+  patternBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+
+  // Icon Positions
+  patternIcon1: {
+    position: 'absolute',
+    top: 15,
+    left: 20,
+    transform: [{ rotate: '15deg' }],
+  },
+  patternIcon2: {
+    position: 'absolute',
+    top: 45,
+    right: 30,
+    transform: [{ rotate: '-25deg' }],
+  },
+  patternIcon3: {
+    position: 'absolute',
+    top: 80,
+    left: 60,
+    transform: [{ rotate: '35deg' }],
+  },
+  patternIcon4: {
+    position: 'absolute',
+    top: 110,
+    right: 80,
+    transform: [{ rotate: '-15deg' }],
+  },
+  patternIcon5: {
+    position: 'absolute',
+    bottom: 50,
+    left: 30,
+    transform: [{ rotate: '45deg' }],
+  },
+  patternIcon6: {
+    position: 'absolute',
+    bottom: 80,
+    right: 50,
+    transform: [{ rotate: '-30deg' }],
+  },
+  patternIcon7: {
+    position: 'absolute',
+    bottom: 20,
+    left: '45%',
+    transform: [{ rotate: '20deg' }],
+  },
+  patternIcon8: {
+    position: 'absolute',
+    top: 30,
+    left: '45%',
+    transform: [{ rotate: '-40deg' }],
+  },
+  profileImageContainer: {
+    marginBottom: 16,
   },
   profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginBottom: theme.spacing.md,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 4,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 4,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   avatarText: {
-    fontSize: theme.fonts.sizes.xl,
-    fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.background,
+    fontSize: 36,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   userName: {
-    fontSize: theme.fonts.sizes.lg,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 4,
     textAlign: 'center',
   },
   userPhone: {
-    fontSize: theme.fonts.sizes.md,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.sm,
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 8,
   },
-
-  verifiedBadge: {
-    backgroundColor: theme.colors.success + '20',
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.sm,
-    marginTop: theme.spacing.sm,
+  userNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
   },
-  verifiedText: {
-    fontSize: theme.fonts.sizes.xs,
-    color: theme.colors.success,
-    fontWeight: theme.fonts.weights.medium,
+  verifiedCheckmark: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#1877F2', // Meta/Facebook blue
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 6,
+    shadowColor: '#1877F2',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  checkmarkIcon: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: 'bold',
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: theme.spacing.sm,
-    gap: theme.spacing.xs,
+    marginTop: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
   ratingText: {
-    fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: '#FDB022',
-    marginRight: theme.spacing.xs,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginLeft: 4,
+    marginRight: 4,
   },
   ratingCount: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
   },
-  sectionTitle: {
-    fontSize: theme.fonts.sizes.lg,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
+
+
+
+
+  // Menu Section
+  menuSection: {
+    paddingHorizontal: 20,
+    marginBottom: 30,
   },
-  profileOptions: {
-    paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
-  },
-  optionItem: {
+  menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
-  optionLeft: {
+  menuLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
-  optionIcon: {
-    marginRight: theme.spacing.md,
+  menuIconContainer: {
     width: 24,
     height: 24,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 16,
   },
-  optionTitle: {
-    fontSize: theme.fonts.sizes.md,
-    color: theme.colors.text.primary,
-    fontWeight: theme.fonts.weights.medium,
+  menuIcon: {
+    fontSize: 18,
   },
-  optionArrow: {
-    fontSize: theme.fonts.sizes.lg,
-    color: theme.colors.text.secondary,
+  menuText: {
+    fontSize: 16,
+    color: '#1A1A1A',
+    fontWeight: '500',
   },
-  logoutButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#FF6B6B',
-    borderRadius: theme.borderRadius.md,
-    paddingVertical: theme.spacing.md,
-    marginHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
-    alignItems: 'center',
+  menuArrow: {
+    fontSize: 20,
+    color: '#C7C7CC',
+    fontWeight: '300',
+  },
+  logoutMenuItem: {
+    borderWidth: 0,
   },
   logoutText: {
-    fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: '#FF6B6B',
-  },
-  appInfo: {
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
-  },
-  appVersion: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.xs,
-  },
-  appDescription: {
-    fontSize: theme.fonts.sizes.xs,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
+    color: '#FF3B30', // Используем тот же цвет, что и для иконки
   },
 
-  // Earnings Widget Styles
+  // Modern Earnings Widget
   earningsContainer: {
-    paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
+    paddingHorizontal: 20,
+    marginBottom: 20,
+    zIndex: 10,
   },
-  earningsWidget: {
-    backgroundColor: theme.colors.primary,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
+  modernEarningsWidget: {
+    borderRadius: 20,
+    padding: 24,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
+    justifyContent: 'space-between',
+    shadowColor: '#FFB800',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 12,
+    minHeight: 120,
+    overflow: 'hidden',
   },
-  earningsIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: theme.spacing.md,
-  },
-  earningsIcon: {
-    fontSize: 24,
-  },
-  earningsTextContainer: {
+  earningsMainContent: {
     flex: 1,
   },
-  earningsValue: {
-    fontSize: theme.fonts.sizes.xxl,
-    fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.white,
-    marginBottom: theme.spacing.xs,
+  earningsTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: 'rgba(0, 0, 0, 0.7)',
+    marginBottom: 8,
   },
-  earningsLabel: {
-    fontSize: theme.fonts.sizes.md,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: theme.fonts.weights.medium,
+  modernEarningsValue: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: 12,
+    letterSpacing: -0.5,
+  },
+  earningsChangeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  earningsChangeIcon: {
+    fontSize: 14,
+    marginRight: 6,
+  },
+  earningsChangeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1A1A1A',
+  },
+  expandArrowContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  expandArrow: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
   },
 
-
-  // Main Stats Styles
+  // Main Stats - Three Cards in Row
   mainStatsContainer: {
     flexDirection: 'row',
-    paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
-    gap: theme.spacing.md,
+    paddingHorizontal: 20,
+    marginBottom: 30,
+    gap: 12,
   },
   statCard: {
     flex: 1,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.sm,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    shadowColor: theme.colors.shadow,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 4,
-    elevation: 3,
-    minHeight: 80,
-  },
-  statIcon: {
-    fontSize: 28,
-    marginBottom: theme.spacing.sm,
+    elevation: 2,
+    minHeight: 90,
   },
   statValue: {
-    fontSize: theme.fonts.sizes.lg,
-    fontWeight: theme.fonts.weights.bold,
-    marginBottom: theme.spacing.xs,
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: 4,
   },
   statLabel: {
-    fontSize: theme.fonts.sizes.xs,
-    color: theme.colors.text.secondary,
+    fontSize: 14,
+    color: '#8E8E93',
     textAlign: 'center',
-    fontWeight: theme.fonts.weights.medium,
+    fontWeight: '500',
   },
 }); 
