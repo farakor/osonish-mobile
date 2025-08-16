@@ -104,6 +104,12 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
           color: '#EF4444',
           backgroundColor: '#FEE2E2',
         };
+      case 'rejected':
+        return {
+          text: 'Отклонен',
+          color: '#EF4444',
+          backgroundColor: '#FEE2E2',
+        };
       default:
         return {
           text: status,

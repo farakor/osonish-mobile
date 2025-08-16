@@ -63,7 +63,7 @@ export function WorkerTabNavigator() {
         name="Applications"
         component={WorkerApplicationsScreen}
         options={{
-          tabBarLabel: 'История',
+          tabBarLabel: 'Мои заказы',
           tabBarIcon: ({ color, size, focused }) => (
             <FileIcon
               width={25}

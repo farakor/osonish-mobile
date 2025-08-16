@@ -32,7 +32,7 @@ const mapApplicationStatusToOrderStatus = (applicationStatus: ApplicationStatus)
     case 'pending': return 'new';
     case 'accepted': return 'in_progress';
     case 'completed': return 'completed';
-    case 'rejected': return 'cancelled';
+    case 'rejected': return 'rejected';
     case 'cancelled': return 'cancelled';
     default: return 'new';
   }
@@ -82,41 +82,11 @@ const ApplicationCard: React.FC<{
           />
         );
       case 'accepted':
-        return (
-          <ModernActionButton
-            title="Принято"
-            onPress={undefined}
-            variant="success"
-            size="small"
-          />
-        );
       case 'completed':
-        return (
-          <ModernActionButton
-            title="Завершено"
-            onPress={undefined}
-            variant="success"
-            size="small"
-          />
-        );
       case 'rejected':
-        return (
-          <ModernActionButton
-            title="Отклонено"
-            onPress={undefined}
-            variant="disabled"
-            size="small"
-          />
-        );
       case 'cancelled':
-        return (
-          <ModernActionButton
-            title="Отменено"
-            onPress={undefined}
-            variant="disabled"
-            size="small"
-          />
-        );
+        // Для этих статусов не показываем кнопку, так как статус уже отображается в верхнем бэдже
+        return null;
       default:
         return null;
     }
@@ -137,7 +107,7 @@ const ApplicationCard: React.FC<{
 
 export const WorkerApplicationsScreen: React.FC = () => {
   const navigation = useNavigation<WorkerNavigationProp>();
-  const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus>('pending');
+  const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus>('accepted');
   const [applications, setApplications] = useState<WorkerApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -226,8 +196,8 @@ export const WorkerApplicationsScreen: React.FC = () => {
 
   const statusFilters = [
     { key: 'pending', label: 'Ожидание', count: applications.filter(a => a.status === 'pending').length },
-    { key: 'accepted', label: 'Принято', count: applications.filter(a => a.status === 'accepted').length },
-    { key: 'completed', label: 'Выполнено', count: applications.filter(a => a.status === 'completed').length },
+    { key: 'accepted', label: 'В работе', count: applications.filter(a => a.status === 'accepted').length },
+    { key: 'completed', label: 'Завершено', count: applications.filter(a => a.status === 'completed').length },
     { key: 'rejected', label: 'Отклонено', count: applications.filter(a => a.status === 'rejected').length },
     { key: 'cancelled', label: 'Отменено', count: applications.filter(a => a.status === 'cancelled').length },
   ];
@@ -306,7 +276,7 @@ export const WorkerApplicationsScreen: React.FC = () => {
     <View style={styles.container}>
       <SafeAreaView style={styles.content}>
         <View style={styles.contentHeader}>
-          <Text style={styles.title}>Мои заявки</Text>
+          <Text style={styles.title}>Мои заказы</Text>
           <Text style={styles.subtitle}>
             Отслеживайте статус ваших заявок на заказы
           </Text>

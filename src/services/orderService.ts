@@ -533,6 +533,48 @@ export class OrderService {
   }
 
   /**
+   * Получение статуса заявки пользователя на конкретный заказ
+   */
+  async getUserApplicationStatus(orderId: string): Promise<{ hasApplied: boolean; status?: 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled' }> {
+    try {
+      const authState = authService.getAuthState();
+      if (!authState.isAuthenticated || !authState.user) {
+        return { hasApplied: false };
+      }
+
+      const { data, error } = await supabase
+        .from('applicants')
+        .select('status, orders!inner(status)')
+        .eq('order_id', orderId)
+        .eq('worker_id', authState.user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 - no rows found
+        console.error('[OrderService] Ошибка получения статуса заявки:', error);
+        return { hasApplied: false };
+      }
+
+      if (!data) {
+        return { hasApplied: false };
+      }
+
+      // Определяем статус заявки с учетом статуса заказа
+      let applicationStatus = data.status;
+      if (data.status === 'accepted' && data.orders.status === 'completed') {
+        applicationStatus = 'completed';
+      }
+
+      return {
+        hasApplied: true,
+        status: applicationStatus as 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled'
+      };
+    } catch (error) {
+      console.error('[OrderService] Ошибка получения статуса заявки:', error);
+      return { hasApplied: false };
+    }
+  }
+
+  /**
    * Получение всех откликов текущего пользователя
    */
   async getUserApplications(): Promise<Set<string>> {

@@ -26,6 +26,7 @@ import { HeaderWithBack, PriceConfirmationModal, ProposePriceModal, MediaViewer,
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { locationService, LocationCoords } from '../../services/locationService';
+import { supabase } from '../../services/supabaseClient';
 import { Order, User } from '../../types';
 
 const { width } = Dimensions.get('window');
@@ -205,6 +206,7 @@ export const JobDetailsScreen: React.FC = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasApplied, setHasApplied] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState<'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled' | null>(null);
   const [customer, setCustomer] = useState<User | null>(null);
   const [priceConfirmationVisible, setPriceConfirmationVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -239,9 +241,10 @@ export const JobDetailsScreen: React.FC = () => {
           setMapCoords(null);
         }
 
-        // Проверяем, откликнулся ли пользователь
-        const applied = await orderService.hasUserAppliedToOrder(orderId);
-        setHasApplied(applied);
+        // Проверяем статус заявки пользователя
+        const applicationData = await orderService.getUserApplicationStatus(orderId);
+        setHasApplied(applicationData.hasApplied);
+        setApplicationStatus(applicationData.status || null);
 
         // Загружаем информацию о заказчике
         if (orderData) {
@@ -276,6 +279,40 @@ export const JobDetailsScreen: React.FC = () => {
     getUserLocation();
   }, [orderId]);
 
+  // Real-time обновления статуса заявки
+  useEffect(() => {
+    const authState = authService.getAuthState();
+    if (!authState.isAuthenticated || !authState.user || !hasApplied) {
+      return;
+    }
+
+    console.log('[JobDetailsScreen] Подключаем real-time обновления заявки');
+
+    const subscription = supabase
+      .channel('job_application_status')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'applicants',
+          filter: `worker_id=eq.${authState.user.id} and order_id=eq.${orderId}`
+        },
+        async (payload: any) => {
+          console.log('[JobDetailsScreen] Real-time изменение статуса заявки:', payload);
+          // Обновляем статус заявки
+          const applicationData = await orderService.getUserApplicationStatus(orderId);
+          setApplicationStatus(applicationData.status || null);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('[JobDetailsScreen] Отключаем real-time обновления заявки');
+      subscription.unsubscribe();
+    };
+  }, [orderId, hasApplied]);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('ru-RU', {
@@ -287,6 +324,23 @@ export const JobDetailsScreen: React.FC = () => {
 
   const formatBudget = (budget: number) => {
     return budget.toLocaleString('ru-RU');
+  };
+
+  const getApplicationStatusText = (status: 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled' | null) => {
+    switch (status) {
+      case 'pending':
+        return 'Отклик отправлен';
+      case 'accepted':
+        return 'Отклик принят';
+      case 'rejected':
+        return 'Отклик отклонен';
+      case 'completed':
+        return 'Заказ завершен';
+      case 'cancelled':
+        return 'Отклик отменен';
+      default:
+        return 'Отклик отправлен';
+    }
   };
 
   // Координаты для карты: берем из заказа, иначе из геокодирования
@@ -336,6 +390,7 @@ export const JobDetailsScreen: React.FC = () => {
 
       if (applicantCreated) {
         setHasApplied(true);
+        setApplicationStatus('pending');
         Alert.alert(
           'Успешно!',
           'Отклик отправлен, ожидайте решение заказчика.',
@@ -374,6 +429,7 @@ export const JobDetailsScreen: React.FC = () => {
 
       if (applicantCreated) {
         setHasApplied(true);
+        setApplicationStatus('pending');
         Alert.alert(
           'Успешно!',
           'Отклик отправлен, ожидайте решение заказчика.',
@@ -567,7 +623,7 @@ export const JobDetailsScreen: React.FC = () => {
               styles.applyButtonText,
               hasApplied && styles.appliedButtonText
             ]}>
-              {hasApplied ? 'Отклик отправлен' : 'Подать заявку'}
+              {hasApplied ? getApplicationStatusText(applicationStatus) : 'Подать заявку'}
             </Text>
           </TouchableOpacity>
         </View>

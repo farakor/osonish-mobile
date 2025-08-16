@@ -63,7 +63,7 @@ export interface Order {
   workersNeeded: number;
   serviceDate: string; // ISO date string
   photos?: string[]; // массив URL фотографий
-  status: 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled';
+  status: 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled' | 'rejected';
   customerId: string;
   applicantsCount: number;
   createdAt: string; // ISO date string
@@ -146,7 +146,7 @@ export interface WorkerApplication {
   message?: string;
   proposedPrice?: number;
   appliedAt: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'completed';
+  status: 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled';
 }
 
 // Review Types
