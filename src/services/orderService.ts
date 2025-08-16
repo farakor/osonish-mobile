@@ -700,6 +700,28 @@ export class OrderService {
   }
 
   /**
+   * Фильтрация откликов для показа заказчику
+   * Скрывает отклоненные и недоступных исполнителей
+   */
+  filterApplicantsForCustomer(applicants: Applicant[]): Applicant[] {
+    return applicants.filter(applicant => {
+      // Показываем только активные отклики (pending или accepted)
+      if (applicant.status === 'rejected') {
+        console.log(`[OrderService] 🚫 Скрываем отклоненный отклик: ${applicant.workerName}`);
+        return false;
+      }
+
+      // Если отклик pending, проверяем доступность исполнителя
+      if (applicant.status === 'pending' && !applicant.isAvailable) {
+        console.log(`[OrderService] ⚠️ Скрываем недоступного исполнителя: ${applicant.workerName}`);
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  /**
    * Получение откликов для заказа
    */
   async getApplicantsForOrder(orderId: string): Promise<Applicant[]> {
@@ -774,6 +796,23 @@ export class OrderService {
       return applicantsWithRealData;
     } catch (error) {
       console.error('[OrderService] Ошибка получения откликов:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Получение отфильтрованных откликов для заказчика
+   * Возвращает только активные и доступные отклики
+   */
+  async getFilteredApplicantsForOrder(orderId: string): Promise<Applicant[]> {
+    try {
+      const allApplicants = await this.getApplicantsForOrder(orderId);
+      const filteredApplicants = this.filterApplicantsForCustomer(allApplicants);
+
+      console.log(`[OrderService] Отфильтровано ${filteredApplicants.length} из ${allApplicants.length} откликов для заказа ${orderId}`);
+      return filteredApplicants;
+    } catch (error) {
+      console.error('[OrderService] Ошибка получения отфильтрованных откликов:', error);
       return [];
     }
   }
@@ -977,9 +1016,10 @@ export class OrderService {
 
       console.log(`[OrderService] ✅ Отклонено ${applicationIds.length} других откликов исполнителя на ту же дату`);
 
-      // Проверяем статус каждого затронутого заказа
+      // Проверяем статус каждого затронутого заказа и обновляем счетчики
       for (const orderId of affectedOrderIds) {
         await this.checkAndRevertOrderStatus(orderId);
+        await this.updateActiveApplicantsCount(orderId);
       }
     } catch (error) {
       console.error('[OrderService] Ошибка отклонения других откликов:', error);
@@ -1120,6 +1160,7 @@ export class OrderService {
 
           if (!fetchError && applicantData) {
             await this.checkAndRevertOrderStatus(applicantData.order_id);
+            await this.updateActiveApplicantsCount(applicantData.order_id);
           }
         }
 
@@ -1200,6 +1241,38 @@ export class OrderService {
     } catch (error) {
       console.error('[OrderService] Ошибка получения счетчика откликов:', error);
       return 0;
+    }
+  }
+
+  /**
+   * Обновление счетчика активных откликов для заказа
+   * Считает только pending и accepted отклики от доступных исполнителей
+   */
+  async updateActiveApplicantsCount(orderId: string): Promise<void> {
+    try {
+      console.log(`[OrderService] 🔄 Обновляем счетчик активных откликов для заказа ${orderId}`);
+
+      // Получаем отфильтрованные отклики
+      const filteredApplicants = await this.getFilteredApplicantsForOrder(orderId);
+      const activeCount = filteredApplicants.length;
+
+      // Обновляем счетчик в базе данных
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          applicants_count: activeCount,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId);
+
+      if (error) {
+        console.error('[OrderService] Ошибка обновления счетчика активных откликов:', error);
+        return;
+      }
+
+      console.log(`[OrderService] ✅ Счетчик активных откликов обновлен: ${activeCount} для заказа ${orderId}`);
+    } catch (error) {
+      console.error('[OrderService] Ошибка обновления счетчика активных откликов:', error);
     }
   }
 

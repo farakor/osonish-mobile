@@ -61,18 +61,18 @@ export const ApplicantsListScreen: React.FC = () => {
         setIsLoading(true);
       }
 
-      // Загружаем данные заказа и отклики параллельно
-      const [orderData, applicantsData] = await Promise.all([
+      // Загружаем данные заказа и отфильтрованные отклики параллельно
+      const [orderData, filteredApplicants] = await Promise.all([
         orderService.getOrderById(orderId),
-        orderService.getApplicantsForOrder(orderId)
+        orderService.getFilteredApplicantsForOrder(orderId)
       ]);
 
       setOrder(orderData);
-      setApplicants(applicantsData);
+      setApplicants(filteredApplicants);
 
       // Инициализируем список принятых исполнителей
       const accepted = new Set(
-        applicantsData
+        filteredApplicants
           .filter(applicant => applicant.status === 'accepted')
           .map(applicant => applicant.id)
       );

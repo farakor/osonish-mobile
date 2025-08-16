@@ -261,18 +261,18 @@ export const OrderDetailsScreen: React.FC = () => {
 
       try {
         setApplicantsLoading(true);
-        const orderApplicants = await orderService.getApplicantsForOrder(orderId);
-        setApplicants(orderApplicants);
+        const filteredApplicants = await orderService.getFilteredApplicantsForOrder(orderId);
+        setApplicants(filteredApplicants);
 
         // Инициализируем список принятых исполнителей
         const accepted = new Set(
-          orderApplicants
+          filteredApplicants
             .filter(applicant => applicant.status === 'accepted')
             .map(applicant => applicant.id)
         );
         setAcceptedApplicants(accepted);
 
-        console.log(`[OrderDetailsScreen] Загружено ${orderApplicants.length} откликов для заказа ${orderId}, принято: ${accepted.size}`);
+        console.log(`[OrderDetailsScreen] Загружено ${filteredApplicants.length} отфильтрованных откликов для заказа ${orderId}, принято: ${accepted.size}`);
       } catch (error) {
         console.error('Ошибка загрузки откликов:', error);
       } finally {
@@ -307,18 +307,18 @@ export const OrderDetailsScreen: React.FC = () => {
 
     try {
       setApplicantsLoading(true);
-      const orderApplicants = await orderService.getApplicantsForOrder(orderId);
-      setApplicants(orderApplicants);
+      const filteredApplicants = await orderService.getFilteredApplicantsForOrder(orderId);
+      setApplicants(filteredApplicants);
 
       // Инициализируем список принятых исполнителей
       const accepted = new Set(
-        orderApplicants
+        filteredApplicants
           .filter(applicant => applicant.status === 'accepted')
           .map(applicant => applicant.id)
       );
       setAcceptedApplicants(accepted);
 
-      console.log(`[OrderDetailsScreen] Загружено ${orderApplicants.length} откликов для заказа ${orderId}, принято: ${accepted.size}`);
+      console.log(`[OrderDetailsScreen] Загружено ${filteredApplicants.length} отфильтрованных откликов для заказа ${orderId}, принято: ${accepted.size}`);
     } catch (error) {
       console.error('[OrderDetailsScreen] Ошибка загрузки откликов:', error);
     } finally {
