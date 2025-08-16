@@ -426,6 +426,26 @@ export class OrderService {
         return false;
       }
 
+      // Получаем информацию о заказе для проверки даты
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select('service_date')
+        .eq('id', request.orderId)
+        .single();
+
+      if (orderError || !orderData) {
+        console.error('[OrderService] Ошибка получения данных заказа:', orderError);
+        return false;
+      }
+
+      // Проверяем, нет ли у исполнителя уже принятых заказов на эту дату
+      const conflictingApplications = await this.checkWorkerDateConflicts(authState.user.id, orderData.service_date);
+      if (conflictingApplications.length > 0) {
+        console.log(`[OrderService] ⚠️ Исполнитель уже занят на эту дату. Конфликтующих заказов: ${conflictingApplications.length}`);
+        // Можно вернуть false или показать предупреждение, но разрешить создание отклика
+        // Пока разрешаем создание отклика, но логируем предупреждение
+      }
+
       const applicantId = this.generateApplicantId();
       const currentTime = new Date().toISOString();
 
@@ -808,6 +828,10 @@ export class OrderService {
     try {
       console.log(`[OrderService] 🔍 Проверяем конфликты дат для исполнителя ${workerId} на дату ${serviceDate}`);
 
+      // Извлекаем только дату без времени для сравнения
+      const targetDate = serviceDate.split('T')[0]; // Получаем только YYYY-MM-DD часть
+      console.log(`[OrderService] 📅 Проверяем конфликты на дату: ${targetDate}`);
+
       // Получаем все принятые отклики исполнителя на ту же дату
       const { data, error } = await supabase
         .from('applicants')
@@ -818,7 +842,8 @@ export class OrderService {
         `)
         .eq('worker_id', workerId)
         .eq('status', 'accepted')
-        .eq('orders.service_date', serviceDate);
+        .gte('orders.service_date', `${targetDate}T00:00:00.000Z`)
+        .lt('orders.service_date', `${targetDate}T23:59:59.999Z`);
 
       if (error) {
         console.error('[OrderService] Ошибка проверки конфликтов дат:', error);
@@ -836,11 +861,77 @@ export class OrderService {
   }
 
   /**
+   * Проверка и возврат статуса заказа если нет активных откликов
+   */
+  private async checkAndRevertOrderStatus(orderId: string): Promise<void> {
+    try {
+      console.log(`[OrderService] 🔄 Проверяем необходимость возврата статуса заказа ${orderId}`);
+
+      // Получаем информацию о заказе
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select('status')
+        .eq('id', orderId)
+        .single();
+
+      if (orderError || !orderData) {
+        console.error('[OrderService] Ошибка получения данных заказа:', orderError);
+        return;
+      }
+
+      // Проверяем только заказы со статусом 'response_received'
+      if (orderData.status !== 'response_received') {
+        console.log(`[OrderService] Заказ ${orderId} имеет статус ${orderData.status}, пропускаем проверку`);
+        return;
+      }
+
+      // Проверяем, есть ли еще активные (pending или accepted) отклики
+      const { data: activeApplicants, error: applicantsError } = await supabase
+        .from('applicants')
+        .select('id')
+        .eq('order_id', orderId)
+        .in('status', ['pending', 'accepted']);
+
+      if (applicantsError) {
+        console.error('[OrderService] Ошибка проверки активных откликов:', applicantsError);
+        return;
+      }
+
+      // Если нет активных откликов, возвращаем статус на 'new'
+      if (!activeApplicants || activeApplicants.length === 0) {
+        const { error: updateError } = await supabase
+          .from('orders')
+          .update({
+            status: 'new',
+            applicants_count: 0,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', orderId);
+
+        if (updateError) {
+          console.error('[OrderService] Ошибка возврата статуса заказа:', updateError);
+          return;
+        }
+
+        console.log(`[OrderService] ✅ Статус заказа ${orderId} возвращен на 'new' (нет активных откликов)`);
+      } else {
+        console.log(`[OrderService] Заказ ${orderId} имеет ${activeApplicants.length} активных откликов, статус не меняется`);
+      }
+    } catch (error) {
+      console.error('[OrderService] Ошибка проверки и возврата статуса заказа:', error);
+    }
+  }
+
+  /**
    * Отклонение других откликов исполнителя на ту же дату
    */
   private async rejectWorkerOtherApplicationsOnSameDate(workerId: string, serviceDate: string, excludeApplicationId: string): Promise<void> {
     try {
       console.log(`[OrderService] 🚫 Отклоняем другие отклики исполнителя ${workerId} на дату ${serviceDate}`);
+
+      // Извлекаем только дату без времени для сравнения
+      const targetDate = serviceDate.split('T')[0]; // Получаем только YYYY-MM-DD часть
+      console.log(`[OrderService] 📅 Ищем конфликты на дату: ${targetDate}`);
 
       // Получаем все pending отклики исполнителя на ту же дату (кроме текущего)
       const { data: pendingApplications, error: fetchError } = await supabase
@@ -852,7 +943,8 @@ export class OrderService {
         `)
         .eq('worker_id', workerId)
         .eq('status', 'pending')
-        .eq('orders.service_date', serviceDate)
+        .gte('orders.service_date', `${targetDate}T00:00:00.000Z`)
+        .lt('orders.service_date', `${targetDate}T23:59:59.999Z`)
         .neq('id', excludeApplicationId);
 
       if (fetchError) {
@@ -864,6 +956,9 @@ export class OrderService {
         console.log('[OrderService] ✅ Нет других pending откликов для отклонения');
         return;
       }
+
+      // Собираем уникальные order_id, которые будут затронуты
+      const affectedOrderIds = [...new Set(pendingApplications.map(app => app.order_id))];
 
       // Отклоняем все найденные отклики
       const applicationIds = pendingApplications.map(app => app.id);
@@ -881,6 +976,11 @@ export class OrderService {
       }
 
       console.log(`[OrderService] ✅ Отклонено ${applicationIds.length} других откликов исполнителя на ту же дату`);
+
+      // Проверяем статус каждого затронутого заказа
+      for (const orderId of affectedOrderIds) {
+        await this.checkAndRevertOrderStatus(orderId);
+      }
     } catch (error) {
       console.error('[OrderService] Ошибка отклонения других откликов:', error);
     }
@@ -949,6 +1049,9 @@ export class OrderService {
         console.log(`[OrderService] ✅ Исполнитель успешно принят для отклика ${applicantId}`);
 
         // Теперь проверяем, есть ли у исполнителя другие принятые заказы на ту же дату
+        const targetDate = serviceDate.split('T')[0]; // Получаем только YYYY-MM-DD часть
+        console.log(`[OrderService] 📅 Проверяем конфликты принятых заказов на дату: ${targetDate}`);
+
         const { data: conflictingData, error: conflictError } = await supabase
           .from('applicants')
           .select(`
@@ -958,7 +1061,8 @@ export class OrderService {
           `)
           .eq('worker_id', workerId)
           .eq('status', 'accepted')
-          .eq('orders.service_date', serviceDate)
+          .gte('orders.service_date', `${targetDate}T00:00:00.000Z`)
+          .lt('orders.service_date', `${targetDate}T23:59:59.999Z`)
           .neq('id', applicantId);
 
         if (conflictError) {
@@ -1004,6 +1108,21 @@ export class OrderService {
         }
 
         console.log(`[OrderService] Статус отклика ${applicantId} обновлен на ${status}`);
+
+        // Если отклик отклонен, проверяем необходимость возврата статуса заказа
+        if (status === 'rejected') {
+          // Получаем order_id для этого отклика
+          const { data: applicantData, error: fetchError } = await supabase
+            .from('applicants')
+            .select('order_id')
+            .eq('id', applicantId)
+            .single();
+
+          if (!fetchError && applicantData) {
+            await this.checkAndRevertOrderStatus(applicantData.order_id);
+          }
+        }
+
         return true;
       }
     } catch (error) {

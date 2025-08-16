@@ -17,6 +17,7 @@ import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { notificationService } from '../../services/notificationService';
 import { locationService, LocationCoords } from '../../services/locationService';
+import { supabase } from '../../services/supabaseClient';
 import { Order } from '../../types';
 import { PriceConfirmationModal, ProposePriceModal, ModernActionButton } from '../../components/common';
 import { ModernOrderCard } from '../../components/cards';
@@ -136,8 +137,59 @@ const WorkerJobsScreen: React.FC = () => {
     getUserLocation();
   }, []);
 
-  // Real-time обновления временно отключены
-  // TODO: Реализовать real-time подписки через Supabase
+  // Real-time обновления для отслеживания изменений статусов заказов
+  useEffect(() => {
+    const authState = authService.getAuthState();
+    if (!authState.isAuthenticated || !authState.user) {
+      return;
+    }
+
+    console.log('[WorkerJobsScreen] Подключаем real-time обновления заказов');
+
+    // Подписка на изменения заказов (например, когда статус меняется обратно на 'new')
+    const ordersSubscription = supabase
+      .channel('worker_available_orders')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `status=in.(new,response_received)`
+        },
+        (payload: any) => {
+          console.log('[WorkerJobsScreen] Real-time изменение заказов:', payload);
+          // Перезагружаем заказы при изменениях
+          loadOrders();
+        }
+      )
+      .subscribe();
+
+    // Подписка на изменения откликов текущего исполнителя
+    const applicantsSubscription = supabase
+      .channel('worker_own_applications')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'applicants',
+          filter: `worker_id=eq.${authState.user.id}`
+        },
+        (payload: any) => {
+          console.log('[WorkerJobsScreen] Real-time изменение откликов исполнителя:', payload);
+          // Перезагружаем заказы при изменениях откликов (например, когда отклик отклонен)
+          loadOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('[WorkerJobsScreen] Отключаем real-time обновления');
+      ordersSubscription.unsubscribe();
+      applicantsSubscription.unsubscribe();
+    };
+  }, []);
 
   // Обновляем заказы при возвращении на экран
   useFocusEffect(
