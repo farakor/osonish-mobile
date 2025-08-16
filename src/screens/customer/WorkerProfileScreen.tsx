@@ -9,9 +9,10 @@ import {
   TouchableOpacity,
   RefreshControl,
   Alert,
-  Linking,
   ActivityIndicator,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
@@ -66,11 +67,7 @@ export const WorkerProfileScreen: React.FC = () => {
     loadWorkerProfile();
   };
 
-  const handleCallWorker = () => {
-    if (workerProfile?.phone) {
-      Linking.openURL(`tel:${workerProfile.phone}`);
-    }
-  };
+
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -161,14 +158,31 @@ export const WorkerProfileScreen: React.FC = () => {
           }
         >
           {/* Основная информация */}
-          <View style={styles.profileCard}>
+          <LinearGradient
+            colors={['#679B00', '#5A8A00', '#4A7A00']}
+            style={styles.profileCard}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            {/* Background Pattern */}
+            <View style={styles.patternBackground}>
+              <Ionicons name="hammer-outline" size={48} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon1} />
+              <Ionicons name="build-outline" size={44} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon2} />
+              <Ionicons name="construct-outline" size={40} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon3} />
+              <Ionicons name="hardware-chip-outline" size={38} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon4} />
+              <Ionicons name="flash-outline" size={46} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon5} />
+              <Ionicons name="settings-outline" size={42} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon6} />
+              <Ionicons name="hammer-outline" size={40} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon7} />
+              <Ionicons name="build-outline" size={38} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon8} />
+            </View>
+
             <View style={styles.profileHeader}>
               <View style={styles.avatarContainer}>
                 {workerProfile.profileImage ? (
                   <Image source={{ uri: workerProfile.profileImage }} style={styles.avatar} />
                 ) : (
                   <View style={styles.avatarPlaceholder}>
-                    <UserIcon width={40} height={40} stroke={theme.colors.text.secondary} />
+                    <UserIcon width={40} height={40} stroke="rgba(255, 255, 255, 0.8)" />
                   </View>
                 )}
                 {workerProfile.averageRating > 0 && (
@@ -207,12 +221,7 @@ export const WorkerProfileScreen: React.FC = () => {
                 <Text style={styles.statLabel}>Рейтинг</Text>
               </View>
             </View>
-
-            {/* Кнопка звонка */}
-            <TouchableOpacity style={styles.callButton} onPress={handleCallWorker}>
-              <Text style={styles.callButtonText}>📞 Позвонить</Text>
-            </TouchableOpacity>
-          </View>
+          </LinearGradient>
 
           {/* Отзывы */}
           <View style={styles.reviewsSection}>
@@ -266,7 +275,6 @@ const styles = StyleSheet.create({
     color: theme.colors.error,
   },
   profileCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
@@ -275,6 +283,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
+    position: 'relative',
+    overflow: 'hidden',
   },
   profileHeader: {
     flexDirection: 'row',
@@ -289,16 +299,18 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
+    borderWidth: 4,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   avatarPlaceholder: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#F0F2F5',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
+    borderWidth: 4,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   ratingBadge: {
     position: 'absolute',
@@ -322,20 +334,19 @@ const styles = StyleSheet.create({
   workerName: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#FFFFFF',
     marginBottom: 4,
   },
   joinedDate: {
     fontSize: 14,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.9)',
   },
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
   },
   statItem: {
     alignItems: 'center',
@@ -343,25 +354,15 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: '800',
-    color: theme.colors.primary,
+    color: '#FFFFFF',
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: '#6B7280',
+    color: 'rgba(255, 255, 255, 0.8)',
     fontWeight: '500',
   },
-  callButton: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  callButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
+
   reviewsSection: {
     marginBottom: 20,
   },
@@ -422,5 +423,64 @@ const styles = StyleSheet.create({
   noReviewsText: {
     fontSize: 16,
     color: '#6B7280',
+  },
+
+  // Background Pattern
+  patternBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+
+  // Icon Positions - Random Distribution
+  patternIcon1: {
+    position: 'absolute',
+    top: 25,
+    left: 15,
+    transform: [{ rotate: '67deg' }],
+  },
+  patternIcon2: {
+    position: 'absolute',
+    top: 12,
+    right: 45,
+    transform: [{ rotate: '-142deg' }],
+  },
+  patternIcon3: {
+    position: 'absolute',
+    top: 95,
+    left: 35,
+    transform: [{ rotate: '203deg' }],
+  },
+  patternIcon4: {
+    position: 'absolute',
+    top: 65,
+    right: 15,
+    transform: [{ rotate: '-78deg' }],
+  },
+  patternIcon5: {
+    position: 'absolute',
+    bottom: 85,
+    left: 55,
+    transform: [{ rotate: '156deg' }],
+  },
+  patternIcon6: {
+    position: 'absolute',
+    bottom: 35,
+    right: 65,
+    transform: [{ rotate: '-234deg' }],
+  },
+  patternIcon7: {
+    position: 'absolute',
+    bottom: 60,
+    left: '25%',
+    transform: [{ rotate: '89deg' }],
+  },
+  patternIcon8: {
+    position: 'absolute',
+    top: 55,
+    left: '65%',
+    transform: [{ rotate: '-167deg' }],
   },
 });

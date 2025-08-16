@@ -11,10 +11,17 @@ import {
   Alert,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { SvgXml } from 'react-native-svg';
 import { theme } from '../../constants';
 import { HeaderWithBack } from '../../components/common';
 import { notificationService, NotificationItem } from '../../services/notificationService';
 import { authService } from '../../services/authService';
+
+// SVG иконка check-circle-broken
+const checkCircleBrokenSvg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path opacity="0.12" d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="#679B00"/>
+<path d="M22 11.0857V12.0057C21.9988 14.1621 21.3005 16.2604 20.0093 17.9875C18.7182 19.7147 16.9033 20.9782 14.8354 21.5896C12.7674 22.201 10.5573 22.1276 8.53447 21.3803C6.51168 20.633 4.78465 19.2518 3.61096 17.4428C2.43727 15.6338 1.87979 13.4938 2.02168 11.342C2.16356 9.19029 2.99721 7.14205 4.39828 5.5028C5.79935 3.86354 7.69279 2.72111 9.79619 2.24587C11.8996 1.77063 14.1003 1.98806 16.07 2.86572M22 4L12 14.01L9 11.01" stroke="#679B00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
 
 const getNotificationIcon = (type: string): string => {
   switch (type) {
@@ -197,9 +204,12 @@ export const NotificationsListScreen: React.FC = () => {
             style={styles.markAllButton}
             onPress={handleMarkAllAsRead}
           >
-            <Text style={styles.markAllButtonText}>
-              Отметить все как прочитанные ({unreadCount})
-            </Text>
+            <View style={styles.markAllButtonContent}>
+              <SvgXml xml={checkCircleBrokenSvg} style={styles.markAllButtonIcon} />
+              <Text style={styles.markAllButtonText}>
+                Отметить все как прочитанные ({unreadCount})
+              </Text>
+            </View>
           </TouchableOpacity>
         )}
       </View>
@@ -246,7 +256,7 @@ export const NotificationsListScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F8F9FA',
   },
   loadingContainer: {
     flex: 1,
@@ -266,36 +276,55 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerActions: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   markAllButton: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  markAllButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  markAllButtonIcon: {
+    marginRight: 8,
   },
   markAllButtonText: {
     fontSize: theme.fonts.sizes.sm,
     color: theme.colors.primary,
     fontWeight: theme.fonts.weights.medium,
-    textAlign: 'center',
   },
   notificationItem: {
     flexDirection: 'row',
-    backgroundColor: theme.colors.surface,
-    marginHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 20,
+    marginBottom: 12,
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   unreadNotification: {
-    backgroundColor: `${theme.colors.primary}05`,
-    borderColor: `${theme.colors.primary}20`,
+    backgroundColor: '#ECFDF5', // светло-зеленый фон как в карточке "Отклик получен"
+    borderColor: theme.colors.primary,
+    borderWidth: 0.5,
+    shadowColor: '#10B981', // зеленый glow
+    shadowOpacity: 0.14,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 3,
   },
   notificationIcon: {
     width: 50,
