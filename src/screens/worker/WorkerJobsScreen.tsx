@@ -82,13 +82,13 @@ const WorkerJobsScreen: React.FC = () => {
         setIsLoading(true);
       }
 
-      // Используем новый метод который автоматически исключает заказы с откликами
+      // Загружаем все доступные заказы и отклики пользователя
       const [availableOrders, applications] = await Promise.all([
         orderService.getAvailableOrdersForWorker(),
         orderService.getUserApplications()
       ]);
 
-      console.log(`[WorkerJobsScreen] Загружено ${availableOrders.length} доступных заказов (без тех, на которые уже отправлен отклик)`);
+      console.log(`[WorkerJobsScreen] Загружено ${availableOrders.length} доступных заказов`);
       console.log(`[WorkerJobsScreen] Найдено ${applications.size} откликов пользователя`);
 
       setOrders(availableOrders);

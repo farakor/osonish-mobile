@@ -240,7 +240,7 @@ export class OrderService {
       const { data, error } = await supabase
         .from('orders')
         .select('*')
-        .eq('status', 'new')
+        .in('status', ['new', 'response_received'])
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -276,7 +276,8 @@ export class OrderService {
   }
 
   /**
-   * Получение доступных заказов для исполнителя (исключая те, на которые уже отправлен отклик)
+   * Получение доступных заказов для исполнителя
+   * Показывает все заказы, которые еще не набрали нужное количество исполнителей
    */
   async getAvailableOrdersForWorker(): Promise<Order[]> {
     try {
@@ -286,19 +287,11 @@ export class OrderService {
         return [];
       }
 
-      // Получаем новые заказы и отклики пользователя параллельно
-      const [allNewOrders, userApplications] = await Promise.all([
-        this.getNewOrdersForWorkers(),
-        this.getUserApplications()
-      ]);
+      // Получаем все заказы, которые еще принимают отклики
+      const allAvailableOrders = await this.getNewOrdersForWorkers();
 
-      // Фильтруем заказы, исключая те на которые уже есть отклик
-      const availableOrders = allNewOrders.filter(order =>
-        !userApplications.has(order.id)
-      );
-
-      console.log(`[OrderService] Из ${allNewOrders.length} новых заказов доступно ${availableOrders.length} (исключено ${userApplications.size} с откликами)`);
-      return availableOrders;
+      console.log(`[OrderService] Загружено ${allAvailableOrders.length} доступных заказов`);
+      return allAvailableOrders;
     } catch (error) {
       console.error('[OrderService] Ошибка получения доступных заказов:', error);
       return [];
