@@ -43,6 +43,7 @@ import {
   AnimatedInteractiveContainer,
   AnimatedSummaryGrid,
 } from '../../components/common/AnimatedComponents';
+import { HeaderWithBack } from '../../components/common';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -924,17 +925,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Text style={styles.backButtonText}>←</Text>
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>{getStepTitle()}</Text>
-            <View style={styles.headerRight} />
-          </View>
+          <HeaderWithBack title={getStepTitle()} />
 
           {/* Progress */}
           <AnimatedProgressBar progress={currentStep} total={totalSteps} />
@@ -1045,35 +1036,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  backButtonText: {
-    fontSize: 20,
-    color: theme.colors.text.primary,
-  },
-  headerTitle: {
-    fontSize: theme.fonts.sizes.lg,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.text.primary,
-  },
-  headerRight: {
-    width: 40,
-  },
+
   stepCounterContainer: {
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.sm,

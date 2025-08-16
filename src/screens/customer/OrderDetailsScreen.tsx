@@ -859,8 +859,8 @@ export const OrderDetailsScreen: React.FC = () => {
         }),
       }]}>
         <View style={styles.stickyHeaderContent}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.backButtonText}>←</Text>
+          <TouchableOpacity style={styles.stickyBackButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.stickyBackButtonText}>←</Text>
           </TouchableOpacity>
           <View style={styles.stickyTitleContainer}>
             <Text style={styles.stickyTitle} numberOfLines={1}>
@@ -872,11 +872,11 @@ export const OrderDetailsScreen: React.FC = () => {
           </View>
           {order?.status === 'in_progress' && (
             <TouchableOpacity
-              style={styles.completeButton}
+              style={styles.stickyCompleteButton}
               onPress={handleCompleteOrder}
               activeOpacity={0.8}
             >
-              <Text style={styles.completeButtonText}>
+              <Text style={styles.stickyCompleteButtonText}>
                 {isCompletingOrder ? 'Завершаем...' : 'Завершить'}
               </Text>
             </TouchableOpacity>
@@ -2371,19 +2371,42 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.xl,
     color: theme.colors.text.primary,
   },
-  completeButton: {
+  // Новые стили для sticky header кнопок (идентичные HeaderWithBack)
+  stickyBackButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  stickyBackButtonText: {
+    fontSize: theme.fonts.sizes.xl,
+    color: theme.colors.text.primary,
+  },
+  stickyCompleteButton: {
     minWidth: 40,
     height: 40,
     paddingHorizontal: theme.spacing.md,
-    borderRadius: 20,
-    backgroundColor: '#DC2626', // красный фон
+    borderRadius: 12,
+    backgroundColor: '#DC2626',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
-  completeButtonText: {
+  stickyCompleteButtonText: {
     fontSize: theme.fonts.sizes.sm,
     fontWeight: theme.fonts.weights.medium,
-    color: '#FFFFFF', // белый текст
+    color: '#FFFFFF',
   },
   stickyTitleContainer: {
     flex: 1,
