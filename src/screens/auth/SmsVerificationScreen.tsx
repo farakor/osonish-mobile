@@ -84,7 +84,10 @@ export function SmsVerificationScreen() {
 
       if (result.success) {
         // Переходим к экрану заполнения профиля
-        navigation.navigate('ProfileInfo', { phone });
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'ProfileInfo', params: { phone } }],
+        });
       } else {
         Alert.alert('Ошибка', result.error || 'Неверный код подтверждения');
         setCode(['', '', '', '', '', '']);

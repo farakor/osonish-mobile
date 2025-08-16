@@ -85,9 +85,15 @@ export function LoginSmsVerificationScreen() {
       if (result.success && result.user) {
         // Успешный вход - переходим в приложение
         if (result.user.role === 'customer') {
-          navigation.navigate('CustomerTabs');
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'CustomerTabs' }],
+          });
         } else {
-          navigation.navigate('WorkerTabs');
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'WorkerTabs' }],
+          });
         }
       } else if (result.error === 'user_not_found') {
         // Пользователь не найден - предлагаем регистрацию
@@ -98,7 +104,10 @@ export function LoginSmsVerificationScreen() {
             { text: 'Отмена', style: 'cancel' },
             {
               text: 'Регистрация',
-              onPress: () => navigation.navigate('Registration')
+              onPress: () => navigation.reset({
+                index: 0,
+                routes: [{ name: 'Registration' }],
+              })
             }
           ]
         );

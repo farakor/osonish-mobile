@@ -8,10 +8,12 @@ import {
   TouchableOpacity,
   Linking,
   Alert,
+  StatusBar,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
-import { HeaderWithBack } from '../../components/common';
+import TelegramIcon from '../../../assets/telegram-icon.svg';
+import PhoneCallIcon from '../../../assets/phone-call-01.svg';
 
 export const SupportScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -46,74 +48,79 @@ export const SupportScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <HeaderWithBack title="Поддержка" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.backButtonText}>‹</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Поддержка</Text>
+        <View style={styles.headerRight} />
+      </View>
+
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Logo Section */}
         <View style={styles.logoSection}>
-          <View style={styles.logoContainer}>
-            <View style={styles.logoPlaceholder}>
-              <Text style={styles.logoText}>LOGO</Text>
-            </View>
+          <View style={styles.logoPlaceholder}>
+            <Text style={styles.logoText}>LOGO</Text>
           </View>
         </View>
 
-        {/* Support Options */}
-        <View style={styles.supportOptions}>
+        {/* Form Fields */}
+        <View style={styles.form}>
           {/* Telegram Support */}
-          <TouchableOpacity style={styles.supportCard} onPress={handleTelegramPress}>
-            <View style={styles.supportIcon}>
-              <Text style={styles.telegramIcon}>📱</Text>
-            </View>
-            <View style={styles.supportContent}>
-              <Text style={styles.supportTitle}>Свяжитесь с нами по Telegram</Text>
-              <Text style={styles.supportDescription}>
-                Мы поможем Вам в любой ситуации
-              </Text>
-              <Text style={styles.supportContact}>@osonish</Text>
-            </View>
-          </TouchableOpacity>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Telegram поддержка</Text>
+            <TouchableOpacity style={styles.inputContainer} onPress={handleTelegramPress}>
+              <View style={styles.supportIcon}>
+                <TelegramIcon width={36} height={36} />
+              </View>
+              <View style={styles.supportContent}>
+                <Text style={styles.supportTitle}>Свяжитесь с нами по Telegram</Text>
+                <Text style={styles.supportDescription}>
+                  Мы поможем Вам в любой ситуации
+                </Text>
+                <Text style={styles.supportContact}>@osonish</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
 
           {/* Phone Support */}
-          <TouchableOpacity style={styles.supportCard} onPress={handlePhonePress}>
-            <View style={styles.supportIcon}>
-              <Text style={styles.phoneIcon}>📞</Text>
-            </View>
-            <View style={styles.supportContent}>
-              <Text style={styles.supportTitle}>Позвоните нам</Text>
-              <Text style={styles.supportDescription}>
-                Пн-Вс | 09:00 - 20:00
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Телефонная поддержка</Text>
+            <TouchableOpacity style={styles.inputContainer} onPress={handlePhonePress}>
+              <View style={styles.supportIcon}>
+                <PhoneCallIcon width={36} height={36} />
+              </View>
+              <View style={styles.supportContent}>
+                <Text style={styles.supportTitle}>Позвоните нам</Text>
+                <Text style={styles.supportDescription}>
+                  Пн-Вс | 09:00 - 20:00
+                </Text>
+                <Text style={styles.supportContact}>+998 (555) 000-0000</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Часы работы поддержки</Text>
+            <View style={styles.inputContainer}>
+              <Text style={styles.infoText}>
+                Понедельник - Воскресенье{'\n'}
+                09:00 - 20:00 (GMT+5)
               </Text>
-              <Text style={styles.supportContact}>+998 (555) 000-0000</Text>
             </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* Additional Info */}
-        <View style={styles.additionalInfo}>
-          <View style={styles.infoCard}>
-            <Text style={styles.infoTitle}>О приложении</Text>
-            <Text style={styles.infoText}>
-              Oson Ish — современная платформа для поиска исполнителей и работы в Узбекистане.
-              Мы помогаем людям находить друг друга и создавать полезные связи.
-            </Text>
           </View>
 
-          <View style={styles.infoCard}>
-            <Text style={styles.infoTitle}>Часы работы поддержки</Text>
-            <Text style={styles.infoText}>
-              Понедельник - Воскресенье{'\n'}
-              09:00 - 20:00 (GMT+5)
-            </Text>
-          </View>
-
-          <View style={styles.infoCard}>
-            <Text style={styles.infoTitle}>Другие способы связи</Text>
-            <Text style={styles.infoText}>
-              Email: support@osonish.uz{'\n'}
-              Адрес: г. Ташкент, ул. Мустақиллик, 1
-            </Text>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Другие способы связи</Text>
+            <View style={styles.inputContainer}>
+              <Text style={styles.infoText}>
+                Email: <Text style={styles.emailLink} onPress={() => Linking.openURL('mailto:info@oson-ish.uz')}>info@oson-ish.uz</Text>{'\n'}
+                Адрес: Samarqand viloyati, Samarqand tumani, Konigil MFY, Samarqand davozasi ko'chasi, 49-uy
+              </Text>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -124,40 +131,55 @@ export const SupportScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F8F9FA',
   },
-  content: {
-    paddingBottom: theme.spacing.xl,
-  },
-  logoSection: {
+
+  // Header (copied from EditProfileScreen)
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme.spacing.xl,
-    marginBottom: theme.spacing.lg,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#F8F9FA',
   },
-  logoContainer: {
-    alignItems: 'center',
-  },
-  logoIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: theme.colors.primary,
+  backButton: {
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing.md,
   },
-  logoTextOld: {
-    fontSize: 32,
-    color: theme.colors.white,
+  backButtonText: {
+    fontSize: 24,
+    color: '#1A1A1A',
+    fontWeight: '300',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
+  },
+  headerRight: {
+    width: 40,
+  },
+
+  scrollView: {
+    flex: 1,
+  },
+
+  // Logo Section
+  logoSection: {
+    alignItems: 'center',
+    paddingVertical: 30,
   },
   logoPlaceholder: {
-    width: 140,
-    height: 140,
+    width: 120,
+    height: 120,
     backgroundColor: '#E5E5E5',
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
+    marginBottom: 16,
   },
   logoText: {
     fontSize: 18,
@@ -165,85 +187,71 @@ const styles = StyleSheet.create({
     color: '#888',
     letterSpacing: 1,
   },
-  logoTitle: {
-    fontSize: theme.fonts.sizes.xl,
-    fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.primary,
-    letterSpacing: 2,
+
+  // Form (copied from EditProfileScreen)
+  form: {
+    paddingHorizontal: 20,
   },
-  supportOptions: {
-    paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
+  inputGroup: {
+    marginBottom: 20,
   },
-  supportCard: {
+  label: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: 8,
+  },
+  inputContainer: {
     flexDirection: 'row',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 2,
+    elevation: 1,
   },
+
+  // Support specific styles
   supportIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: theme.colors.primary + '20',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.spacing.md,
-  },
-  telegramIcon: {
-    fontSize: 24,
-  },
-  phoneIcon: {
-    fontSize: 24,
+    marginRight: 12,
   },
   supportContent: {
     flex: 1,
-    justifyContent: 'center',
   },
   supportTitle: {
-    fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 4,
   },
   supportDescription: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.xs,
+    fontSize: 14,
+    color: '#8E8E93',
+    marginBottom: 4,
   },
   supportContact: {
-    fontSize: theme.fonts.sizes.sm,
-    fontWeight: theme.fonts.weights.medium,
-    color: theme.colors.primary,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#679B00',
   },
-  additionalInfo: {
-    paddingHorizontal: theme.spacing.lg,
-  },
-  infoCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  infoTitle: {
-    fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
-  },
+
+  // Info text
   infoText: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
-    lineHeight: 20,
+    fontSize: 16,
+    color: '#1A1A1A',
+    lineHeight: 22,
+  },
+  emailLink: {
+    color: '#679B00',
+    textDecorationLine: 'underline',
   },
 }); 

@@ -23,18 +23,30 @@ export function SplashScreen() {
         if (authState.isAuthenticated && authState.user) {
           // Пользователь авторизован - переходим в основное приложение
           if (authState.user.role === 'customer') {
-            navigation.navigate('CustomerTabs');
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'CustomerTabs' }],
+            });
           } else {
-            navigation.navigate('WorkerTabs');
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'WorkerTabs' }],
+            });
           }
         } else {
           // Пользователь не авторизован - переходим к экрану авторизации
-          navigation.navigate('Auth');
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Auth' }],
+          });
         }
       } catch (error) {
         console.error('Ошибка проверки авторизации:', error);
         // В случае ошибки переходим к экрану авторизации
-        navigation.navigate('Auth');
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Auth' }],
+        });
       }
     };
 

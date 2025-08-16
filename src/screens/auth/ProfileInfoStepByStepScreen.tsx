@@ -242,7 +242,10 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
       await AsyncStorage.default.setItem('@temp_profile_data', JSON.stringify(profileData));
 
       // Переходим к выбору роли
-      navigation.navigate('RoleSelection');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'RoleSelection' }],
+      });
     } catch (error) {
       Alert.alert('Ошибка', 'Не удалось сохранить данные. Попробуйте еще раз.');
     } finally {

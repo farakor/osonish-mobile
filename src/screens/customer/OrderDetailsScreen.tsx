@@ -1379,7 +1379,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md, // Одинаковые отступы между карточками
   },
   infoCard: {
-    flexBasis: '47%', // Используем flexBasis для точной сетки 2x2
+    flex: 1, // Используем flex для равномерного распределения
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.md,
@@ -2379,14 +2379,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#DC2626', // красный фон
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   completeButtonText: {
     fontSize: theme.fonts.sizes.sm,

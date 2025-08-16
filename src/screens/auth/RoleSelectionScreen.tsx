@@ -54,9 +54,15 @@ export const RoleSelectionScreen: React.FC = () => {
 
         // Переходим в приложение в зависимости от роли
         if (selectedRole === 'customer') {
-          navigation.navigate('CustomerTabs');
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'CustomerTabs' }],
+          });
         } else {
-          navigation.navigate('WorkerTabs');
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'WorkerTabs' }],
+          });
         }
       } else {
         Alert.alert('Ошибка', result.error || 'Не удалось завершить регистрацию');
