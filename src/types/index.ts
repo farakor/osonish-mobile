@@ -104,7 +104,7 @@ export interface Applicant {
   message?: string;
   proposedPrice: number; // предложенная цена исполнителя
   appliedAt: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'completed';
+  status: 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled';
   isAvailable?: boolean; // доступность исполнителя на дату заказа
 }
 

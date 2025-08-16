@@ -23,7 +23,7 @@ import { ModernOrderCard } from '../../components/cards';
 import { ModernActionButton } from '../../components/common';
 
 
-type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | 'completed';
+type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled';
 type WorkerNavigationProp = NativeStackNavigationProp<WorkerStackParamList>;
 
 // Функция для преобразования статуса заявки в статус заказа для отображения
@@ -33,6 +33,7 @@ const mapApplicationStatusToOrderStatus = (applicationStatus: ApplicationStatus)
     case 'accepted': return 'in_progress';
     case 'completed': return 'completed';
     case 'rejected': return 'cancelled';
+    case 'cancelled': return 'cancelled';
     default: return 'new';
   }
 };
@@ -102,6 +103,15 @@ const ApplicationCard: React.FC<{
         return (
           <ModernActionButton
             title="Отклонено"
+            onPress={undefined}
+            variant="disabled"
+            size="small"
+          />
+        );
+      case 'cancelled':
+        return (
+          <ModernActionButton
+            title="Отменено"
             onPress={undefined}
             variant="disabled"
             size="small"
@@ -219,6 +229,7 @@ export const WorkerApplicationsScreen: React.FC = () => {
     { key: 'accepted', label: 'Принято', count: applications.filter(a => a.status === 'accepted').length },
     { key: 'completed', label: 'Выполнено', count: applications.filter(a => a.status === 'completed').length },
     { key: 'rejected', label: 'Отклонено', count: applications.filter(a => a.status === 'rejected').length },
+    { key: 'cancelled', label: 'Отменено', count: applications.filter(a => a.status === 'cancelled').length },
   ];
 
   const filteredApplications = applications.filter(app =>
@@ -233,7 +244,7 @@ export const WorkerApplicationsScreen: React.FC = () => {
     if (action === 'cancel') {
       Alert.alert(
         'Отменить заявку',
-        'Вы действительно хотите отменить эту заявку?',
+        'Вы действительно хотите отменить эту заявку? Заказчик больше не увидит ваш отклик, и вы не сможете восстановить его.',
         [
           { text: 'Отмена', style: 'cancel' },
           {
@@ -241,15 +252,20 @@ export const WorkerApplicationsScreen: React.FC = () => {
             style: 'destructive',
             onPress: async () => {
               try {
+                console.log(`[WorkerApplicationsScreen] 🔄 Отменяем заявку ${applicationId}`);
                 const success = await orderService.cancelWorkerApplication(applicationId);
+                console.log(`[WorkerApplicationsScreen] Результат отмены: ${success}`);
+
                 if (success) {
-                  Alert.alert('Успешно', 'Заявка отменена');
+                  Alert.alert('Успешно', 'Заявка отменена. Заказчик больше не увидит ваш отклик.');
+                  console.log(`[WorkerApplicationsScreen] ✅ Заявка отменена, перезагружаем данные...`);
                   loadApplications(); // Перезагружаем данные
                 } else {
-                  Alert.alert('Ошибка', 'Не удалось отменить заявку');
+                  console.log(`[WorkerApplicationsScreen] ❌ Не удалось отменить заявку`);
+                  Alert.alert('Ошибка', 'Не удалось отменить заявку. Возможно, заявка уже была принята или отклонена.');
                 }
               } catch (error) {
-                console.error('Ошибка отмены заявки:', error);
+                console.error('[WorkerApplicationsScreen] ❌ Ошибка отмены заявки:', error);
                 Alert.alert('Ошибка', 'Произошла ошибка при отмене заявки');
               }
             }

@@ -100,6 +100,7 @@ export class TestingHelpers {
     }
   }
 
+
   /**
    * Быстрое переключение между ролями для тестирования
    */
@@ -135,6 +136,7 @@ export const showAllUsers = TestingHelpers.showAllUsers;
 export const showOrdersStats = TestingHelpers.showOrdersStats;
 export const switchToTestUser = TestingHelpers.switchToTestUser;
 
+
 // Делаем доступными глобально для удобства тестирования
 if (__DEV__) {
   (global as any).clearAllData = clearAllData;
@@ -144,6 +146,7 @@ if (__DEV__) {
   (global as any).showOrdersStats = showOrdersStats;
   (global as any).switchToTestUser = switchToTestUser;
 
+
   console.log('🧪 Команды для тестирования:');
   console.log('- clearAllData() - очистить все данные (включая Supabase)');
   console.log('- clearLocalDataOnly() - очистить только локальные данные');
@@ -152,4 +155,5 @@ if (__DEV__) {
   console.log('- showOrdersStats() - показать статистику заказов');
   console.log('- switchToTestUser("customer") - найти заказчика');
   console.log('- switchToTestUser("worker") - найти исполнителя');
+
 } 

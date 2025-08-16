@@ -106,7 +106,7 @@ export interface Database {
           message?: string;
           proposed_price?: number;
           applied_at: string;
-          status: 'pending' | 'accepted' | 'rejected';
+          status: 'pending' | 'accepted' | 'rejected' | 'cancelled';
           created_at: string;
           updated_at: string;
         };
@@ -121,7 +121,7 @@ export interface Database {
           message?: string;
           proposed_price?: number;
           applied_at?: string;
-          status?: 'pending' | 'accepted' | 'rejected';
+          status?: 'pending' | 'accepted' | 'rejected' | 'cancelled';
           created_at?: string;
           updated_at?: string;
         };
@@ -136,7 +136,7 @@ export interface Database {
           message?: string;
           proposed_price?: number;
           applied_at?: string;
-          status?: 'pending' | 'accepted' | 'rejected';
+          status?: 'pending' | 'accepted' | 'rejected' | 'cancelled';
           created_at?: string;
           updated_at?: string;
         };

@@ -668,20 +668,90 @@ export class OrderService {
    */
   async cancelWorkerApplication(applicationId: string): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from('applicants')
-        .delete()
-        .eq('id', applicationId);
+      console.log(`[OrderService] 🔄 Начинаем отмену заявки ${applicationId}`);
 
-      if (error) {
-        console.error('[OrderService] Ошибка отмены заявки:', error);
+      // Сначала получаем информацию об отклике, чтобы знать orderId
+      const { data: applicant, error: getError } = await supabase
+        .from('applicants')
+        .select('order_id, status, worker_name')
+        .eq('id', applicationId)
+        .single();
+
+      if (getError || !applicant) {
+        console.error('[OrderService] ❌ Ошибка получения информации об отклике:', getError);
         return false;
       }
 
-      console.log(`[OrderService] ✅ Заявка ${applicationId} отменена`);
+      console.log(`[OrderService] 📋 Найден отклик: статус "${applicant.status}", заказ ${applicant.order_id}`);
+
+      // Проверяем, что отклик можно отменить (только pending)
+      if (applicant.status !== 'pending') {
+        console.error(`[OrderService] ❌ Нельзя отменить отклик со статусом: ${applicant.status}`);
+        return false;
+      }
+
+      const orderId = applicant.order_id;
+
+      // Помечаем отклик как отмененный
+      console.log(`[OrderService] 🔄 Помечаем отклик как отмененный...`);
+      const { error } = await supabase
+        .from('applicants')
+        .update({
+          status: 'cancelled',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', applicationId);
+
+      if (error) {
+        console.error('[OrderService] ❌ Ошибка отмены отклика:', error);
+        return false;
+      }
+
+      console.log(`[OrderService] ✅ Отклик ${applicationId} помечен как отмененный`);
+
+      // Прямой подсчет активных откликов из базы данных
+      console.log(`[OrderService] 🔄 Подсчитываем активные отклики напрямую из базы данных...`);
+      const { data: remainingApplicants, error: countError } = await supabase
+        .from('applicants')
+        .select('id, status')
+        .eq('order_id', orderId)
+        .in('status', ['pending', 'accepted']);
+
+      if (countError) {
+        console.error('[OrderService] ❌ Ошибка подсчета активных откликов:', countError);
+      } else {
+        const activeCount = remainingApplicants?.length || 0;
+        const applicantIds = remainingApplicants?.map(a => `${a.id} (${a.status})`) || [];
+        console.log(`[OrderService] 📊 Найдено активных откликов в базе: ${activeCount}`);
+        console.log(`[OrderService] 📋 ID активных откликов:`, applicantIds);
+
+        // Обновляем счетчик в заказе
+        const { error: updateError } = await supabase
+          .from('orders')
+          .update({
+            applicants_count: activeCount,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', orderId);
+
+        if (updateError) {
+          console.error('[OrderService] ❌ Ошибка обновления счетчика:', updateError);
+        } else {
+          console.log(`[OrderService] ✅ Счетчик откликов обновлен: ${activeCount}`);
+        }
+
+        // Если нет активных откликов, меняем статус заказа на 'new'
+        if (activeCount === 0) {
+          console.log(`[OrderService] 🔄 Возвращаем статус заказа на 'new'...`);
+          await this.updateOrderStatus(orderId, 'new');
+          console.log(`[OrderService] ✅ Статус заказа ${orderId} изменен обратно на 'new' - нет активных откликов`);
+        }
+      }
+
+      console.log(`[OrderService] 🎉 Отмена заявки ${applicationId} завершена успешно`);
       return true;
     } catch (error) {
-      console.error('[OrderService] Ошибка отмены заявки:', error);
+      console.error('[OrderService] ❌ Критическая ошибка отмены заявки:', error);
       return false;
     }
   }
