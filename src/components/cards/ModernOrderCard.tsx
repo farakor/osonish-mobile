@@ -72,11 +72,20 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
           backgroundColor: theme.colors.primary + '20',
         };
       case 'response_received':
-        return {
-          text: 'Отклик получен',
-          color: '#FFFFFF',
-          backgroundColor: theme.colors.primary,
-        };
+        // Для исполнителей показываем как "Новый", для заказчиков - "Отклик получен"
+        if (workerView) {
+          return {
+            text: 'Новый',
+            color: theme.colors.primary,
+            backgroundColor: theme.colors.primary + '20',
+          };
+        } else {
+          return {
+            text: 'Отклик получен',
+            color: '#FFFFFF',
+            backgroundColor: theme.colors.primary,
+          };
+        }
       case 'in_progress':
         return {
           text: 'В работе',
@@ -147,7 +156,8 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
       <View
         style={[
           styles.card,
-          order.status === 'response_received' && styles.cardResponseReceived,
+          // Показываем зеленый стиль только для заказчиков, не для исполнителей
+          order.status === 'response_received' && !workerView && styles.cardResponseReceived,
         ]}
       >
         {/* Header */}
