@@ -781,6 +781,12 @@ export class OrderService {
         return false;
       }
 
+      // Скрываем отмененные отклики
+      if (applicant.status === 'cancelled') {
+        console.log(`[OrderService] 🚫 Скрываем отмененный отклик: ${applicant.workerName}`);
+        return false;
+      }
+
       // Если отклик pending, проверяем доступность исполнителя
       if (applicant.status === 'pending' && !applicant.isAvailable) {
         console.log(`[OrderService] ⚠️ Скрываем недоступного исполнителя: ${applicant.workerName}`);
@@ -877,7 +883,10 @@ export class OrderService {
   async getFilteredApplicantsForOrder(orderId: string): Promise<Applicant[]> {
     try {
       const allApplicants = await this.getApplicantsForOrder(orderId);
+      console.log(`[OrderService] 🔍 Все отклики для заказа ${orderId}:`, allApplicants.map(a => `${a.id} (${a.status})`));
+
       const filteredApplicants = this.filterApplicantsForCustomer(allApplicants);
+      console.log(`[OrderService] 🔍 Отфильтрованные отклики:`, filteredApplicants.map(a => `${a.id} (${a.status})`));
 
       console.log(`[OrderService] Отфильтровано ${filteredApplicants.length} из ${allApplicants.length} откликов для заказа ${orderId}`);
       return filteredApplicants;
