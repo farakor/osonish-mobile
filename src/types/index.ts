@@ -105,6 +105,7 @@ export interface Applicant {
   proposedPrice: number; // предложенная цена исполнителя
   appliedAt: string;
   status: 'pending' | 'accepted' | 'rejected' | 'completed';
+  isAvailable?: boolean; // доступность исполнителя на дату заказа
 }
 
 export interface CreateApplicantRequest {

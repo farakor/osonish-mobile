@@ -201,6 +201,9 @@ export const ApplicantsListScreen: React.FC = () => {
       return;
     }
 
+    // Убираем предварительную проверку isAvailable
+    // Проверка будет происходить на сервере при попытке выбора
+
     setSelectedApplicant(applicant);
     setShowConfirmModal(true);
   };
@@ -275,7 +278,10 @@ export const ApplicantsListScreen: React.FC = () => {
 
         await loadData(true);
       } else {
-        Alert.alert('Ошибка', 'Не удалось выбрать исполнителя');
+        Alert.alert(
+          'Исполнитель недоступен',
+          'Этот исполнитель уже занят в указанную дату. Возможно, его выбрал другой заказчик. Попробуйте выбрать другого исполнителя.'
+        );
       }
     } catch (error) {
       console.error('Ошибка выбора исполнителя:', error);

@@ -674,10 +674,37 @@ export class OrderService {
   }
 
   /**
+   * Проверка доступности исполнителя на определенную дату
+   */
+  async isWorkerAvailableOnDate(workerId: string, serviceDate: string): Promise<boolean> {
+    try {
+      const conflictingApplications = await this.checkWorkerDateConflicts(workerId, serviceDate);
+      return conflictingApplications.length === 0;
+    } catch (error) {
+      console.error('[OrderService] Ошибка проверки доступности исполнителя:', error);
+      return true; // В случае ошибки считаем исполнителя доступным
+    }
+  }
+
+  /**
    * Получение откликов для заказа
    */
   async getApplicantsForOrder(orderId: string): Promise<Applicant[]> {
     try {
+      // Сначала получаем информацию о заказе для получения даты
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select('service_date')
+        .eq('id', orderId)
+        .single();
+
+      if (orderError || !orderData) {
+        console.error('[OrderService] Ошибка получения данных заказа:', orderError);
+        return [];
+      }
+
+      const serviceDate = orderData.service_date;
+
       const { data, error } = await supabase
         .from('applicants')
         .select(`
@@ -698,12 +725,13 @@ export class OrderService {
         return [];
       }
 
-      // Для каждого исполнителя получаем актуальные данные о рейтинге и количестве работ
+      // Для каждого исполнителя получаем актуальные данные о рейтинге, количестве работ и доступности
       const applicantsWithRealData = await Promise.all(
         data.map(async (item: any) => {
-          const [workerRating, completedJobsCount] = await Promise.all([
+          const [workerRating, completedJobsCount, isAvailable] = await Promise.all([
             this.getWorkerRating(item.worker_id),
-            this.getWorkerCompletedJobsCount(item.worker_id)
+            this.getWorkerCompletedJobsCount(item.worker_id),
+            this.isWorkerAvailableOnDate(item.worker_id, serviceDate)
           ]);
 
           const worker = item.worker;
@@ -723,7 +751,8 @@ export class OrderService {
             message: item.message,
             proposedPrice: item.proposed_price,
             appliedAt: item.applied_at,
-            status: item.status as 'pending' | 'accepted' | 'rejected' | 'completed'
+            status: item.status as 'pending' | 'accepted' | 'rejected' | 'completed',
+            isAvailable: isAvailable // Добавляем информацию о доступности
           };
         })
       );
@@ -780,32 +809,210 @@ export class OrderService {
   }
 
   /**
-   * Обновление статуса отклика
+   * Проверка конфликтов дат для исполнителя
    */
-  async updateApplicantStatus(applicantId: string, status: Applicant['status']): Promise<boolean> {
+  private async checkWorkerDateConflicts(workerId: string, serviceDate: string): Promise<string[]> {
     try {
-      const { error } = await supabase
+      console.log(`[OrderService] 🔍 Проверяем конфликты дат для исполнителя ${workerId} на дату ${serviceDate}`);
+
+      // Получаем все принятые отклики исполнителя на ту же дату
+      const { data, error } = await supabase
         .from('applicants')
-        .update({
-          status,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', applicantId);
+        .select(`
+          id,
+          order_id,
+          orders!inner(service_date)
+        `)
+        .eq('worker_id', workerId)
+        .eq('status', 'accepted')
+        .eq('orders.service_date', serviceDate);
 
       if (error) {
-        console.error('[OrderService] Ошибка обновления статуса отклика:', error);
-        return false;
+        console.error('[OrderService] Ошибка проверки конфликтов дат:', error);
+        return [];
       }
 
-      // Отправляем уведомление исполнителю если его выбрали
+      const conflictingApplicationIds = data?.map(item => item.id) || [];
+      console.log(`[OrderService] 📅 Найдено ${conflictingApplicationIds.length} конфликтующих откликов`);
+
+      return conflictingApplicationIds;
+    } catch (error) {
+      console.error('[OrderService] Ошибка проверки конфликтов дат:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Отклонение других откликов исполнителя на ту же дату
+   */
+  private async rejectWorkerOtherApplicationsOnSameDate(workerId: string, serviceDate: string, excludeApplicationId: string): Promise<void> {
+    try {
+      console.log(`[OrderService] 🚫 Отклоняем другие отклики исполнителя ${workerId} на дату ${serviceDate}`);
+
+      // Получаем все pending отклики исполнителя на ту же дату (кроме текущего)
+      const { data: pendingApplications, error: fetchError } = await supabase
+        .from('applicants')
+        .select(`
+          id,
+          order_id,
+          orders!inner(service_date)
+        `)
+        .eq('worker_id', workerId)
+        .eq('status', 'pending')
+        .eq('orders.service_date', serviceDate)
+        .neq('id', excludeApplicationId);
+
+      if (fetchError) {
+        console.error('[OrderService] Ошибка получения pending откликов:', fetchError);
+        return;
+      }
+
+      if (!pendingApplications || pendingApplications.length === 0) {
+        console.log('[OrderService] ✅ Нет других pending откликов для отклонения');
+        return;
+      }
+
+      // Отклоняем все найденные отклики
+      const applicationIds = pendingApplications.map(app => app.id);
+      const { error: updateError } = await supabase
+        .from('applicants')
+        .update({
+          status: 'rejected',
+          updated_at: new Date().toISOString()
+        })
+        .in('id', applicationIds);
+
+      if (updateError) {
+        console.error('[OrderService] Ошибка отклонения других откликов:', updateError);
+        return;
+      }
+
+      console.log(`[OrderService] ✅ Отклонено ${applicationIds.length} других откликов исполнителя на ту же дату`);
+    } catch (error) {
+      console.error('[OrderService] Ошибка отклонения других откликов:', error);
+    }
+  }
+
+  /**
+ * Обновление статуса отклика с проверкой конфликтов
+ */
+  async updateApplicantStatus(applicantId: string, status: Applicant['status']): Promise<boolean> {
+    try {
+      // Если принимаем исполнителя, используем более надежную проверку
       if (status === 'accepted') {
+        console.log(`[OrderService] 🔄 Начинаем процесс принятия исполнителя для отклика ${applicantId}`);
+
+        // Получаем информацию об отклике и заказе
+        const { data: applicantData, error: applicantError } = await supabase
+          .from('applicants')
+          .select(`
+            id,
+            worker_id,
+            order_id,
+            status,
+            orders!inner(service_date)
+          `)
+          .eq('id', applicantId)
+          .single();
+
+        if (applicantError || !applicantData) {
+          console.error('[OrderService] Ошибка получения данных отклика:', applicantError);
+          return false;
+        }
+
+        // Проверяем, что отклик еще pending
+        if (applicantData.status !== 'pending') {
+          console.log(`[OrderService] ⚠️ Отклик ${applicantId} уже имеет статус ${applicantData.status}`);
+          return false;
+        }
+
+        const workerId = applicantData.worker_id;
+        const serviceDate = applicantData.orders.service_date;
+
+        console.log(`[OrderService] 🔍 Проверяем доступность исполнителя ${workerId} на дату ${serviceDate}`);
+
+        // Делаем атомарную проверку и обновление
+        // Сначала пытаемся обновить статус с условием, что он все еще pending
+        const { data: updateResult, error: updateError } = await supabase
+          .from('applicants')
+          .update({
+            status: 'accepted',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', applicantId)
+          .eq('status', 'pending') // Обновляем только если статус все еще pending
+          .select();
+
+        if (updateError) {
+          console.error('[OrderService] Ошибка обновления статуса отклика:', updateError);
+          return false;
+        }
+
+        if (!updateResult || updateResult.length === 0) {
+          console.log(`[OrderService] ⚠️ Не удалось обновить отклик ${applicantId} - возможно, он уже был изменен`);
+          return false;
+        }
+
+        console.log(`[OrderService] ✅ Исполнитель успешно принят для отклика ${applicantId}`);
+
+        // Теперь проверяем, есть ли у исполнителя другие принятые заказы на ту же дату
+        const { data: conflictingData, error: conflictError } = await supabase
+          .from('applicants')
+          .select(`
+            id,
+            order_id,
+            orders!inner(service_date)
+          `)
+          .eq('worker_id', workerId)
+          .eq('status', 'accepted')
+          .eq('orders.service_date', serviceDate)
+          .neq('id', applicantId);
+
+        if (conflictError) {
+          console.error('[OrderService] Ошибка проверки конфликтов:', conflictError);
+        } else if (conflictingData && conflictingData.length > 0) {
+          console.log(`[OrderService] ⚠️ Найдены конфликтующие принятые заказы: ${conflictingData.length}`);
+
+          // Если есть конфликты, отклоняем текущий отклик
+          await supabase
+            .from('applicants')
+            .update({
+              status: 'rejected',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', applicantId);
+
+          console.log(`[OrderService] 🚫 Отклик ${applicantId} отклонен из-за конфликта дат`);
+          return false;
+        }
+
+        // Отклоняем другие pending отклики исполнителя на ту же дату
+        await this.rejectWorkerOtherApplicationsOnSameDate(workerId, serviceDate, applicantId);
+
+        // Отправляем уведомление исполнителю
         this.sendWorkerSelectedNotification(applicantId).catch(error => {
           console.error('[OrderService] ❌ Ошибка отправки уведомления о выборе исполнителя:', error);
         });
-      }
 
-      console.log(`[OrderService] Статус отклика ${applicantId} обновлен на ${status}`);
-      return true;
+        return true;
+      } else {
+        // Для других статусов используем обычное обновление
+        const { error } = await supabase
+          .from('applicants')
+          .update({
+            status,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', applicantId);
+
+        if (error) {
+          console.error('[OrderService] Ошибка обновления статуса отклика:', error);
+          return false;
+        }
+
+        console.log(`[OrderService] Статус отклика ${applicantId} обновлен на ${status}`);
+        return true;
+      }
     } catch (error) {
       console.error('[OrderService] Ошибка обновления статуса отклика:', error);
       return false;
