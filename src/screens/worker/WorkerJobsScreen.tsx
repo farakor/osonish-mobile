@@ -88,10 +88,16 @@ const WorkerJobsScreen: React.FC = () => {
         orderService.getUserApplications()
       ]);
 
+      // Фильтруем заказы, исключая те на которые уже есть отклик (только для главного экрана)
+      const ordersWithoutApplications = availableOrders.filter(order =>
+        !applications.has(order.id)
+      );
+
       console.log(`[WorkerJobsScreen] Загружено ${availableOrders.length} доступных заказов`);
       console.log(`[WorkerJobsScreen] Найдено ${applications.size} откликов пользователя`);
+      console.log(`[WorkerJobsScreen] Показываем ${ordersWithoutApplications.length} заказов (исключено ${applications.size} с откликами)`);
 
-      setOrders(availableOrders);
+      setOrders(ordersWithoutApplications);
       setUserApplications(applications);
 
       // Загружаем количество непрочитанных уведомлений
@@ -310,12 +316,12 @@ const WorkerJobsScreen: React.FC = () => {
   };
 
   const renderJobCard = ({ item }: { item: Order }) => {
-    const hasApplied = userApplications.has(item.id);
+    // На главном экране показываем только заказы без откликов, поэтому hasApplied всегда false
     return (
       <JobCard
         item={item}
         onApply={handleApplyToJob}
-        hasApplied={hasApplied}
+        hasApplied={false}
         navigation={navigation}
         userLocation={userLocation}
       />
