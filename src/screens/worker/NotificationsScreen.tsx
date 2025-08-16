@@ -9,23 +9,18 @@ import {
   Switch,
   Alert,
   ActivityIndicator,
+  StatusBar,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
-import { HeaderWithBack } from '../../components/common';
 import { notificationService, NotificationSettings } from '../../services/notificationService';
 import { authService } from '../../services/authService';
+import { HeaderWithBack } from '../../components/common';
 
 export const NotificationsScreen: React.FC = () => {
   const navigation = useNavigation();
 
-  const [settings, setSettings] = useState<NotificationSettings>({
-    allNotificationsEnabled: true,
-    newOrdersEnabled: true,
-    newApplicationsEnabled: true,
-    orderUpdatesEnabled: true,
-    orderCompletedEnabled: true,
-  });
+  const [allNotificationsEnabled, setAllNotificationsEnabled] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -43,8 +38,12 @@ export const NotificationsScreen: React.FC = () => {
         return;
       }
 
+      console.log('[NotificationsScreen] 📱 Загружаем настройки для пользователя:', authState.user.id);
       const userSettings = await notificationService.getUserNotificationSettings(authState.user.id);
-      setSettings(userSettings);
+      console.log('[NotificationsScreen] 📱 Загруженные настройки:', userSettings);
+
+      setAllNotificationsEnabled(userSettings.allNotificationsEnabled);
+      console.log('[NotificationsScreen] 📱 Состояние переключателя установлено в:', userSettings.allNotificationsEnabled);
     } catch (error) {
       console.error('Ошибка загрузки настроек уведомлений:', error);
       Alert.alert('Ошибка', 'Не удалось загрузить настройки уведомлений');
@@ -53,24 +52,21 @@ export const NotificationsScreen: React.FC = () => {
     }
   };
 
-  const updateSetting = (key: keyof NotificationSettings, value: boolean) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: value,
-      // Если отключаем все уведомления, отключаем и все подкатегории
-      ...(key === 'allNotificationsEnabled' && !value ? {
-        newOrdersEnabled: false,
-        newApplicationsEnabled: false,
-        orderUpdatesEnabled: false,
-        orderCompletedEnabled: false,
-      } : {})
-    }));
-  };
-
   const handleSaveSettings = async () => {
+    if (allNotificationsEnabled === null) {
+      Alert.alert('Ошибка', 'Настройки еще загружаются. Попробуйте еще раз.');
+      return;
+    }
+
+    console.log('[NotificationsScreen] 💾 Сохраняем настройки. Текущее состояние переключателя:', allNotificationsEnabled);
     setIsSaving(true);
 
     try {
+      const settings: NotificationSettings = {
+        allNotificationsEnabled,
+      };
+
+      console.log('[NotificationsScreen] 💾 Настройки для сохранения:', settings);
       const success = await notificationService.updateNotificationSettings(settings);
 
       if (success) {
@@ -94,6 +90,7 @@ export const NotificationsScreen: React.FC = () => {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
         <HeaderWithBack title="Уведомления" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -105,151 +102,64 @@ export const NotificationsScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
+      <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
       <HeaderWithBack title="Уведомления" />
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Summary */}
-        <View style={styles.summary}>
-          <View style={styles.summaryIcon}>
-            <Text style={styles.summaryIconText}>🔔</Text>
-          </View>
-          <View style={styles.summaryContent}>
-            <Text style={styles.summaryTitle}>Настройки уведомлений</Text>
-            <Text style={styles.summaryDescription}>
-              Уведомления {settings.allNotificationsEnabled ? 'включены' : 'отключены'}
-            </Text>
-          </View>
-        </View>
-
-        {/* Main Notification Toggle */}
-        <View style={styles.mainToggle}>
-          <View style={styles.notificationItem}>
-            <View style={styles.notificationLeft}>
-              <View style={styles.notificationIcon}>
-                <Text style={styles.notificationIconText}>🔔</Text>
-              </View>
-              <View style={styles.notificationContent}>
-                <Text style={styles.notificationTitle}>Все уведомления</Text>
-                <Text style={styles.notificationDescription}>
-                  Получать все уведомления от приложения
-                </Text>
-              </View>
-            </View>
-            <Switch
-              value={settings.allNotificationsEnabled}
-              onValueChange={(value) => updateSetting('allNotificationsEnabled', value)}
-              trackColor={{
-                false: theme.colors.border,
-                true: `${theme.colors.primary}40`
-              }}
-              thumbColor={settings.allNotificationsEnabled ? theme.colors.primary : theme.colors.text.secondary}
-              ios_backgroundColor={theme.colors.border}
-            />
-          </View>
-        </View>
-
-        {/* Detailed Notification Settings for Workers */}
-        {settings.allNotificationsEnabled && (
-          <View style={styles.detailedSettings}>
-            <Text style={styles.sectionTitle}>Типы уведомлений</Text>
-
-            <View style={styles.notificationItem}>
-              <View style={styles.notificationLeft}>
-                <View style={styles.notificationIcon}>
-                  <Text style={styles.notificationIconText}>🆕</Text>
-                </View>
-                <View style={styles.notificationContent}>
-                  <Text style={styles.notificationTitle}>Новые заказы</Text>
-                  <Text style={styles.notificationDescription}>
-                    Уведомления о новых заказах для выполнения
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Form Fields */}
+        <View style={styles.form}>
+          {/* Main Notification Toggle */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Уведомления</Text>
+            <View style={styles.inputContainer}>
+              <View style={styles.switchContainer}>
+                <View style={styles.switchContent}>
+                  <Text style={styles.switchTitle}>Получать уведомления</Text>
+                  <Text style={styles.switchDescription}>
+                    Уведомления о заказах, откликах и обновлениях
                   </Text>
                 </View>
-              </View>
-              <Switch
-                value={settings.newOrdersEnabled}
-                onValueChange={(value) => updateSetting('newOrdersEnabled', value)}
-                trackColor={{
-                  false: theme.colors.border,
-                  true: `${theme.colors.primary}40`
-                }}
-                thumbColor={settings.newOrdersEnabled ? theme.colors.primary : theme.colors.text.secondary}
-                ios_backgroundColor={theme.colors.border}
-              />
-            </View>
-
-            <View style={styles.notificationItem}>
-              <View style={styles.notificationLeft}>
-                <View style={styles.notificationIcon}>
-                  <Text style={styles.notificationIconText}>✅</Text>
-                </View>
-                <View style={styles.notificationContent}>
-                  <Text style={styles.notificationTitle}>Принятие заявок</Text>
-                  <Text style={styles.notificationDescription}>
-                    Уведомления когда заказчик выбирает вас
-                  </Text>
+                <View style={[
+                  styles.switchWrapper,
+                  allNotificationsEnabled && styles.switchWrapperActive
+                ]}>
+                  <Switch
+                    value={allNotificationsEnabled ?? false}
+                    onValueChange={setAllNotificationsEnabled}
+                    trackColor={{
+                      false: '#C7C7CC',
+                      true: '#FFFFFF'
+                    }}
+                    thumbColor={allNotificationsEnabled ? theme.colors.primary : '#FFFFFF'}
+                    ios_backgroundColor="#C7C7CC"
+                    disabled={allNotificationsEnabled === null}
+                  />
                 </View>
               </View>
-              <Switch
-                value={settings.orderUpdatesEnabled}
-                onValueChange={(value) => updateSetting('orderUpdatesEnabled', value)}
-                trackColor={{
-                  false: theme.colors.border,
-                  true: `${theme.colors.primary}40`
-                }}
-                thumbColor={settings.orderUpdatesEnabled ? theme.colors.primary : theme.colors.text.secondary}
-                ios_backgroundColor={theme.colors.border}
-              />
-            </View>
-
-            <View style={styles.notificationItem}>
-              <View style={styles.notificationLeft}>
-                <View style={styles.notificationIcon}>
-                  <Text style={styles.notificationIconText}>🏁</Text>
-                </View>
-                <View style={styles.notificationContent}>
-                  <Text style={styles.notificationTitle}>Завершение работ</Text>
-                  <Text style={styles.notificationDescription}>
-                    Уведомления о завершении ваших работ
-                  </Text>
-                </View>
-              </View>
-              <Switch
-                value={settings.orderCompletedEnabled}
-                onValueChange={(value) => updateSetting('orderCompletedEnabled', value)}
-                trackColor={{
-                  false: theme.colors.border,
-                  true: `${theme.colors.primary}40`
-                }}
-                thumbColor={settings.orderCompletedEnabled ? theme.colors.primary : theme.colors.text.secondary}
-                ios_backgroundColor={theme.colors.border}
-              />
             </View>
           </View>
-        )}
 
-
-
-        {/* Info Section */}
-        <View style={styles.infoSection}>
-          <View style={styles.infoCard}>
-            <Text style={styles.infoIcon}>ℹ️</Text>
-            <Text style={styles.infoText}>
-              При отключении уведомлений вы можете пропустить важную информацию о новых заказах и сообщения от заказчиков.
-            </Text>
+          {/* Info Section */}
+          <View style={styles.infoGroup}>
+            <View style={styles.infoCard}>
+              <Text style={styles.infoIcon}>ℹ️</Text>
+              <Text style={styles.infoText}>
+                При отключении уведомлений вы можете пропустить важную информацию о новых заказах и сообщения от заказчиков.
+              </Text>
+            </View>
           </View>
         </View>
       </ScrollView>
 
-      {/* Save Button */}
-      <View style={styles.saveSection}>
+      {/* Bottom Button */}
+      <View style={styles.bottomSection}>
         <TouchableOpacity
-          style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
+          style={[styles.saveButton, (isSaving || allNotificationsEnabled === null) && styles.saveButtonDisabled]}
           onPress={handleSaveSettings}
-          disabled={isLoading}
+          disabled={isSaving || allNotificationsEnabled === null}
         >
           <Text style={styles.saveButtonText}>
-            {isLoading ? 'Сохраняем...' : 'Сохранить настройки'}
+            {isSaving ? 'Сохраняем...' : 'Сохранить'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -260,154 +170,132 @@ export const NotificationsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F8F9FA',
   },
-  summary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.surface,
-    marginHorizontal: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
-  },
-  summaryIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: `${theme.colors.primary}20`,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: theme.spacing.md,
-  },
-  summaryIconText: {
-    fontSize: 24,
-  },
-  summaryContent: {
+
+  scrollView: {
     flex: 1,
   },
-  summaryTitle: {
-    fontSize: theme.fonts.sizes.lg,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
+
+  // Form (copied from EditProfileScreen)
+  form: {
+    paddingHorizontal: 20,
   },
-  summaryDescription: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
+  inputGroup: {
+    marginBottom: 20,
   },
-  mainToggle: {
-    paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
+  label: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: 8,
   },
-  notificationItem: {
+  inputContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+
+  // Switch specific styles
+  switchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
   },
-  notificationLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  switchContent: {
     flex: 1,
+    marginRight: 16,
   },
-  notificationIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: `${theme.colors.primary}10`,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: theme.spacing.md,
+  switchTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 4,
   },
-  notificationIconText: {
-    fontSize: 18,
-  },
-  notificationContent: {
-    flex: 1,
-  },
-  notificationTitle: {
-    fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.medium,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
-  },
-  notificationDescription: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
+  switchDescription: {
+    fontSize: 14,
+    color: '#8E8E93',
     lineHeight: 18,
   },
 
-  infoSection: {
-    paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
+  // Info section
+  infoGroup: {
+    marginBottom: 20,
   },
   infoCard: {
     flexDirection: 'row',
-    backgroundColor: `${theme.colors.primary}08`,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
+    backgroundColor: '#F1F8E9',
+    borderRadius: 12,
+    padding: 16,
     borderWidth: 1,
-    borderColor: `${theme.colors.primary}20`,
+    borderColor: '#E8F5E8',
   },
   infoIcon: {
     fontSize: 16,
-    marginRight: theme.spacing.sm,
+    marginRight: 12,
     marginTop: 2,
   },
   infoText: {
     flex: 1,
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
+    fontSize: 14,
+    color: '#666666',
     lineHeight: 20,
   },
-  saveSection: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.lg,
-    backgroundColor: theme.colors.background,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
+
+  // Bottom Section (copied from EditProfileScreen)
+  bottomSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    backgroundColor: '#F8F9FA',
   },
   saveButton: {
-    backgroundColor: theme.colors.primary,
-    borderRadius: theme.borderRadius.md,
-    paddingVertical: theme.spacing.md,
+    backgroundColor: '#679B00',
+    borderRadius: 12,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginTop: theme.spacing.md,
+    shadowColor: '#679B00',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
   },
   saveButtonDisabled: {
-    backgroundColor: theme.colors.text.secondary,
+    backgroundColor: '#C7C7CC',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   saveButtonText: {
-    color: theme.colors.white,
-    fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.semiBold,
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
+
+  // Loading states
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: 20,
   },
   loadingText: {
-    marginTop: theme.spacing.md,
-    fontSize: theme.fonts.sizes.md,
-    color: theme.colors.text.secondary,
-  },
-  detailedSettings: {
-    paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: theme.fonts.sizes.lg,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
+    marginTop: 16,
+    fontSize: 16,
+    color: '#8E8E93',
   },
 
-}); 
+  // Switch wrapper styles
+  switchWrapper: {
+    borderRadius: 20,
+  },
+  switchWrapperActive: {
+    borderWidth: 1,
+    borderColor: '#C7C7CC',
+  },
+});

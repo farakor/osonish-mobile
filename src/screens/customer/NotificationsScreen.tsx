@@ -15,11 +15,12 @@ import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
 import { notificationService, NotificationSettings } from '../../services/notificationService';
 import { authService } from '../../services/authService';
+import { HeaderWithBack } from '../../components/common';
 
 export const NotificationsScreen: React.FC = () => {
   const navigation = useNavigation();
 
-  const [allNotificationsEnabled, setAllNotificationsEnabled] = useState(true);
+  const [allNotificationsEnabled, setAllNotificationsEnabled] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -37,8 +38,12 @@ export const NotificationsScreen: React.FC = () => {
         return;
       }
 
+      console.log('[NotificationsScreen] 📱 Загружаем настройки для пользователя:', authState.user.id);
       const userSettings = await notificationService.getUserNotificationSettings(authState.user.id);
+      console.log('[NotificationsScreen] 📱 Загруженные настройки:', userSettings);
+
       setAllNotificationsEnabled(userSettings.allNotificationsEnabled);
+      console.log('[NotificationsScreen] 📱 Состояние переключателя установлено в:', userSettings.allNotificationsEnabled);
     } catch (error) {
       console.error('Ошибка загрузки настроек уведомлений:', error);
       Alert.alert('Ошибка', 'Не удалось загрузить настройки уведомлений');
@@ -48,17 +53,20 @@ export const NotificationsScreen: React.FC = () => {
   };
 
   const handleSaveSettings = async () => {
+    if (allNotificationsEnabled === null) {
+      Alert.alert('Ошибка', 'Настройки еще загружаются. Попробуйте еще раз.');
+      return;
+    }
+
+    console.log('[NotificationsScreen] 💾 Сохраняем настройки. Текущее состояние переключателя:', allNotificationsEnabled);
     setIsSaving(true);
 
     try {
       const settings: NotificationSettings = {
         allNotificationsEnabled,
-        newOrdersEnabled: allNotificationsEnabled,
-        newApplicationsEnabled: allNotificationsEnabled,
-        orderUpdatesEnabled: allNotificationsEnabled,
-        orderCompletedEnabled: allNotificationsEnabled,
       };
 
+      console.log('[NotificationsScreen] 💾 Настройки для сохранения:', settings);
       const success = await notificationService.updateNotificationSettings(settings);
 
       if (success) {
@@ -83,13 +91,7 @@ export const NotificationsScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.backButtonText}>‹</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Уведомления</Text>
-          <View style={styles.headerRight} />
-        </View>
+        <HeaderWithBack title="Уведомления" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={styles.loadingText}>Загружаем настройки...</Text>
@@ -101,15 +103,7 @@ export const NotificationsScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
-
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>‹</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Уведомления</Text>
-        <View style={styles.headerRight} />
-      </View>
+      <HeaderWithBack title="Уведомления" />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Form Fields */}
@@ -125,16 +119,22 @@ export const NotificationsScreen: React.FC = () => {
                     Уведомления о заказах, откликах и обновлениях
                   </Text>
                 </View>
-                <Switch
-                  value={allNotificationsEnabled}
-                  onValueChange={setAllNotificationsEnabled}
-                  trackColor={{
-                    false: '#C7C7CC',
-                    true: '#679B0040'
-                  }}
-                  thumbColor={allNotificationsEnabled ? '#679B00' : '#FFFFFF'}
-                  ios_backgroundColor="#C7C7CC"
-                />
+                <View style={[
+                  styles.switchWrapper,
+                  allNotificationsEnabled && styles.switchWrapperActive
+                ]}>
+                  <Switch
+                    value={allNotificationsEnabled ?? false}
+                    onValueChange={setAllNotificationsEnabled}
+                    trackColor={{
+                      false: '#C7C7CC',
+                      true: '#FFFFFF'
+                    }}
+                    thumbColor={allNotificationsEnabled ? theme.colors.primary : '#FFFFFF'}
+                    ios_backgroundColor="#C7C7CC"
+                    disabled={allNotificationsEnabled === null}
+                  />
+                </View>
               </View>
             </View>
           </View>
@@ -154,9 +154,9 @@ export const NotificationsScreen: React.FC = () => {
       {/* Bottom Button */}
       <View style={styles.bottomSection}>
         <TouchableOpacity
-          style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
+          style={[styles.saveButton, (isSaving || allNotificationsEnabled === null) && styles.saveButtonDisabled]}
           onPress={handleSaveSettings}
-          disabled={isSaving}
+          disabled={isSaving || allNotificationsEnabled === null}
         >
           <Text style={styles.saveButtonText}>
             {isSaving ? 'Сохраняем...' : 'Сохранить'}
@@ -173,34 +173,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
 
-  // Header (copied from EditProfileScreen)
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#F8F9FA',
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backButtonText: {
-    fontSize: 24,
-    color: '#1A1A1A',
-    fontWeight: '300',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1A1A1A',
-  },
-  headerRight: {
-    width: 40,
-  },
+
 
   scrollView: {
     flex: 1,
@@ -317,5 +290,14 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     color: '#8E8E93',
+  },
+
+  // Switch wrapper styles
+  switchWrapper: {
+    borderRadius: 20,
+  },
+  switchWrapperActive: {
+    borderWidth: 1,
+    borderColor: '#C7C7CC',
   },
 }); 

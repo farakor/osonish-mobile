@@ -18,10 +18,6 @@ import { authService } from './authService';
 // Типы для уведомлений
 export interface NotificationSettings {
   allNotificationsEnabled: boolean;
-  newOrdersEnabled: boolean;
-  newApplicationsEnabled: boolean;
-  orderUpdatesEnabled: boolean;
-  orderCompletedEnabled: boolean;
 }
 
 export interface PushNotificationData {
@@ -427,18 +423,8 @@ class NotificationService {
     type: PushNotificationData['notificationType'],
     settings: NotificationSettings
   ): boolean {
-    switch (type) {
-      case 'new_order':
-        return settings.newOrdersEnabled;
-      case 'new_application':
-        return settings.newApplicationsEnabled;
-      case 'order_update':
-        return settings.orderUpdatesEnabled;
-      case 'order_completed':
-        return settings.orderCompletedEnabled;
-      default:
-        return true;
-    }
+    // Теперь все типы уведомлений контролируются одной настройкой
+    return settings.allNotificationsEnabled;
   }
 
   /**
@@ -585,64 +571,57 @@ class NotificationService {
    */
   async getUserNotificationSettings(userId: string): Promise<NotificationSettings> {
     try {
+      console.log('[NotificationService] 📱 Получаем настройки уведомлений для пользователя:', userId);
+
       const { data, error } = await supabase
         .from('notification_settings')
-        .select('*')
+        .select('all_notifications_enabled')
         .eq('user_id', userId)
         .single();
 
       if (error) {
         // Если настройки не найдены (первый запуск), возвращаем дефолтные настройки
         if (error.code === 'PGRST116') { // No rows found
-          console.log('[NotificationService] ℹ️ Настройки не найдены, используем дефолтные');
-          return {
+          console.log('[NotificationService] ℹ️ Настройки не найдены для пользователя', userId, ', используем дефолтные');
+          const defaultSettings = {
             allNotificationsEnabled: true,
-            newOrdersEnabled: true,
-            newApplicationsEnabled: true,
-            orderUpdatesEnabled: true,
-            orderCompletedEnabled: true,
           };
+          console.log('[NotificationService] 📱 Возвращаем дефолтные настройки:', defaultSettings);
+          return defaultSettings;
         }
 
         console.error('[NotificationService] ❌ Ошибка получения настроек:', error);
         // Возвращаем дефолтные настройки
-        return {
+        const defaultSettings = {
           allNotificationsEnabled: true,
-          newOrdersEnabled: true,
-          newApplicationsEnabled: true,
-          orderUpdatesEnabled: true,
-          orderCompletedEnabled: true,
         };
+        console.log('[NotificationService] 📱 Возвращаем дефолтные настройки из-за ошибки:', defaultSettings);
+        return defaultSettings;
       }
 
       if (!data) {
-        console.log('[NotificationService] ℹ️ Настройки не найдены, используем дефолтные');
-        return {
+        console.log('[NotificationService] ℹ️ Данные пустые, используем дефолтные настройки');
+        const defaultSettings = {
           allNotificationsEnabled: true,
-          newOrdersEnabled: true,
-          newApplicationsEnabled: true,
-          orderUpdatesEnabled: true,
-          orderCompletedEnabled: true,
         };
+        console.log('[NotificationService] 📱 Возвращаем дефолтные настройки (пустые данные):', defaultSettings);
+        return defaultSettings;
       }
 
-      return {
+      console.log('[NotificationService] 📱 Данные из БД:', data);
+      const settings = {
         allNotificationsEnabled: data.all_notifications_enabled,
-        newOrdersEnabled: data.new_orders_enabled,
-        newApplicationsEnabled: data.new_applications_enabled,
-        orderUpdatesEnabled: data.order_updates_enabled,
-        orderCompletedEnabled: data.order_completed_enabled,
       };
+      console.log('[NotificationService] 📱 Преобразованные настройки:', settings);
+      return settings;
     } catch (error) {
       console.error('[NotificationService] ❌ Ошибка получения настроек:', error);
       // Возвращаем дефолтные настройки
-      return {
+      const defaultSettings = {
         allNotificationsEnabled: true,
-        newOrdersEnabled: true,
-        newApplicationsEnabled: true,
-        orderUpdatesEnabled: true,
-        orderCompletedEnabled: true,
       };
+      console.log('[NotificationService] 📱 Возвращаем дефолтные настройки из-за исключения:', defaultSettings);
+      return defaultSettings;
     }
   }
 
@@ -659,20 +638,19 @@ class NotificationService {
       const settingsData = {
         user_id: authState.user.id,
         all_notifications_enabled: settings.allNotificationsEnabled,
-        new_orders_enabled: settings.newOrdersEnabled,
-        new_applications_enabled: settings.newApplicationsEnabled,
-        order_updates_enabled: settings.orderUpdatesEnabled,
-        order_completed_enabled: settings.orderCompletedEnabled,
       };
 
       // Сначала пробуем обновить существующую запись
-      const { error: updateError } = await supabase
+      const { data: updateData, error: updateError } = await supabase
         .from('notification_settings')
         .update(settingsData)
-        .eq('user_id', authState.user.id);
+        .eq('user_id', authState.user.id)
+        .select();
 
-      // Если запись не найдена, создаем новую
-      if (updateError && updateError.code === 'PGRST116') {
+      // Если запись не найдена (updateData пустой) или есть ошибка, создаем новую
+      if (updateError || !updateData || updateData.length === 0) {
+        console.log('[NotificationService] 📝 Запись не найдена, создаем новую настройку');
+
         const { error: insertError } = await supabase
           .from('notification_settings')
           .insert(settingsData);
@@ -681,12 +659,12 @@ class NotificationService {
           console.error('[NotificationService] ❌ Ошибка создания настроек:', insertError);
           return false;
         }
-      } else if (updateError) {
-        console.error('[NotificationService] ❌ Ошибка обновления настроек:', updateError);
-        return false;
+
+        console.log('[NotificationService] ✅ Новые настройки уведомлений созданы');
+      } else {
+        console.log('[NotificationService] ✅ Настройки уведомлений обновлены');
       }
 
-      console.log('[NotificationService] ✅ Настройки уведомлений обновлены');
       return true;
     } catch (error) {
       console.error('[NotificationService] ❌ Ошибка обновления настроек:', error);

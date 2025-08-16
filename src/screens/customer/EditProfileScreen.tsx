@@ -240,14 +240,7 @@ export const EditProfileScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>‹</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Редактировать профиль</Text>
-        <View style={styles.headerRight} />
-      </View>
+      <HeaderWithBack title="Редактировать профиль" />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Profile Photo Section */}
@@ -421,34 +414,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.semiBold,
   },
 
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#F8F9FA',
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backButtonText: {
-    fontSize: 24,
-    color: '#1A1A1A',
-    fontWeight: '300',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1A1A1A',
-  },
-  headerRight: {
-    width: 40,
-  },
+
 
   scrollView: {
     flex: 1,

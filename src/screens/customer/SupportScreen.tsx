@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
 import TelegramIcon from '../../../assets/telegram-icon.svg';
 import PhoneCallIcon from '../../../assets/phone-call-01.svg';
+import { HeaderWithBack } from '../../components/common';
 
 export const SupportScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -50,14 +51,7 @@ export const SupportScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>‹</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Поддержка</Text>
-        <View style={styles.headerRight} />
-      </View>
+      <HeaderWithBack title="Поддержка" />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Logo Section */}
@@ -134,34 +128,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
 
-  // Header (copied from EditProfileScreen)
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#F8F9FA',
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backButtonText: {
-    fontSize: 24,
-    color: '#1A1A1A',
-    fontWeight: '300',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1A1A1A',
-  },
-  headerRight: {
-    width: 40,
-  },
+
 
   scrollView: {
     flex: 1,
