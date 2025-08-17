@@ -91,6 +91,33 @@ export interface CreateOrderResponse {
   error?: string;
 }
 
+// Update Order Types
+export interface UpdateOrderRequest {
+  orderId: string;
+  title?: string;
+  description?: string;
+  category?: string;
+  location?: string;
+  latitude?: number;
+  longitude?: number;
+  budget?: number;
+  workersNeeded?: number;
+  photos?: string[];
+  // Примечание: serviceDate намеренно исключена - дату нельзя изменять
+}
+
+export interface UpdateOrderResponse {
+  success: boolean;
+  data?: Order;
+  error?: string;
+}
+
+// Cancel Order Types
+export interface CancelOrderResponse {
+  success: boolean;
+  error?: string;
+}
+
 // Applicant Types
 export interface Applicant {
   id: string;

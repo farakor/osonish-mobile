@@ -1,4 +1,4 @@
-import { Order, CreateOrderRequest, CreateOrderResponse, Applicant, CreateApplicantRequest, WorkerApplication, Review, CreateReviewRequest, WorkerRating, WorkerProfile } from '../types';
+import { Order, CreateOrderRequest, CreateOrderResponse, UpdateOrderRequest, UpdateOrderResponse, CancelOrderResponse, Applicant, CreateApplicantRequest, WorkerApplication, Review, CreateReviewRequest, WorkerRating, WorkerProfile } from '../types';
 import { authService } from './authService';
 import { notificationService } from './notificationService';
 import { supabase, Database } from './supabaseClient';
@@ -137,6 +137,238 @@ export class OrderService {
       return {
         success: false,
         error: 'Произошла ошибка при создании заказа'
+      };
+    }
+  }
+
+  /**
+   * Обновление заказа (кроме даты)
+   */
+  async updateOrder(request: UpdateOrderRequest): Promise<UpdateOrderResponse> {
+    try {
+      console.log('[OrderService] 🔨 Обновление заказа:', request.orderId);
+      console.log('[OrderService] 🕒 Время обновления:', new Date().toISOString());
+
+      const authState = authService.getAuthState();
+      if (!authState.isAuthenticated || !authState.user) {
+        return {
+          success: false,
+          error: 'Пользователь не авторизован'
+        };
+      }
+
+      // Проверяем, что заказ принадлежит текущему пользователю
+      const { data: existingOrder, error: fetchError } = await supabase
+        .from('orders')
+        .select('customer_id, status, service_date')
+        .eq('id', request.orderId)
+        .single();
+
+      if (fetchError || !existingOrder) {
+        console.error('[OrderService] Заказ не найден:', fetchError);
+        return {
+          success: false,
+          error: 'Заказ не найден'
+        };
+      }
+
+      if (existingOrder.customer_id !== authState.user.id) {
+        console.error('[OrderService] Заказ не принадлежит пользователю');
+        return {
+          success: false,
+          error: 'У вас нет прав на редактирование этого заказа'
+        };
+      }
+
+      // Проверяем, что заказ можно редактировать (только новые заказы и с откликами)
+      if (!['new', 'response_received'].includes(existingOrder.status)) {
+        console.error('[OrderService] Заказ нельзя редактировать в текущем статусе:', existingOrder.status);
+        return {
+          success: false,
+          error: 'Заказ нельзя редактировать в текущем статусе'
+        };
+      }
+
+      // Подготавливаем данные для обновления (исключаем service_date)
+      const updateData: any = {
+        updated_at: new Date().toISOString()
+      };
+
+      if (request.title !== undefined) updateData.title = request.title;
+      if (request.description !== undefined) updateData.description = request.description;
+      if (request.category !== undefined) updateData.category = request.category;
+      if (request.location !== undefined) updateData.location = request.location;
+      if (request.latitude !== undefined) updateData.latitude = request.latitude;
+      if (request.longitude !== undefined) updateData.longitude = request.longitude;
+      if (request.budget !== undefined) updateData.budget = request.budget;
+      if (request.workersNeeded !== undefined) updateData.workers_needed = request.workersNeeded;
+      if (request.photos !== undefined) updateData.photos = request.photos;
+
+      console.log('[OrderService] 📝 Обновляемые поля:', Object.keys(updateData));
+
+      // Обновляем заказ в Supabase
+      const { data, error } = await supabase
+        .from('orders')
+        .update(updateData)
+        .eq('id', request.orderId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('[OrderService] Ошибка обновления заказа в Supabase:', error);
+        return {
+          success: false,
+          error: 'Не удалось обновить заказ'
+        };
+      }
+
+      const updatedOrder: Order = {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        location: data.location,
+        latitude: data.latitude || undefined,
+        longitude: data.longitude || undefined,
+        budget: data.budget,
+        workersNeeded: data.workers_needed,
+        serviceDate: data.service_date, // Дата остается неизменной
+        photos: data.photos || [],
+        status: data.status as 'new' | 'in_progress' | 'completed' | 'cancelled',
+        customerId: data.customer_id,
+        applicantsCount: data.applicants_count,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at
+      };
+
+      console.log('[OrderService] ✅ Заказ обновлен:', updatedOrder.title);
+
+      // Отправляем уведомления исполнителям, которые откликнулись на заказ, о его изменении
+      this.sendOrderUpdatedNotifications(request.orderId).catch(error => {
+        console.error('[OrderService] ❌ Ошибка отправки уведомлений об обновлении заказа:', error);
+      });
+
+      return {
+        success: true,
+        data: updatedOrder
+      };
+    } catch (error) {
+      console.error('[OrderService] Ошибка обновления заказа:', error);
+      return {
+        success: false,
+        error: 'Произошла ошибка при обновлении заказа'
+      };
+    }
+  }
+
+  /**
+   * Отмена заказа с удалением откликов (освобождение исполнителей)
+   */
+  async cancelOrder(orderId: string): Promise<CancelOrderResponse> {
+    try {
+      console.log('[OrderService] ❌ Отмена заказа:', orderId);
+      console.log('[OrderService] 🕒 Время отмены:', new Date().toISOString());
+
+      const authState = authService.getAuthState();
+      if (!authState.isAuthenticated || !authState.user) {
+        return {
+          success: false,
+          error: 'Пользователь не авторизован'
+        };
+      }
+
+      // Проверяем, что заказ принадлежит текущему пользователю
+      const { data: existingOrder, error: fetchError } = await supabase
+        .from('orders')
+        .select('customer_id, status, title')
+        .eq('id', orderId)
+        .single();
+
+      if (fetchError || !existingOrder) {
+        console.error('[OrderService] Заказ не найден:', fetchError);
+        return {
+          success: false,
+          error: 'Заказ не найден'
+        };
+      }
+
+      if (existingOrder.customer_id !== authState.user.id) {
+        console.error('[OrderService] Заказ не принадлежит пользователю');
+        return {
+          success: false,
+          error: 'У вас нет прав на отмену этого заказа'
+        };
+      }
+
+      // Проверяем, что заказ можно отменить (только новые заказы и с откликами)
+      if (!['new', 'response_received'].includes(existingOrder.status)) {
+        console.error('[OrderService] Заказ нельзя отменить в текущем статусе:', existingOrder.status);
+        return {
+          success: false,
+          error: 'Заказ нельзя отменить в текущем статусе'
+        };
+      }
+
+      // Получаем всех исполнителей, которые откликнулись на заказ, для уведомлений
+      const { data: applicants } = await supabase
+        .from('applicants')
+        .select('worker_id, worker_name')
+        .eq('order_id', orderId)
+        .in('status', ['pending', 'accepted']);
+
+      console.log(`[OrderService] 📋 Найдено ${applicants?.length || 0} активных откликов для удаления`);
+
+      // Удаляем все отклики на заказ (освобождаем исполнителей)
+      const { error: deleteApplicantsError } = await supabase
+        .from('applicants')
+        .delete()
+        .eq('order_id', orderId);
+
+      if (deleteApplicantsError) {
+        console.error('[OrderService] Ошибка удаления откликов:', deleteApplicantsError);
+        return {
+          success: false,
+          error: 'Не удалось удалить отклики на заказ'
+        };
+      }
+
+      console.log('[OrderService] ✅ Отклики удалены - исполнители освобождены');
+
+      // Меняем статус заказа на 'cancelled' вместо удаления
+      const { error: updateOrderError } = await supabase
+        .from('orders')
+        .update({
+          status: 'cancelled',
+          applicants_count: 0,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId);
+
+      if (updateOrderError) {
+        console.error('[OrderService] Ошибка отмены заказа:', updateOrderError);
+        return {
+          success: false,
+          error: 'Не удалось отменить заказ'
+        };
+      }
+
+      console.log('[OrderService] ✅ Заказ отменен:', existingOrder.title);
+
+      // Отправляем уведомления исполнителям об отмене заказа
+      if (applicants && applicants.length > 0) {
+        this.sendOrderCancelledNotifications(orderId, existingOrder.title, applicants).catch(error => {
+          console.error('[OrderService] ❌ Ошибка отправки уведомлений об отмене заказа:', error);
+        });
+      }
+
+      return {
+        success: true
+      };
+    } catch (error) {
+      console.error('[OrderService] Ошибка отмены заказа:', error);
+      return {
+        success: false,
+        error: 'Произошла ошибка при отмене заказа'
       };
     }
   }
@@ -300,7 +532,7 @@ export class OrderService {
 
   /**
    * Получение активных заказов для текущего пользователя (заказчика)
-   * Включает все заказы кроме завершенных
+   * Включает все заказы кроме завершенных и отмененных
    */
   async getUserNewOrders(): Promise<Order[]> {
     try {
@@ -314,7 +546,7 @@ export class OrderService {
         .from('orders')
         .select('*')
         .eq('customer_id', authState.user.id)
-        .neq('status', 'completed')
+        .not('status', 'in', '(completed,cancelled)')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -672,6 +904,9 @@ export class OrderService {
         let applicationStatus = item.status;
         if (item.status === 'accepted' && order.status === 'completed') {
           applicationStatus = 'completed';
+        } else if (order.status === 'cancelled') {
+          // Если заказ отменен, то заявка тоже считается отмененной
+          applicationStatus = 'cancelled';
         }
 
         return {
@@ -2023,6 +2258,99 @@ export class OrderService {
       console.log(`[OrderService] ✅ Отправлено ${sentCount} уведомлений о завершении заказа`);
     } catch (error) {
       console.error('[OrderService] ❌ Ошибка отправки уведомлений о завершении заказа:', error);
+    }
+  }
+
+  /**
+   * Отправка уведомлений об обновлении заказа
+   */
+  private async sendOrderUpdatedNotifications(orderId: string): Promise<void> {
+    try {
+      console.log('[OrderService] 📤 Отправляем уведомления об обновлении заказа...');
+
+      // Получаем данные заказа
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select('id, title, budget, location')
+        .eq('id', orderId)
+        .single();
+
+      if (orderError || !orderData) {
+        console.error('[OrderService] ❌ Ошибка получения данных заказа:', orderError);
+        return;
+      }
+
+      // Получаем исполнителей, которые откликнулись на заказ
+      const { data: applicants, error: applicantsError } = await supabase
+        .from('applicants')
+        .select('worker_id')
+        .eq('order_id', orderId)
+        .in('status', ['pending', 'accepted']);
+
+      if (applicantsError) {
+        console.error('[OrderService] ❌ Ошибка получения откликов:', applicantsError);
+        return;
+      }
+
+      if (!applicants || applicants.length === 0) {
+        console.log('[OrderService] ⚠️ Нет исполнителей для уведомления об обновлении');
+        return;
+      }
+
+      const workerIds = applicants.map(applicant => applicant.worker_id);
+      const title = 'Заказ обновлен';
+      const body = `Заказ "${orderData.title}" был изменен заказчиком`;
+      const data = {
+        orderId: orderData.id,
+        orderTitle: orderData.title,
+        orderBudget: orderData.budget,
+        orderLocation: orderData.location,
+        type: 'order_updated'
+      };
+
+      // Отправляем уведомления
+      const sentCount = await notificationService.sendNotificationToUsers(
+        workerIds,
+        title,
+        body,
+        data,
+        'order_update'
+      );
+
+      console.log(`[OrderService] ✅ Отправлено ${sentCount} уведомлений об обновлении заказа`);
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка отправки уведомлений об обновлении заказа:', error);
+    }
+  }
+
+  /**
+   * Отправка уведомлений об отмене заказа
+   */
+  private async sendOrderCancelledNotifications(orderId: string, orderTitle: string, applicants: any[]): Promise<void> {
+    try {
+      console.log('[OrderService] 📤 Отправляем уведомления об отмене заказа...');
+
+      const workerIds = applicants.map(applicant => applicant.worker_id);
+      const title = 'Заказ отменен';
+      const body = `Заказ "${orderTitle}" был отменен заказчиком`;
+      const data = {
+        orderId: orderId,
+        orderTitle: orderTitle,
+        type: 'order_cancelled'
+      };
+
+      // Отправляем уведомления
+      const sentCount = await notificationService.sendNotificationToUsers(
+        workerIds,
+        title,
+        body,
+        data,
+        'order_cancelled'
+      );
+
+      console.log(`[OrderService] ✅ Отправлено ${sentCount} уведомлений об отмене заказа`);
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка отправки уведомлений об отмене заказа:', error);
     }
   }
 

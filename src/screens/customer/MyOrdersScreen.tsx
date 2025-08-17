@@ -183,8 +183,10 @@ export const MyOrdersScreen: React.FC = () => {
     }
   };
 
-  // Фильтрация заказов - показываем только завершенные
-  const filteredOrders = allOrders.filter((order: Order) => order.status === 'completed');
+  // Фильтрация заказов - показываем завершенные и отмененные
+  const filteredOrders = allOrders.filter((order: Order) =>
+    order.status === 'completed' || order.status === 'cancelled'
+  );
 
   const renderOrder = ({ item }: { item: Order }) => (
     <ModernOrderCard
@@ -234,7 +236,7 @@ export const MyOrdersScreen: React.FC = () => {
               Нет завершенных заказов
             </Text>
             <Text style={styles.emptyStateText}>
-              У вас пока нет завершенных заказов
+              У вас пока нет завершенных или отмененных заказов
             </Text>
           </View>
         )}

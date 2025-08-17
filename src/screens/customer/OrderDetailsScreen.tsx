@@ -430,23 +430,61 @@ export const OrderDetailsScreen: React.FC = () => {
     }
   };
 
-  const handleDeleteOrder = () => {
+  const handleEditOrder = () => {
+    if (!order) return;
+
+    // Проверяем, что заказ можно редактировать
+    if (!['new', 'response_received'].includes(order.status)) {
+      Alert.alert(
+        'Нельзя редактировать',
+        'Заказ можно редактировать только пока он не находится в работе или не завершен.'
+      );
+      return;
+    }
+
+    // Переходим на экран редактирования заказа
+    navigation.navigate('EditOrder', { orderId: order.id });
+  };
+
+  const handleCancelOrder = () => {
+    if (!order) return;
+
+    // Проверяем, что заказ можно отменить
+    if (!['new', 'response_received'].includes(order.status)) {
+      Alert.alert(
+        'Нельзя отменить',
+        'Заказ можно отменить только пока он не находится в работе или не завершен.'
+      );
+      return;
+    }
+
     Alert.alert(
-      'Удалить заказ',
-      'Вы уверены, что хотите удалить этот заказ? Это действие нельзя отменить.',
+      'Отменить заказ',
+      'Вы уверены, что хотите отменить этот заказ? Все отклики на этот заказ будут удалены, и исполнители освободятся на указанную дату. Заказ останется в истории со статусом "Отменен".',
       [
-        { text: 'Отмена', style: 'cancel' },
+        { text: 'Назад', style: 'cancel' },
         {
-          text: 'Удалить',
+          text: 'Отменить заказ',
           style: 'destructive',
           onPress: async () => {
             try {
-              // TODO: API запрос для удаления заказа
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              Alert.alert('Успешно', 'Заказ удален');
-              navigation.goBack();
+              setIsLoading(true);
+              const result = await orderService.cancelOrder(order.id);
+
+              if (result.success) {
+                Alert.alert(
+                  'Заказ отменен',
+                  'Заказ успешно отменен. Исполнители освобождены на указанную дату.',
+                  [{ text: 'ОК', onPress: () => navigation.navigate('MainTabs' as any) }]
+                );
+              } else {
+                Alert.alert('Ошибка', result.error || 'Не удалось отменить заказ');
+              }
             } catch (error) {
-              Alert.alert('Ошибка', 'Не удалось удалить заказ');
+              console.error('Ошибка отмены заказа:', error);
+              Alert.alert('Ошибка', 'Произошла ошибка при отмене заказа');
+            } finally {
+              setIsLoading(false);
             }
           }
         }
@@ -935,6 +973,27 @@ export const OrderDetailsScreen: React.FC = () => {
           {/* Order Title */}
           <View style={styles.titleSection}>
             <Text style={styles.orderTitle}>{order.title}</Text>
+
+            {/* Action buttons for editable orders */}
+            {['new', 'response_received'].includes(order.status) && (
+              <View style={styles.orderActions}>
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={handleEditOrder}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.editButtonText}>✏️ Редактировать</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={handleCancelOrder}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.cancelButtonText}>❌ Отменить</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           {/* Image Gallery */}
@@ -1159,13 +1218,13 @@ export const OrderDetailsScreen: React.FC = () => {
               </Pressable>
               <Pressable
                 style={({ pressed }) => [
-                  styles.cancelButton,
+                  styles.modalCancelButton,
                   { opacity: pressed && !isProcessing ? 0.7 : 1 }
                 ]}
                 onPress={() => setShowConfirmModal(false)}
                 disabled={isProcessing}
               >
-                <Text style={[styles.cancelButtonText, isProcessing && styles.cancelButtonTextDisabled]}>
+                <Text style={[styles.modalCancelButtonText, isProcessing && styles.cancelButtonTextDisabled]}>
                   Отмена
                 </Text>
               </Pressable>
@@ -1281,6 +1340,47 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
     lineHeight: 32,
+    marginBottom: theme.spacing.md,
+  },
+  orderActions: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+  },
+  editButton: {
+    flex: 1,
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  editButtonText: {
+    color: theme.colors.white,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.semiBold,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: '#FF6B35',
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  cancelButtonText: {
+    color: theme.colors.white,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.semiBold,
   },
 
   // Gallery Section
@@ -2194,7 +2294,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.disabled,
     opacity: 0.7,
   },
-  cancelButton: {
+  modalCancelButton: {
     backgroundColor: 'transparent',
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.lg,
@@ -2203,7 +2303,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
-  cancelButtonText: {
+  modalCancelButtonText: {
     color: theme.colors.text.secondary,
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.medium,

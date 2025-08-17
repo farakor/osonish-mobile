@@ -24,6 +24,7 @@ export type AuthStackParamList = {
 export type CustomerStackParamList = {
   MainTabs: undefined;
   OrderDetails: { orderId: string };
+  EditOrder: { orderId: string };
   ApplicantsList: { orderId: string };
   WorkerProfile: { workerId: string; workerName: string };
   Rating: { orderId: string; acceptedWorkers: Applicant[] };

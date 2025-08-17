@@ -1,6 +1,7 @@
 export { CustomerHomeScreen } from './CustomerHomeScreen';
 export { CreateOrderScreen } from './CreateOrderScreen';
 export { CreateOrderStepByStepScreen } from './CreateOrderStepByStepScreen';
+export { EditOrderScreen } from './EditOrderScreen';
 export { MyOrdersScreen } from './MyOrdersScreen';
 export { CustomerProfileScreen } from './CustomerProfileScreen';
 export { EditProfileScreen } from './EditProfileScreen';
