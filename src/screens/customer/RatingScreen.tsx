@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   TextInput,
 } from 'react-native';
 import { theme } from '../../constants';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { orderService } from '../../services/orderService';
@@ -158,6 +158,7 @@ export const RatingScreen: React.FC = () => {
   const [ratings, setRatings] = useState<WorkerRatingState>({});
   const [comments, setComments] = useState<WorkerCommentsState>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
 
   const handleRatingChange = (workerId: string, rating: number) => {
     setRatings(prev => ({
@@ -175,6 +176,28 @@ export const RatingScreen: React.FC = () => {
 
   // Проверяем, есть ли хотя бы одна оценка
   const hasAnyRating = Object.values(ratings).some(rating => rating > 0);
+
+  // Предотвращаем возврат назад только если оценка не завершена
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+      // Если оценка завершена, разрешаем навигацию
+      if (isCompleted) {
+        return;
+      }
+
+      // Предотвращаем возврат назад
+      e.preventDefault();
+
+      // Показываем предупреждение пользователю
+      Alert.alert(
+        'Завершите оценку',
+        'Пожалуйста, завершите оценку работы исполнителей, чтобы продолжить.',
+        [{ text: 'Понятно' }]
+      );
+    });
+
+    return unsubscribe;
+  }, [navigation, isCompleted]);
 
   const handleSubmitReviews = async () => {
     // Получаем только те отзывы, где есть рейтинг > 0
@@ -234,24 +257,42 @@ export const RatingScreen: React.FC = () => {
 
       // Показываем результат
       if (successCount > 0 && failCount === 0) {
+        // Отмечаем оценку как завершенную перед показом Alert'а
+        setIsCompleted(true);
+
         Alert.alert(
           'Спасибо!',
           `Отзывы успешно отправлены (${successCount})`,
           [
             {
               text: 'OK',
-              onPress: () => navigation.navigate('MainTabs' as any),
+              onPress: () => {
+                // Сбрасываем стек навигации, чтобы нельзя было вернуться назад
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'MainTabs' as any }],
+                });
+              },
             },
           ]
         );
       } else if (successCount > 0 && failCount > 0) {
+        // Отмечаем оценку как завершенную перед показом Alert'а
+        setIsCompleted(true);
+
         Alert.alert(
           'Частично отправлено',
           `Отправлено: ${successCount}, не удалось отправить: ${failCount}`,
           [
             {
               text: 'OK',
-              onPress: () => navigation.navigate('MainTabs' as any),
+              onPress: () => {
+                // Сбрасываем стек навигации, чтобы нельзя было вернуться назад
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'MainTabs' as any }],
+                });
+              },
             },
           ]
         );

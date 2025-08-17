@@ -657,7 +657,16 @@ export const OrderDetailsScreen: React.FC = () => {
                 Alert.alert(
                   'Заказ завершен',
                   'Заказ успешно завершен',
-                  [{ text: 'ОК', onPress: () => navigation.navigate('MainTabs' as any) }]
+                  [{
+                    text: 'ОК',
+                    onPress: () => {
+                      // Сбрасываем стек навигации, чтобы нельзя было вернуться назад
+                      navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'MainTabs' as any }],
+                      });
+                    }
+                  }]
                 );
               }
             } catch (error) {
