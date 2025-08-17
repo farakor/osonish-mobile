@@ -230,6 +230,30 @@ export const OrderDetailsScreen: React.FC = () => {
   // Анимация для карточек откликов
   const animatedCards = useRef<{ [key: string]: Animated.Value }>({}).current;
 
+  // Функция для проверки, можно ли показывать кнопку "Завершить"
+  const canShowCompleteButton = (order: Order | null): boolean => {
+    if (!order || order.status !== 'in_progress') {
+      return false;
+    }
+
+    // Получаем дату заказа
+    const serviceDate = new Date(order.serviceDate);
+
+    // Получаем текущую дату
+    const currentDate = new Date();
+
+    // Устанавливаем время в 00:00 для корректного сравнения дат
+    serviceDate.setHours(0, 0, 0, 0);
+    currentDate.setHours(0, 0, 0, 0);
+
+    // Вычисляем дату следующего дня после serviceDate
+    const nextDay = new Date(serviceDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    // Кнопка доступна только если текущая дата >= следующего дня после serviceDate
+    return currentDate >= nextDay;
+  };
+
   // Загружаем заказ по ID
   useEffect(() => {
     const loadOrder = async () => {
@@ -942,7 +966,7 @@ export const OrderDetailsScreen: React.FC = () => {
               {order ? formatBudget(order.budget) + ' сум' : ''}
             </Text>
           </View>
-          {order?.status === 'in_progress' && (
+          {canShowCompleteButton(order) && (
             <TouchableOpacity
               style={styles.stickyCompleteButton}
               onPress={handleCompleteOrder}
@@ -970,7 +994,7 @@ export const OrderDetailsScreen: React.FC = () => {
           {/* Regular Header */}
           <HeaderWithBack
             rightAction={
-              order?.status === 'in_progress' ? {
+              canShowCompleteButton(order) ? {
                 text: isCompletingOrder ? 'Завершаем...' : 'Завершить',
                 color: '#FFFFFF', // Белый текст
                 backgroundColor: '#DC2626', // Красный фон
@@ -978,7 +1002,7 @@ export const OrderDetailsScreen: React.FC = () => {
                 onPress: handleCompleteOrder,
               } : undefined
             }
-            dropdownMenu={order?.status !== 'in_progress' ? getDropdownMenuItems() : undefined}
+            dropdownMenu={!canShowCompleteButton(order) ? getDropdownMenuItems() : undefined}
           />
 
           {/* User Profile Section */}
