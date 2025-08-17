@@ -20,6 +20,7 @@ DerivedData
 *.hmap
 *.ipa
 *.xcuserstate
+project.xcworkspace
 
 # Android/IntelliJ
 #
@@ -45,6 +46,17 @@ buck-out/
 *.keystore
 !debug.keystore
 
+# fastlane
+#
+# It is recommended to not store the screenshots in the git repo. Instead, use fastlane to re-generate the
+# screenshots whenever they are needed.
+# For more information about the recommended setup visit:
+# https://docs.fastlane.tools/best-practices/source-control/
+
+*/fastlane/report.xml
+*/fastlane/Preview.html
+*/fastlane/screenshots
+
 # Bundle artifacts
 *.jsbundle
 
@@ -53,8 +65,8 @@ buck-out/
 
 # Expo
 .expo/
-web-build/
 dist/
+web-build/
 
 # Native
 *.orig.*
@@ -78,6 +90,7 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
 
 # typescript
 *.tsbuildinfo
@@ -85,8 +98,41 @@ yarn-error.*
 # Temporary files created by Metro to check the health of the file watcher
 .metro-health-check*
 
-# @generated expo modules
-expo-modules/
+# Testing
+/coverage
 
-# Local environment
-.env
+# EAS
+.easignore
+
+# Flipper
+ios/Pods/Flipper*
+ios/Pods/boost-for-react-native
+ios/Pods/Flipper-RSocket
+ios/Pods/Yoga
+ios/Pods/glog
+ios/Pods/Flipper-PeerTalk
+ios/Pods/FlipperKit
+ios/Pods/OpenSSL-Universal
+ios/Pods/RCT-Folly
+ios/Pods/RCTRequired
+ios/Pods/RCTTypeSafety
+ios/Pods/React-Core
+ios/Pods/React-CoreModules
+ios/Pods/React-RCTActionSheet
+ios/Pods/React-RCTAnimation
+ios/Pods/React-RCTBlob
+ios/Pods/React-RCTImage
+ios/Pods/React-RCTLinking
+ios/Pods/React-RCTNetwork
+ios/Pods/React-RCTSettings
+ios/Pods/React-RCTText
+ios/Pods/React-RCTVibration
+ios/Pods/React-cxxreact
+ios/Pods/React-jsi
+ios/Pods/React-jsiexecutor
+ios/Pods/React-jsinspector
+ios/Pods/React-logger
+ios/Pods/React-perflogger
+ios/Pods/React-runtimeexecutor
+ios/Pods/ReactCommon
+ios/Pods/Yoga
