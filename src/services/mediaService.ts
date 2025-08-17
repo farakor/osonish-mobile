@@ -2,6 +2,7 @@ import { supabase } from './supabaseClient';
 import * as FileSystem from 'expo-file-system';
 import { decode } from 'base64-arraybuffer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 export interface MediaUploadResult {
   success: boolean;
@@ -9,16 +10,53 @@ export interface MediaUploadResult {
   error?: string;
 }
 
+export interface MediaOptimizationSettings {
+  // Настройки для изображений
+  maxImageWidth: number;
+  maxImageHeight: number;
+  imageQuality: number; // 0.0 - 1.0
+
+  // Настройки для видео
+  maxVideoSize: number; // в байтах
+
+  // Общие настройки
+  enableOptimization: boolean;
+}
+
 export class MediaService {
   private static instance: MediaService;
   private readonly BUCKET_NAME = 'order-media';
   private readonly ENABLE_STORAGE = true; // Поставьте false для отключения Storage
+
+  // Настройки оптимизации медиа
+  private readonly optimizationSettings: MediaOptimizationSettings = {
+    maxImageWidth: 1920,      // Максимальная ширина изображения
+    maxImageHeight: 1080,     // Максимальная высота изображения
+    imageQuality: 0.8,        // Качество сжатия изображений (80%)
+    maxVideoSize: 20 * 1024 * 1024, // Максимальный размер видео 20 МБ
+    enableOptimization: true  // Включить оптимизацию
+  };
 
   static getInstance(): MediaService {
     if (!MediaService.instance) {
       MediaService.instance = new MediaService();
     }
     return MediaService.instance;
+  }
+
+  /**
+   * Получает текущие настройки оптимизации
+   */
+  getOptimizationSettings(): MediaOptimizationSettings {
+    return { ...this.optimizationSettings };
+  }
+
+  /**
+   * Обновляет настройки оптимизации
+   */
+  updateOptimizationSettings(newSettings: Partial<MediaOptimizationSettings>): void {
+    Object.assign(this.optimizationSettings, newSettings);
+    console.log('[MediaService] ⚙️ Настройки оптимизации обновлены:', this.optimizationSettings);
   }
 
   /**
@@ -202,6 +240,174 @@ export class MediaService {
   }
 
   /**
+   * Рассчитывает новые размеры изображения с сохранением пропорций
+   */
+  private calculateOptimalSize(
+    originalWidth: number,
+    originalHeight: number,
+    maxWidth: number,
+    maxHeight: number
+  ): { width: number; height: number; needsResize: boolean } {
+
+    // Если изображение уже меньше максимальных размеров, не изменяем
+    if (originalWidth <= maxWidth && originalHeight <= maxHeight) {
+      return {
+        width: originalWidth,
+        height: originalHeight,
+        needsResize: false
+      };
+    }
+
+    // Рассчитываем коэффициенты масштабирования
+    const widthRatio = maxWidth / originalWidth;
+    const heightRatio = maxHeight / originalHeight;
+
+    // Выбираем меньший коэффициент, чтобы изображение поместилось в рамки
+    const scaleFactor = Math.min(widthRatio, heightRatio);
+
+    const newWidth = Math.round(originalWidth * scaleFactor);
+    const newHeight = Math.round(originalHeight * scaleFactor);
+
+    console.log(`[MediaService] 🔢 Коэффициент масштабирования: ${scaleFactor.toFixed(3)}`);
+    console.log(`[MediaService] 📐 Пропорции: ${(originalWidth / originalHeight).toFixed(3)} → ${(newWidth / newHeight).toFixed(3)}`);
+
+    return {
+      width: newWidth,
+      height: newHeight,
+      needsResize: true
+    };
+  }
+
+  /**
+   * Оптимизирует изображение: изменяет размер и сжимает
+   */
+  private async optimizeImage(uri: string, originalName: string): Promise<{ uri: string; size: number; name: string }> {
+    try {
+      if (!this.optimizationSettings.enableOptimization) {
+        // Если оптимизация отключена, возвращаем оригинал
+        const fileInfo = await FileSystem.getInfoAsync(uri);
+        return {
+          uri,
+          size: fileInfo.size || 0,
+          name: originalName
+        };
+      }
+
+      console.log(`[MediaService] 🔧 Оптимизируем изображение: ${originalName}`);
+
+      // Получаем информацию о файле
+      const fileInfo = await FileSystem.getInfoAsync(uri);
+      const originalSize = fileInfo.size || 0;
+
+      console.log(`[MediaService] 📏 Оригинальный размер: ${(originalSize / 1024).toFixed(1)} KB`);
+
+      // Получаем размеры изображения для расчета пропорций
+      const imageInfo = await ImageManipulator.manipulateAsync(uri, [], { base64: false });
+
+      console.log(`[MediaService] 📐 Оригинальные размеры: ${imageInfo.width}x${imageInfo.height}`);
+
+      // Рассчитываем оптимальные размеры с сохранением пропорций
+      const optimalSize = this.calculateOptimalSize(
+        imageInfo.width,
+        imageInfo.height,
+        this.optimizationSettings.maxImageWidth,
+        this.optimizationSettings.maxImageHeight
+      );
+
+      console.log(`[MediaService] 📐 Новые размеры: ${optimalSize.width}x${optimalSize.height}`);
+
+      // Создаем массив операций для ImageManipulator
+      const manipulateActions = [];
+
+      // Добавляем resize только если размеры нужно изменить
+      if (optimalSize.needsResize) {
+        manipulateActions.push({
+          resize: {
+            width: optimalSize.width,
+            height: optimalSize.height,
+          }
+        });
+      }
+
+      // Оптимизируем изображение
+      const manipulatedImage = await ImageManipulator.manipulateAsync(
+        uri,
+        manipulateActions,
+        {
+          compress: this.optimizationSettings.imageQuality,
+          format: ImageManipulator.SaveFormat.JPEG, // Конвертируем в JPEG для лучшего сжатия
+          base64: false
+        }
+      );
+
+      // Получаем размер оптимизированного файла
+      const optimizedFileInfo = await FileSystem.getInfoAsync(manipulatedImage.uri);
+      const optimizedSize = optimizedFileInfo.size || 0;
+
+      const compressionRatio = originalSize > 0 ? ((originalSize - optimizedSize) / originalSize * 100) : 0;
+
+      console.log(`[MediaService] ✅ Оптимизировано: ${(optimizedSize / 1024).toFixed(1)} KB`);
+      console.log(`[MediaService] 📉 Сжатие: ${compressionRatio.toFixed(1)}%`);
+      console.log(`[MediaService] 📐 Финальные размеры: ${manipulatedImage.width}x${manipulatedImage.height}`);
+
+      // Генерируем новое имя файла с расширением .jpg
+      const nameWithoutExt = originalName.replace(/\.[^/.]+$/, "");
+      const optimizedName = `${nameWithoutExt}_optimized.jpg`;
+
+      return {
+        uri: manipulatedImage.uri,
+        size: optimizedSize,
+        name: optimizedName
+      };
+
+    } catch (error) {
+      console.error(`[MediaService] ❌ Ошибка оптимизации изображения ${originalName}:`, error);
+
+      // В случае ошибки возвращаем оригинал
+      const fileInfo = await FileSystem.getInfoAsync(uri);
+      return {
+        uri,
+        size: fileInfo.size || 0,
+        name: originalName
+      };
+    }
+  }
+
+  /**
+   * Проверяет размер видео и при необходимости показывает предупреждение
+   */
+  private async checkVideoSize(uri: string, originalName: string): Promise<{ uri: string; size: number; name: string; warning?: string }> {
+    try {
+      const fileInfo = await FileSystem.getInfoAsync(uri);
+      const size = fileInfo.size || 0;
+
+      console.log(`[MediaService] 🎥 Видео ${originalName}: ${(size / 1024 / 1024).toFixed(1)} MB`);
+
+      let warning: string | undefined;
+
+      if (size > this.optimizationSettings.maxVideoSize) {
+        warning = `Видео файл большой (${(size / 1024 / 1024).toFixed(1)} MB). Рекомендуется сжать до ${(this.optimizationSettings.maxVideoSize / 1024 / 1024).toFixed(0)} MB.`;
+        console.warn(`[MediaService] ⚠️ ${warning}`);
+      }
+
+      return {
+        uri,
+        size,
+        name: originalName,
+        warning
+      };
+
+    } catch (error) {
+      console.error(`[MediaService] ❌ Ошибка проверки видео ${originalName}:`, error);
+      return {
+        uri,
+        size: 0,
+        name: originalName
+      };
+    }
+  }
+
+  /**
    * Загружает медиа файлы в Supabase Storage
    */
   async uploadMediaFiles(files: Array<{ uri: string, type: 'image' | 'video', name: string, size: number }>): Promise<MediaUploadResult> {
@@ -258,7 +464,45 @@ export class MediaService {
         };
       }
 
-      const uploadPromises = files.map(async (file, index) => {
+      // Сначала оптимизируем все файлы
+      console.log('[MediaService] 🔧 Оптимизируем медиа файлы...');
+      const optimizedFiles = await Promise.all(
+        files.map(async (file, index) => {
+          let processedFile = file;
+
+          if (file.type === 'image') {
+            // Оптимизируем изображения
+            const optimized = await this.optimizeImage(file.uri, file.name);
+            processedFile = {
+              uri: optimized.uri,
+              type: file.type,
+              name: optimized.name,
+              size: optimized.size
+            };
+          } else if (file.type === 'video') {
+            // Проверяем размер видео
+            const checked = await this.checkVideoSize(file.uri, file.name);
+            processedFile = {
+              uri: checked.uri,
+              type: file.type,
+              name: checked.name,
+              size: checked.size
+            };
+
+            if (checked.warning) {
+              console.warn(`[MediaService] ⚠️ ${checked.warning}`);
+            }
+          }
+
+          return processedFile;
+        })
+      );
+
+      // Подсчитываем общий размер после оптимизации
+      const totalOptimizedSize = optimizedFiles.reduce((sum, file) => sum + file.size, 0);
+      console.log(`[MediaService] 📊 Общий размер после оптимизации: ${(totalOptimizedSize / 1024 / 1024).toFixed(1)} MB`);
+
+      const uploadPromises = optimizedFiles.map(async (file, index) => {
         try {
           // Получаем расширение файла
           const fileExtension = file.name.split('.').pop() || (file.type === 'image' ? 'jpg' : 'mp4');

@@ -253,7 +253,7 @@ export const EditOrderScreen: React.FC = () => {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.All,
         allowsEditing: false,
-        quality: 0.8,
+        quality: 1.0, // Максимальное качество, оптимизация будет в MediaService
         allowsMultipleSelection: false,
       });
 

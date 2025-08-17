@@ -123,7 +123,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
               mediaTypes: ['images'],
               allowsEditing: true,
               aspect: [1, 1],
-              quality: 0.8,
+              quality: 1.0, // Максимальное качество, оптимизация будет в MediaService
             });
             if (!result.canceled) {
               setProfileImage(result.assets[0].uri);
@@ -137,7 +137,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
               mediaTypes: ['images'],
               allowsEditing: true,
               aspect: [1, 1],
-              quality: 0.8,
+              quality: 1.0, // Максимальное качество, оптимизация будет в MediaService
             });
             if (!result.canceled) {
               setProfileImage(result.assets[0].uri);

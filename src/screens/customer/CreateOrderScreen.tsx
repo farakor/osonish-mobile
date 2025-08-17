@@ -169,7 +169,7 @@ export const CreateOrderScreen: React.FC = () => {
             }
             let result = await ImagePicker.launchCameraAsync({
               mediaTypes: ['images', 'videos'],
-              quality: 0.8,
+              quality: 1.0, // Максимальное качество, оптимизация будет в MediaService
             });
             handleMediaResult(result);
           },
@@ -186,7 +186,7 @@ export const CreateOrderScreen: React.FC = () => {
               mediaTypes: ['images', 'videos'],
               allowsMultipleSelection: true,
               selectionLimit: 5 - mediaFiles.length,
-              quality: 0.8,
+              quality: 1.0, // Максимальное качество, оптимизация будет в MediaService
             });
             handleMediaResult(result);
           },
