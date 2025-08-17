@@ -25,7 +25,7 @@ import LocationIcon from '../../../assets/card-icons/location.svg';
 import CategoryIcon from '../../../assets/card-icons/category.svg';
 import UserIcon from '../../../assets/user-01.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import { HeaderWithBack, MediaViewer, OrderLocationMap } from '../../components/common';
+import { HeaderWithBack, MediaViewer, OrderLocationMap, DropdownMenuItem } from '../../components/common';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { supabase } from '../../services/supabaseClient';
@@ -593,6 +593,31 @@ export const OrderDetailsScreen: React.FC = () => {
     );
   };
 
+  // Создаем элементы выпадающего меню
+  const getDropdownMenuItems = (): DropdownMenuItem[] => {
+    if (!order) return [];
+
+    const items: DropdownMenuItem[] = [];
+
+    // Показываем кнопки редактирования и отмены только для заказов со статусом 'new' или 'response_received'
+    if (['new', 'response_received'].includes(order.status)) {
+      items.push({
+        id: 'edit',
+        title: 'Редактировать',
+        onPress: handleEditOrder,
+      });
+
+      items.push({
+        id: 'cancel',
+        title: 'Отменить',
+        color: '#DC2626',
+        onPress: handleCancelOrder,
+      });
+    }
+
+    return items;
+  };
+
   const handleCompleteOrder = async () => {
     if (!order || isCompletingOrder) return;
 
@@ -944,6 +969,7 @@ export const OrderDetailsScreen: React.FC = () => {
                 onPress: handleCompleteOrder,
               } : undefined
             }
+            dropdownMenu={order?.status !== 'in_progress' ? getDropdownMenuItems() : undefined}
           />
 
           {/* User Profile Section */}
@@ -974,26 +1000,7 @@ export const OrderDetailsScreen: React.FC = () => {
           <View style={styles.titleSection}>
             <Text style={styles.orderTitle}>{order.title}</Text>
 
-            {/* Action buttons for editable orders */}
-            {['new', 'response_received'].includes(order.status) && (
-              <View style={styles.orderActions}>
-                <TouchableOpacity
-                  style={styles.editButton}
-                  onPress={handleEditOrder}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.editButtonText}>✏️ Редактировать</Text>
-                </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={handleCancelOrder}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.cancelButtonText}>❌ Отменить</Text>
-                </TouchableOpacity>
-              </View>
-            )}
           </View>
 
           {/* Image Gallery */}
@@ -1342,46 +1349,7 @@ const styles = StyleSheet.create({
     lineHeight: 32,
     marginBottom: theme.spacing.md,
   },
-  orderActions: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-  },
-  editButton: {
-    flex: 1,
-    backgroundColor: theme.colors.primary,
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  editButtonText: {
-    color: theme.colors.white,
-    fontSize: theme.fonts.sizes.sm,
-    fontWeight: theme.fonts.weights.semiBold,
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: '#FF6B35',
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
-    shadowColor: '#FF6B35',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cancelButtonText: {
-    color: theme.colors.white,
-    fontSize: theme.fonts.sizes.sm,
-    fontWeight: theme.fonts.weights.semiBold,
-  },
+
 
   // Gallery Section
   gallerySection: {

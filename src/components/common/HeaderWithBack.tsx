@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
+import { DropdownMenu, DropdownMenuItem } from './DropdownMenu';
 
 interface HeaderWithBackProps {
   title?: string;
@@ -12,12 +13,14 @@ interface HeaderWithBackProps {
     buttonStyle?: boolean; // новый параметр для кнопочного стиля
     onPress: () => void;
   };
+  dropdownMenu?: DropdownMenuItem[];
   backAction?: () => void;
 }
 
 export const HeaderWithBack: React.FC<HeaderWithBackProps> = ({
   title,
   rightAction,
+  dropdownMenu,
   backAction
 }) => {
   const navigation = useNavigation();
@@ -56,6 +59,8 @@ export const HeaderWithBack: React.FC<HeaderWithBackProps> = ({
             {rightAction.text}
           </Text>
         </TouchableOpacity>
+      ) : dropdownMenu && dropdownMenu.length > 0 ? (
+        <DropdownMenu items={dropdownMenu} />
       ) : (
         <View style={styles.placeholder} />
       )}

@@ -198,20 +198,38 @@ export const EditOrderScreen: React.FC = () => {
       setIsGettingLocation(true);
       setMediaError(null);
 
-      const result = await locationService.getCurrentLocation();
+      console.log('[EditOrder] 🚀 Начинаем получение местоположения...');
+      const coords = await locationService.getCurrentLocation();
+      console.log('[EditOrder] 📍 Получены координаты:', coords);
 
-      if (result.success && result.data) {
-        setLocation(result.data.address);
-        setCoordinates(result.data.coordinates);
-        console.log('[EditOrder] ✅ Местоположение получено:', result.data.address);
+      if (coords) {
+        setCoordinates(coords);
+        console.log('[EditOrder] ✅ Координаты сохранены в состоянии');
+
+        // Получаем адрес по координатам
+        console.log('[EditOrder] 🔄 Начинаем геокодирование...');
+        const geocodeResult = await locationService.reverseGeocode(coords.latitude, coords.longitude);
+        console.log('[EditOrder] 🏠 Результат геокодирования:', geocodeResult);
+
+        if (geocodeResult) {
+          console.log('[EditOrder] 📝 Устанавливаем адрес:', geocodeResult.address);
+          setLocation(geocodeResult.address);
+          console.log('[EditOrder] ✅ Местоположение получено:', geocodeResult.address);
+        } else {
+          const coordsString = `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
+          console.log('[EditOrder] 📝 Устанавливаем координаты как строку:', coordsString);
+          setLocation(coordsString);
+          console.log('[EditOrder] ✅ Координаты установлены как адрес');
+        }
       } else {
-        setMediaError(result.error || 'Не удалось получить местоположение');
-        console.error('[EditOrder] ❌ Ошибка получения местоположения:', result.error);
+        console.log('[EditOrder] ❌ Координаты не получены');
+        setMediaError('Не удалось определить местоположение. Проверьте настройки геолокации в устройстве.');
       }
     } catch (error) {
       console.error('[EditOrder] ❌ Критическая ошибка получения местоположения:', error);
       setMediaError('Произошла ошибка при получении местоположения');
     } finally {
+      console.log('[EditOrder] 🏁 Завершение получения местоположения');
       setIsGettingLocation(false);
     }
   };
@@ -330,28 +348,43 @@ export const EditOrderScreen: React.FC = () => {
         setIsUploadingMedia(true);
         console.log('[EditOrder] 📤 Загружаем медиа файлы...');
 
-        const uploadResults = await Promise.all(
-          mediaFiles.map(async (file) => {
-            // Если файл уже имеет полный URL (существующий файл), не загружаем его повторно
-            if (file.uri.startsWith('http')) {
-              return file.uri;
-            }
+        // Разделяем файлы на существующие (с http URL) и новые (локальные)
+        const existingFiles: string[] = [];
+        const newFiles: Array<{ uri: string; type: 'image' | 'video'; name: string; size: number }> = [];
 
-            // Загружаем новый файл
-            const result = await mediaService.uploadMedia(file.uri, file.type);
-            if (result.success && result.data) {
-              console.log('[EditOrder] ✅ Файл загружен:', result.data.url);
-              return result.data.url;
-            } else {
-              console.error('[EditOrder] ❌ Ошибка загрузки файла:', result.error);
-              throw new Error(result.error || 'Ошибка загрузки файла');
-            }
-          })
-        );
+        mediaFiles.forEach(file => {
+          if (file.uri.startsWith('http')) {
+            // Существующий файл - просто добавляем его URL
+            existingFiles.push(file.uri);
+          } else {
+            // Новый файл - нужно загрузить
+            newFiles.push(file);
+          }
+        });
 
-        uploadedMediaUrls = uploadResults;
+        console.log('[EditOrder] 📋 Существующих файлов:', existingFiles.length);
+        console.log('[EditOrder] 📋 Новых файлов для загрузки:', newFiles.length);
+
+        // Загружаем только новые файлы
+        if (newFiles.length > 0) {
+          console.log('[EditOrder] 📤 Вызываем mediaService.uploadMediaFiles...');
+          const mediaUploadResult = await mediaService.uploadMediaFiles(newFiles);
+          console.log('[EditOrder] 📥 Результат загрузки медиа:', mediaUploadResult);
+
+          if (mediaUploadResult.success && mediaUploadResult.urls) {
+            console.log('[EditOrder] ✅ Новые файлы загружены:', mediaUploadResult.urls);
+            uploadedMediaUrls = [...existingFiles, ...mediaUploadResult.urls];
+          } else {
+            console.error('[EditOrder] ❌ Ошибка загрузки новых файлов:', mediaUploadResult.error);
+            throw new Error(mediaUploadResult.error || 'Ошибка загрузки медиа файлов');
+          }
+        } else {
+          // Только существующие файлы
+          uploadedMediaUrls = existingFiles;
+        }
+
         setIsUploadingMedia(false);
-        console.log('[EditOrder] ✅ Все медиа файлы загружены');
+        console.log('[EditOrder] ✅ Все медиа файлы обработаны, итого:', uploadedMediaUrls.length);
       }
 
       // Подготавливаем данные для обновления

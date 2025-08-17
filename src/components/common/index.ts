@@ -1,4 +1,6 @@
 export { HeaderWithBack } from './HeaderWithBack';
+export { DropdownMenu } from './DropdownMenu';
+export type { DropdownMenuItem } from './DropdownMenu';
 export { PriceConfirmationModal } from './PriceConfirmationModal';
 export { StatsWidget } from './StatsWidget';
 export { ProposePriceModal } from './ProposePriceModal';
