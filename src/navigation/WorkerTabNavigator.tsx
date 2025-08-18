@@ -54,9 +54,6 @@ export function WorkerTabNavigator() {
         tabBarIconStyle: {
           marginBottom: 0,
         },
-        // Добавляем анимацию переходов между экранами
-        animationEnabled: true,
-        animationTypeForReplace: 'push',
       }}
     >
       <Tab.Screen

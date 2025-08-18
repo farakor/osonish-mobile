@@ -9,6 +9,7 @@ import {
   FlatList,
   Alert,
   RefreshControl,
+  StatusBar,
 } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -114,6 +115,8 @@ export const WorkerApplicationsScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [userLocation, setUserLocation] = useState<LocationCoords | undefined>(undefined);
+
+
 
   // Функция загрузки заявок
   const loadApplications = async (isRefresh = false) => {
@@ -280,6 +283,7 @@ export const WorkerApplicationsScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
       <SafeAreaView style={styles.content}>
         <View style={styles.contentHeader}>
           <Text style={styles.title}>Мои заказы</Text>

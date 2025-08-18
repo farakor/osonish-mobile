@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Image,
   Animated,
+  StatusBar,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -315,6 +316,7 @@ export const WorkerProfileScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
       <SafeAreaView style={styles.content}>
         {/* Animated Header */}
         <Animated.View style={[styles.animatedHeader, { opacity: headerOpacity }]}>

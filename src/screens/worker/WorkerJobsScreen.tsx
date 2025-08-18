@@ -10,6 +10,7 @@ import {
   FlatList,
   Alert,
   RefreshControl,
+  StatusBar,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../constants/theme';
@@ -421,6 +422,7 @@ const WorkerJobsScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.primary} />
       <SafeAreaView style={styles.content}>
         {/* Header with notifications */}
         <View style={styles.header}>
@@ -576,7 +578,7 @@ const WorkerJobsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.primary,
   },
   content: {
     flex: 1,
@@ -585,6 +587,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: theme.colors.background,
   },
   loadingText: {
     fontSize: theme.fonts.sizes.md,
@@ -602,6 +605,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
+    backgroundColor: theme.colors.primary,
   },
   headerLeft: {
     flex: 1,
@@ -609,19 +613,20 @@ const styles = StyleSheet.create({
   title: {
     fontSize: theme.fonts.sizes.xxl,
     fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.text.primary,
+    color: theme.colors.white,
     marginBottom: theme.spacing.xs,
   },
   subtitle: {
     fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
+    color: theme.colors.white,
   },
   searchContainer: {
     paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
+    paddingBottom: theme.spacing.md,
+    backgroundColor: theme.colors.primary,
   },
   searchInput: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.white,
     borderRadius: 12,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
@@ -631,7 +636,8 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
   },
   categoriesSection: {
-    marginBottom: theme.spacing.md,
+    backgroundColor: theme.colors.primary,
+    paddingBottom: theme.spacing.lg,
   },
   categoriesContainer: {
     paddingLeft: theme.spacing.lg,
@@ -642,17 +648,17 @@ const styles = StyleSheet.create({
   categoryChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#5A8A00',
     borderRadius: 20,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     marginRight: theme.spacing.sm,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: '#5A8A00',
   },
   categoryChipActive: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
+    backgroundColor: 'transparent',
+    borderColor: theme.colors.white,
   },
   categoryEmoji: {
     fontSize: 16,
@@ -661,24 +667,25 @@ const styles = StyleSheet.create({
   categoryChipText: {
     fontSize: theme.fonts.sizes.sm,
     fontWeight: theme.fonts.weights.medium,
-    color: theme.colors.text.primary,
+    color: theme.colors.white,
     marginRight: theme.spacing.xs,
   },
   categoryChipTextActive: {
-    color: theme.colors.background,
+    color: theme.colors.white,
   },
   categoryChipCount: {
     fontSize: theme.fonts.sizes.xs,
-    color: theme.colors.text.secondary,
+    color: theme.colors.white,
   },
   categoryChipCountActive: {
-    color: theme.colors.background,
+    color: theme.colors.white,
   },
   jobsList: {
     flex: 1,
+    backgroundColor: theme.colors.background,
   },
   jobsListContent: {
-    paddingTop: theme.spacing.sm,
+    paddingTop: theme.spacing.lg,
   },
   jobCard: {
     backgroundColor: theme.colors.surface,
