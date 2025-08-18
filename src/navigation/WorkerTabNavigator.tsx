@@ -1,4 +1,5 @@
 import React from 'react';
+import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { theme } from '../constants';
 import type { WorkerTabParamList } from '../types';
@@ -7,11 +8,22 @@ import {
   WorkerApplicationsScreen,
   WorkerProfileScreen,
 } from '../screens/worker';
+import {
+  AnimatedTabIcon,
+  AnimatedTabLabel,
+  AnimatedTabIndicator,
+  withAnimatedTabScreen,
+} from '../components/common';
 import HomeIcon from '../../assets/home-02.svg';
 import FileIcon from '../../assets/file-02.svg';
 import ProfileIcon from '../../assets/user-01.svg';
 
 const Tab = createBottomTabNavigator<WorkerTabParamList>();
+
+// Создаем анимированные версии экранов
+const AnimatedWorkerJobsScreen = withAnimatedTabScreen(WorkerJobsScreen);
+const AnimatedWorkerApplicationsScreen = withAnimatedTabScreen(WorkerApplicationsScreen);
+const AnimatedWorkerProfileScreen = withAnimatedTabScreen(WorkerProfileScreen);
 
 export function WorkerTabNavigator() {
   return (
@@ -28,64 +40,91 @@ export function WorkerTabNavigator() {
           shadowOpacity: 0.06,
           shadowRadius: 8,
           elevation: 8,
-          paddingTop: theme.spacing.sm, // уменьшен верхний паддинг
-          paddingBottom: theme.spacing.xxl, // увеличен нижний паддинг
-          height: 99, // уменьшена высота меню на 10% (было 110)
-          justifyContent: 'center', // центрирование по вертикали
+          paddingTop: theme.spacing.sm,
+          paddingBottom: theme.spacing.xxl,
+          height: 99,
+          justifyContent: 'center',
         },
         tabBarLabelStyle: {
-          fontSize: theme.fonts.sizes.sm, // уменьшен размер шрифта
-          fontWeight: theme.fonts.weights.medium, // обычный вес
-          marginBottom: 0, // убираем отступ снизу
-          marginTop: theme.spacing.xs, // добавляем отступ сверху
+          fontSize: theme.fonts.sizes.sm,
+          fontWeight: theme.fonts.weights.medium,
+          marginBottom: 0,
+          marginTop: theme.spacing.xs,
         },
         tabBarIconStyle: {
-          marginBottom: 0, // убираем отступ снизу у иконки
+          marginBottom: 0,
         },
+        // Добавляем анимацию переходов между экранами
+        animationEnabled: true,
+        animationTypeForReplace: 'push',
       }}
     >
       <Tab.Screen
         name="Jobs"
-        component={WorkerJobsScreen}
+        component={AnimatedWorkerJobsScreen}
         options={{
-          tabBarLabel: 'Заказы',
+          tabBarLabel: ({ focused, color }) => (
+            <AnimatedTabLabel focused={focused} color={color}>
+              <Text style={{ color, fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.medium }}>
+                Заказы
+              </Text>
+            </AnimatedTabLabel>
+          ),
           tabBarIcon: ({ color, size, focused }) => (
-            <HomeIcon
-              width={25}
-              height={25}
-              fill={focused ? `${color}1F` : `${theme.colors.text.secondary}1F`}
-              stroke={focused ? color : theme.colors.text.secondary}
-            />
+            <AnimatedTabIcon focused={focused} color={color}>
+              <HomeIcon
+                width={25}
+                height={25}
+                fill={focused ? `${color}1F` : `${theme.colors.text.secondary}1F`}
+                stroke={focused ? color : theme.colors.text.secondary}
+              />
+            </AnimatedTabIcon>
           ),
         }}
       />
       <Tab.Screen
         name="Applications"
-        component={WorkerApplicationsScreen}
+        component={AnimatedWorkerApplicationsScreen}
         options={{
-          tabBarLabel: 'Мои заказы',
+          tabBarLabel: ({ focused, color }) => (
+            <AnimatedTabLabel focused={focused} color={color}>
+              <Text style={{ color, fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.medium }}>
+                Мои заказы
+              </Text>
+            </AnimatedTabLabel>
+          ),
           tabBarIcon: ({ color, size, focused }) => (
-            <FileIcon
-              width={25}
-              height={25}
-              fill={focused ? `${color}1F` : `${theme.colors.text.secondary}1F`}
-              stroke={focused ? color : theme.colors.text.secondary}
-            />
+            <AnimatedTabIcon focused={focused} color={color}>
+              <FileIcon
+                width={25}
+                height={25}
+                fill={focused ? `${color}1F` : `${theme.colors.text.secondary}1F`}
+                stroke={focused ? color : theme.colors.text.secondary}
+              />
+            </AnimatedTabIcon>
           ),
         }}
       />
       <Tab.Screen
         name="Profile"
-        component={WorkerProfileScreen}
+        component={AnimatedWorkerProfileScreen}
         options={{
-          tabBarLabel: 'Профиль',
+          tabBarLabel: ({ focused, color }) => (
+            <AnimatedTabLabel focused={focused} color={color}>
+              <Text style={{ color, fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.medium }}>
+                Профиль
+              </Text>
+            </AnimatedTabLabel>
+          ),
           tabBarIcon: ({ color, size, focused }) => (
-            <ProfileIcon
-              width={25}
-              height={25}
-              fill={focused ? `${color}1F` : `${theme.colors.text.secondary}1F`}
-              stroke={focused ? color : theme.colors.text.secondary}
-            />
+            <AnimatedTabIcon focused={focused} color={color}>
+              <ProfileIcon
+                width={25}
+                height={25}
+                fill={focused ? `${color}1F` : `${theme.colors.text.secondary}1F`}
+                stroke={focused ? color : theme.colors.text.secondary}
+              />
+            </AnimatedTabIcon>
           ),
         }}
       />

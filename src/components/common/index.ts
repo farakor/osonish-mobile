@@ -15,6 +15,18 @@ export {
   AnimatedLoadingIndicator,
   AnimatedSummaryGrid,
 } from './AnimatedComponents';
+export {
+  AnimatedTabTransition,
+  AnimatedScreenContainer,
+  AnimatedTabIcon,
+  AnimatedTabLabel,
+  AnimatedTabIndicator,
+} from './AnimatedTabTransition';
+export {
+  withAnimatedTabScreen,
+  AnimatedTabScreen,
+  AnimatedTabScreenWithDirection,
+} from './AnimatedTabScreen';
 export { ModernActionButton } from './ModernActionButton';
 export { MediaViewer } from './MediaViewer';
 export { OrderLocationMap } from './OrderLocationMap';
