@@ -10,7 +10,7 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants/theme';
 import { orderService } from '../../services/orderService';
@@ -107,7 +107,9 @@ const ApplicationCard: React.FC<{
 
 export const WorkerApplicationsScreen: React.FC = () => {
   const navigation = useNavigation<WorkerNavigationProp>();
-  const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus>('accepted');
+  const route = useRoute();
+  const params = route.params as { initialStatus?: ApplicationStatus } | undefined;
+  const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus>(params?.initialStatus || 'accepted');
   const [applications, setApplications] = useState<WorkerApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -158,7 +160,11 @@ export const WorkerApplicationsScreen: React.FC = () => {
   useFocusEffect(
     React.useCallback(() => {
       loadApplications();
-    }, [])
+      // Обновляем статус если передан новый параметр
+      if (params?.initialStatus && params.initialStatus !== selectedStatus) {
+        setSelectedStatus(params.initialStatus);
+      }
+    }, [params?.initialStatus])
   );
 
   // Real-time обновления заявок

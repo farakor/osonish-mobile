@@ -19,7 +19,7 @@ import { notificationService } from '../../services/notificationService';
 import { locationService, LocationCoords } from '../../services/locationService';
 import { supabase } from '../../services/supabaseClient';
 import { Order } from '../../types';
-import { PriceConfirmationModal, ProposePriceModal, ModernActionButton } from '../../components/common';
+import { PriceConfirmationModal, ProposePriceModal, ModernActionButton, OrderStatsWidget } from '../../components/common';
 import { ModernOrderCard } from '../../components/cards';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -73,6 +73,7 @@ const WorkerJobsScreen: React.FC = () => {
   const [userApplications, setUserApplications] = useState<Set<string>>(new Set());
   const [userLocation, setUserLocation] = useState<LocationCoords | undefined>(undefined);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [applicationStats, setApplicationStats] = useState({ pending: 0, inProgress: 0 });
 
   // Функция загрузки заказов
   const loadOrders = async (isRefresh = false) => {
@@ -83,10 +84,11 @@ const WorkerJobsScreen: React.FC = () => {
         setIsLoading(true);
       }
 
-      // Загружаем все доступные заказы и отклики пользователя
-      const [availableOrders, applications] = await Promise.all([
+      // Загружаем все доступные заказы, отклики пользователя и статистику заявок
+      const [availableOrders, applications, workerApplications] = await Promise.all([
         orderService.getAvailableOrdersForWorker(),
-        orderService.getUserApplications()
+        orderService.getUserApplications(),
+        orderService.getWorkerApplications()
       ]);
 
       // Фильтруем заказы, исключая те на которые уже есть отклик (только для главного экрана)
@@ -100,6 +102,12 @@ const WorkerJobsScreen: React.FC = () => {
 
       setOrders(ordersWithoutApplications);
       setUserApplications(applications);
+
+      // Подсчитываем статистику заявок
+      const pendingCount = workerApplications.filter(app => app.status === 'pending').length;
+      const inProgressCount = workerApplications.filter(app => app.status === 'accepted').length;
+
+      setApplicationStats({ pending: pendingCount, inProgress: inProgressCount });
 
       // Загружаем количество непрочитанных уведомлений
       const authState = authService.getAuthState();
@@ -367,6 +375,23 @@ const WorkerJobsScreen: React.FC = () => {
     navigation.navigate('NotificationsList');
   };
 
+  // Навигация к разделам "Мои заказы"
+  const handlePendingOrdersPress = () => {
+    // Переходим на таб "Мои заказы" с фильтром "Ожидание"
+    navigation.navigate('MainTabs', {
+      screen: 'Applications',
+      params: { initialStatus: 'pending' }
+    });
+  };
+
+  const handleInProgressOrdersPress = () => {
+    // Переходим на таб "Мои заказы" с фильтром "В работе"
+    navigation.navigate('MainTabs', {
+      screen: 'Applications',
+      params: { initialStatus: 'accepted' }
+    });
+  };
+
   const renderJobCard = ({ item }: { item: Order }) => {
     // На главном экране показываем только заказы без откликов, поэтому hasApplied всегда false
     return (
@@ -482,13 +507,39 @@ const WorkerJobsScreen: React.FC = () => {
           }
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Text style={styles.emptyStateIcon}>📋</Text>
-              <Text style={styles.emptyStateTitle}>Нет заказов</Text>
-              <Text style={styles.emptyStateText}>
-                {searchQuery || selectedCategory !== 'Все'
-                  ? 'По вашему запросу заказы не найдены'
-                  : 'Пока нет доступных заказов.\nПотяните вниз, чтобы обновить.'}
-              </Text>
+              {(() => {
+                const hasSearchOrFilter = searchQuery || selectedCategory !== 'Все';
+
+                if (hasSearchOrFilter) {
+                  // Показываем обычное пустое состояние для поиска/фильтров
+                  return (
+                    <>
+                      <Text style={styles.emptyStateIcon}>📋</Text>
+                      <Text style={styles.emptyStateTitle}>Нет заказов</Text>
+                      <Text style={styles.emptyStateText}>
+                        По вашему запросу заказы не найдены
+                      </Text>
+                    </>
+                  );
+                } else {
+                  // Показываем виджет статистики когда нет новых заказов
+                  return (
+                    <>
+                      <Text style={styles.emptyStateIcon}>📋</Text>
+                      <Text style={styles.emptyStateTitle}>Новых заказов пока нет</Text>
+                      <Text style={styles.emptyStateText}>
+                        Потяните вниз, чтобы обновить
+                      </Text>
+                      <OrderStatsWidget
+                        pendingCount={applicationStats.pending}
+                        inProgressCount={applicationStats.inProgress}
+                        onPendingPress={handlePendingOrdersPress}
+                        onInProgressPress={handleInProgressOrdersPress}
+                      />
+                    </>
+                  );
+                }
+              })()}
             </View>
           }
         />
@@ -730,7 +781,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: theme.spacing.xxxl,
+    paddingVertical: theme.spacing.lg,
   },
   emptyStateIcon: {
     fontSize: 48,

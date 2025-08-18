@@ -42,7 +42,7 @@ export type CustomerTabParamList = {
 };
 
 export type WorkerStackParamList = {
-  MainTabs: undefined;
+  MainTabs: { screen?: keyof WorkerTabParamList; params?: any } | undefined;
   JobDetails: { orderId: string };
   EditProfile: undefined;
   Notifications: undefined;
@@ -52,6 +52,6 @@ export type WorkerStackParamList = {
 
 export type WorkerTabParamList = {
   Jobs: undefined;
-  Applications: undefined;
+  Applications: { initialStatus?: 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled' } | undefined;
   Profile: undefined;
 };
