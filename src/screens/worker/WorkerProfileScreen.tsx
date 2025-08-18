@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,10 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  RefreshControl,
   Image,
+  Animated,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../constants';
@@ -46,7 +47,29 @@ export const WorkerProfileScreen: React.FC = () => {
   const navigation = useNavigation();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const insets = useSafeAreaInsets();
+
+  // Анимация для header
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
+  // Анимированный отступ для элементов профиля
+  const profileContentMarginTop = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [0, 80 + insets.top], // 80px высота header + безопасная зона
+    extrapolate: 'clamp',
+  });
+
+  // Анимация для скрытия имени в основной секции
+  const profileNameOpacity = scrollY.interpolate({
+    inputRange: [0, 50, 100],
+    outputRange: [1, 0.5, 0],
+    extrapolate: 'clamp',
+  });
 
   // Цвет для элементов выхода
   const logoutColor = '#FF3B30';
@@ -104,19 +127,7 @@ export const WorkerProfileScreen: React.FC = () => {
     }
   };
 
-  const onRefresh = async () => {
-    try {
-      setIsRefreshing(true);
-      await Promise.all([
-        loadUserProfile(),
-        loadWorkerStats()
-      ]);
-    } catch (error) {
-      console.error('Ошибка обновления данных:', error);
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
+
 
   const loadWorkerStats = async () => {
     try {
@@ -305,76 +316,95 @@ export const WorkerProfileScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.content}>
-        <ScrollView
+        {/* Animated Header */}
+        <Animated.View style={[styles.animatedHeader, { opacity: headerOpacity }]}>
+          <LinearGradient
+            colors={['#679B00', '#5A8A00', '#4A7A00']}
+            style={[styles.animatedHeaderGradient, { paddingTop: insets.top + 16 }]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            {/* Background Pattern */}
+            <View style={styles.headerPatternBackground}>
+              <Ionicons name="hammer-outline" size={24} color="rgba(255, 255, 255, 0.15)" style={styles.headerPatternIcon1} />
+              <Ionicons name="build-outline" size={22} color="rgba(255, 255, 255, 0.15)" style={styles.headerPatternIcon2} />
+              <Ionicons name="construct-outline" size={20} color="rgba(255, 255, 255, 0.15)" style={styles.headerPatternIcon3} />
+              <Ionicons name="settings-outline" size={18} color="rgba(255, 255, 255, 0.15)" style={styles.headerPatternIcon4} />
+            </View>
+            <Text style={styles.animatedHeaderTitle}>
+              {user ? `${user.firstName} ${user.lastName}` : 'Профиль'}
+            </Text>
+          </LinearGradient>
+        </Animated.View>
+
+        <Animated.ScrollView
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={onRefresh}
-              colors={[theme.colors.primary]}
-              tintColor={theme.colors.primary}
-              title="Обновление..."
-              titleColor={theme.colors.text.secondary}
-            />
-          }
+          bounces={false}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: false }
+          )}
+          scrollEventThrottle={16}
         >
-          {/* Header */}
-          <View style={styles.header}>
+          {/* Regular Header */}
+          <View style={styles.regularHeader}>
             <Text style={styles.headerTitle}>Профиль</Text>
             <View style={styles.headerRight} />
           </View>
 
           {/* Profile Section with Gradient */}
-          <LinearGradient
-            colors={['#679B00', '#5A8A00', '#4A7A00']}
-            style={styles.profileSection}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            {/* Background Pattern */}
-            <View style={styles.patternBackground}>
-              <Ionicons name="hammer-outline" size={48} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon1} />
-              <Ionicons name="build-outline" size={44} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon2} />
-              <Ionicons name="construct-outline" size={40} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon3} />
-              <Ionicons name="hardware-chip-outline" size={38} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon4} />
-              <Ionicons name="flash-outline" size={46} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon5} />
-              <Ionicons name="settings-outline" size={42} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon6} />
-              <Ionicons name="hammer-outline" size={40} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon7} />
-              <Ionicons name="build-outline" size={38} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon8} />
-            </View>
+          <Animated.View style={{ marginTop: profileContentMarginTop }}>
+            <LinearGradient
+              colors={['#679B00', '#5A8A00', '#4A7A00']}
+              style={styles.profileSection}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              {/* Background Pattern */}
+              <View style={styles.patternBackground}>
+                <Ionicons name="hammer-outline" size={48} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon1} />
+                <Ionicons name="build-outline" size={44} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon2} />
+                <Ionicons name="construct-outline" size={40} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon3} />
+                <Ionicons name="hardware-chip-outline" size={38} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon4} />
+                <Ionicons name="flash-outline" size={46} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon5} />
+                <Ionicons name="settings-outline" size={42} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon6} />
+                <Ionicons name="hammer-outline" size={40} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon7} />
+                <Ionicons name="build-outline" size={38} color="rgba(255, 255, 255, 0.15)" style={styles.patternIcon8} />
+              </View>
 
-            <View style={styles.profileImageContainer}>
-              {user.profileImage ? (
-                <Image source={{ uri: user.profileImage }} style={styles.profileImage} />
-              ) : (
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>
-                    {getInitials(user.firstName, user.lastName)}
+              <View style={styles.profileImageContainer}>
+                {user.profileImage ? (
+                  <Image source={{ uri: user.profileImage }} style={styles.profileImage} />
+                ) : (
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>
+                      {getInitials(user.firstName, user.lastName)}
+                    </Text>
+                  </View>
+                )}
+              </View>
+              <Animated.View style={[styles.userNameContainer, { opacity: profileNameOpacity }]}>
+                <Text style={styles.userName}>
+                  {user.firstName} {user.lastName}
+                </Text>
+                {user.isVerified && (
+                  <View style={styles.verifiedCheckmark}>
+                    <Text style={styles.checkmarkIcon}>✓</Text>
+                  </View>
+                )}
+              </Animated.View>
+              <Text style={styles.userPhone}>{user.phone}</Text>
+              {stats.rating > 0 && (
+                <View style={styles.ratingContainer}>
+                  <StarIcon filled={true} size={16} />
+                  <Text style={styles.ratingText}>{stats.rating}</Text>
+                  <Text style={styles.ratingCount}>
+                    ({stats.totalReviews} отзыв{stats.totalReviews === 1 ? '' : stats.totalReviews < 5 ? 'а' : 'ов'})
                   </Text>
                 </View>
               )}
-            </View>
-            <View style={styles.userNameContainer}>
-              <Text style={styles.userName}>
-                {user.firstName} {user.lastName}
-              </Text>
-              {user.isVerified && (
-                <View style={styles.verifiedCheckmark}>
-                  <Text style={styles.checkmarkIcon}>✓</Text>
-                </View>
-              )}
-            </View>
-            <Text style={styles.userPhone}>{user.phone}</Text>
-            {stats.rating > 0 && (
-              <View style={styles.ratingContainer}>
-                <StarIcon filled={true} size={16} />
-                <Text style={styles.ratingText}>{stats.rating}</Text>
-                <Text style={styles.ratingCount}>
-                  ({stats.totalReviews} отзыв{stats.totalReviews === 1 ? '' : stats.totalReviews < 5 ? 'а' : 'ов'})
-                </Text>
-              </View>
-            )}
-          </LinearGradient>
+            </LinearGradient>
+          </Animated.View>
 
           {/* Modern Earnings Widget */}
           <View style={styles.earningsContainer}>
@@ -473,7 +503,7 @@ export const WorkerProfileScreen: React.FC = () => {
               </View>
             </TouchableOpacity>
           </View>
-        </ScrollView>
+        </Animated.ScrollView>
       </SafeAreaView>
     </View>
   );
@@ -519,8 +549,62 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.semiBold,
   },
 
-  // New Header Styles
-  header: {
+  // Animated Header Styles
+  animatedHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
+  animatedHeaderGradient: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  animatedHeaderTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+
+  // Header Pattern Background
+  headerPatternBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  headerPatternIcon1: {
+    position: 'absolute',
+    top: 8,
+    left: 15,
+    transform: [{ rotate: '15deg' }],
+  },
+  headerPatternIcon2: {
+    position: 'absolute',
+    top: 12,
+    right: 25,
+    transform: [{ rotate: '-25deg' }],
+  },
+  headerPatternIcon3: {
+    position: 'absolute',
+    top: 8,
+    left: '45%',
+    transform: [{ rotate: '35deg' }],
+  },
+  headerPatternIcon4: {
+    position: 'absolute',
+    top: 15,
+    right: 60,
+    transform: [{ rotate: '-15deg' }],
+  },
+
+  // Regular Header (in scroll)
+  regularHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
