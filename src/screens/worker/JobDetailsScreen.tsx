@@ -22,7 +22,7 @@ import LocationIcon from '../../../assets/card-icons/location.svg';
 import CategoryIcon from '../../../assets/card-icons/category.svg';
 import UserIcon from '../../../assets/user-01.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import { HeaderWithBack, PriceConfirmationModal, ProposePriceModal, MediaViewer, OrderLocationMap } from '../../components/common';
+import { HeaderWithBack, PriceConfirmationModal, ProposePriceModal, MediaViewer, OrderLocationMap, StatusBadge } from '../../components/common';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { locationService, LocationCoords } from '../../services/locationService';
@@ -514,7 +514,9 @@ export const JobDetailsScreen: React.FC = () => {
           scrollEventThrottle={16}
         >
           {/* Regular Header */}
-          <HeaderWithBack />
+          <HeaderWithBack
+            rightComponent={<StatusBadge status={order.status} workerView={true} />}
+          />
 
           {/* Customer Profile Section */}
           <View style={styles.profileSection}>

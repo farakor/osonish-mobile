@@ -25,7 +25,7 @@ import LocationIcon from '../../../assets/card-icons/location.svg';
 import CategoryIcon from '../../../assets/card-icons/category.svg';
 import UserIcon from '../../../assets/user-01.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import { HeaderWithBack, MediaViewer, OrderLocationMap, DropdownMenuItem } from '../../components/common';
+import { HeaderWithBack, MediaViewer, OrderLocationMap, DropdownMenuItem, StatusBadge, DropdownMenu } from '../../components/common';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { supabase } from '../../services/supabaseClient';
@@ -993,16 +993,28 @@ export const OrderDetailsScreen: React.FC = () => {
         >
           {/* Regular Header */}
           <HeaderWithBack
-            rightAction={
-              canShowCompleteButton(order) ? {
-                text: isCompletingOrder ? 'Завершаем...' : 'Завершить',
-                color: '#FFFFFF', // Белый текст
-                backgroundColor: '#DC2626', // Красный фон
-                buttonStyle: true, // Включаем кнопочный стиль
-                onPress: handleCompleteOrder,
-              } : undefined
+            rightComponent={
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <StatusBadge status={order.status} workerView={false} />
+                {canShowCompleteButton(order) && (
+                  <TouchableOpacity
+                    style={[
+                      styles.completeButton,
+                      { backgroundColor: '#DC2626' }
+                    ]}
+                    onPress={handleCompleteOrder}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.completeButtonText}>
+                      {isCompletingOrder ? 'Завершаем...' : 'Завершить'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                {!canShowCompleteButton(order) && getDropdownMenuItems().length > 0 && (
+                  <DropdownMenu items={getDropdownMenuItems()} />
+                )}
+              </View>
             }
-            dropdownMenu={!canShowCompleteButton(order) ? getDropdownMenuItems() : undefined}
           />
 
           {/* User Profile Section */}
@@ -2558,5 +2570,23 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.sm,
     fontWeight: theme.fonts.weights.medium,
     color: theme.colors.surface,
+  },
+  completeButton: {
+    minWidth: 40,
+    height: 40,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  completeButtonText: {
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.medium,
+    color: '#FFFFFF',
   },
 }); 

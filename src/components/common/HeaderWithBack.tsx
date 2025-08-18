@@ -15,13 +15,15 @@ interface HeaderWithBackProps {
   };
   dropdownMenu?: DropdownMenuItem[];
   backAction?: () => void;
+  rightComponent?: React.ReactNode; // новый параметр для произвольного компонента справа
 }
 
 export const HeaderWithBack: React.FC<HeaderWithBackProps> = ({
   title,
   rightAction,
   dropdownMenu,
-  backAction
+  backAction,
+  rightComponent
 }) => {
   const navigation = useNavigation();
 
@@ -41,7 +43,9 @@ export const HeaderWithBack: React.FC<HeaderWithBackProps> = ({
 
       {title && <Text style={styles.headerTitle}>{title}</Text>}
 
-      {rightAction ? (
+      {rightComponent ? (
+        rightComponent
+      ) : rightAction ? (
         <TouchableOpacity
           style={rightAction.buttonStyle ? [
             styles.rightActionButton,

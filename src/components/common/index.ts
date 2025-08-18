@@ -31,3 +31,4 @@ export { ModernActionButton } from './ModernActionButton';
 export { MediaViewer } from './MediaViewer';
 export { OrderLocationMap } from './OrderLocationMap';
 export { OrderStatsWidget } from './OrderStatsWidget';
+export { StatusBadge } from './StatusBadge';
