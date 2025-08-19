@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from './src/navigation';
 import { OrdersProvider } from './src/hooks';
 
@@ -38,9 +39,11 @@ export default function App() {
   }, []);
 
   return (
-    <OrdersProvider>
-      <StatusBar style="dark" />
-      <AppNavigator />
-    </OrdersProvider>
+    <SafeAreaProvider>
+      <OrdersProvider>
+        <StatusBar style="dark" />
+        <AppNavigator />
+      </OrdersProvider>
+    </SafeAreaProvider>
   );
 }

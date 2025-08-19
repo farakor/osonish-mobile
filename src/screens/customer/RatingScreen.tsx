@@ -11,6 +11,7 @@ import {
   TextInput,
 } from 'react-native';
 import { theme } from '../../constants';
+import { usePlatformSafeAreaInsets, getFixedBottomStyle } from '../../utils/safeAreaUtils';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -154,6 +155,7 @@ export const RatingScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RatingRouteProp>();
   const { orderId, acceptedWorkers } = route.params;
+  const insets = usePlatformSafeAreaInsets();
 
   const [ratings, setRatings] = useState<WorkerRatingState>({});
   const [comments, setComments] = useState<WorkerCommentsState>({});
@@ -340,7 +342,7 @@ export const RatingScreen: React.FC = () => {
       </ScrollView>
 
       {/* Фиксированная кнопка внизу */}
-      <View style={styles.fixedButtonContainer}>
+      <View style={[styles.fixedButtonContainer, getFixedBottomStyle(insets, theme.spacing.lg)]}>
         <TouchableOpacity
           style={[
             styles.fixedButton,
@@ -492,7 +494,6 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl, // Больше отступа снизу от края экрана
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
   },

@@ -18,6 +18,7 @@ import {
   Platform,
 } from 'react-native';
 import { theme } from '../../constants';
+import { usePlatformSafeAreaInsets, getFixedBottomStyle, getEdgeToEdgeBottomStyle } from '../../utils/safeAreaUtils';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -208,6 +209,7 @@ export const OrderDetailsScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<OrderDetailsRouteProp>();
   const { orderId } = route.params;
+  const insets = usePlatformSafeAreaInsets();
 
 
 
@@ -1232,7 +1234,7 @@ export const OrderDetailsScreen: React.FC = () => {
 
         {/* Закрепленная кнопка внизу - показываем только если есть отклики */}
         {applicants.length > 0 && (
-          <View style={styles.fixedBottomSection}>
+          <View style={[styles.fixedBottomSection, getEdgeToEdgeBottomStyle(insets)]}>
             <TouchableOpacity
               style={styles.fixedViewAllApplicantsButton}
               onPress={() => navigation.navigate('ApplicantsList', { orderId: orderId })}
@@ -2434,15 +2436,13 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: theme.colors.background,
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    paddingBottom: theme.spacing.lg, // Дополнительный отступ для безопасной области
+    paddingTop: theme.spacing.md,
+    paddingBottom: 0, // Динамически устанавливается через getFixedBottomStyle
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
-    elevation: 8,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    // Убираем только тени, границу оставляем
+    elevation: 0,
+    shadowOpacity: 0,
   },
   fixedViewAllApplicantsButton: {
     backgroundColor: theme.colors.primary,
@@ -2455,6 +2455,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 4,
+    marginBottom: Platform.OS === 'ios' ? 16 : 0, // Отступ только на iOS
   },
   fixedViewAllApplicantsButtonText: {
     color: '#fff',

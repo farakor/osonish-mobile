@@ -7,8 +7,16 @@ import {
   StyleSheet,
   SafeAreaView,
   Animated,
+  Platform,
+  Dimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../constants/theme';
+
+const { height: screenHeight } = Dimensions.get('window');
+
+// Определяем маленький экран для Android (высота меньше 1080px)
+const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
 
 interface PriceConfirmationModalProps {
   visible: boolean;
@@ -27,6 +35,7 @@ export const PriceConfirmationModal: React.FC<PriceConfirmationModalProps> = ({
   orderPrice,
   orderTitle,
 }) => {
+  const insets = useSafeAreaInsets();
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const modalTranslateY = useRef(new Animated.Value(300)).current;
   const [animationComplete, setAnimationComplete] = useState(false);
@@ -110,7 +119,7 @@ export const PriceConfirmationModal: React.FC<PriceConfirmationModalProps> = ({
           opacity: overlayOpacity,
         }
       ]}>
-        <SafeAreaView style={styles.container}>
+        <View style={[styles.container, { paddingBottom: insets.bottom + (Platform.OS === 'android' ? 120 : 0) }]}>
           <Animated.View style={[
             styles.modal,
             {
@@ -125,11 +134,8 @@ export const PriceConfirmationModal: React.FC<PriceConfirmationModalProps> = ({
               </TouchableOpacity>
             </View>
 
-            {/* Order info */}
+            {/* Price info */}
             <View style={styles.orderInfo}>
-              <Text style={styles.orderTitle} numberOfLines={2}>
-                {orderTitle}
-              </Text>
               <View style={styles.priceContainer}>
                 <Text style={styles.priceLabel}>Цена заказа:</Text>
                 <Text style={styles.priceValue}>
@@ -178,7 +184,7 @@ export const PriceConfirmationModal: React.FC<PriceConfirmationModalProps> = ({
               </TouchableOpacity>
             </View>
           </Animated.View>
-        </SafeAreaView>
+        </View>
       </Animated.View>
     </Modal>
   );
@@ -199,7 +205,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
+    paddingBottom: theme.spacing.lg,
   },
   header: {
     flexDirection: 'row',

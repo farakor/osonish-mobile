@@ -1,7 +1,8 @@
 import React from 'react';
-import { Text } from 'react-native';
+import { Text, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { theme } from '../constants';
+import { usePlatformSafeAreaInsets, getBottomTabBarStyle } from '../utils/safeAreaUtils';
 import type { WorkerTabParamList } from '../types';
 import {
   WorkerJobsScreen,
@@ -26,6 +27,9 @@ const AnimatedWorkerApplicationsScreen = withAnimatedTabScreen(WorkerApplication
 const AnimatedWorkerProfileScreen = withAnimatedTabScreen(WorkerProfileScreen);
 
 export function WorkerTabNavigator() {
+  const insets = usePlatformSafeAreaInsets();
+  const tabBarStyle = getBottomTabBarStyle(insets);
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -41,8 +45,7 @@ export function WorkerTabNavigator() {
           shadowRadius: 8,
           elevation: 8,
           paddingTop: theme.spacing.sm,
-          paddingBottom: theme.spacing.xxl,
-          height: 99,
+          ...tabBarStyle,
           justifyContent: 'center',
         },
         tabBarLabelStyle: {

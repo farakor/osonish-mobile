@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
@@ -54,7 +54,7 @@ export function SplashScreen() {
   }, [navigation]);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Logo Section */}
       <View style={styles.logoSection}>
         <View style={styles.logoPlaceholder}>
@@ -67,7 +67,7 @@ export function SplashScreen() {
       <View style={styles.loadingSection}>
         <Text style={styles.loadingText}>Загрузка...</Text>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

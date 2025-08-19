@@ -12,12 +12,14 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
+import { usePlatformSafeAreaInsets, getScrollViewContentStyle } from '../../utils/safeAreaUtils';
 import TelegramIcon from '../../../assets/telegram-icon.svg';
 import PhoneCallIcon from '../../../assets/phone-call-01.svg';
 import { HeaderWithBack } from '../../components/common';
 
 export const SupportScreen: React.FC = () => {
   const navigation = useNavigation();
+  const insets = usePlatformSafeAreaInsets();
 
   const handleTelegramPress = async () => {
     const telegramUrl = 'https://t.me/osonish';
@@ -53,7 +55,11 @@ export const SupportScreen: React.FC = () => {
 
       <HeaderWithBack title="Поддержка" />
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={getScrollViewContentStyle(insets, theme.spacing.lg)}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Logo Section */}
         <View style={styles.logoSection}>
           <View style={styles.logoPlaceholder}>

@@ -10,15 +10,24 @@ import {
   Alert,
   ActivityIndicator,
   StatusBar,
+  Platform,
+  Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
+import { usePlatformSafeAreaInsets, getFixedBottomStyle, getContainerBottomStyle } from '../../utils/safeAreaUtils';
 import { notificationService, NotificationSettings } from '../../services/notificationService';
 import { authService } from '../../services/authService';
 import { HeaderWithBack } from '../../components/common';
 
+const { height: screenHeight } = Dimensions.get('window');
+
+// Определяем маленький экран для Android (высота меньше 1080px)
+const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
+
 export const NotificationsScreen: React.FC = () => {
   const navigation = useNavigation();
+  const insets = usePlatformSafeAreaInsets();
 
   const [allNotificationsEnabled, setAllNotificationsEnabled] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -152,9 +161,12 @@ export const NotificationsScreen: React.FC = () => {
       </ScrollView>
 
       {/* Bottom Button */}
-      <View style={styles.bottomSection}>
+      <View style={[styles.bottomSection, getContainerBottomStyle(insets)]}>
         <TouchableOpacity
-          style={[styles.saveButton, (isSaving || allNotificationsEnabled === null) && styles.saveButtonDisabled]}
+          style={[
+            styles.saveButton,
+            (isSaving || allNotificationsEnabled === null) && styles.saveButtonDisabled
+          ]}
           onPress={handleSaveSettings}
           disabled={isSaving || allNotificationsEnabled === null}
         >
@@ -182,19 +194,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: isSmallScreen ? 16 : 20,
   },
   label: {
-    fontSize: 16,
+    fontSize: isSmallScreen ? 14 : 16,
     fontWeight: '700',
     color: '#1A1A1A',
-    marginBottom: 8,
+    marginBottom: isSmallScreen ? 6 : 8,
   },
   inputContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: isSmallScreen ? 12 : 16,
+    paddingVertical: isSmallScreen ? 12 : 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -213,26 +225,26 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   switchTitle: {
-    fontSize: 16,
+    fontSize: isSmallScreen ? 14 : 16,
     fontWeight: '600',
     color: '#1A1A1A',
     marginBottom: 4,
   },
   switchDescription: {
-    fontSize: 14,
+    fontSize: isSmallScreen ? 12 : 14,
     color: '#8E8E93',
-    lineHeight: 18,
+    lineHeight: isSmallScreen ? 16 : 18,
   },
 
   // Info section
   infoGroup: {
-    marginBottom: 20,
+    marginBottom: isSmallScreen ? 16 : 20,
   },
   infoCard: {
     flexDirection: 'row',
     backgroundColor: '#F1F8E9',
     borderRadius: 12,
-    padding: 16,
+    padding: isSmallScreen ? 12 : 16,
     borderWidth: 1,
     borderColor: '#E8F5E8',
   },
@@ -243,21 +255,31 @@ const styles = StyleSheet.create({
   },
   infoText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: isSmallScreen ? 12 : 14,
     color: '#666666',
-    lineHeight: 20,
+    lineHeight: isSmallScreen ? 16 : 20,
   },
 
   // Bottom Section (copied from EditProfileScreen)
   bottomSection: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingTop: 20,
+    paddingBottom: 0, // Динамически устанавливается через getFixedBottomStyle
     backgroundColor: '#F8F9FA',
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    // Убираем тени для чистого вида
+    elevation: 0,
+    shadowOpacity: 0,
   },
   saveButton: {
     backgroundColor: '#679B00',
     borderRadius: 12,
-    paddingVertical: 16,
+    paddingVertical: isSmallScreen ? 12 : 16,
     alignItems: 'center',
     shadowColor: '#679B00',
     shadowOffset: { width: 0, height: 2 },
@@ -271,7 +293,7 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   saveButtonText: {
-    fontSize: 16,
+    fontSize: isSmallScreen ? 14 : 16,
     fontWeight: '700',
     color: '#FFFFFF',
     textAlign: 'center',

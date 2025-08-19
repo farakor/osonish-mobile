@@ -12,8 +12,10 @@ import {
   Dimensions,
   Animated,
   StatusBar,
+  Platform,
 } from 'react-native';
 import { theme } from '../../constants';
+import { usePlatformSafeAreaInsets, getFixedBottomStyle, getEdgeToEdgeBottomStyle } from '../../utils/safeAreaUtils';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { WorkerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -203,6 +205,7 @@ export const JobDetailsScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<JobDetailsRouteProp>();
   const { orderId } = route.params;
+  const insets = usePlatformSafeAreaInsets();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -613,7 +616,7 @@ export const JobDetailsScreen: React.FC = () => {
         </Animated.ScrollView>
 
         {/* Fixed Bottom Section */}
-        <View style={styles.fixedBottomSection}>
+        <View style={[styles.fixedBottomSection, getEdgeToEdgeBottomStyle(insets)]}>
           <TouchableOpacity
             style={[
               styles.applyButton,
@@ -920,15 +923,13 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: theme.colors.background,
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    paddingBottom: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
+    paddingBottom: 0, // Динамически устанавливается через getFixedBottomStyle
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
-    elevation: 8,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    // Убираем только тени, границу оставляем
+    elevation: 0,
+    shadowOpacity: 0,
   },
   applyButton: {
     backgroundColor: theme.colors.primary,
@@ -940,6 +941,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 4,
+    marginBottom: Platform.OS === 'ios' ? 16 : 0, // Отступ только на iOS
   },
   appliedButton: {
     backgroundColor: theme.colors.surface,
@@ -983,10 +985,15 @@ const styles = StyleSheet.create({
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.surface,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
   },
 
   stickyTitleContainer: {

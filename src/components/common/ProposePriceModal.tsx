@@ -8,8 +8,15 @@ import {
   TextInput,
   SafeAreaView,
   Animated,
+  Platform,
+  Dimensions,
 } from 'react-native';
 import { theme } from '../../constants/theme';
+
+const { height: screenHeight } = Dimensions.get('window');
+
+// Определяем маленький экран для Android (высота меньше 1080px)
+const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
 
 interface ProposePriceModalProps {
   visible: boolean;
@@ -278,7 +285,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     paddingHorizontal: 24,
     paddingTop: 16,
-    paddingBottom: 32,
+    paddingBottom: Platform.OS === 'android' ? (isSmallScreen ? 160 : 140) : 32,
     maxHeight: '80%',
   },
   header: {
