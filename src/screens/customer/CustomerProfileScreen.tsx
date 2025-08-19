@@ -96,6 +96,12 @@ export const CustomerProfileScreen: React.FC = () => {
       console.log('[CustomerProfile] 🔄 useFocusEffect: перезагружаем профиль');
       loadUserProfile();
       loadCustomerStats();
+
+      // Сбрасываем настройки статус-бара при фокусе на экран
+      StatusBar.setBarStyle('dark-content', true);
+      if (Platform.OS === 'android') {
+        StatusBar.setBackgroundColor('#F8F9FA', true);
+      }
     }, [])
   );
 
@@ -283,6 +289,7 @@ export const CustomerProfileScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
       <SafeAreaView style={styles.content}>
         {/* Animated Header */}
         <Animated.View style={[styles.animatedHeader, { opacity: headerOpacity }]}>

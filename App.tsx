@@ -39,7 +39,7 @@ export default function App() {
 
   return (
     <OrdersProvider>
-      <StatusBar style="auto" />
+      <StatusBar style="dark" />
       <AppNavigator />
     </OrdersProvider>
   );

@@ -100,6 +100,12 @@ export const WorkerProfileScreen: React.FC = () => {
     React.useCallback(() => {
       console.log('[WorkerProfile] 🔄 useFocusEffect: перезагружаем профиль');
       loadUserProfile();
+
+      // Сбрасываем настройки статус-бара при фокусе на экран
+      StatusBar.setBarStyle('dark-content', true);
+      if (Platform.OS === 'android') {
+        StatusBar.setBackgroundColor('#F8F9FA', true);
+      }
     }, [])
   );
 
