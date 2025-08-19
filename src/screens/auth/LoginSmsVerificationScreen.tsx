@@ -16,6 +16,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
 import { authService } from '../../services/authService';
 import type { RootStackParamList } from '../../types';
+import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -192,7 +193,7 @@ export function LoginSmsVerificationScreen() {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Text style={styles.backButtonText}>←</Text>
+            <ArrowBackIcon width={20} height={20} stroke={theme.colors.text.primary} />
           </TouchableOpacity>
         </View>
 
@@ -290,10 +291,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backButtonText: {
-    fontSize: theme.fonts.sizes.xl,
-    color: theme.colors.text.primary,
-  },
+
   titleSection: {
     marginBottom: isSmallScreen ? theme.spacing.xl : theme.spacing.xxxl,
     alignItems: 'center',

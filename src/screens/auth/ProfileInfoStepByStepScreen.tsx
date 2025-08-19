@@ -27,6 +27,7 @@ import { theme } from '../../constants';
 import * as ImagePicker from 'expo-image-picker';
 import Svg, { Path } from 'react-native-svg';
 
+
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../types';
@@ -519,12 +520,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
         >
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Text style={styles.backButtonText}>←</Text>
-            </TouchableOpacity>
+            <View style={styles.headerRight} />
             <Text style={styles.headerTitle}>{getStepTitle()}</Text>
             <View style={styles.headerRight} />
           </View>
@@ -655,18 +651,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  backButtonText: {
-    fontSize: 20,
-    color: theme.colors.text.primary,
-  },
+
+
   headerTitle: {
     fontSize: theme.fonts.sizes.lg,
     fontWeight: theme.fonts.weights.semiBold,

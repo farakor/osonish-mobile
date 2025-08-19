@@ -937,7 +937,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
-          <HeaderWithBack title={getStepTitle()} />
+          <HeaderWithBack title={getStepTitle()} showBackButton={currentStep === 1} />
 
           {/* Progress */}
           <AnimatedProgressBar progress={currentStep} total={totalSteps} />

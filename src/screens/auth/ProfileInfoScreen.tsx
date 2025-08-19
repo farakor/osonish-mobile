@@ -21,6 +21,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import Svg, { Path } from 'react-native-svg';
 import { CustomPrivacyModal } from '../../components/common';
+import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -139,7 +140,7 @@ export function ProfileInfoScreen() {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Text style={styles.backButtonText}>←</Text>
+            <ArrowBackIcon width={20} height={20} stroke={theme.colors.text.primary} />
           </TouchableOpacity>
         </View>
 
@@ -345,10 +346,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backButtonText: {
-    fontSize: theme.fonts.sizes.xl,
-    color: theme.colors.text.primary,
-  },
+
   titleSection: {
     paddingHorizontal: theme.spacing.lg,
     marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.xl,

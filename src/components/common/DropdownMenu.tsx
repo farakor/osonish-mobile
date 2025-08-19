@@ -7,8 +7,13 @@ import {
   Modal,
   Pressable,
   Animated,
+  Dimensions,
 } from 'react-native';
 import { theme } from '../../constants';
+
+const { height: screenHeight } = Dimensions.get('window');
+
+// Убираем определение платформы - используем одинаковое меню для всех
 
 export interface DropdownMenuItem {
   id: string;
@@ -70,6 +75,8 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
     }, 100);
   };
 
+  // Используем обычное выпадающее меню для всех платформ
+
   return (
     <>
       <TouchableOpacity
@@ -77,6 +84,7 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
         style={[styles.trigger, triggerStyle]}
         onPress={showMenu}
         activeOpacity={0.7}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
         <View style={styles.dotsContainer}>
           <View style={styles.dot} />
@@ -98,8 +106,9 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
               menuStyle,
               {
                 position: 'absolute',
-                top: triggerLayout.y + triggerLayout.height + 8,
-                right: 24, // Отступ от правого края экрана
+                top: triggerLayout.y + triggerLayout.height - 32, // Увеличиваем перекрытие на 20px больше
+                left: Math.max(16, triggerLayout.x + triggerLayout.width - 180), // Не выходим за левый край экрана
+                maxHeight: screenHeight - triggerLayout.y - triggerLayout.height - 50,
                 transform: [
                   {
                     scale: scaleAnim,
@@ -168,6 +177,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
   },
+
   menu: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar } from 'r
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
 import { DropdownMenu, DropdownMenuItem } from './DropdownMenu';
+import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
 
 interface HeaderWithBackProps {
   title?: string;
@@ -16,6 +17,7 @@ interface HeaderWithBackProps {
   dropdownMenu?: DropdownMenuItem[];
   backAction?: () => void;
   rightComponent?: React.ReactNode; // новый параметр для произвольного компонента справа
+  showBackButton?: boolean; // новый параметр для управления видимостью кнопки назад
 }
 
 // Функция для получения высоты статусбара только на Android
@@ -28,7 +30,8 @@ export const HeaderWithBack: React.FC<HeaderWithBackProps> = ({
   rightAction,
   dropdownMenu,
   backAction,
-  rightComponent
+  rightComponent,
+  showBackButton = true
 }) => {
   const navigation = useNavigation();
 
@@ -42,9 +45,13 @@ export const HeaderWithBack: React.FC<HeaderWithBackProps> = ({
 
   return (
     <View style={[styles.header, { paddingTop: theme.spacing.md + getAndroidStatusBarHeight() }]}>
-      <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-        <Text style={styles.backButtonText}>←</Text>
-      </TouchableOpacity>
+      {showBackButton ? (
+        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+          <ArrowBackIcon width={20} height={20} stroke={theme.colors.text.primary} />
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.placeholder} />
+      )}
 
       {title && <Text style={styles.headerTitle}>{title}</Text>}
 
@@ -84,6 +91,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.lg, // Единый отступ для всех экранов
+    overflow: 'visible', // Разрешаем элементам выходить за границы
+    minHeight: 60, // Минимальная высота для размещения элементов
   },
   backButton: {
     width: 40,
@@ -98,10 +107,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
   },
-  backButtonText: {
-    fontSize: theme.fonts.sizes.xl,
-    color: theme.colors.text.primary,
-  },
+
   headerTitle: {
     fontSize: theme.fonts.sizes.lg,
     fontWeight: theme.fonts.weights.semiBold,

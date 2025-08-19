@@ -21,6 +21,7 @@ import CalendarIcon from '../../../assets/card-icons/calendar.svg';
 import LocationIcon from '../../../assets/card-icons/location.svg';
 import CategoryIcon from '../../../assets/card-icons/category.svg';
 import UserIcon from '../../../assets/user-01.svg';
+import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { HeaderWithBack, PriceConfirmationModal, ProposePriceModal, MediaViewer, OrderLocationMap, StatusBadge } from '../../components/common';
 import { orderService } from '../../services/orderService';
@@ -486,7 +487,7 @@ export const JobDetailsScreen: React.FC = () => {
       }]}>
         <View style={styles.stickyHeaderContent}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.backButtonText}>←</Text>
+            <ArrowBackIcon width={20} height={20} stroke={theme.colors.text.primary} />
           </TouchableOpacity>
           <View style={styles.stickyTitleContainer}>
             <Text style={styles.stickyTitle} numberOfLines={1}>
@@ -987,10 +988,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backButtonText: {
-    fontSize: theme.fonts.sizes.xl,
-    color: theme.colors.text.primary,
-  },
+
   stickyTitleContainer: {
     flex: 1,
     marginHorizontal: theme.spacing.md,

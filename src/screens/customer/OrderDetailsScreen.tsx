@@ -15,6 +15,7 @@ import {
   Animated,
   StatusBar,
   Linking,
+  Platform,
 } from 'react-native';
 import { theme } from '../../constants';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
@@ -24,6 +25,7 @@ import CalendarIcon from '../../../assets/card-icons/calendar.svg';
 import LocationIcon from '../../../assets/card-icons/location.svg';
 import CategoryIcon from '../../../assets/card-icons/category.svg';
 import UserIcon from '../../../assets/user-01.svg';
+import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { HeaderWithBack, MediaViewer, OrderLocationMap, DropdownMenuItem, StatusBadge, DropdownMenu } from '../../components/common';
 import { orderService } from '../../services/orderService';
@@ -31,8 +33,10 @@ import { authService } from '../../services/authService';
 import { supabase } from '../../services/supabaseClient';
 import { Order, Applicant, User } from '../../types';
 
-const { width } = Dimensions.get('window');
+const { width, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = width - 48; // 24px margin on each side
+
+// Убираем определение Android - используем одинаковое меню для всех платформ
 
 type OrderDetailsRouteProp = RouteProp<CustomerStackParamList, 'OrderDetails'>;
 type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
@@ -947,7 +951,7 @@ export const OrderDetailsScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       {/* Sticky Header */}
       <Animated.View style={[styles.stickyHeader, {
-        paddingTop: STATUS_BAR_HEIGHT + theme.spacing.lg, // Увеличил отступ от статус бара
+        paddingTop: STATUS_BAR_HEIGHT + theme.spacing.lg,
         opacity: scrollY.interpolate({
           inputRange: [0, HEADER_HEIGHT],
           outputRange: [0, 1],
@@ -956,7 +960,7 @@ export const OrderDetailsScreen: React.FC = () => {
       }]}>
         <View style={styles.stickyHeaderContent}>
           <TouchableOpacity style={styles.stickyBackButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.stickyBackButtonText}>←</Text>
+            <ArrowBackIcon width={20} height={20} stroke={theme.colors.text.primary} />
           </TouchableOpacity>
           <View style={styles.stickyTitleContainer}>
             <Text style={styles.stickyTitle} numberOfLines={1}>
@@ -966,7 +970,7 @@ export const OrderDetailsScreen: React.FC = () => {
               {order ? formatBudget(order.budget) + ' сум' : ''}
             </Text>
           </View>
-          {canShowCompleteButton(order) && (
+          {canShowCompleteButton(order) ? (
             <TouchableOpacity
               style={styles.stickyCompleteButton}
               onPress={handleCompleteOrder}
@@ -976,6 +980,12 @@ export const OrderDetailsScreen: React.FC = () => {
                 {isCompletingOrder ? 'Завершаем...' : 'Завершить'}
               </Text>
             </TouchableOpacity>
+          ) : getDropdownMenuItems().length > 0 ? (
+            <DropdownMenu
+              items={getDropdownMenuItems()}
+            />
+          ) : (
+            <View style={{ width: 40 }} />
           )}
         </View>
       </Animated.View>
@@ -990,11 +1000,12 @@ export const OrderDetailsScreen: React.FC = () => {
             { useNativeDriver: false }
           )}
           scrollEventThrottle={16}
+          scrollEnabled={true} // Включаем scroll обратно
         >
           {/* Regular Header */}
           <HeaderWithBack
             rightComponent={
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={styles.headerRightContainer}>
                 <StatusBadge status={order.status} workerView={false} />
                 {canShowCompleteButton(order) && (
                   <TouchableOpacity
@@ -1011,11 +1022,15 @@ export const OrderDetailsScreen: React.FC = () => {
                   </TouchableOpacity>
                 )}
                 {!canShowCompleteButton(order) && getDropdownMenuItems().length > 0 && (
-                  <DropdownMenu items={getDropdownMenuItems()} />
+                  <DropdownMenu
+                    items={getDropdownMenuItems()}
+                  />
                 )}
               </View>
             }
           />
+
+
 
           {/* User Profile Section */}
           <View style={styles.profileSection}>
@@ -2498,10 +2513,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
   },
-  stickyBackButtonText: {
-    fontSize: theme.fonts.sizes.xl,
-    color: theme.colors.text.primary,
-  },
+
   stickyCompleteButton: {
     minWidth: 40,
     height: 40,
@@ -2588,5 +2600,13 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.sm,
     fontWeight: theme.fonts.weights.medium,
     color: '#FFFFFF',
+  },
+  // Стили для header
+  headerRightContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    overflow: 'visible',
+    minWidth: 120,
   },
 }); 
