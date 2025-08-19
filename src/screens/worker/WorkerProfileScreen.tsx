@@ -11,6 +11,7 @@ import {
   Image,
   Animated,
   StatusBar,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -44,6 +45,11 @@ interface WorkerStats {
   earningsChange?: number; // Процентное изменение заработка
 }
 
+// Функция для получения высоты статусбара только на Android
+const getAndroidStatusBarHeight = () => {
+  return Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0;
+};
+
 export const WorkerProfileScreen: React.FC = () => {
   const navigation = useNavigation();
   const [user, setUser] = useState<User | null>(null);
@@ -61,7 +67,7 @@ export const WorkerProfileScreen: React.FC = () => {
   // Анимированный отступ для элементов профиля
   const profileContentMarginTop = scrollY.interpolate({
     inputRange: [0, 100],
-    outputRange: [0, 80 + insets.top], // 80px высота header + безопасная зона
+    outputRange: [0, 80 + getAndroidStatusBarHeight()], // 80px высота header + высота статусбара на Android
     extrapolate: 'clamp',
   });
 
@@ -322,7 +328,7 @@ export const WorkerProfileScreen: React.FC = () => {
         <Animated.View style={[styles.animatedHeader, { opacity: headerOpacity }]}>
           <LinearGradient
             colors={['#679B00', '#5A8A00', '#4A7A00']}
-            style={[styles.animatedHeaderGradient, { paddingTop: insets.top + 16 }]}
+            style={[styles.animatedHeaderGradient, { paddingTop: 16 + getAndroidStatusBarHeight() }]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
@@ -349,7 +355,7 @@ export const WorkerProfileScreen: React.FC = () => {
           scrollEventThrottle={16}
         >
           {/* Regular Header */}
-          <View style={styles.regularHeader}>
+          <View style={[styles.regularHeader, { paddingTop: 16 + getAndroidStatusBarHeight() }]}>
             <Text style={styles.headerTitle}>Профиль</Text>
             <View style={styles.headerRight} />
           </View>
@@ -611,7 +617,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 16,
     paddingBottom: 20,
   },
   headerTitle: {

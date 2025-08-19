@@ -7,6 +7,8 @@ import {
   SafeAreaView,
   Dimensions,
   Alert,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -14,6 +16,23 @@ import { theme } from '../../constants';
 import type { RootStackParamList } from '../../types';
 import WorkerIcon from '../../../assets/engineer-worker.svg';
 import UserIcon from '../../../assets/user-03.svg';
+
+const { height: screenHeight } = Dimensions.get('window');
+
+// Определяем маленький экран для Android (высота меньше 1080px)
+const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
+
+// Функция для получения высоты статус-бара на Android
+const getAndroidStatusBarHeight = () => {
+  if (Platform.OS === 'android') {
+    try {
+      return StatusBar.currentHeight || 24; // fallback 24px для Android
+    } catch (error) {
+      return 24; // стандартная высота статус-бара на Android
+    }
+  }
+  return 0;
+};
 
 type UserRole = 'customer' | 'worker';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -184,33 +203,33 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl,
+    paddingTop: theme.spacing.xl + getAndroidStatusBarHeight(),
   },
   header: {
     alignItems: 'center',
-    marginBottom: theme.spacing.xxl,
+    marginBottom: isSmallScreen ? theme.spacing.xl : theme.spacing.xxl,
   },
   title: {
-    fontSize: theme.fonts.sizes.xxl,
+    fontSize: isSmallScreen ? theme.fonts.sizes.xl : theme.fonts.sizes.xxl,
     fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
     textAlign: 'center',
-    marginBottom: theme.spacing.md,
+    marginBottom: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
   },
   subtitle: {
-    fontSize: theme.fonts.sizes.md,
+    fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: isSmallScreen ? 18 : 22,
   },
   rolesContainer: {
-    gap: theme.spacing.lg,
-    marginBottom: theme.spacing.xxl,
+    gap: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
+    marginBottom: isSmallScreen ? theme.spacing.xl : theme.spacing.xxl,
   },
   roleCard: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.xl,
+    padding: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
     borderWidth: 2,
     borderColor: theme.colors.border,
     alignItems: 'center',
@@ -229,19 +248,19 @@ const styles = StyleSheet.create({
     backgroundColor: `${theme.colors.primary}08`,
   },
   iconContainer: {
-    width: 60,
-    height: 60,
+    width: isSmallScreen ? 50 : 60,
+    height: isSmallScreen ? 50 : 60,
     backgroundColor: theme.colors.background,
-    borderRadius: 30,
+    borderRadius: isSmallScreen ? 25 : 30,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
+    marginBottom: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
   },
   icon: {
     fontSize: 28,
   },
   roleTitle: {
-    fontSize: theme.fonts.sizes.lg,
+    fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
@@ -253,7 +272,7 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: isSmallScreen ? 18 : 20,
   },
   roleDescriptionSelected: {
     color: theme.colors.text.primary,
@@ -277,16 +296,16 @@ const styles = StyleSheet.create({
   continueButton: {
     backgroundColor: theme.colors.primary,
     borderRadius: theme.borderRadius.md,
-    paddingVertical: theme.spacing.md,
+    paddingVertical: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
     alignItems: 'center',
-    marginBottom: theme.spacing.lg,
+    marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
   },
   continueButtonDisabled: {
     backgroundColor: theme.colors.disabled,
   },
   continueButtonText: {
     color: theme.colors.white,
-    fontSize: theme.fonts.sizes.md,
+    fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
   },
   continueButtonTextDisabled: {

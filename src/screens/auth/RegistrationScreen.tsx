@@ -10,11 +10,29 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
 import type { RootStackParamList } from '../../types';
+
+const { height: screenHeight } = Dimensions.get('window');
+
+// Определяем маленький экран для Android (высота меньше 1080px)
+const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
+
+// Функция для получения высоты статус-бара на Android
+const getAndroidStatusBarHeight = () => {
+  if (Platform.OS === 'android') {
+    try {
+      return StatusBar.currentHeight || 24; // fallback 24px для Android
+    } catch (error) {
+      return 24; // стандартная высота статус-бара на Android
+    }
+  }
+  return 0;
+};
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -145,6 +163,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: theme.spacing.lg,
+    paddingTop: getAndroidStatusBarHeight(),
   },
   header: {
     flexDirection: 'row',
@@ -165,35 +184,35 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
   },
   titleSection: {
-    marginBottom: theme.spacing.xxxl,
+    marginBottom: isSmallScreen ? theme.spacing.xl : theme.spacing.xxxl,
   },
   title: {
-    fontSize: theme.fonts.sizes.xxl,
+    fontSize: isSmallScreen ? theme.fonts.sizes.xl : theme.fonts.sizes.xxl,
     fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
+    marginBottom: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
   },
   subtitle: {
-    fontSize: theme.fonts.sizes.md,
+    fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
-    lineHeight: 24,
+    lineHeight: isSmallScreen ? 20 : 24,
   },
   inputSection: {
-    marginBottom: theme.spacing.xxxl,
+    marginBottom: isSmallScreen ? theme.spacing.xl : theme.spacing.xxxl,
   },
   inputLabel: {
-    fontSize: theme.fonts.sizes.md,
+    fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.medium,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
   },
   phoneInput: {
-    height: 56,
+    height: isSmallScreen ? 48 : 56,
     borderWidth: 2,
     borderColor: theme.colors.border,
     borderRadius: 12,
     paddingHorizontal: theme.spacing.md,
-    fontSize: theme.fonts.sizes.lg,
+    fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,
     color: theme.colors.text.primary,
     backgroundColor: theme.colors.background,
   },
@@ -204,12 +223,12 @@ const styles = StyleSheet.create({
   },
   continueButton: {
     backgroundColor: theme.colors.primary,
-    paddingVertical: theme.spacing.md,
+    paddingVertical: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 56,
-    marginBottom: theme.spacing.xl,
+    minHeight: isSmallScreen ? 48 : 56,
+    marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.xl,
     shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -222,7 +241,7 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   continueButtonText: {
-    fontSize: theme.fonts.sizes.lg,
+    fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.background,
   },

@@ -8,11 +8,30 @@ import {
   StatusBar,
   SafeAreaView,
   Alert,
+  Dimensions,
+  Platform,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
 import type { RootStackParamList } from '../../types';
+
+const { height: screenHeight } = Dimensions.get('window');
+
+// Определяем маленький экран для Android (высота меньше 1080px)
+const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
+
+// Функция для получения высоты статус-бара на Android
+const getAndroidStatusBarHeight = () => {
+  if (Platform.OS === 'android') {
+    try {
+      return StatusBar.currentHeight || 24; // fallback 24px для Android
+    } catch (error) {
+      return 24; // стандартная высота статус-бара на Android
+    }
+  }
+  return 0;
+};
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -233,6 +252,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: theme.spacing.lg,
+    paddingTop: getAndroidStatusBarHeight(),
   },
   header: {
     flexDirection: 'row',
@@ -253,47 +273,47 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
   },
   titleSection: {
-    marginBottom: theme.spacing.xxxl,
+    marginBottom: isSmallScreen ? theme.spacing.xl : theme.spacing.xxxl,
     alignItems: 'center',
   },
   title: {
-    fontSize: theme.fonts.sizes.xxl,
+    fontSize: isSmallScreen ? theme.fonts.sizes.xl : theme.fonts.sizes.xxl,
     fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
+    marginBottom: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: theme.fonts.sizes.md,
+    fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: isSmallScreen ? 20 : 24,
   },
   phoneNumber: {
     color: theme.colors.primary,
     fontWeight: theme.fonts.weights.semiBold,
   },
   codeSection: {
-    marginBottom: theme.spacing.xxxl,
+    marginBottom: isSmallScreen ? theme.spacing.xl : theme.spacing.xxxl,
     alignItems: 'center',
   },
   codeInputs: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
   },
   codeInput: {
-    width: 48,
-    height: 56,
+    width: isSmallScreen ? 42 : 48,
+    height: isSmallScreen ? 48 : 56,
     borderWidth: 2,
     borderColor: theme.colors.border,
     borderRadius: 12,
-    fontSize: theme.fonts.sizes.xl,
+    fontSize: isSmallScreen ? theme.fonts.sizes.lg : theme.fonts.sizes.xl,
     fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
     backgroundColor: theme.colors.background,
-    marginHorizontal: 4,
+    marginHorizontal: isSmallScreen ? 2 : 4,
   },
   codeInputFilled: {
     borderColor: theme.colors.primary,
@@ -306,23 +326,23 @@ const styles = StyleSheet.create({
   },
   resendSection: {
     alignItems: 'center',
-    marginBottom: theme.spacing.xl,
+    marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.xl,
   },
   resendButton: {
-    fontSize: theme.fonts.sizes.md,
+    fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.primary,
   },
   timerText: {
-    fontSize: theme.fonts.sizes.md,
+    fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
   },
   loadingSection: {
     alignItems: 'center',
-    marginBottom: theme.spacing.xl,
+    marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.xl,
   },
   loadingText: {
-    fontSize: theme.fonts.sizes.md,
+    fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     color: theme.colors.primary,
     fontWeight: theme.fonts.weights.medium,
   },

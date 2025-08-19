@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
 import { DropdownMenu, DropdownMenuItem } from './DropdownMenu';
@@ -17,6 +17,11 @@ interface HeaderWithBackProps {
   backAction?: () => void;
   rightComponent?: React.ReactNode; // новый параметр для произвольного компонента справа
 }
+
+// Функция для получения высоты статусбара только на Android
+const getAndroidStatusBarHeight = () => {
+  return Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0;
+};
 
 export const HeaderWithBack: React.FC<HeaderWithBackProps> = ({
   title,
@@ -36,7 +41,7 @@ export const HeaderWithBack: React.FC<HeaderWithBackProps> = ({
   };
 
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, { paddingTop: theme.spacing.md + getAndroidStatusBarHeight() }]}>
       <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
         <Text style={styles.backButtonText}>←</Text>
       </TouchableOpacity>
@@ -78,7 +83,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
     paddingBottom: theme.spacing.lg, // Единый отступ для всех экранов
   },
   backButton: {

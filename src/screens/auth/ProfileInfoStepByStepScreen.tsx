@@ -37,9 +37,24 @@ import {
   AnimatedNavigationButton,
   AnimatedInteractiveContainer,
 } from '../../components/common/AnimatedComponents';
-import { PrivacyPolicyModal } from '../../components/common';
+import { CustomPrivacyModal } from '../../components/common';
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+// Определяем маленький экран для Android (высота меньше 1080px)
+const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
+
+// Функция для получения высоты статус-бара на Android
+const getAndroidStatusBarHeight = () => {
+  if (Platform.OS === 'android') {
+    try {
+      return StatusBar.currentHeight || 24; // fallback 24px для Android
+    } catch (error) {
+      return 24; // стандартная высота статус-бара на Android
+    }
+  }
+  return 0;
+};
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -607,7 +622,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
           )}
 
           {/* Privacy Policy Modal */}
-          <PrivacyPolicyModal
+          <CustomPrivacyModal
             visible={showPrivacyModal}
             onClose={() => setShowPrivacyModal(false)}
             onAccept={() => { }}
@@ -636,6 +651,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
+    paddingTop: theme.spacing.md + getAndroidStatusBarHeight(),
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
   },
@@ -674,33 +690,33 @@ const styles = StyleSheet.create({
   stepContent: {
     flex: 1,
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl,
+    paddingTop: isSmallScreen ? theme.spacing.md : theme.spacing.xl,
   },
   stepTitle: {
-    fontSize: theme.fonts.sizes.xxl,
+    fontSize: isSmallScreen ? theme.fonts.sizes.xl : theme.fonts.sizes.xxl,
     fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
     textAlign: 'center',
   },
   stepSubtitle: {
-    fontSize: theme.fonts.sizes.md,
+    fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.xl,
-    lineHeight: 22,
+    marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.xl,
+    lineHeight: isSmallScreen ? 18 : 22,
     textAlign: 'center',
   },
   inputContainer: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
   },
   stepInput: {
     backgroundColor: theme.colors.surface,
     borderWidth: 2,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.lg,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.lg,
-    fontSize: theme.fonts.sizes.lg,
+    paddingHorizontal: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
+    paddingVertical: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
+    fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,
     color: theme.colors.text.primary,
     fontFamily: Platform.select({
       ios: 'System',
@@ -717,24 +733,24 @@ const styles = StyleSheet.create({
   },
   photoSection: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.xl,
+    paddingVertical: isSmallScreen ? theme.spacing.md : theme.spacing.xl,
   },
   photoContainer: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
   },
   photoPlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: isSmallScreen ? 100 : 120,
+    height: isSmallScreen ? 100 : 120,
+    borderRadius: isSmallScreen ? 50 : 60,
     backgroundColor: '#E5E5E5',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
   photoIcon: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: isSmallScreen ? 100 : 120,
+    height: isSmallScreen ? 100 : 120,
+    borderRadius: isSmallScreen ? 50 : 60,
     backgroundColor: '#E5E5E5',
     alignItems: 'center',
     justifyContent: 'center',
@@ -744,17 +760,17 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: isSmallScreen ? 100 : 120,
+    height: isSmallScreen ? 100 : 120,
+    borderRadius: isSmallScreen ? 50 : 60,
   },
   addPhotoButton: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: isSmallScreen ? 32 : 40,
+    height: isSmallScreen ? 32 : 40,
+    borderRadius: isSmallScreen ? 16 : 20,
     backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
@@ -769,12 +785,12 @@ const styles = StyleSheet.create({
   addPhotoTextButton: {
     backgroundColor: theme.colors.primary,
     borderRadius: theme.borderRadius.md,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
+    paddingHorizontal: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
   },
   addPhotoTextButtonText: {
     color: theme.colors.white,
-    fontSize: theme.fonts.sizes.md,
+    fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
   },
   changePhotoButton: {
@@ -782,12 +798,12 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: theme.colors.primary,
     borderRadius: theme.borderRadius.md,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
+    paddingHorizontal: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
   },
   changePhotoButtonText: {
     color: theme.colors.primary,
-    fontSize: theme.fonts.sizes.md,
+    fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
   },
   dateSelector: {
@@ -886,7 +902,7 @@ const styles = StyleSheet.create({
   navigation: {
     flexDirection: 'row',
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
     backgroundColor: theme.colors.background,
@@ -896,12 +912,12 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     color: theme.colors.text.primary,
-    fontSize: theme.fonts.sizes.md,
+    fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
   },
   primaryButtonText: {
     color: theme.colors.white,
-    fontSize: theme.fonts.sizes.md,
+    fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.bold,
   },
   datePickerContainer: {

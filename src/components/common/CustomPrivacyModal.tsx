@@ -1,33 +1,80 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  Modal,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
-  StatusBar,
-  Platform,
+  Animated,
   Dimensions,
+  Platform,
+  StatusBar,
+  BackHandler,
 } from 'react-native';
 import { theme } from '../../constants';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-interface PrivacyPolicyModalProps {
+interface CustomPrivacyModalProps {
   visible: boolean;
   onClose: () => void;
-  onAccept: () => void;
-  privacyAccepted: boolean;
+  onAccept?: () => void;
+  privacyAccepted?: boolean;
 }
 
-export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({
+export const CustomPrivacyModal: React.FC<CustomPrivacyModalProps> = ({
   visible,
   onClose,
   onAccept,
   privacyAccepted,
 }) => {
+  const slideAnim = useRef(new Animated.Value(screenHeight)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      // Анимация появления
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          tension: 65,
+          friction: 10,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Анимация скрытия
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: screenHeight,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, slideAnim, fadeAnim]);
+
+  // Обработка кнопки назад на Android
+  useEffect(() => {
+    if (visible) {
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+        onClose();
+        return true;
+      });
+      return () => backHandler.remove();
+    }
+  }, [visible, onClose]);
+
   const legalText = `СОГЛАСИЕ НА ОБРАБОТКУ ПЕРСОНАЛЬНЫХ ДАННЫХ
 
 1. ОБЩИЕ ПОЛОЖЕНИЯ
@@ -97,97 +144,138 @@ Email: privacy@osonish.uz
 
 Даю согласие на обработку указанных персональных данных в соответствии с условиями, изложенными выше.`;
 
+  if (!visible) return null;
+
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={false}
-      onRequestClose={onClose}
-    >
-      <View style={styles.modalContainer}>
-        <SafeAreaView style={styles.safeArea}>
-          <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+    <View style={StyleSheet.absoluteFillObject}>
+      {/* Overlay */}
+      <Animated.View
+        style={[
+          styles.overlay,
+          {
+            opacity: fadeAnim,
+          },
+        ]}
+      >
+        <TouchableOpacity
+          style={StyleSheet.absoluteFillObject}
+          activeOpacity={1}
+          onPress={onClose}
+        />
+      </Animated.View>
 
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Text style={styles.closeButtonText}>✕</Text>
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Согласие на обработку ПД</Text>
-            <View style={styles.headerSpacer} />
+      {/* Modal Content */}
+      <Animated.View
+        style={[
+          styles.modalContent,
+          {
+            transform: [{ translateY: slideAnim }],
+          },
+        ]}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Text style={styles.closeButtonText}>✕</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Согласие на обработку ПД</Text>
+          <View style={styles.headerSpacer} />
+        </View>
+
+        {/* Content */}
+        <ScrollView
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
+          <View style={styles.contentContainer}>
+            <Text style={styles.legalText}>{legalText}</Text>
           </View>
+        </ScrollView>
 
-          {/* Content */}
-          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-            <View style={styles.content}>
-              <Text style={styles.legalText}>{legalText}</Text>
-            </View>
-          </ScrollView>
-
-          {/* Footer */}
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={styles.closeFooterButton}
-              onPress={onClose}
-            >
-              <Text style={styles.closeFooterButtonText}>Закрыть</Text>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-      </View>
-    </Modal>
+        {/* Footer */}
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.closeFooterButton}
+            onPress={onClose}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.closeFooterButtonText}>Закрыть</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  modalContainer: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  safeArea: {
-    flex: 1,
+  modalContent: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: screenHeight * 0.9,
     backgroundColor: theme.colors.background,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -3,
+    },
+    shadowOpacity: 0.27,
+    shadowRadius: 4.65,
+    elevation: 6,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    paddingVertical: theme.spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
     backgroundColor: theme.colors.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeButtonText: {
-    fontSize: 18,
+    fontSize: 20,
     color: theme.colors.text.secondary,
+    fontWeight: '600',
   },
   headerTitle: {
     fontSize: theme.fonts.sizes.lg,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
+    flex: 1,
+    textAlign: 'center',
   },
   headerSpacer: {
-    width: 32,
+    width: 36,
   },
   scrollView: {
     flex: 1,
   },
-  content: {
+  contentContainer: {
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: theme.spacing.xl,
   },
   legalText: {
     fontSize: theme.fonts.sizes.sm,
-    lineHeight: 20,
+    lineHeight: 22,
     color: theme.colors.text.primary,
     textAlign: 'justify',
   },
@@ -197,7 +285,7 @@ const styles = StyleSheet.create({
     borderTopColor: theme.colors.border,
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
+    paddingBottom: Platform.OS === 'ios' ? theme.spacing.xl + 10 : theme.spacing.lg,
   },
   closeFooterButton: {
     backgroundColor: theme.colors.primary,

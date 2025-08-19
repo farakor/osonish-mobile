@@ -45,7 +45,18 @@ import {
 } from '../../components/common/AnimatedComponents';
 import { HeaderWithBack } from '../../components/common';
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+// Определяем маленький экран для Android (высота меньше 1080px)
+const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
+
+// Логирование для отладки
+console.log('[CreateOrderStepByStep] Screen dimensions:', {
+  screenWidth,
+  screenHeight,
+  ratio: screenHeight / screenWidth,
+  isSmallScreen
+});
 
 // Упрощенный компонент для превью видео с безопасной обработкой ошибок
 const VideoPreview: React.FC<{ uri: string }> = ({ uri }) => {
@@ -624,6 +635,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 onSelectCategory={setCategory}
                 isActive={currentStep === 2}
                 resetKey={`${animationResetKey}-step-2`}
+                isSmallScreen={isSmallScreen}
               />
             </View>
           </AnimatedStepContainer>
@@ -1052,31 +1064,32 @@ const styles = StyleSheet.create({
 
   stepContent: {
     flex: 1,
-    paddingTop: theme.spacing.xl,
+    paddingTop: isSmallScreen ? theme.spacing.md : theme.spacing.xl,
+    paddingBottom: isSmallScreen ? 100 : 0, // Дополнительное место для кнопки на маленьких экранах
   },
   stepTitle: {
-    fontSize: theme.fonts.sizes.xxl,
+    fontSize: isSmallScreen ? theme.fonts.sizes.xl : theme.fonts.sizes.xxl,
     fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
+    marginBottom: isSmallScreen ? theme.spacing.xs : theme.spacing.sm,
   },
   stepSubtitle: {
-    fontSize: theme.fonts.sizes.md,
+    fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.xl,
-    lineHeight: 22,
+    marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.xl,
+    lineHeight: isSmallScreen ? 18 : 22,
   },
   inputContainer: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
   },
   stepInput: {
     backgroundColor: theme.colors.surface,
     borderWidth: 2,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.lg,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.lg,
-    fontSize: theme.fonts.sizes.lg,
+    paddingHorizontal: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
+    paddingVertical: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
+    fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,
     color: theme.colors.text.primary,
     fontFamily: Platform.select({
       ios: 'System',
@@ -1092,8 +1105,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   textArea: {
-    height: 120,
-    paddingTop: theme.spacing.lg,
+    height: isSmallScreen ? 80 : 120,
+    paddingTop: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
     textAlignVertical: 'top',
   },
   fieldLabel: {
@@ -1103,13 +1116,13 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   categoryTitle: {
-    fontSize: theme.fonts.sizes.lg,
+    fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.lg,
+    marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
   },
   categoriesGrid: {
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
     paddingHorizontal: theme.spacing.md,
   },
   workersContainer: {
@@ -1232,8 +1245,9 @@ const styles = StyleSheet.create({
   },
   navigation: {
     flexDirection: 'row',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.lg,
+    paddingHorizontal: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
+    paddingBottom: isSmallScreen ? theme.spacing.xs : theme.spacing.lg,
+    paddingTop: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
     backgroundColor: theme.colors.background,

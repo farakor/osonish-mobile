@@ -1,7 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, SafeAreaView, Dimensions, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
+
+const { height: screenHeight } = Dimensions.get('window');
+
+// Определяем маленький экран для Android (высота меньше 1080px)
+const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
 
 export function AuthScreen() {
   const navigation = useNavigation();
@@ -73,19 +78,19 @@ const styles = StyleSheet.create({
   },
   logoSection: {
     alignItems: 'center',
-    marginBottom: theme.spacing.xxl,
+    marginBottom: isSmallScreen ? theme.spacing.lg : theme.spacing.xxl,
   },
   logoPlaceholder: {
-    width: 280,
-    height: 280,
+    width: isSmallScreen ? 200 : 280,
+    height: isSmallScreen ? 200 : 280,
     backgroundColor: '#E5E5E5',
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: isSmallScreen ? 12 : 16,
   },
   logoText: {
-    fontSize: 28,
+    fontSize: isSmallScreen ? 20 : 28,
     fontWeight: 'bold',
     color: '#888',
     letterSpacing: 2,
@@ -103,32 +108,32 @@ const styles = StyleSheet.create({
   },
   welcomeSection: {
     alignItems: 'center',
-    marginBottom: theme.spacing.xxxl,
+    marginBottom: isSmallScreen ? theme.spacing.xl : theme.spacing.xxxl,
   },
   welcomeTitle: {
-    fontSize: theme.fonts.sizes.xxl,
+    fontSize: isSmallScreen ? theme.fonts.sizes.xl : theme.fonts.sizes.xxl,
     fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
+    marginBottom: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
     textAlign: 'center',
   },
   welcomeSubtitle: {
-    fontSize: theme.fonts.sizes.md,
+    fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: isSmallScreen ? 20 : 24,
   },
   buttonSection: {
-    marginBottom: theme.spacing.xxxl,
+    marginBottom: isSmallScreen ? theme.spacing.xl : theme.spacing.xxxl,
   },
   button: {
-    paddingVertical: theme.spacing.md,
+    paddingVertical: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
     paddingHorizontal: theme.spacing.lg,
     borderRadius: 12,
-    marginBottom: theme.spacing.md,
+    marginBottom: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 56,
+    minHeight: isSmallScreen ? 48 : 56,
   },
   primaryButton: {
     backgroundColor: theme.colors.primary,
@@ -144,12 +149,12 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
   },
   primaryButtonText: {
-    fontSize: theme.fonts.sizes.lg,
+    fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.background,
   },
   secondaryButtonText: {
-    fontSize: theme.fonts.sizes.lg,
+    fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
   },

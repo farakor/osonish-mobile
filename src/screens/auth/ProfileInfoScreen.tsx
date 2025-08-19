@@ -11,6 +11,7 @@ import {
   ScrollView,
   Platform,
   Image,
+  Dimensions,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -19,7 +20,24 @@ import type { RootStackParamList } from '../../types';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import Svg, { Path } from 'react-native-svg';
-import { PrivacyPolicyModal } from '../../components/common';
+import { CustomPrivacyModal } from '../../components/common';
+
+const { height: screenHeight } = Dimensions.get('window');
+
+// Определяем маленький экран для Android (высота меньше 1080px)
+const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
+
+// Функция для получения высоты статус-бара на Android
+const getAndroidStatusBarHeight = () => {
+  if (Platform.OS === 'android') {
+    try {
+      return StatusBar.currentHeight || 24; // fallback 24px для Android
+    } catch (error) {
+      return 24; // стандартная высота статус-бара на Android
+    }
+  }
+  return 0;
+};
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -294,7 +312,7 @@ export function ProfileInfoScreen() {
       )}
 
       {/* Privacy Policy Modal */}
-      <PrivacyPolicyModal
+      <CustomPrivacyModal
         visible={showPrivacyModal}
         onClose={() => setShowPrivacyModal(false)}
         onAccept={() => { }}
@@ -316,8 +334,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
+    paddingTop: theme.spacing.md + getAndroidStatusBarHeight(),
+    marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
   },
   backButton: {
     width: 40,
@@ -333,11 +351,11 @@ const styles = StyleSheet.create({
   },
   titleSection: {
     paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
+    marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.xl,
     alignItems: 'center',
   },
   title: {
-    fontSize: theme.fonts.sizes.xxl,
+    fontSize: isSmallScreen ? theme.fonts.sizes.xl : theme.fonts.sizes.xxl,
     fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
     textAlign: 'center',
@@ -345,29 +363,29 @@ const styles = StyleSheet.create({
   photoSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
+    paddingHorizontal: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
+    marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.xl,
     backgroundColor: theme.colors.surface,
     marginHorizontal: theme.spacing.lg,
     borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
+    padding: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
   },
   photoContainer: {
     marginRight: theme.spacing.md,
   },
   photoPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: isSmallScreen ? 60 : 80,
+    height: isSmallScreen ? 60 : 80,
+    borderRadius: isSmallScreen ? 30 : 40,
     backgroundColor: '#E5E5E5',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
   photoIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: isSmallScreen ? 60 : 80,
+    height: isSmallScreen ? 60 : 80,
+    borderRadius: isSmallScreen ? 30 : 40,
     backgroundColor: '#E5E5E5',
     alignItems: 'center',
     justifyContent: 'center',
@@ -377,9 +395,9 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: isSmallScreen ? 60 : 80,
+    height: isSmallScreen ? 60 : 80,
+    borderRadius: isSmallScreen ? 30 : 40,
   },
   addPhotoButton: {
     position: 'absolute',
@@ -403,7 +421,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   photoTitle: {
-    fontSize: theme.fonts.sizes.md,
+    fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
@@ -411,17 +429,17 @@ const styles = StyleSheet.create({
   photoSubtitle: {
     fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
-    lineHeight: 18,
+    lineHeight: isSmallScreen ? 16 : 18,
   },
   form: {
     paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
+    paddingBottom: isSmallScreen ? theme.spacing.md : theme.spacing.xl,
   },
   inputGroup: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
   },
   label: {
-    fontSize: theme.fonts.sizes.md,
+    fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
@@ -436,9 +454,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
-    fontSize: theme.fonts.sizes.md,
+    paddingHorizontal: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
+    paddingVertical: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
+    fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     color: theme.colors.text.primary,
   },
   dateInput: {
@@ -446,8 +464,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
+    paddingHorizontal: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
+    paddingVertical: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -456,7 +474,7 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.sm,
   },
   dateText: {
-    fontSize: theme.fonts.sizes.md,
+    fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     color: theme.colors.text.primary,
   },
   datePlaceholder: {
@@ -483,7 +501,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   privacyDocumentTitle: {
-    fontSize: theme.fonts.sizes.md,
+    fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
     marginBottom: 4,
@@ -529,11 +547,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.primary,
-    lineHeight: 18,
+    lineHeight: isSmallScreen ? 16 : 18,
   },
   submitSection: {
     paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.lg,
+    paddingBottom: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
     backgroundColor: theme.colors.background,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
@@ -541,16 +559,16 @@ const styles = StyleSheet.create({
   submitButton: {
     backgroundColor: theme.colors.primary,
     borderRadius: theme.borderRadius.md,
-    paddingVertical: theme.spacing.md,
+    paddingVertical: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
     alignItems: 'center',
-    marginTop: theme.spacing.md,
+    marginTop: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
   },
   submitButtonDisabled: {
     backgroundColor: theme.colors.disabled,
   },
   submitButtonText: {
     color: theme.colors.white,
-    fontSize: theme.fonts.sizes.md,
+    fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
   },
   datePickerContainer: {

@@ -10,6 +10,7 @@ import {
   Alert,
   RefreshControl,
   StatusBar,
+  Platform,
 } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -26,6 +27,11 @@ import { ModernActionButton } from '../../components/common';
 
 type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled';
 type WorkerNavigationProp = NativeStackNavigationProp<WorkerStackParamList>;
+
+// Функция для получения высоты статусбара только на Android
+const getAndroidStatusBarHeight = () => {
+  return Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0;
+};
 
 // Функция для преобразования статуса заявки в статус заказа для отображения
 const mapApplicationStatusToOrderStatus = (applicationStatus: ApplicationStatus): Order['status'] => {
@@ -285,7 +291,7 @@ export const WorkerApplicationsScreen: React.FC = () => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
       <SafeAreaView style={styles.content}>
-        <View style={styles.contentHeader}>
+        <View style={[styles.contentHeader, { paddingTop: theme.spacing.lg + getAndroidStatusBarHeight() }]}>
           <Text style={styles.title}>Мои заказы</Text>
           <Text style={styles.subtitle}>
             Отслеживайте статус ваших заявок на заказы
@@ -350,7 +356,6 @@ const styles = StyleSheet.create({
   },
   contentHeader: {
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
   },
   title: {

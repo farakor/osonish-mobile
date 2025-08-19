@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   FlatList,
   RefreshControl,
+  StatusBar,
+  Platform,
 } from 'react-native';
 import { theme } from '../../constants';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -22,8 +24,10 @@ import { supabase } from '../../services/supabaseClient';
 import { Order } from '../../types';
 import { ModernOrderCard } from '../../components/cards';
 
-
-
+// Функция для получения высоты статусбара только на Android
+const getAndroidStatusBarHeight = () => {
+  return Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0;
+};
 
 export const CustomerHomeScreen: React.FC = () => {
   const [newOrders, setNewOrders] = useState<Order[]>([]);
@@ -174,7 +178,7 @@ export const CustomerHomeScreen: React.FC = () => {
     <View style={styles.container}>
       <SafeAreaView style={styles.content}>
         {/* Header with notifications */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: theme.spacing.lg + getAndroidStatusBarHeight() }]}>
           <View style={styles.headerLeft}>
             <Text style={styles.greeting}>Мои заказы</Text>
             <Text style={styles.subtitle}>
@@ -263,7 +267,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
     backgroundColor: theme.colors.background,
   },

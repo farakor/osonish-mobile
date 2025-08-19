@@ -11,6 +11,7 @@ import {
   Alert,
   RefreshControl,
   StatusBar,
+  Platform,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../constants/theme';
@@ -28,6 +29,11 @@ import { WorkerStackParamList } from '../../types/navigation';
 import NotificationIcon from '../../../assets/notification-message.svg';
 
 type WorkerNavigationProp = NativeStackNavigationProp<WorkerStackParamList>;
+
+// Функция для получения высоты статусбара только на Android
+const getAndroidStatusBarHeight = () => {
+  return Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0;
+};
 
 // Отдельный компонент для карточки заказа
 const JobCard: React.FC<{
@@ -425,7 +431,7 @@ const WorkerJobsScreen: React.FC = () => {
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.primary} />
       <SafeAreaView style={styles.content}>
         {/* Header with notifications */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: theme.spacing.lg + getAndroidStatusBarHeight() }]}>
           <View style={styles.headerLeft}>
             <Text style={styles.title}>Доступные заказы</Text>
             <Text style={styles.subtitle}>
@@ -603,7 +609,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
     backgroundColor: theme.colors.primary,
   },

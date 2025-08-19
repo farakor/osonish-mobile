@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   FlatList,
   RefreshControl,
+  StatusBar,
+  Platform,
 } from 'react-native';
 import { theme } from '../../constants';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -19,6 +21,10 @@ import { supabase } from '../../services/supabaseClient';
 import { Order } from '../../types';
 import { ModernOrderCard } from '../../components/cards';
 
+// Функция для получения высоты статусбара только на Android
+const getAndroidStatusBarHeight = () => {
+  return Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0;
+};
 
 type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
 
@@ -201,7 +207,7 @@ export const MyOrdersScreen: React.FC = () => {
     <View style={styles.container}>
       <SafeAreaView style={styles.content}>
         {/* Content Header */}
-        <View style={styles.contentHeader}>
+        <View style={[styles.contentHeader, { paddingTop: theme.spacing.xl + getAndroidStatusBarHeight() }]}>
           <Text style={styles.title}>Мои заказы</Text>
           <Text style={styles.subtitle}>Отслеживайте свои заказы</Text>
         </View>
@@ -256,7 +262,6 @@ const styles = StyleSheet.create({
   },
   contentHeader: {
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl,
     paddingBottom: theme.spacing.lg,
   },
   title: {

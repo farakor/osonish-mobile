@@ -188,7 +188,8 @@ export const AnimatedCategoryCard: React.FC<{
   label: string;
   isSelected: boolean;
   onPress: () => void;
-}> = ({ emoji, label, isSelected, onPress }) => {
+  isSmallScreen?: boolean;
+}> = ({ emoji, label, isSelected, onPress, isSmallScreen = false }) => {
   const scale = useSharedValue(1);
   const elevation = useSharedValue(2);
   const rotateY = useSharedValue(0);
@@ -243,13 +244,15 @@ export const AnimatedCategoryCard: React.FC<{
         style={[
           styles.categoryCard,
           isSelected && styles.categoryCardSelected,
+          isSmallScreen && styles.categoryCardSmall,
           animatedStyle,
         ]}
       >
-        <Text style={styles.categoryEmoji}>{emoji}</Text>
+        <Text style={[styles.categoryEmoji, isSmallScreen && styles.categoryEmojiSmall]}>{emoji}</Text>
         <Text style={[
           styles.categoryLabel,
           isSelected && styles.categoryLabelSelected,
+          isSmallScreen && styles.categoryLabelSmall,
         ]}>
           {label}
         </Text>
@@ -381,7 +384,8 @@ const AnimatedCategoryItem: React.FC<{
   isActive: boolean;
   delay: number;
   resetKey?: string | number;
-}> = ({ category, selectedCategory, onSelectCategory, isActive, delay, resetKey = '' }) => {
+  isSmallScreen?: boolean;
+}> = ({ category, selectedCategory, onSelectCategory, isActive, delay, resetKey = '', isSmallScreen = false }) => {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(30);
   const scale = useSharedValue(0.9);
@@ -432,6 +436,7 @@ const AnimatedCategoryItem: React.FC<{
         label={category.label}
         isSelected={selectedCategory === category.label}
         onPress={() => onSelectCategory(category.label)}
+        isSmallScreen={isSmallScreen}
       />
     </Animated.View>
   );
@@ -444,7 +449,8 @@ export const AnimatedCategoryGrid: React.FC<{
   onSelectCategory: (category: string) => void;
   isActive: boolean;
   resetKey?: string | number;
-}> = ({ categories, selectedCategory, onSelectCategory, isActive, resetKey = '' }) => {
+  isSmallScreen?: boolean;
+}> = ({ categories, selectedCategory, onSelectCategory, isActive, resetKey = '', isSmallScreen = false }) => {
   // Разбиваем категории на строки по 3 элемента
   const rows = [];
   for (let i = 0; i < categories.length; i += 3) {
@@ -452,9 +458,9 @@ export const AnimatedCategoryGrid: React.FC<{
   }
 
   return (
-    <View style={styles.categoriesGrid}>
+    <View style={[styles.categoriesGrid, isSmallScreen && styles.categoriesGridSmall]}>
       {rows.map((row, rowIndex) => (
-        <View key={`row-${rowIndex}`} style={styles.categoryRow}>
+        <View key={`row-${rowIndex}`} style={[styles.categoryRow, isSmallScreen && styles.categoryRowSmall]}>
           {row.map((cat, index) => (
             <AnimatedCategoryItem
               key={`${cat.label}-${resetKey}`}
@@ -464,6 +470,7 @@ export const AnimatedCategoryGrid: React.FC<{
               isActive={isActive}
               delay={(rowIndex * 3 + index) * 50 + 150}
               resetKey={resetKey}
+              isSmallScreen={isSmallScreen}
             />
           ))}
         </View>
@@ -987,5 +994,28 @@ const styles = StyleSheet.create({
   },
   summaryPlaceholder: {
     flex: 1,
+  },
+  // Стили для маленьких экранов
+  categoriesGridSmall: {
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.sm,
+  },
+  categoryRowSmall: {
+    marginBottom: theme.spacing.sm,
+  },
+  categoryCardSmall: {
+    width: 100,
+    height: 80,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.xs,
+    marginHorizontal: theme.spacing.xs,
+  },
+  categoryEmojiSmall: {
+    fontSize: 28,
+    marginBottom: 5,
+  },
+  categoryLabelSmall: {
+    fontSize: 11,
+    lineHeight: 13,
   },
 });

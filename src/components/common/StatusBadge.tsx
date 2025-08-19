@@ -94,3 +94,4 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.semiBold,
   },
 });
+
