@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
-import { usePlatformSafeAreaInsets, getScrollViewContentStyle } from '../../utils/safeAreaUtils';
+import { usePlatformSafeAreaInsets, getTabScreenScrollViewContentStyle, getSafeAreaViewWithWhiteBackground, getAndroidNavigationBarBackground } from '../../utils/safeAreaUtils';
 import TelegramIcon from '../../../assets/telegram-icon.svg';
 import PhoneCallIcon from '../../../assets/phone-call-01.svg';
 import { HeaderWithBack } from '../../components/common';
@@ -50,14 +50,14 @@ export const SupportScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={getSafeAreaViewWithWhiteBackground(insets)}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
 
       <HeaderWithBack title="Поддержка" />
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={getScrollViewContentStyle(insets, theme.spacing.lg)}
+        contentContainerStyle={getTabScreenScrollViewContentStyle(insets, theme.spacing.lg)}
         showsVerticalScrollIndicator={false}
       >
         {/* Logo Section */}
@@ -124,17 +124,14 @@ export const SupportScreen: React.FC = () => {
           </View>
         </View>
       </ScrollView>
+
+      {/* Белый фон под navigation bar на Android */}
+      <View style={getAndroidNavigationBarBackground(insets)} />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8F9FA',
-  },
-
-
 
   scrollView: {
     flex: 1,

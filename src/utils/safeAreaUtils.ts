@@ -51,7 +51,7 @@ export const getSafeAreaContainerStyle = (insets: ReturnType<typeof usePlatformS
 
 /**
  * Получает стили для нижней панели с учетом Android navigation bar
- * Применяет дополнительные отступы только на Android
+ * Применяет дополнительные отступы только на Android и белый фон
  */
 export const getBottomTabBarStyle = (insets: ReturnType<typeof usePlatformSafeAreaInsets>) => {
   if (Platform.OS === 'android') {
@@ -59,6 +59,14 @@ export const getBottomTabBarStyle = (insets: ReturnType<typeof usePlatformSafeAr
     return {
       paddingBottom: bottomPadding,
       height: 70 + bottomPadding,
+      // Обеспечиваем белый фон под навигацией на Android
+      backgroundColor: '#ffffff',
+      borderBottomWidth: 0,
+      shadowColor: '#ffffff',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 1,
+      shadowRadius: 0,
+      elevation: 0,
     };
   }
 
@@ -89,13 +97,16 @@ export const getFixedBottomStyle = (insets: ReturnType<typeof usePlatformSafeAre
 
 /**
  * Получает стили для контента ScrollView с учетом платформы
- * Android: дополнительные отступы для navigation bar
+ * Android: дополнительные отступы для navigation bar + tab bar
  * iOS: минимальный отступ для комфорта прокрутки
  */
 export const getScrollViewContentStyle = (insets: ReturnType<typeof usePlatformSafeAreaInsets>, additionalPadding: number = 24) => {
   if (Platform.OS === 'android') {
+    // На Android добавляем больше отступа для tab bar (70px) + navigation bar + дополнительный отступ
+    const tabBarHeight = 70; // высота tab bar
+    const navigationBarPadding = Math.max(insets.bottom, 16);
     return {
-      paddingBottom: Math.max(insets.bottom, 16) + additionalPadding,
+      paddingBottom: tabBarHeight + navigationBarPadding + additionalPadding,
     };
   }
 
@@ -136,5 +147,69 @@ export const getContainerBottomStyle = (insets: ReturnType<typeof usePlatformSaf
   // На iOS учитываем safe area
   return {
     paddingBottom: insets.bottom, // контейнер с учетом safe area на iOS
+  };
+};
+
+/**
+ * Получает стили для ScrollView контента на экранах с tab navigation
+ * Специально для экранов поддержки и других экранов в tab navigator
+ */
+export const getTabScreenScrollViewContentStyle = (insets: ReturnType<typeof usePlatformSafeAreaInsets>, additionalPadding: number = 32) => {
+  if (Platform.OS === 'android') {
+    // На Android добавляем отступ для tab bar + navigation bar + дополнительный отступ
+    const tabBarHeight = 70; // высота tab bar
+    const navigationBarPadding = Math.max(insets.bottom, 16);
+    return {
+      paddingBottom: tabBarHeight + navigationBarPadding + additionalPadding,
+    };
+  }
+
+  // На iOS используем отступ с учетом safe area + tab bar
+  return {
+    paddingBottom: Math.max(insets.bottom, 16) + 70 + additionalPadding, // safe area + tab bar + дополнительный отступ
+  };
+};
+
+/**
+ * Получает стили для SafeAreaView с белым фоном на Android
+ * Обеспечивает белый фон под navigation bar на Android
+ */
+export const getSafeAreaViewWithWhiteBackground = (insets: ReturnType<typeof usePlatformSafeAreaInsets>) => {
+  if (Platform.OS === 'android') {
+    return {
+      flex: 1,
+      backgroundColor: '#F8F9FA', // основной фон
+      // Добавляем белую область внизу для navigation bar
+      paddingBottom: 0, // убираем padding, используем отдельный View
+    };
+  }
+
+  // На iOS стандартный SafeAreaView
+  return {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  };
+};
+
+/**
+ * Получает стили для белого фона под navigation bar на Android
+ */
+export const getAndroidNavigationBarBackground = (insets: ReturnType<typeof usePlatformSafeAreaInsets>) => {
+  if (Platform.OS === 'android') {
+    const navigationBarHeight = Math.max(insets.bottom, 16);
+    return {
+      position: 'absolute' as const,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: navigationBarHeight,
+      backgroundColor: '#ffffff',
+      zIndex: 1000,
+    };
+  }
+
+  // На iOS не нужно
+  return {
+    display: 'none' as const,
   };
 };

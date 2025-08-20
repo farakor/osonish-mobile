@@ -48,8 +48,8 @@ export function CustomerTabNavigator() {
           shadowRadius: 8,
           elevation: 8,
           paddingTop: theme.spacing.sm,
-          ...tabBarStyle,
           justifyContent: 'center',
+          ...tabBarStyle, // Применяем стили с учетом платформы в конце
         },
         tabBarLabelStyle: {
           fontSize: theme.fonts.sizes.sm,
