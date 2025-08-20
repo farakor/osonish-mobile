@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { theme } from '../../constants/theme';
 import { Order } from '../../types';
@@ -34,6 +35,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
   userLocation,
   workerView = false,
 }) => {
+  const [isPressed, setIsPressed] = useState(false);
   const formatBudget = (amount: number) => {
     return `${amount.toLocaleString('ru-RU')} сум`;
   };
@@ -156,8 +158,10 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
   return (
     <TouchableOpacity
       style={styles.cardContainer}
-      activeOpacity={0.7}
+      activeOpacity={1}
       onPress={onPress}
+      onPressIn={() => setIsPressed(true)}
+      onPressOut={() => setIsPressed(false)}
     >
       <View
         style={[
@@ -315,6 +319,11 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
             </View>
           )}
         </View>
+
+        {/* Белый overlay при нажатии */}
+        {isPressed && (
+          <View style={styles.pressOverlay} />
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -324,6 +333,15 @@ const styles = StyleSheet.create({
   cardContainer: {
     marginHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
+    // Полностью отключаем inner shadow на Android
+    ...Platform.select({
+      android: {
+        // Отключаем системные эффекты нажатия
+        renderToHardwareTextureAndroid: false,
+        // Предотвращаем inner shadow
+        overflow: 'visible',
+      },
+    }),
   },
   card: {
     backgroundColor: theme.colors.white,
@@ -339,6 +357,15 @@ const styles = StyleSheet.create({
     elevation: 4,
     borderWidth: 1,
     borderColor: '#F0F0F0',
+    // Отключаем системные эффекты нажатия на Android
+    ...Platform.select({
+      android: {
+        // Предотвращаем inner shadow при нажатии
+        overflow: 'hidden',
+        // Отключаем стандартные эффекты
+        needsOffscreenAlphaCompositing: false,
+      },
+    }),
   },
   cardResponseReceived: {
     // светлее, чем фон badge (#D1FAE5)
@@ -455,5 +482,15 @@ const styles = StyleSheet.create({
   },
   actionContainer: {
     marginLeft: theme.spacing.md,
+  },
+  pressOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 12,
+    pointerEvents: 'none',
   },
 });

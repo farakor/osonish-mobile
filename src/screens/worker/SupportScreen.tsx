@@ -22,7 +22,7 @@ export const SupportScreen: React.FC = () => {
   const insets = usePlatformSafeAreaInsets();
 
   const handleTelegramPress = async () => {
-    const telegramUrl = 'https://t.me/osonish';
+    const telegramUrl = 'https://t.me/osonish_uzb';
     try {
       const supported = await Linking.canOpenURL(telegramUrl);
       if (supported) {
@@ -36,7 +36,7 @@ export const SupportScreen: React.FC = () => {
   };
 
   const handlePhonePress = async () => {
-    const phoneUrl = 'tel:+998555000000';
+    const phoneUrl = 'tel:+998916480070';
     try {
       const supported = await Linking.canOpenURL(phoneUrl);
       if (supported) {
@@ -81,7 +81,7 @@ export const SupportScreen: React.FC = () => {
                 <Text style={styles.supportDescription}>
                   Мы поможем Вам в любой ситуации
                 </Text>
-                <Text style={styles.supportContact}>@osonish</Text>
+                <Text style={styles.supportContact}>@osonish_uzb</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -98,7 +98,7 @@ export const SupportScreen: React.FC = () => {
                 <Text style={styles.supportDescription}>
                   Пн-Вс | 09:00 - 20:00
                 </Text>
-                <Text style={styles.supportContact}>+998 (555) 000-0000</Text>
+                <Text style={styles.supportContact}>+998 91-648-00-70</Text>
               </View>
             </TouchableOpacity>
           </View>

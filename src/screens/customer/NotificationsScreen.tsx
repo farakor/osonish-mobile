@@ -128,22 +128,17 @@ export const NotificationsScreen: React.FC = () => {
                     Уведомления о заказах, откликах и обновлениях
                   </Text>
                 </View>
-                <View style={[
-                  styles.switchWrapper,
-                  allNotificationsEnabled && styles.switchWrapperActive
-                ]}>
-                  <Switch
-                    value={allNotificationsEnabled ?? false}
-                    onValueChange={setAllNotificationsEnabled}
-                    trackColor={{
-                      false: '#C7C7CC',
-                      true: '#FFFFFF'
-                    }}
-                    thumbColor={allNotificationsEnabled ? theme.colors.primary : '#FFFFFF'}
-                    ios_backgroundColor="#C7C7CC"
-                    disabled={allNotificationsEnabled === null}
-                  />
-                </View>
+                <Switch
+                  value={allNotificationsEnabled ?? false}
+                  onValueChange={setAllNotificationsEnabled}
+                  trackColor={Platform.OS === 'android' ? undefined : {
+                    false: '#C7C7CC',
+                    true: '#FFFFFF'
+                  }}
+                  thumbColor={Platform.OS === 'android' ? undefined : (allNotificationsEnabled ? theme.colors.primary : '#FFFFFF')}
+                  ios_backgroundColor="#C7C7CC"
+                  disabled={allNotificationsEnabled === null}
+                />
               </View>
             </View>
           </View>
@@ -199,16 +194,16 @@ const styles = StyleSheet.create({
     marginBottom: isSmallScreen ? 16 : 20,
   },
   label: {
-    fontSize: isSmallScreen ? 14 : 16,
+    fontSize: isSmallScreen ? 16 : 18,
     fontWeight: '700',
     color: '#1A1A1A',
-    marginBottom: isSmallScreen ? 6 : 8,
+    marginBottom: isSmallScreen ? 8 : 10,
   },
   inputContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    paddingHorizontal: isSmallScreen ? 12 : 16,
-    paddingVertical: isSmallScreen ? 12 : 16,
+    paddingHorizontal: isSmallScreen ? 16 : 20,
+    paddingVertical: isSmallScreen ? 16 : 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -227,15 +222,15 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   switchTitle: {
-    fontSize: isSmallScreen ? 14 : 16,
+    fontSize: isSmallScreen ? 16 : 18,
     fontWeight: '600',
     color: '#1A1A1A',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   switchDescription: {
-    fontSize: isSmallScreen ? 12 : 14,
+    fontSize: isSmallScreen ? 14 : 16,
     color: '#8E8E93',
-    lineHeight: isSmallScreen ? 16 : 18,
+    lineHeight: isSmallScreen ? 18 : 22,
   },
 
   // Info section
@@ -314,12 +309,5 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
   },
 
-  // Switch wrapper styles
-  switchWrapper: {
-    borderRadius: 20,
-  },
-  switchWrapperActive: {
-    borderWidth: 1,
-    borderColor: '#C7C7CC',
-  },
+
 }); 
