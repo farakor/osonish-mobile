@@ -71,6 +71,12 @@ export const EditOrderScreen: React.FC = () => {
   const [locationFocused, setLocationFocused] = useState(false);
   const [budgetFocused, setBudgetFocused] = useState(false);
 
+  // Обработчик изменения бюджета с форматированием
+  const handleBudgetChange = (text: string) => {
+    const formatted = formatNumber(text);
+    setBudget(formatted);
+  };
+
   // Загружаем данные заказа при монтировании компонента
   useEffect(() => {
     const loadOrder = async () => {
@@ -100,7 +106,7 @@ export const EditOrderScreen: React.FC = () => {
         setTitle(orderData.title);
         setDescription(orderData.description);
         setCategory(orderData.category);
-        setBudget(orderData.budget.toString());
+        setBudget(formatNumber(orderData.budget.toString()));
         setWorkersCount(orderData.workersNeeded.toString());
         setSelectedDate(new Date(orderData.serviceDate));
         setLocation(orderData.location);
@@ -140,6 +146,22 @@ export const EditOrderScreen: React.FC = () => {
       uri.includes('video') ||
       uri.includes('/video/') ||
       uri.includes('_video_');
+  };
+
+  // Функция для форматирования числа с разделителями тысяч
+  const formatNumber = (value: string): string => {
+    // Убираем все символы кроме цифр
+    const numericValue = value.replace(/\D/g, '');
+
+    if (!numericValue) return '';
+
+    // Добавляем разделители тысяч
+    return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  };
+
+  // Функция для получения числового значения из отформатированной строки
+  const parseFormattedNumber = (formattedValue: string): string => {
+    return formattedValue.replace(/\s/g, '');
   };
 
   // Функция для получения стиля поля ввода с учетом фокуса
@@ -305,7 +327,8 @@ export const EditOrderScreen: React.FC = () => {
       Alert.alert('Ошибка', 'Введите адрес или получите текущее местоположение');
       return false;
     }
-    if (!budget.trim() || isNaN(Number(budget)) || Number(budget) <= 0) {
+    const numericBudget = parseFormattedNumber(budget);
+    if (!budget.trim() || isNaN(Number(numericBudget)) || Number(numericBudget) <= 0) {
       Alert.alert('Ошибка', 'Введите корректный бюджет');
       return false;
     }
@@ -396,7 +419,7 @@ export const EditOrderScreen: React.FC = () => {
         location: location.trim(),
         latitude: coordinates?.latitude,
         longitude: coordinates?.longitude,
-        budget: Number(budget),
+        budget: Number(parseFormattedNumber(budget)),
         workersNeeded: Number(workersCount),
         photos: uploadedMediaUrls,
         // Примечание: serviceDate намеренно исключена - дату нельзя изменять
@@ -554,8 +577,8 @@ export const EditOrderScreen: React.FC = () => {
               <TextInput
                 style={getInputStyle(budgetFocused)}
                 value={budget}
-                onChangeText={setBudget}
-                placeholder="10000"
+                onChangeText={handleBudgetChange}
+                placeholder="10 000"
                 placeholderTextColor={theme.colors.text.secondary}
                 keyboardType="numeric"
                 onFocus={() => setBudgetFocused(true)}
@@ -604,7 +627,7 @@ export const EditOrderScreen: React.FC = () => {
               </Text>
             </View>
             <Text style={styles.dateNote}>
-              💡 Дату выполнения заказа нельзя изменить
+              Дату выполнения заказа нельзя изменить
             </Text>
           </View>
 
@@ -619,12 +642,14 @@ export const EditOrderScreen: React.FC = () => {
             {mediaFiles.length > 0 && (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mediaPreview}>
                 {mediaFiles.map((file, index) => (
-                  <View key={index} style={styles.mediaItem}>
-                    {file.type === 'video' ? (
-                      <VideoPreview uri={file.uri} />
-                    ) : (
-                      <Image source={{ uri: file.uri }} style={styles.mediaImage} />
-                    )}
+                  <View key={index} style={styles.mediaItemContainer}>
+                    <View style={styles.mediaItem}>
+                      {file.type === 'video' ? (
+                        <VideoPreview uri={file.uri} />
+                      ) : (
+                        <Image source={{ uri: file.uri }} style={styles.mediaImage} />
+                      )}
+                    </View>
                     <TouchableOpacity
                       style={styles.removeMediaButton}
                       onPress={() => handleRemoveMedia(index)}
@@ -749,10 +774,10 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   sectionTitle: {
-    fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: 8,
   },
   sectionSubtitle: {
     fontSize: theme.fonts.sizes.sm,
@@ -760,22 +785,25 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   input: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 0,
   },
   inputFocused: {
-    borderColor: theme.colors.primary,
     shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 6,
   },
   textArea: {
     height: 100,
@@ -816,7 +844,7 @@ const styles = StyleSheet.create({
   locationButton: {
     backgroundColor: theme.colors.primary + '20',
     borderRadius: theme.borderRadius.md,
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.md,
     alignItems: 'center',
     marginTop: theme.spacing.sm,
@@ -897,13 +925,19 @@ const styles = StyleSheet.create({
   mediaPreview: {
     marginBottom: theme.spacing.md,
   },
+  mediaItemContainer: {
+    width: 92,
+    height: 92,
+    marginRight: theme.spacing.sm,
+    position: 'relative',
+    paddingTop: 12,
+    paddingRight: 12,
+  },
   mediaItem: {
     width: 80,
     height: 80,
-    marginRight: theme.spacing.sm,
     borderRadius: theme.borderRadius.md,
     overflow: 'hidden',
-    position: 'relative',
   },
   mediaImage: {
     width: '100%',
@@ -911,14 +945,19 @@ const styles = StyleSheet.create({
   },
   removeMediaButton: {
     position: 'absolute',
-    top: -5,
-    right: -5,
+    top: 0,
+    right: 0,
     backgroundColor: '#FF4444',
     borderRadius: 12,
     width: 24,
     height: 24,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
   },
   removeMediaButtonText: {
     color: theme.colors.white,
