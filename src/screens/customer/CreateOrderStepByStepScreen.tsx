@@ -650,7 +650,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 3} delay={150} resetKey={`${animationResetKey}-step-3`}>
-                <Text style={styles.stepSubtitle}>Опишите детали работы, требования и пожелания</Text>
+                <Text style={styles.stepSubtitle}>Расскажите детальнее, что необходимо сделать</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 3} delay={200} resetKey={`${animationResetKey}-step-3`}>
@@ -659,7 +659,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                     style={getInputStyle(descriptionFocused, true)}
                     value={description}
                     onChangeText={setDescription}
-                    placeholder="Подробно опишите, что нужно сделать, какие материалы использовать, сколько времени займет работа..."
+                    placeholder="Например: Необходимо убрать мусор на складе и загрузить в грузовик"
                     placeholderTextColor={theme.colors.text.secondary}
                     multiline
                     numberOfLines={6}
@@ -679,11 +679,11 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 4} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 4} delay={0} resetKey={`${animationResetKey}-step-4`}>
-                <Text style={styles.stepTitle}>Где выполнить?</Text>
+                <Text style={styles.stepTitle}>Куда подъехать?</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 4} delay={150} resetKey={`${animationResetKey}-step-4`}>
-                <Text style={styles.stepSubtitle}>Укажите адрес или район</Text>
+                <Text style={styles.stepSubtitle}>Укажите адрес, район или ориентир</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 4} delay={200} resetKey={`${animationResetKey}-step-4`}>
@@ -694,7 +694,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                     style={getInputStyle(locationFocused)}
                     value={location}
                     onChangeText={setLocation}
-                    placeholder="Например: Ташкент, Юнусабад, ул. Амира Темура 15"
+                    placeholder="Самарканд, улица Мирзоулугбека 74А"
                     placeholderTextColor={theme.colors.text.secondary}
                     onFocus={() => setLocationFocused(true)}
                     onBlur={() => setLocationFocused(false)}

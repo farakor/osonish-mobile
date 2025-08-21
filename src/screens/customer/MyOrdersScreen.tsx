@@ -209,7 +209,7 @@ export const MyOrdersScreen: React.FC = () => {
         {/* Content Header */}
         <View style={[styles.contentHeader, { paddingTop: theme.spacing.xl + getAndroidStatusBarHeight() }]}>
           <Text style={styles.title}>Мои заказы</Text>
-          <Text style={styles.subtitle}>Отслеживайте свои заказы</Text>
+          <Text style={styles.subtitle}>Ваши завершенные заказы</Text>
         </View>
 
 

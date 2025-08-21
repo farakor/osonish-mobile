@@ -183,7 +183,7 @@ export const CustomerHomeScreen: React.FC = () => {
             <Text style={styles.greeting}>Мои заказы</Text>
             <Text style={styles.subtitle}>
               {newOrders.length > 0
-                ? `У вас ${newOrders.length} новых заказа`
+                ? `У вас ${newOrders.length} активных заказов`
                 : 'Создайте свой первый заказ'
               }
             </Text>

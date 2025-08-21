@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, Platform } from 'react-native';
+import { Text, Platform, TouchableOpacity } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { theme } from '../constants';
 import { usePlatformSafeAreaInsets, getBottomTabBarStyle } from '../utils/safeAreaUtils';
@@ -57,6 +57,14 @@ export function WorkerTabNavigator() {
         tabBarIconStyle: {
           marginBottom: 0,
         },
+        // Отключаем ripple эффект на Android
+        tabBarButton: Platform.OS === 'android' ? (props: any) => (
+          <TouchableOpacity
+            {...props}
+            activeOpacity={0.8}
+            style={[props.style, { overflow: 'hidden' }]}
+          />
+        ) : undefined,
       }}
     >
       <Tab.Screen
