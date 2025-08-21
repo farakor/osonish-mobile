@@ -2058,7 +2058,7 @@ export class OrderService {
 
       const workerIds = workers.map(worker => worker.id);
       const title = 'Новый заказ!';
-      const body = `${order.title} - ${order.budget} сом в ${order.location}`;
+      const body = `${order.title} - ${order.budget} сум в ${order.location}`;
       const data = {
         orderId: order.id,
         orderTitle: order.title,
@@ -2171,7 +2171,7 @@ export class OrderService {
 
       const order = applicantData.orders;
       const title = 'Вас выбрали для выполнения заказа!';
-      const body = `Поздравляем! Вас выбрали для заказа "${order.title}" за ${order.budget} сом`;
+      const body = `Поздравляем! Вас выбрали для заказа "${order.title}" за ${order.budget} сум`;
       const data = {
         orderId: order.id,
         orderTitle: order.title,

@@ -13,7 +13,8 @@ import {
   SmsVerificationScreen,
   ProfileInfoStepByStepScreen,
   RoleSelectionScreen,
-  CitySelectionScreen
+  CitySelectionScreen,
+  LanguageSelectionScreen
 } from '../screens/auth';
 import { CustomerStackNavigator } from './CustomerStackNavigator';
 import { WorkerStackNavigator } from './WorkerStackNavigator';
@@ -32,6 +33,10 @@ export function AppNavigator() {
         <Stack.Screen
           name="Splash"
           component={SplashScreen}
+        />
+        <Stack.Screen
+          name="LanguageSelection"
+          component={LanguageSelectionScreen}
         />
         <Stack.Screen
           name="Auth"

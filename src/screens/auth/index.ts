@@ -6,4 +6,5 @@ export { RegistrationScreen } from './RegistrationScreen';
 export { SmsVerificationScreen } from './SmsVerificationScreen';
 export { ProfileInfoStepByStepScreen } from './ProfileInfoStepByStepScreen';
 export { RoleSelectionScreen } from './RoleSelectionScreen';
-export { CitySelectionScreen } from './CitySelectionScreen'; 
+export { CitySelectionScreen } from './CitySelectionScreen';
+export { LanguageSelectionScreen } from './LanguageSelectionScreen'; 

@@ -3,6 +3,7 @@ import { Applicant } from './index';
 
 export type RootStackParamList = {
   Splash: undefined;
+  LanguageSelection: undefined;
   Auth: undefined;
   Login: undefined;
   LoginSmsVerification: { phone: string };

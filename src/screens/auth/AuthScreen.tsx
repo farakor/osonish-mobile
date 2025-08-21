@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, StatusBar, SafeAreaView, Dimensions, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
+import { useAuthTranslation } from '../../hooks/useTranslation';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -10,6 +11,7 @@ const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
 
 export function AuthScreen() {
   const navigation = useNavigation();
+  const t = useAuthTranslation();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -25,9 +27,9 @@ export function AuthScreen() {
 
         {/* Welcome Section */}
         <View style={styles.welcomeSection}>
-          <Text style={styles.welcomeTitle}>Добро пожаловать!</Text>
+          <Text style={styles.welcomeTitle}>{t('welcome_title')}</Text>
           <Text style={styles.welcomeSubtitle}>
-            Присоединяйтесь к нашему сообществу и найдите идеальную работу или исполнителя
+            {t('welcome_subtitle')}
           </Text>
         </View>
 
@@ -39,7 +41,7 @@ export function AuthScreen() {
               navigation.navigate('Registration' as never);
             }}
           >
-            <Text style={styles.primaryButtonText}>Зарегистрироваться</Text>
+            <Text style={styles.primaryButtonText}>{t('register')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -48,7 +50,7 @@ export function AuthScreen() {
               navigation.navigate('Login' as never);
             }}
           >
-            <Text style={styles.secondaryButtonText}>Уже есть аккаунт? Войти</Text>
+            <Text style={styles.secondaryButtonText}>{t('go_to_login')}</Text>
           </TouchableOpacity>
         </View>
 

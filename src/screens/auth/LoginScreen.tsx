@@ -17,6 +17,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
 import { authService } from '../../services/authService';
 import type { RootStackParamList } from '../../types';
+import { useAuthTranslation, useErrorsTranslation } from '../../hooks/useTranslation';
 import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -40,6 +41,8 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export function LoginScreen() {
   const navigation = useNavigation<NavigationProp>();
+  const t = useAuthTranslation();
+  const tError = useErrorsTranslation();
   const [phoneNumber, setPhoneNumber] = useState('+998');
   const [isLoading, setIsLoading] = useState(false);
 

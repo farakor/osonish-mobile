@@ -3,6 +3,10 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from './src/navigation';
 import { OrdersProvider } from './src/hooks';
+import { LanguageProvider } from './src/contexts/LanguageContext';
+
+// Инициализация i18n
+import './src/i18n';
 
 // Инициализация сервисов
 import { initSMSService } from './src/services/smsService';
@@ -40,10 +44,12 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <OrdersProvider>
-        <StatusBar style="dark" />
-        <AppNavigator />
-      </OrdersProvider>
+      <LanguageProvider>
+        <OrdersProvider>
+          <StatusBar style="dark" />
+          <AppNavigator />
+        </OrdersProvider>
+      </LanguageProvider>
     </SafeAreaProvider>
   );
 }

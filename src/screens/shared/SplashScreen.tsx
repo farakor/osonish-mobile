@@ -4,18 +4,29 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
 import { authService } from '../../services/authService';
+import { useLanguage } from '../../contexts/LanguageContext';
 import type { RootStackParamList } from '../../types';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export function SplashScreen() {
   const navigation = useNavigation<NavigationProp>();
+  const { isLanguageSelected } = useLanguage();
 
   useEffect(() => {
     const checkAuthAndNavigate = async () => {
       try {
         // Небольшая задержка для показа splash экрана
         await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Сначала проверяем выбор языка
+        if (!isLanguageSelected) {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'LanguageSelection' }],
+          });
+          return;
+        }
 
         // Проверяем состояние авторизации
         const authState = authService.getAuthState();
@@ -42,16 +53,23 @@ export function SplashScreen() {
         }
       } catch (error) {
         console.error('Ошибка проверки авторизации:', error);
-        // В случае ошибки переходим к экрану авторизации
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Auth' }],
-        });
+        // В случае ошибки переходим к экрану выбора языка или авторизации
+        if (!isLanguageSelected) {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'LanguageSelection' }],
+          });
+        } else {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Auth' }],
+          });
+        }
       }
     };
 
     checkAuthAndNavigate();
-  }, [navigation]);
+  }, [navigation, isLanguageSelected]);
 
   return (
     <SafeAreaView style={styles.container}>
