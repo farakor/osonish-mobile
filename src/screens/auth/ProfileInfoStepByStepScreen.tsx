@@ -26,6 +26,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { theme } from '../../constants';
 import * as ImagePicker from 'expo-image-picker';
 import Svg, { Path } from 'react-native-svg';
+import CalendarDateIcon from '../../../assets/calendar-date.svg';
 
 
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -346,7 +347,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 2} delay={150} resetKey={`${animationResetKey}-step-2`}>
-                <Text style={styles.stepSubtitle}>Укажите вашу фамилию</Text>
+                <Text style={styles.stepSubtitle}></Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 2} delay={200} resetKey={`${animationResetKey}-step-2`}>
@@ -376,7 +377,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 3} delay={150} resetKey={`${animationResetKey}-step-3`}>
-                <Text style={styles.stepSubtitle}>Укажите ваше имя</Text>
+                <Text style={styles.stepSubtitle}></Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 3} delay={200} resetKey={`${animationResetKey}-step-3`}>
@@ -406,7 +407,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 4} delay={150} resetKey={`${animationResetKey}-step-4`}>
-                <Text style={styles.stepSubtitle}>Укажите ваше отчество (необязательно)</Text>
+                <Text style={styles.stepSubtitle}>(необязательно)</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 4} delay={200} resetKey={`${animationResetKey}-step-4`}>
@@ -436,7 +437,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 5} delay={150} resetKey={`${animationResetKey}-step-5`}>
-                <Text style={styles.stepSubtitle}>Выберите дату вашего рождения</Text>
+                <Text style={styles.stepSubtitle}></Text>
               </AnimatedField>
 
               <AnimatedInteractiveContainer isActive={currentStep === 5} delay={200} resetKey={`${animationResetKey}-step-5`}>
@@ -445,7 +446,9 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                     style={styles.dateSelector}
                     onPress={() => setShowDatePicker(true)}
                   >
-                    <Text style={styles.calendarIcon}>📅</Text>
+                    <View style={{ marginRight: theme.spacing.md }}>
+                      <CalendarDateIcon width={20} height={20} stroke={theme.colors.text.secondary} />
+                    </View>
                     <Text style={[
                       styles.dateText,
                       !birthDate && styles.dateTextPlaceholder
@@ -801,12 +804,9 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
   },
-  calendarIcon: {
-    fontSize: 24,
-    marginRight: theme.spacing.md,
-  },
+
   dateText: {
     fontSize: theme.fonts.sizes.lg,
     color: theme.colors.text.primary,

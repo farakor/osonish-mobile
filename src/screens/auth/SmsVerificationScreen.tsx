@@ -233,13 +233,7 @@ export function SmsVerificationScreen() {
           </View>
         )}
 
-        {/* Help Section */}
-        <View style={styles.helpSection}>
-          <Text style={styles.helpText}>
-            Не получили SMS?{' '}
-            <Text style={styles.helpLink}>Проверьте настройки</Text>
-          </Text>
-        </View>
+
       </View>
     </SafeAreaView>
   );
@@ -264,10 +258,15 @@ const styles = StyleSheet.create({
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.surface,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
   },
 
   titleSection: {
@@ -344,17 +343,5 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontWeight: theme.fonts.weights.medium,
   },
-  helpSection: {
-    alignItems: 'center',
-    paddingBottom: theme.spacing.lg,
-  },
-  helpText: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
-  },
-  helpLink: {
-    color: theme.colors.secondary,
-    fontWeight: theme.fonts.weights.medium,
-  },
+
 }); 

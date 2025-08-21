@@ -146,7 +146,7 @@ export const RoleSelectionScreen: React.FC = () => {
         <View style={styles.header}>
           <Text style={styles.title}>Выберите вашу роль</Text>
           <Text style={styles.subtitle}>
-            Как вы планируете использовать Osonish?
+            Как вы планируете использовать Oson Ish?
           </Text>
         </View>
 
@@ -154,7 +154,7 @@ export const RoleSelectionScreen: React.FC = () => {
           <RoleCard
             role="customer"
             title="Я заказчик"
-            description="Ищу исполнителей для моих задач и проектов"
+            description="Ищу исполнителей для моих задач"
             isSelected={selectedRole === 'customer'}
             onPress={() => handleRoleSelect('customer')}
           />
@@ -185,9 +185,7 @@ export const RoleSelectionScreen: React.FC = () => {
           </Text>
         </TouchableOpacity>
 
-        <Text style={styles.note}>
-          Вы сможете изменить роль позже в настройках
-        </Text>
+
       </View>
     </SafeAreaView>
   );
@@ -311,10 +309,5 @@ const styles = StyleSheet.create({
   continueButtonTextDisabled: {
     color: theme.colors.text.disabled,
   },
-  note: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
+
 }); 
