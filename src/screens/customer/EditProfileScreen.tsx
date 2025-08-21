@@ -495,7 +495,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     paddingHorizontal: isSmallScreen ? 12 : 16,
-    paddingVertical: isSmallScreen ? 4 : 16,
+    paddingVertical: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -507,13 +507,15 @@ const styles = StyleSheet.create({
     fontSize: isSmallScreen ? 14 : 16,
     color: '#1A1A1A',
     paddingRight: 12,
+    paddingVertical: 0, // Убираем дефолтный padding чтобы высота совпадала с полем даты
   },
   inputDisabled: {
     color: '#8E8E93',
     backgroundColor: 'transparent',
   },
   dateInput: {
-    paddingVertical: isSmallScreen ? 8 : 16,
+    // Поле даты использует тот же padding что и inputContainer, без дополнительного padding
+    paddingVertical: 0,
   },
 
   // Bottom Section

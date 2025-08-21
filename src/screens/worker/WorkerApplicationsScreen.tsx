@@ -359,13 +359,13 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.md,
   },
   title: {
-    fontSize: theme.fonts.sizes.xl,
+    fontSize: theme.fonts.sizes.xxxl,
     fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   subtitle: {
-    fontSize: theme.fonts.sizes.sm,
+    fontSize: theme.fonts.sizes.lg,
     color: theme.colors.text.secondary,
     lineHeight: 20,
   },

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,11 +9,9 @@ import {
   Alert,
   ActivityIndicator,
   Image,
-  Animated,
   StatusBar,
   Platform,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../constants';
@@ -25,6 +23,11 @@ import NotificationMessageIcon from '../../../assets/notification-message.svg';
 import LifeBuoyIcon from '../../../assets/life-buoy-02.svg';
 import LogOutIcon from '../../../assets/log-out-03.svg';
 import { Ionicons } from '@expo/vector-icons';
+
+// Функция для получения высоты статусбара только на Android
+const getAndroidStatusBarHeight = () => {
+  return Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0;
+};
 
 
 interface ProfileOption {
@@ -42,38 +45,10 @@ interface CustomerStats {
   monthsOnPlatform: number;
 }
 
-// Функция для получения высоты статусбара только на Android
-const getAndroidStatusBarHeight = () => {
-  return Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0;
-};
-
 export const CustomerProfileScreen: React.FC = () => {
   const navigation = useNavigation();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const insets = useSafeAreaInsets();
-
-  // Анимация для header
-  const scrollY = useRef(new Animated.Value(0)).current;
-  const headerOpacity = scrollY.interpolate({
-    inputRange: [0, 100],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
-
-  // Анимированный отступ для элементов профиля
-  const profileContentMarginTop = scrollY.interpolate({
-    inputRange: [0, 100],
-    outputRange: [0, 80], // 80px высота header
-    extrapolate: 'clamp',
-  });
-
-  // Анимация для скрытия имени в основной секции
-  const profileNameOpacity = scrollY.interpolate({
-    inputRange: [0, 50, 100],
-    outputRange: [1, 0.5, 0],
-    extrapolate: 'clamp',
-  });
 
   // Цвет для элементов выхода
   const logoutColor = '#FF3B30';
@@ -289,46 +264,21 @@ export const CustomerProfileScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
       <SafeAreaView style={styles.content}>
-        {/* Animated Header */}
-        <Animated.View style={[styles.animatedHeader, { opacity: headerOpacity }]}>
-          <LinearGradient
-            colors={['#679B00', '#5A8A00', '#4A7A00']}
-            style={[styles.animatedHeaderGradient, { paddingTop: 16 + getAndroidStatusBarHeight() }]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            {/* Background Pattern */}
-            <View style={styles.headerPatternBackground}>
-              <Ionicons name="bag-handle-outline" size={24} color="rgba(255, 255, 255, 0.15)" style={styles.headerPatternIcon1} />
-              <Ionicons name="card-outline" size={22} color="rgba(255, 255, 255, 0.15)" style={styles.headerPatternIcon2} />
-              <Ionicons name="storefront-outline" size={20} color="rgba(255, 255, 255, 0.15)" style={styles.headerPatternIcon3} />
-              <Ionicons name="receipt-outline" size={18} color="rgba(255, 255, 255, 0.15)" style={styles.headerPatternIcon4} />
-            </View>
-            <Text style={styles.animatedHeaderTitle}>
-              {user ? `${user.firstName} ${user.lastName}` : 'Профиль'}
-            </Text>
-          </LinearGradient>
-        </Animated.View>
+        {/* Custom Header */}
+        <View style={[styles.contentHeader, { paddingTop: theme.spacing.lg + getAndroidStatusBarHeight() }]}>
+          <Text style={styles.title}>Профиль</Text>
+          <Text style={styles.subtitle}>Управляйте своим профилем</Text>
+        </View>
 
-        <Animated.ScrollView
+        <ScrollView
           showsVerticalScrollIndicator={false}
           bounces={false}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: false }
-          )}
-          scrollEventThrottle={16}
         >
-          {/* Regular Header */}
-          <View style={[styles.regularHeader, { paddingTop: theme.spacing.xl + getAndroidStatusBarHeight() }]}>
-            <Text style={styles.headerTitle}>Профиль</Text>
-            <View style={styles.headerRight} />
-          </View>
 
           {/* Profile Section with Gradient */}
-          <Animated.View style={{ marginTop: profileContentMarginTop }}>
+          <View>
             <LinearGradient
               colors={['#679B00', '#5A8A00', '#4A7A00']}
               style={styles.profileSection}
@@ -358,7 +308,7 @@ export const CustomerProfileScreen: React.FC = () => {
                   </View>
                 )}
               </View>
-              <Animated.View style={[styles.userNameContainer, { opacity: profileNameOpacity }]}>
+              <View style={styles.userNameContainer}>
                 <Text style={styles.userName}>
                   {user.firstName} {user.lastName}
                 </Text>
@@ -367,7 +317,7 @@ export const CustomerProfileScreen: React.FC = () => {
                     <Text style={styles.checkmarkIcon}>✓</Text>
                   </View>
                 )}
-              </Animated.View>
+              </View>
               <Text style={styles.userPhone}>{user.phone}</Text>
               {stats.activeOrders > 0 && (
                 <View style={styles.statusContainer}>
@@ -377,7 +327,7 @@ export const CustomerProfileScreen: React.FC = () => {
                 </View>
               )}
             </LinearGradient>
-          </Animated.View>
+          </View>
 
           {/* Main Stats - Three Cards in Row */}
           <View style={styles.mainStatsContainer}>
@@ -440,7 +390,7 @@ export const CustomerProfileScreen: React.FC = () => {
               </View>
             </TouchableOpacity>
           </View>
-        </Animated.ScrollView>
+        </ScrollView>
       </SafeAreaView>
     </View>
   );
@@ -453,6 +403,20 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  contentHeader: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.lg,
+  },
+  title: {
+    fontSize: theme.fonts.sizes.xxxl,
+    fontWeight: theme.fonts.weights.bold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  subtitle: {
+    fontSize: theme.fonts.sizes.lg,
+    color: theme.colors.text.secondary,
   },
   loadingContainer: {
     justifyContent: 'center',
@@ -486,76 +450,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.semiBold,
   },
 
-  // Animated Header Styles
-  animatedHeader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-  },
-  animatedHeaderGradient: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  animatedHeaderTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
 
-  // Header Pattern Background
-  headerPatternBackground: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  headerPatternIcon1: {
-    position: 'absolute',
-    top: 8,
-    left: 15,
-    transform: [{ rotate: '15deg' }],
-  },
-  headerPatternIcon2: {
-    position: 'absolute',
-    top: 12,
-    right: 25,
-    transform: [{ rotate: '-25deg' }],
-  },
-  headerPatternIcon3: {
-    position: 'absolute',
-    top: 8,
-    left: '45%',
-    transform: [{ rotate: '35deg' }],
-  },
-  headerPatternIcon4: {
-    position: 'absolute',
-    top: 15,
-    right: 60,
-    transform: [{ rotate: '-15deg' }],
-  },
-
-  // Regular Header (in scroll)
-  regularHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#1A1A1A',
-  },
-  headerRight: {
-    width: 40,
-  },
 
   // Profile Section with Gradient
   profileSection: {

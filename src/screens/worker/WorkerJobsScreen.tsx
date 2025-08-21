@@ -616,13 +616,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: theme.fonts.sizes.xxl,
+    fontSize: theme.fonts.sizes.xxxl,
     fontWeight: theme.fonts.weights.bold,
     color: theme.colors.white,
     marginBottom: theme.spacing.xs,
   },
   subtitle: {
-    fontSize: theme.fonts.sizes.sm,
+    fontSize: theme.fonts.sizes.lg,
     color: theme.colors.white,
   },
   searchContainer: {

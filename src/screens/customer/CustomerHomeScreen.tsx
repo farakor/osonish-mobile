@@ -274,13 +274,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   greeting: {
-    fontSize: theme.fonts.sizes.xxl,
+    fontSize: theme.fonts.sizes.xxxl,
     fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   subtitle: {
-    fontSize: theme.fonts.sizes.md,
+    fontSize: theme.fonts.sizes.lg,
     color: theme.colors.text.secondary,
   },
   quickCreateButton: {

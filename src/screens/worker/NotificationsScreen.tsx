@@ -131,12 +131,6 @@ export const NotificationsScreen: React.FC = () => {
                 <Switch
                   value={allNotificationsEnabled ?? false}
                   onValueChange={setAllNotificationsEnabled}
-                  trackColor={Platform.OS === 'android' ? undefined : {
-                    false: '#C7C7CC',
-                    true: '#FFFFFF'
-                  }}
-                  thumbColor={Platform.OS === 'android' ? undefined : (allNotificationsEnabled ? theme.colors.primary : '#FFFFFF')}
-                  ios_backgroundColor="#C7C7CC"
                   disabled={allNotificationsEnabled === null}
                 />
               </View>
