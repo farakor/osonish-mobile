@@ -16,6 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
 import type { RootStackParamList } from '../../types';
+import { useAuthTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -39,6 +40,9 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export function RegistrationScreen() {
   const navigation = useNavigation<NavigationProp>();
+  const t = useAuthTranslation();
+  const tError = useErrorsTranslation();
+  const tCommon = useCommonTranslation();
   const [phoneNumber, setPhoneNumber] = useState('+998');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -63,7 +67,7 @@ export function RegistrationScreen() {
 
   const handleContinue = async () => {
     if (!validatePhoneNumber()) {
-      Alert.alert('Ошибка', 'Пожалуйста, введите корректный номер телефона');
+      Alert.alert(tError('error'), t('invalid_phone'));
       return;
     }
 
@@ -77,10 +81,10 @@ export function RegistrationScreen() {
         // Переходим к экрану верификации
         navigation.navigate('SmsVerification', { phone: phoneNumber });
       } else {
-        Alert.alert('Ошибка', result.error || 'Не удалось отправить SMS');
+        Alert.alert(tError('error'), result.error || t('sms_send_error'));
       }
     } catch (error) {
-      Alert.alert('Ошибка', 'Не удалось отправить SMS. Попробуйте еще раз.');
+      Alert.alert(tError('error'), t('general_error'));
     } finally {
       setIsLoading(false);
     }
@@ -107,27 +111,27 @@ export function RegistrationScreen() {
 
           {/* Title Section */}
           <View style={styles.titleSection}>
-            <Text style={styles.title}>Введите номер телефона</Text>
+            <Text style={styles.title}>{t('register_title')}</Text>
             <Text style={styles.subtitle}>
-              Мы отправим вам SMS с кодом подтверждения
+              {t('register_subtitle')}
             </Text>
           </View>
 
           {/* Phone Input */}
           <View style={styles.inputSection}>
-            <Text style={styles.inputLabel}>Номер телефона</Text>
+            <Text style={styles.inputLabel}>{t('phone_number')}</Text>
             <TextInput
               style={styles.phoneInput}
               value={phoneNumber}
               onChangeText={handlePhoneChange}
-              placeholder="+998 (XX) XXX-XX-XX"
+              placeholder={t('phone_placeholder')}
               placeholderTextColor={theme.colors.text.secondary}
               keyboardType="phone-pad"
               maxLength={20}
               autoFocus
             />
             <Text style={styles.inputHint}>
-              Введите номер телефона в формате +998
+              {t('phone_hint')}
             </Text>
           </View>
 
@@ -144,7 +148,7 @@ export function RegistrationScreen() {
               styles.continueButtonText,
               (!validatePhoneNumber() || isLoading) && styles.continueButtonTextDisabled
             ]}>
-              {isLoading ? 'Отправляем SMS...' : 'Продолжить'}
+              {isLoading ? t('sending_sms') : tCommon('continue')}
             </Text>
           </TouchableOpacity>
         </View>

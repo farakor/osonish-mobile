@@ -57,10 +57,10 @@ export function AuthScreen() {
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Продолжая, вы соглашаетесь с нашими{' '}
-            <Text style={styles.linkText}>условиями использования</Text>
-            {' '}и{' '}
-            <Text style={styles.linkText}>политикой конфиденциальности</Text>
+            {t('terms_agreement')}{' '}
+            <Text style={styles.linkText}>{t('terms_of_use')}</Text>
+            {' '}{t('and')}{' '}
+            <Text style={styles.linkText}>{t('privacy_policy')}</Text>
           </Text>
         </View>
       </View>

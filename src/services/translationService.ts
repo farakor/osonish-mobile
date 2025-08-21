@@ -8,24 +8,16 @@ export interface NotificationTranslation {
 
 export class TranslationService {
   /**
-   * Переводит уведомление на указанный язык
-   */
+ * Переводит уведомление на указанный язык
+ */
   static translateNotification(
     titleKey: string,
     bodyKey: string,
     language: Language,
     params?: Record<string, any>
   ): NotificationTranslation {
-    const currentLanguage = i18n.language;
-
-    // Временно переключаемся на нужный язык
-    i18n.changeLanguage(language);
-
-    const title = i18n.t(titleKey, params);
-    const body = i18n.t(bodyKey, params);
-
-    // Возвращаем обратно текущий язык
-    i18n.changeLanguage(currentLanguage);
+    const title = this.translateText(titleKey, language, params);
+    const body = this.translateText(bodyKey, language, params);
 
     return { title, body };
   }
@@ -45,18 +37,28 @@ export class TranslationService {
   }
 
   /**
-   * Переводит текст на указанный язык
-   */
+ * Переводит текст на указанный язык
+ */
   static translateText(key: string, language: Language, params?: Record<string, any>): string {
-    const currentLanguage = i18n.language;
+    // Используем прямой доступ к ресурсам вместо смены языка
+    const resources = i18n.getResourceBundle(language, 'translation');
+    if (!resources) {
+      return key;
+    }
 
-    // Временно переключаемся на нужный язык
-    i18n.changeLanguage(language);
+    // Простая функция для получения значения по ключу
+    const getValue = (obj: any, path: string): string => {
+      return path.split('.').reduce((current, key) => current?.[key], obj) || key;
+    };
 
-    const translation = i18n.t(key, params);
+    let translation = getValue(resources, key);
 
-    // Возвращаем обратно текущий язык
-    i18n.changeLanguage(currentLanguage);
+    // Простая интерполяция параметров
+    if (params && typeof translation === 'string') {
+      Object.keys(params).forEach(paramKey => {
+        translation = translation.replace(new RegExp(`{{${paramKey}}}`, 'g'), params[paramKey]);
+      });
+    }
 
     return translation;
   }

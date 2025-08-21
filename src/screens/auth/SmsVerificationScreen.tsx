@@ -15,6 +15,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
 import type { RootStackParamList } from '../../types';
+import { useAuthTranslation, useErrorsTranslation } from '../../hooks/useTranslation';
 import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -40,6 +41,8 @@ export function SmsVerificationScreen() {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute();
   const { phone } = route.params as { phone: string };
+  const t = useAuthTranslation();
+  const tError = useErrorsTranslation();
 
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(60);
@@ -109,12 +112,12 @@ export function SmsVerificationScreen() {
           routes: [{ name: 'ProfileInfo', params: { phone } }],
         });
       } else {
-        Alert.alert('Ошибка', result.error || 'Неверный код подтверждения');
+        Alert.alert(tError('error'), result.error || t('invalid_code'));
         setCode(['', '', '', '', '', '']);
         inputRefs.current[0]?.focus();
       }
     } catch (error) {
-      Alert.alert('Ошибка', 'Не удалось проверить код. Попробуйте еще раз.');
+      Alert.alert(tError('error'), t('code_verification_error'));
     } finally {
       setIsLoading(false);
     }
@@ -130,7 +133,7 @@ export function SmsVerificationScreen() {
       const result = await authService.startRegistration(phone);
 
       if (result.success) {
-        Alert.alert('Успешно', 'SMS код отправлен повторно');
+        Alert.alert(tError('success'), t('sms_resent_success'));
         inputRefs.current[0]?.focus();
 
         // Запускаем таймер заново
@@ -145,11 +148,11 @@ export function SmsVerificationScreen() {
           });
         }, 1000);
       } else {
-        Alert.alert('Ошибка', result.error || 'Не удалось отправить SMS');
+        Alert.alert(tError('error'), result.error || t('sms_send_error'));
         setIsResendAvailable(true);
       }
     } catch (error) {
-      Alert.alert('Ошибка', 'Не удалось отправить SMS. Попробуйте еще раз.');
+      Alert.alert(tError('error'), t('general_error'));
       setIsResendAvailable(true);
     }
   };
@@ -177,9 +180,9 @@ export function SmsVerificationScreen() {
 
         {/* Title Section */}
         <View style={styles.titleSection}>
-          <Text style={styles.title}>Введите код из SMS</Text>
+          <Text style={styles.title}>{t('sms_code_title')}</Text>
           <Text style={styles.subtitle}>
-            Мы отправили код подтверждения на номер{'\n'}
+            {t('sms_code_subtitle')}{'\n'}
             <Text style={styles.phoneNumber}>{phone}</Text>
           </Text>
         </View>
@@ -207,7 +210,7 @@ export function SmsVerificationScreen() {
           </View>
 
           <Text style={styles.codeHint}>
-            Введите 6-значный код для подтверждения
+            {t('sms_code_hint')}
           </Text>
         </View>
 
@@ -216,12 +219,12 @@ export function SmsVerificationScreen() {
           {isResendAvailable ? (
             <TouchableOpacity onPress={handleResendCode}>
               <Text style={styles.resendButton}>
-                Отправить код повторно
+                {t('resend_code')}
               </Text>
             </TouchableOpacity>
           ) : (
             <Text style={styles.timerText}>
-              Отправить повторно через {formatTime(timer)}
+              {t('resend_in')} {formatTime(timer)}
             </Text>
           )}
         </View>
@@ -229,7 +232,7 @@ export function SmsVerificationScreen() {
         {/* Loading Indicator */}
         {isLoading && (
           <View style={styles.loadingSection}>
-            <Text style={styles.loadingText}>Проверяем код...</Text>
+            <Text style={styles.loadingText}>{t('verifying_code')}</Text>
           </View>
         )}
 

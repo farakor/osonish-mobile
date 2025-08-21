@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 
 export type Language = 'ru' | 'uz';
 
@@ -17,7 +17,6 @@ const LANGUAGE_STORAGE_KEY = 'osonish_selected_language';
 const LANGUAGE_SELECTION_KEY = 'osonish_language_selected';
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { i18n } = useTranslation();
   const [currentLanguage, setCurrentLanguage] = useState<Language>('ru');
   const [isLanguageSelected, setIsLanguageSelected] = useState(false);
 

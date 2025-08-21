@@ -27,6 +27,7 @@ import { theme } from '../../constants';
 import * as ImagePicker from 'expo-image-picker';
 import Svg, { Path } from 'react-native-svg';
 import CalendarDateIcon from '../../../assets/calendar-date.svg';
+import { useAuthTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 
 
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -61,10 +62,10 @@ const getAndroidStatusBarHeight = () => {
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 // Компонент для отображения номера шага с анимацией
-const StepCounter: React.FC<{ currentStep: number; totalSteps: number }> = ({ currentStep, totalSteps }) => {
+const StepCounter: React.FC<{ currentStep: number; totalSteps: number; t: any }> = ({ currentStep, totalSteps, t }) => {
   return (
     <View style={styles.stepCounterContainer}>
-      <Text style={styles.progressText}>{currentStep} из {totalSteps}</Text>
+      <Text style={styles.progressText}>{t('profile_step_counter', { current: currentStep, total: totalSteps })}</Text>
     </View>
   );
 };
@@ -73,6 +74,8 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute();
   const { phone } = route.params as { phone: string };
+  const t = useAuthTranslation();
+  const tCommon = useCommonTranslation();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -109,7 +112,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
   };
 
   const formatDate = (date: Date | null) => {
-    if (!date) return 'Выберите дату рождения';
+    if (!date) return t('select_birth_date');
     return date.toLocaleDateString('ru-RU', {
       day: '2-digit',
       month: '2-digit',
@@ -120,20 +123,20 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Ошибка', 'Нужен доступ к фотографиям');
+      Alert.alert(tCommon('error'), t('photo_permission_error'));
       return;
     }
 
     Alert.alert(
-      'Добавить фото профиля',
-      'Выберите источник',
+      t('add_profile_photo'),
+      t('choose_source'),
       [
         {
-          text: 'Снять фото',
+          text: t('take_photo'),
           onPress: async () => {
             const { status } = await ImagePicker.requestCameraPermissionsAsync();
             if (status !== 'granted') {
-              Alert.alert('Нет доступа к камере');
+              Alert.alert(t('camera_permission_error'));
               return;
             }
             let result = await ImagePicker.launchCameraAsync({
@@ -148,7 +151,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
           },
         },
         {
-          text: 'Выбрать из галереи',
+          text: t('choose_from_gallery'),
           onPress: async () => {
             let result = await ImagePicker.launchImageLibraryAsync({
               mediaTypes: ['images'],
@@ -161,7 +164,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
             }
           },
         },
-        { text: 'Отмена', style: 'cancel' },
+        { text: tCommon('cancel'), style: 'cancel' },
       ]
     );
   };
@@ -289,12 +292,12 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 1} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 1} delay={0} resetKey={`${animationResetKey}-step-1`}>
-                <Text style={styles.stepTitle}>Добавьте фото профиля</Text>
+                <Text style={styles.stepTitle}>{t('profile_step_photo_title')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 1} delay={150} resetKey={`${animationResetKey}-step-1`}>
                 <Text style={styles.stepSubtitle}>
-                  Добавьте фото профиля чтобы повысить{'\n'}шансы одобрения заказчиком (необязательно)
+                  {t('profile_step_photo_subtitle')}
                 </Text>
               </AnimatedField>
 
@@ -324,12 +327,12 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                   </TouchableOpacity>
                   {!profileImage && (
                     <TouchableOpacity style={styles.addPhotoTextButton} onPress={pickImage}>
-                      <Text style={styles.addPhotoTextButtonText}>Добавить фото</Text>
+                      <Text style={styles.addPhotoTextButtonText}>{t('add_photo')}</Text>
                     </TouchableOpacity>
                   )}
                   {profileImage && (
                     <TouchableOpacity style={styles.changePhotoButton} onPress={pickImage}>
-                      <Text style={styles.changePhotoButtonText}>Изменить фото</Text>
+                      <Text style={styles.changePhotoButtonText}>{t('change_photo')}</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -343,7 +346,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 2} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 2} delay={0} resetKey={`${animationResetKey}-step-2`}>
-                <Text style={styles.stepTitle}>Введите фамилию</Text>
+                <Text style={styles.stepTitle}>{t('profile_step_lastname_title')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 2} delay={150} resetKey={`${animationResetKey}-step-2`}>
@@ -356,7 +359,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                     style={getInputStyle(lastNameFocused)}
                     value={lastName}
                     onChangeText={setLastName}
-                    placeholder="Например: Султонов"
+                    placeholder={t('lastname_placeholder')}
                     placeholderTextColor={theme.colors.text.secondary}
                     autoFocus
                     onFocus={() => setLastNameFocused(true)}
@@ -373,7 +376,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 3} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 3} delay={0} resetKey={`${animationResetKey}-step-3`}>
-                <Text style={styles.stepTitle}>Введите имя</Text>
+                <Text style={styles.stepTitle}>{t('profile_step_firstname_title')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 3} delay={150} resetKey={`${animationResetKey}-step-3`}>
@@ -386,7 +389,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                     style={getInputStyle(firstNameFocused)}
                     value={firstName}
                     onChangeText={setFirstName}
-                    placeholder="Например: Амир"
+                    placeholder={t('firstname_placeholder')}
                     placeholderTextColor={theme.colors.text.secondary}
                     autoFocus
                     onFocus={() => setFirstNameFocused(true)}
@@ -403,11 +406,11 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 4} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 4} delay={0} resetKey={`${animationResetKey}-step-4`}>
-                <Text style={styles.stepTitle}>Введите отчество</Text>
+                <Text style={styles.stepTitle}>{t('profile_step_middlename_title')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 4} delay={150} resetKey={`${animationResetKey}-step-4`}>
-                <Text style={styles.stepSubtitle}>(необязательно)</Text>
+                <Text style={styles.stepSubtitle}>{t('profile_step_middlename_optional')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 4} delay={200} resetKey={`${animationResetKey}-step-4`}>
@@ -416,7 +419,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                     style={getInputStyle(middleNameFocused)}
                     value={middleName}
                     onChangeText={setMiddleName}
-                    placeholder="Например: Каримович"
+                    placeholder={t('middlename_placeholder')}
                     placeholderTextColor={theme.colors.text.secondary}
                     autoFocus
                     onFocus={() => setMiddleNameFocused(true)}
@@ -433,7 +436,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 5} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 5} delay={0} resetKey={`${animationResetKey}-step-5`}>
-                <Text style={styles.stepTitle}>Дата рождения</Text>
+                <Text style={styles.stepTitle}>{t('profile_step_birthdate_title')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 5} delay={150} resetKey={`${animationResetKey}-step-5`}>
@@ -467,11 +470,11 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 6} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 6} delay={0} resetKey={`${animationResetKey}-step-6`}>
-                <Text style={styles.stepTitle}>Согласие с обработкой данных</Text>
+                <Text style={styles.stepTitle}>{t('profile_step_privacy_title')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 6} delay={150} resetKey={`${animationResetKey}-step-6`}>
-                <Text style={styles.stepSubtitle}>Ознакомьтесь с условиями обработки персональных данных и дайте согласие</Text>
+                <Text style={styles.stepSubtitle}>{t('profile_step_privacy_subtitle')}</Text>
               </AnimatedField>
 
               <AnimatedInteractiveContainer isActive={currentStep === 6} delay={200} resetKey={`${animationResetKey}-step-6`}>
@@ -482,7 +485,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                   >
                     <Text style={styles.privacyDocumentIcon}>📄</Text>
                     <View style={styles.privacyDocumentContent}>
-                      <Text style={styles.privacyDocumentTitle}>Согласие на обработку персональных данных</Text>
+                      <Text style={styles.privacyDocumentTitle}>{t('privacy_document_title')}</Text>
                     </View>
                     <Text style={styles.privacyDocumentArrow}>›</Text>
                   </TouchableOpacity>
@@ -498,7 +501,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                         )}
                       </View>
                       <Text style={styles.privacyCheckboxText}>
-                        Согласен с обработкой персональных данных
+                        {t('privacy_agreement_text')}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -530,7 +533,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
 
           {/* Progress */}
           <AnimatedProgressBar progress={currentStep} total={totalSteps} />
-          <StepCounter currentStep={currentStep} totalSteps={totalSteps} />
+          <StepCounter currentStep={currentStep} totalSteps={totalSteps} t={t} />
 
           {/* Content */}
           <View style={styles.mainContent}>
@@ -547,7 +550,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                 delay={0}
                 resetKey={`${animationResetKey}-step-${currentStep}`}
               >
-                <Text style={styles.secondaryButtonText}>Назад</Text>
+                <Text style={styles.secondaryButtonText}>{tCommon('back')}</Text>
               </AnimatedNavigationButton>
             )}
 
@@ -562,7 +565,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                   delay={0}
                   resetKey={`${animationResetKey}-step-${currentStep}`}
                 >
-                  <Text style={styles.primaryButtonText}>Далее</Text>
+                  <Text style={styles.primaryButtonText}>{tCommon('next')}</Text>
                 </AnimatedNavigationButton>
               )
             ) : (
@@ -590,7 +593,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
             <View style={styles.loadingOverlay}>
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={theme.colors.primary} />
-                <Text style={styles.loadingText}>Сохраняем данные...</Text>
+                <Text style={styles.loadingText}>{t('saving_data')}</Text>
               </View>
             </View>
           </Modal>
@@ -604,7 +607,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                     style={styles.doneButton}
                     onPress={() => setShowDatePicker(false)}
                   >
-                    <Text style={styles.doneButtonText}>Готово</Text>
+                    <Text style={styles.doneButtonText}>{t('done')}</Text>
                   </TouchableOpacity>
                 </View>
               )}
