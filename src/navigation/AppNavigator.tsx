@@ -12,7 +12,8 @@ import {
   RegistrationScreen,
   SmsVerificationScreen,
   ProfileInfoStepByStepScreen,
-  RoleSelectionScreen
+  RoleSelectionScreen,
+  CitySelectionScreen
 } from '../screens/auth';
 import { CustomerStackNavigator } from './CustomerStackNavigator';
 import { WorkerStackNavigator } from './WorkerStackNavigator';
@@ -59,6 +60,10 @@ export function AppNavigator() {
         <Stack.Screen
           name="RoleSelection"
           component={RoleSelectionScreen}
+        />
+        <Stack.Screen
+          name="CitySelection"
+          component={CitySelectionScreen}
         />
         <Stack.Screen
           name="CustomerTabs"

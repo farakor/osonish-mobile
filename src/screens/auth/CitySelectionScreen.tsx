@@ -10,12 +10,10 @@ import {
   Platform,
   StatusBar,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
-import type { RootStackParamList } from '../../types';
-import WorkerIcon from '../../../assets/engineer-worker.svg';
-import UserIcon from '../../../assets/user-03.svg';
+import type { RootStackParamList, City } from '../../types';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -34,22 +32,40 @@ const getAndroidStatusBarHeight = () => {
   return 0;
 };
 
-type UserRole = 'customer' | 'worker';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type RouteProp = {
+  params: {
+    role: 'customer' | 'worker';
+  };
+};
 
-export const RoleSelectionScreen: React.FC = () => {
+// Доступные города (пока только Самарканд)
+const AVAILABLE_CITIES: City[] = [
+  {
+    id: 'samarkand',
+    name: 'Самарканд и область',
+    isAvailable: true,
+  },
+];
+
+export const CitySelectionScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const route = useRoute<RouteProp>();
+  const { role } = route.params;
 
-  const handleRoleSelect = (role: UserRole) => {
-    setSelectedRole(role);
+  const [selectedCity, setSelectedCity] = useState<City | null>(null);
+
+  const handleCitySelect = (city: City) => {
+    if (city.isAvailable) {
+      setSelectedCity(city);
+    }
   };
 
   const handleContinue = async () => {
-    if (!selectedRole) return;
+    if (!selectedCity) return;
 
     try {
-      // Проверяем наличие данных профиля
+      // Получаем данные профиля из временного хранилища
       const AsyncStorage = await import('@react-native-async-storage/async-storage');
       const profileDataString = await AsyncStorage.default.getItem('@temp_profile_data');
 
@@ -58,55 +74,78 @@ export const RoleSelectionScreen: React.FC = () => {
         return;
       }
 
-      // Переходим к экрану выбора города
-      navigation.navigate('CitySelection', { role: selectedRole });
+      const profileData = JSON.parse(profileDataString);
+
+      // Завершаем регистрацию с выбранным городом
+      const { authService } = await import('../../services/authService');
+      const result = await authService.completeRegistration({
+        ...profileData,
+        role: role,
+        city: selectedCity.name,
+      });
+
+      if (result.success && result.user) {
+        // Сохраняем выбранный город
+        await AsyncStorage.default.setItem('@selected_city', JSON.stringify(selectedCity));
+
+        // Очищаем временные данные
+        await AsyncStorage.default.removeItem('@temp_profile_data');
+
+        // Переходим в приложение в зависимости от роли
+        if (role === 'customer') {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'CustomerTabs' }],
+          });
+        } else {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'WorkerTabs' }],
+          });
+        }
+      } else {
+        Alert.alert('Ошибка', result.error || 'Не удалось завершить регистрацию');
+      }
     } catch (error) {
-      console.error('Ошибка перехода к выбору города:', error);
-      Alert.alert('Ошибка', 'Произошла ошибка. Попробуйте еще раз.');
+      console.error('Ошибка завершения регистрации:', error);
+      Alert.alert('Ошибка', 'Произошла ошибка при регистрации. Попробуйте еще раз.');
     }
   };
 
-  const RoleCard = ({
-    role,
-    title,
-    description,
+  const CityCard = ({
+    city,
     isSelected,
     onPress
   }: {
-    role: UserRole;
-    title: string;
-    description: string;
+    city: City;
     isSelected: boolean;
     onPress: () => void;
   }) => (
     <TouchableOpacity
       style={[
-        styles.roleCard,
-        isSelected && styles.roleCardSelected
+        styles.cityCard,
+        isSelected && styles.cityCardSelected,
+        !city.isAvailable && styles.cityCardDisabled
       ]}
       onPress={onPress}
-      activeOpacity={0.8}
+      activeOpacity={city.isAvailable ? 0.8 : 1}
+      disabled={!city.isAvailable}
     >
-      <View style={styles.iconContainer}>
-        {role === 'worker' ? (
-          <WorkerIcon width={32} height={32} fill={isSelected ? theme.colors.primary : '#666666'} />
-        ) : (
-          <UserIcon width={32} height={32} stroke={isSelected ? theme.colors.primary : '#666666'} />
+      <View style={styles.cityInfo}>
+        <Text style={[
+          styles.cityName,
+          isSelected && styles.cityNameSelected,
+          !city.isAvailable && styles.cityNameDisabled
+        ]}>
+          {city.name}
+        </Text>
+        {!city.isAvailable && (
+          <Text style={styles.unavailableText}>
+            Скоро будет доступен
+          </Text>
         )}
       </View>
-      <Text style={[
-        styles.roleTitle,
-        isSelected && styles.roleTitleSelected
-      ]}>
-        {title}
-      </Text>
-      <Text style={[
-        styles.roleDescription,
-        isSelected && styles.roleDescriptionSelected
-      ]}>
-        {description}
-      </Text>
-      {isSelected && (
+      {isSelected && city.isAvailable && (
         <View style={styles.checkmark}>
           <Text style={styles.checkmarkText}>✓</Text>
         </View>
@@ -118,54 +157,49 @@ export const RoleSelectionScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>Выберите вашу роль</Text>
+          <Text style={styles.title}>Выберите город</Text>
           <Text style={styles.subtitle}>
-            Как вы планируете использовать Oson Ish?
+            В каком городе вы проживаете?
           </Text>
         </View>
 
-        <View style={styles.rolesContainer}>
-          <RoleCard
-            role="customer"
-            title="Я заказчик"
-            description="Ищу исполнителей для моих задач"
-            isSelected={selectedRole === 'customer'}
-            onPress={() => handleRoleSelect('customer')}
-          />
+        <View style={styles.noticeContainer}>
+          <Text style={styles.noticeText}>
+            📍 Данный проект является пилотным и пока доступен только в Самарканде и области
+          </Text>
+        </View>
 
-          <RoleCard
-            role="worker"
-            title="Я исполнитель"
-            description="Ищу работу и готов выполнять различные задачи"
-            isSelected={selectedRole === 'worker'}
-            onPress={() => handleRoleSelect('worker')}
-          />
+        <View style={styles.citiesContainer}>
+          {AVAILABLE_CITIES.map((city) => (
+            <CityCard
+              key={city.id}
+              city={city}
+              isSelected={selectedCity?.id === city.id}
+              onPress={() => handleCitySelect(city)}
+            />
+          ))}
         </View>
 
         <TouchableOpacity
           style={[
             styles.continueButton,
-            !selectedRole && styles.continueButtonDisabled
+            !selectedCity && styles.continueButtonDisabled
           ]}
           onPress={handleContinue}
-          disabled={!selectedRole}
+          disabled={!selectedCity}
           activeOpacity={0.8}
         >
           <Text style={[
             styles.continueButtonText,
-            !selectedRole && styles.continueButtonTextDisabled
+            !selectedCity && styles.continueButtonTextDisabled
           ]}>
             Продолжить
           </Text>
         </TouchableOpacity>
-
-
       </View>
     </SafeAreaView>
   );
 };
-
-const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
@@ -179,7 +213,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: isSmallScreen ? theme.spacing.xl : theme.spacing.xxl,
+    marginBottom: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
   },
   title: {
     fontSize: isSmallScreen ? theme.fonts.sizes.xl : theme.fonts.sizes.xxl,
@@ -194,17 +228,31 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: isSmallScreen ? 18 : 22,
   },
-  rolesContainer: {
+  noticeContainer: {
+    backgroundColor: `${theme.colors.primary}15`,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginBottom: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
+  },
+  noticeText: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.primary,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  citiesContainer: {
     gap: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
     marginBottom: isSmallScreen ? theme.spacing.xl : theme.spacing.xxl,
   },
-  roleCard: {
+  cityCard: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
     padding: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
     borderWidth: 2,
     borderColor: theme.colors.border,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     position: 'relative',
     shadowColor: theme.colors.shadow,
     shadowOffset: {
@@ -215,44 +263,34 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  roleCardSelected: {
+  cityCardSelected: {
     borderColor: theme.colors.primary,
     backgroundColor: `${theme.colors.primary}08`,
   },
-  iconContainer: {
-    width: isSmallScreen ? 50 : 60,
-    height: isSmallScreen ? 50 : 60,
-    backgroundColor: theme.colors.background,
-    borderRadius: isSmallScreen ? 25 : 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
+  cityCardDisabled: {
+    backgroundColor: theme.colors.disabled + '20',
+    borderColor: theme.colors.disabled,
   },
-  icon: {
-    fontSize: 28,
+  cityInfo: {
+    flex: 1,
   },
-  roleTitle: {
+  cityName: {
     fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
   },
-  roleTitleSelected: {
+  cityNameSelected: {
     color: theme.colors.primary,
   },
-  roleDescription: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
-    lineHeight: isSmallScreen ? 18 : 20,
+  cityNameDisabled: {
+    color: theme.colors.text.disabled,
   },
-  roleDescriptionSelected: {
-    color: theme.colors.text.primary,
+  unavailableText: {
+    fontSize: theme.fonts.sizes.xs,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.xs,
   },
   checkmark: {
-    position: 'absolute',
-    top: theme.spacing.md,
-    right: theme.spacing.md,
     width: 24,
     height: 24,
     backgroundColor: theme.colors.primary,
@@ -283,5 +321,4 @@ const styles = StyleSheet.create({
   continueButtonTextDisabled: {
     color: theme.colors.text.disabled,
   },
-
-}); 
+});

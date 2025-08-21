@@ -10,6 +10,7 @@ export type RootStackParamList = {
   SmsVerification: { phone: string };
   ProfileInfo: { phone: string };
   RoleSelection: undefined;
+  CitySelection: { role: 'customer' | 'worker' };
   CustomerTabs: undefined;
   WorkerTabs: undefined;
 };

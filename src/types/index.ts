@@ -10,6 +10,7 @@ export interface User {
   birthDate: string; // ISO date string
   profileImage?: string;
   role: 'customer' | 'worker';
+  city?: string;
   isVerified: boolean;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
@@ -38,6 +39,7 @@ export interface RegisterRequest {
   birthDate: string;
   profileImage?: string;
   role: 'customer' | 'worker';
+  city?: string;
 }
 
 export interface AuthResponse {
@@ -223,4 +225,15 @@ export interface WorkerProfile {
   completedJobs: number;
   joinedAt: string;
   reviews: Review[];
+}
+
+// City Types
+export interface City {
+  id: string;
+  name: string;
+  isAvailable: boolean;
+}
+
+export interface CitySelectionData {
+  selectedCity: City;
 }
