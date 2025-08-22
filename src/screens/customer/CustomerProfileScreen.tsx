@@ -23,6 +23,7 @@ import NotificationMessageIcon from '../../../assets/notification-message.svg';
 import LifeBuoyIcon from '../../../assets/life-buoy-02.svg';
 import LogOutIcon from '../../../assets/log-out-03.svg';
 import { Ionicons } from '@expo/vector-icons';
+import { useCustomerTranslation, useErrorsTranslation } from '../../hooks/useTranslation';
 
 // Функция для получения высоты статусбара только на Android
 const getAndroidStatusBarHeight = () => {
@@ -47,6 +48,8 @@ interface CustomerStats {
 
 export const CustomerProfileScreen: React.FC = () => {
   const navigation = useNavigation();
+  const t = useCustomerTranslation();
+  const tError = useErrorsTranslation();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -105,7 +108,7 @@ export const CustomerProfileScreen: React.FC = () => {
       }
     } catch (error) {
       console.error('Ошибка загрузки профиля:', error);
-      Alert.alert('Ошибка', 'Не удалось загрузить данные профиля');
+      Alert.alert(tError('error'), t('profile_data_error'));
     } finally {
       setIsLoading(false);
     }
@@ -178,23 +181,23 @@ export const CustomerProfileScreen: React.FC = () => {
   const getInitials = (firstName?: string, lastName?: string): string => {
     const first = firstName?.charAt(0)?.toUpperCase() || '';
     const last = lastName?.charAt(0)?.toUpperCase() || '';
-    return first + last || 'У';
+    return first + last || 'F';
   };
 
   const mainStatsData = [
     {
       id: 'orders',
       value: stats.totalOrders.toString(),
-      label: 'Заказов',
+      label: t('orders_label'),
       color: theme.colors.primary,
       onPress: () => navigation.navigate('MyOrders' as never),
     },
     {
       id: 'experience',
       value: stats.monthsOnPlatform > 12
-        ? `${Math.floor(stats.monthsOnPlatform / 12)} г`
-        : `${stats.monthsOnPlatform} мес`,
-      label: 'На платформе',
+        ? `${Math.floor(stats.monthsOnPlatform / 12)} ${t('years_short')}`
+        : `${stats.monthsOnPlatform} ${t('months_short')}`,
+      label: t('on_platform_label'),
       color: theme.colors.primary,
     },
   ];
@@ -213,12 +216,12 @@ export const CustomerProfileScreen: React.FC = () => {
 
   const handleLogout = async () => {
     Alert.alert(
-      'Выход',
-      'Вы действительно хотите выйти из аккаунта?',
+      t('logout_title'),
+      t('logout_message'),
       [
-        { text: 'Отмена', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         {
-          text: 'Выйти',
+          text: t('logout'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -228,7 +231,7 @@ export const CustomerProfileScreen: React.FC = () => {
               navigation.navigate('Auth' as never);
             } catch (error) {
               console.error('Ошибка выхода:', error);
-              Alert.alert('Ошибка', 'Не удалось выйти из аккаунта');
+              Alert.alert(tError('error'), t('logout_error'));
             }
           }
         },
@@ -237,16 +240,16 @@ export const CustomerProfileScreen: React.FC = () => {
   };
 
   const profileOptions: ProfileOption[] = [
-    { id: '1', title: 'Редактировать профиль', icon: <UserEditIcon width={20} height={20} />, action: handleEditProfile },
-    { id: '2', title: 'Уведомления', icon: <NotificationMessageIcon width={20} height={20} />, action: handleNotifications },
-    { id: '5', title: 'Поддержка', icon: <LifeBuoyIcon width={20} height={20} />, action: handleSupport },
+    { id: '1', title: t('edit_profile'), icon: <UserEditIcon width={20} height={20} />, action: handleEditProfile },
+    { id: '2', title: t('notifications'), icon: <NotificationMessageIcon width={20} height={20} />, action: handleNotifications },
+    { id: '5', title: t('support'), icon: <LifeBuoyIcon width={20} height={20} />, action: handleSupport },
   ];
 
   if (isLoading) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>Загрузка профиля...</Text>
+        <Text style={styles.loadingText}>{t('loading_profile')}</Text>
       </View>
     );
   }
@@ -254,9 +257,9 @@ export const CustomerProfileScreen: React.FC = () => {
   if (!user) {
     return (
       <View style={[styles.container, styles.errorContainer]}>
-        <Text style={styles.errorText}>Ошибка загрузки профиля</Text>
+        <Text style={styles.errorText}>{t('profile_load_error')}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={loadUserProfile}>
-          <Text style={styles.retryButtonText}>Попробовать снова</Text>
+          <Text style={styles.retryButtonText}>{t('try_again')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -268,8 +271,8 @@ export const CustomerProfileScreen: React.FC = () => {
       <SafeAreaView style={styles.content}>
         {/* Custom Header */}
         <View style={[styles.contentHeader, { paddingTop: theme.spacing.lg + getAndroidStatusBarHeight() }]}>
-          <Text style={styles.title}>Профиль</Text>
-          <Text style={styles.subtitle}>Управляйте своим профилем</Text>
+          <Text style={styles.title}>{t('profile_title')}</Text>
+          <Text style={styles.subtitle}>{t('profile_subtitle')}</Text>
         </View>
 
         <ScrollView
@@ -322,7 +325,7 @@ export const CustomerProfileScreen: React.FC = () => {
               {stats.activeOrders > 0 && (
                 <View style={styles.statusContainer}>
                   <Text style={styles.statusText}>
-                    {stats.activeOrders} активных заказов
+                    {t('active_orders', { count: stats.activeOrders })}
                   </Text>
                 </View>
               )}
@@ -333,19 +336,19 @@ export const CustomerProfileScreen: React.FC = () => {
           <View style={styles.mainStatsContainer}>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>{stats.totalOrders}</Text>
-              <Text style={styles.statLabel}>Заказов</Text>
+              <Text style={styles.statLabel}>{t('orders_label')}</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>{stats.completedOrders}</Text>
-              <Text style={styles.statLabel}>Завершено</Text>
+              <Text style={styles.statLabel}>{t('completed_label')}</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>
                 {stats.monthsOnPlatform > 12
-                  ? `${Math.floor(stats.monthsOnPlatform / 12)} г`
-                  : `${stats.monthsOnPlatform} мес`}
+                  ? `${Math.floor(stats.monthsOnPlatform / 12)} ${t('years_short')}`
+                  : `${stats.monthsOnPlatform} ${t('months_short')}`}
               </Text>
-              <Text style={styles.statLabel}>На платформе</Text>
+              <Text style={styles.statLabel}>{t('on_platform_label')}</Text>
             </View>
           </View>
 
@@ -356,7 +359,7 @@ export const CustomerProfileScreen: React.FC = () => {
                 <View style={styles.menuIconContainer}>
                   <UserEditIcon width={20} height={20} />
                 </View>
-                <Text style={styles.menuText}>Редактировать профиль</Text>
+                <Text style={styles.menuText}>{t('edit_profile')}</Text>
               </View>
               <Text style={styles.menuArrow}>›</Text>
             </TouchableOpacity>
@@ -366,7 +369,7 @@ export const CustomerProfileScreen: React.FC = () => {
                 <View style={styles.menuIconContainer}>
                   <NotificationMessageIcon width={20} height={20} />
                 </View>
-                <Text style={styles.menuText}>Уведомления</Text>
+                <Text style={styles.menuText}>{t('notifications')}</Text>
               </View>
               <Text style={styles.menuArrow}>›</Text>
             </TouchableOpacity>
@@ -376,7 +379,7 @@ export const CustomerProfileScreen: React.FC = () => {
                 <View style={styles.menuIconContainer}>
                   <LifeBuoyIcon width={20} height={20} />
                 </View>
-                <Text style={styles.menuText}>Поддержка</Text>
+                <Text style={styles.menuText}>{t('support')}</Text>
               </View>
               <Text style={styles.menuArrow}>›</Text>
             </TouchableOpacity>
@@ -386,7 +389,7 @@ export const CustomerProfileScreen: React.FC = () => {
                 <View style={styles.menuIconContainer}>
                   <LogOutIcon width={20} height={20} color={logoutColor} />
                 </View>
-                <Text style={[styles.menuText, styles.logoutText]}>Выйти</Text>
+                <Text style={[styles.menuText, styles.logoutText]}>{t('logout')}</Text>
               </View>
             </TouchableOpacity>
           </View>

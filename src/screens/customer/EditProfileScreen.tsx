@@ -22,6 +22,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { HeaderWithBack } from '../../components/common';
 import { authService } from '../../services/authService';
 import { User } from '../../types';
+import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -31,6 +32,9 @@ const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
 export const EditProfileScreen: React.FC = () => {
   const navigation = useNavigation();
   const insets = usePlatformSafeAreaInsets();
+  const t = useCustomerTranslation();
+  const tError = useErrorsTranslation();
+  const tCommon = useCommonTranslation();
 
   // Состояние загрузки и данных пользователя
   const [user, setUser] = useState<User | null>(null);
@@ -66,12 +70,12 @@ export const EditProfileScreen: React.FC = () => {
         setBirthDate(userData.birthDate ? new Date(userData.birthDate) : null);
         setProfileImage(userData.profileImage || null);
       } else {
-        Alert.alert('Ошибка', 'Пользователь не авторизован');
+        Alert.alert(tError('error'), t('user_not_authorized'));
         navigation.goBack();
       }
     } catch (error) {
       console.error('Ошибка загрузки профиля:', error);
-      Alert.alert('Ошибка', 'Не удалось загрузить данные профиля');
+      Alert.alert(tError('error'), t('profile_data_load_error'));
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +102,7 @@ export const EditProfileScreen: React.FC = () => {
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Ошибка', 'Нужен доступ к фотографиям');
+      Alert.alert(tError('error'), t('photo_access_needed'));
       return;
     }
 
@@ -116,17 +120,17 @@ export const EditProfileScreen: React.FC = () => {
 
   const validateForm = (): boolean => {
     if (!firstName.trim()) {
-      Alert.alert('Ошибка', 'Введите имя');
+      Alert.alert(tError('error'), t('enter_first_name'));
       return false;
     }
 
     if (!lastName.trim()) {
-      Alert.alert('Ошибка', 'Введите фамилию');
+      Alert.alert(tError('error'), t('enter_last_name'));
       return false;
     }
 
     if (!birthDate) {
-      Alert.alert('Ошибка', 'Выберите дату рождения');
+      Alert.alert(tError('error'), t('select_birth_date'));
       return false;
     }
 
@@ -136,7 +140,7 @@ export const EditProfileScreen: React.FC = () => {
     const monthDiff = today.getMonth() - birthDate.getMonth();
 
     if (age < 16 || (age === 16 && monthDiff < 0)) {
-      Alert.alert('Ошибка', 'Возраст должен быть не менее 16 лет');
+      Alert.alert(tError('error'), t('age_minimum_16'));
       return false;
     }
 
@@ -174,26 +178,26 @@ export const EditProfileScreen: React.FC = () => {
         console.log('[EditProfile] ✅ Профиль успешно обновлен');
 
         const successMessage = hasNewImage
-          ? 'Профиль и фото успешно обновлены'
-          : 'Профиль обновлен';
+          ? t('profile_photo_updated')
+          : t('profile_updated');
 
-        Alert.alert('Успешно', successMessage, [
-          { text: 'OK', onPress: () => navigation.goBack() }
+        Alert.alert(t('success'), successMessage, [
+          { text: tCommon('ok'), onPress: () => navigation.goBack() }
         ]);
       } else {
         console.error('[EditProfile] ❌ Ошибка обновления профиля:', result.error);
 
         // Более детальные сообщения об ошибках
-        let errorMessage = result.error || 'Не удалось обновить профиль';
+        let errorMessage = result.error || t('profile_update_error');
         if (result.error?.includes('Storage') || result.error?.includes('изображение')) {
-          errorMessage = 'Не удалось загрузить фото. Попробуйте выбрать другое изображение или проверьте интернет-соединение.';
+          errorMessage = t('photo_upload_error');
         }
 
-        Alert.alert('Ошибка', errorMessage);
+        Alert.alert(tError('error'), errorMessage);
       }
     } catch (error) {
       console.error('Ошибка сохранения профиля:', error);
-      Alert.alert('Ошибка', 'Произошла ошибка при сохранении. Попробуйте еще раз.');
+      Alert.alert(tError('error'), t('save_error'));
     } finally {
       setIsSaving(false);
       setIsUploadingImage(false);
@@ -203,7 +207,7 @@ export const EditProfileScreen: React.FC = () => {
   const getInitials = (): string => {
     const first = firstName.charAt(0)?.toUpperCase() || '';
     const last = lastName.charAt(0)?.toUpperCase() || '';
-    return first + last || 'У';
+    return first + last || 'F';
   };
 
   const hasChanges = (): boolean => {
@@ -221,10 +225,10 @@ export const EditProfileScreen: React.FC = () => {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <HeaderWithBack title="Редактировать профиль" />
+        <HeaderWithBack title={t('edit_profile_title')} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Загрузка профиля...</Text>
+          <Text style={styles.loadingText}>{t('loading_profile')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -233,11 +237,11 @@ export const EditProfileScreen: React.FC = () => {
   if (!user) {
     return (
       <SafeAreaView style={styles.container}>
-        <HeaderWithBack title="Редактировать профиль" />
+        <HeaderWithBack title={t('edit_profile_title')} />
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Ошибка загрузки профиля</Text>
+          <Text style={styles.errorText}>{t('profile_load_error')}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={loadUserProfile}>
-            <Text style={styles.retryButtonText}>Попробовать снова</Text>
+            <Text style={styles.retryButtonText}>{t('try_again')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -248,7 +252,7 @@ export const EditProfileScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
 
-      <HeaderWithBack title="Редактировать профиль" />
+      <HeaderWithBack title={t('edit_profile_title')} />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Profile Photo Section */}
@@ -273,7 +277,7 @@ export const EditProfileScreen: React.FC = () => {
         <View style={styles.form}>
           {/* Phone Number (non-editable) */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Номер телефона</Text>
+            <Text style={styles.label}>{t('phone_number')}</Text>
             <View style={styles.inputContainer}>
               <TextInput
                 style={[styles.input, styles.inputDisabled]}
@@ -287,13 +291,13 @@ export const EditProfileScreen: React.FC = () => {
 
           {/* Last Name */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Фамилия</Text>
+            <Text style={styles.label}>{t('last_name')}</Text>
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.input}
                 value={lastName}
                 onChangeText={setLastName}
-                placeholder="Иванов"
+                placeholder={t('last_name_placeholder')}
                 placeholderTextColor="#C7C7CC"
               />
             </View>
@@ -301,13 +305,13 @@ export const EditProfileScreen: React.FC = () => {
 
           {/* First Name */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Имя</Text>
+            <Text style={styles.label}>{t('first_name')}</Text>
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.input}
                 value={firstName}
                 onChangeText={setFirstName}
-                placeholder="Иван"
+                placeholder={t('first_name_placeholder')}
                 placeholderTextColor="#C7C7CC"
               />
             </View>
@@ -315,13 +319,13 @@ export const EditProfileScreen: React.FC = () => {
 
           {/* Middle Name */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Отчество</Text>
+            <Text style={styles.label}>{t('middle_name')}</Text>
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.input}
                 value={middleName}
                 onChangeText={setMiddleName}
-                placeholder="Иванович"
+                placeholder={t('middle_name_placeholder')}
                 placeholderTextColor="#C7C7CC"
               />
             </View>
@@ -329,13 +333,13 @@ export const EditProfileScreen: React.FC = () => {
 
           {/* Birth Date */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Дата рождения</Text>
+            <Text style={styles.label}>{t('birth_date')}</Text>
             <TouchableOpacity
               style={styles.inputContainer}
               onPress={() => setShowDatePicker(true)}
             >
               <Text style={[styles.input, styles.dateInput]}>
-                {birthDate ? formatDate(birthDate) : 'Выберите дату рождения'}
+                {birthDate ? formatDate(birthDate) : t('select_birth_date_placeholder')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -353,7 +357,7 @@ export const EditProfileScreen: React.FC = () => {
           disabled={isSaving || !hasChanges()}
         >
           <Text style={styles.saveButtonText}>
-            {isUploadingImage ? 'Загружаем...' : isSaving ? 'Сохраняем...' : 'Сохранить'}
+            {isUploadingImage ? t('uploading') : isSaving ? t('saving') : t('save')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -367,7 +371,7 @@ export const EditProfileScreen: React.FC = () => {
                 style={styles.doneButton}
                 onPress={() => setShowDatePicker(false)}
               >
-                <Text style={styles.doneButtonText}>Готово</Text>
+                <Text style={styles.doneButtonText}>{t('done')}</Text>
               </TouchableOpacity>
             </View>
           )}

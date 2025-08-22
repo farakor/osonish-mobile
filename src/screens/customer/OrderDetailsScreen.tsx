@@ -33,6 +33,7 @@ import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { supabase } from '../../services/supabaseClient';
 import { Order, Applicant, User } from '../../types';
+import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 
 const { width, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = width - 48; // 24px margin on each side
@@ -210,6 +211,9 @@ export const OrderDetailsScreen: React.FC = () => {
   const route = useRoute<OrderDetailsRouteProp>();
   const { orderId } = route.params;
   const insets = usePlatformSafeAreaInsets();
+  const t = useCustomerTranslation();
+  const tError = useErrorsTranslation();
+  const tCommon = useCommonTranslation();
 
 
 
@@ -275,7 +279,7 @@ export const OrderDetailsScreen: React.FC = () => {
         }
       } catch (error) {
         console.error('Ошибка загрузки заказа:', error);
-        Alert.alert('Ошибка', 'Не удалось загрузить данные заказа');
+        Alert.alert(tError('error'), t('load_order_error'));
       } finally {
         setIsLoading(false);
       }
@@ -453,10 +457,10 @@ export const OrderDetailsScreen: React.FC = () => {
 
   const getApplicantStatusText = (status: string): string => {
     switch (status) {
-      case 'pending': return 'Ожидает';
-      case 'accepted': return 'Выбран';
-      case 'rejected': return 'Отклонен';
-      default: return 'Неизвестно';
+      case 'pending': return t('status_pending');
+      case 'accepted': return t('status_accepted');
+      case 'rejected': return t('status_rejected');
+      default: return t('status_unknown');
     }
   };
 
@@ -466,8 +470,8 @@ export const OrderDetailsScreen: React.FC = () => {
     // Проверяем, что заказ можно редактировать
     if (!['new', 'response_received'].includes(order.status)) {
       Alert.alert(
-        'Нельзя редактировать',
-        'Заказ можно редактировать только пока он не находится в работе или не завершен.'
+        t('cannot_edit'),
+        t('edit_restriction')
       );
       return;
     }
@@ -482,19 +486,19 @@ export const OrderDetailsScreen: React.FC = () => {
     // Проверяем, что заказ можно отменить
     if (!['new', 'response_received'].includes(order.status)) {
       Alert.alert(
-        'Нельзя отменить',
-        'Заказ можно отменить только пока он не находится в работе или не завершен.'
+        t('cannot_cancel'),
+        t('cancel_restriction')
       );
       return;
     }
 
     Alert.alert(
-      'Отменить заказ',
-      'Вы уверены, что хотите отменить этот заказ? Все отклики на этот заказ будут удалены, и исполнители освободятся на указанную дату. Заказ останется в истории со статусом "Отменен".',
+      t('cancel_order'),
+      t('cancel_confirmation'),
       [
-        { text: 'Назад', style: 'cancel' },
+        { text: tCommon('back'), style: 'cancel' },
         {
-          text: 'Отменить заказ',
+          text: t('cancel_order_button'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -503,16 +507,16 @@ export const OrderDetailsScreen: React.FC = () => {
 
               if (result.success) {
                 Alert.alert(
-                  'Заказ отменен',
-                  'Заказ успешно отменен. Исполнители освобождены на указанную дату.',
-                  [{ text: 'ОК', onPress: () => navigation.navigate('MainTabs' as any) }]
+                  t('order_cancelled'),
+                  t('order_cancelled_success'),
+                  [{ text: tCommon('ok'), onPress: () => navigation.navigate('MainTabs' as any) }]
                 );
               } else {
-                Alert.alert('Ошибка', result.error || 'Не удалось отменить заказ');
+                Alert.alert(tError('error'), result.error || t('cancel_order_error'));
               }
             } catch (error) {
               console.error('Ошибка отмены заказа:', error);
-              Alert.alert('Ошибка', 'Произошла ошибка при отмене заказа');
+              Alert.alert(tError('error'), t('cancel_order_general_error'));
             } finally {
               setIsLoading(false);
             }
@@ -538,7 +542,7 @@ export const OrderDetailsScreen: React.FC = () => {
       // Принимаем выбранного исполнителя
       const success = await orderService.updateApplicantStatus(selectedApplicant.id, 'accepted');
       if (!success) {
-        Alert.alert('Ошибка', 'Не удалось принять отклик');
+        Alert.alert(tError('error'), t('accept_applicant_error'));
         setIsProcessing(false);
         setShowConfirmModal(false);
         setSelectedApplicant(null);
@@ -595,11 +599,11 @@ export const OrderDetailsScreen: React.FC = () => {
       setSelectedApplicant(null);
 
       // Показываем сообщение об успехе
-      Alert.alert('Успешно', `Исполнитель ${selectedApplicant.workerName} выбран для выполнения заказа`);
+      Alert.alert(tCommon('success'), t('applicant_selected_success', { name: selectedApplicant.workerName }));
 
     } catch (error) {
       console.error('Ошибка принятия отклика:', error);
-      Alert.alert('Ошибка', 'Произошла ошибка при принятии отклика');
+      Alert.alert(tError('error'), t('accept_applicant_general_error'));
       setIsProcessing(false);
       setShowConfirmModal(false);
       setSelectedApplicant(null);
@@ -609,12 +613,12 @@ export const OrderDetailsScreen: React.FC = () => {
   // Завершить заказ
   const handleCallWorker = (workerPhone: string, workerName: string) => {
     Alert.alert(
-      'Позвонить исполнителю',
-      `Позвонить ${workerName} по номеру ${workerPhone}?`,
+      t('call_worker'),
+      t('call_worker_confirmation', { name: workerName, phone: workerPhone }),
       [
-        { text: 'Отмена', style: 'cancel' },
+        { text: tCommon('cancel'), style: 'cancel' },
         {
-          text: 'Позвонить',
+          text: t('call'),
           onPress: () => {
             Linking.openURL(`tel:${workerPhone}`);
           }
@@ -633,13 +637,13 @@ export const OrderDetailsScreen: React.FC = () => {
     if (['new', 'response_received'].includes(order.status)) {
       items.push({
         id: 'edit',
-        title: 'Редактировать',
+        title: t('edit'),
         onPress: handleEditOrder,
       });
 
       items.push({
         id: 'cancel',
-        title: 'Отменить',
+        title: tCommon('cancel'),
         color: '#DC2626',
         onPress: handleCancelOrder,
       });
@@ -652,12 +656,12 @@ export const OrderDetailsScreen: React.FC = () => {
     if (!order || isCompletingOrder) return;
 
     Alert.alert(
-      'Завершить заказ',
-      'Вы уверены, что хотите завершить этот заказ? После завершения вам нужно будет оценить работу исполнителей.',
+      t('complete_order'),
+      t('complete_confirmation'),
       [
-        { text: 'Отмена', style: 'cancel' },
+        { text: tCommon('cancel'), style: 'cancel' },
         {
-          text: 'Завершить',
+          text: t('complete'),
           style: 'destructive',
           onPress: async () => {
             setIsCompletingOrder(true);
@@ -668,7 +672,7 @@ export const OrderDetailsScreen: React.FC = () => {
               // Завершаем заказ
               const success = await orderService.completeOrder(orderId);
               if (!success) {
-                Alert.alert('Ошибка', 'Не удалось завершить заказ');
+                Alert.alert(tError('error'), t('complete_order_error'));
                 return;
               }
 
@@ -685,10 +689,10 @@ export const OrderDetailsScreen: React.FC = () => {
               } else {
                 // Если нет исполнителей, просто показываем сообщение
                 Alert.alert(
-                  'Заказ завершен',
-                  'Заказ успешно завершен',
+                  t('order_completed'),
+                  t('order_completed_success'),
                   [{
-                    text: 'ОК',
+                    text: tCommon('ok'),
                     onPress: () => {
                       // Сбрасываем стек навигации, чтобы нельзя было вернуться назад
                       navigation.reset({
@@ -701,7 +705,7 @@ export const OrderDetailsScreen: React.FC = () => {
               }
             } catch (error) {
               console.error('Ошибка завершения заказа:', error);
-              Alert.alert('Ошибка', 'Произошла ошибка при завершении заказа');
+              Alert.alert(tError('error'), t('complete_order_general_error'));
             } finally {
               setIsCompletingOrder(false);
             }
@@ -720,12 +724,12 @@ export const OrderDetailsScreen: React.FC = () => {
 
       if (diffHours < 1) {
         const diffMins = Math.floor(diffMs / (1000 * 60));
-        return `${diffMins} мин назад`;
+        return t('minutes_ago_short', { count: diffMins });
       } else if (diffHours < 24) {
-        return `${diffHours} ч назад`;
+        return t('hours_ago_short', { count: diffHours });
       } else {
         const diffDays = Math.floor(diffHours / 24);
-        return `${diffDays} дн назад`;
+        return t('days_ago_short', { count: diffDays });
       }
     };
 
@@ -815,7 +819,7 @@ export const OrderDetailsScreen: React.FC = () => {
                 <View style={styles.modernStatItem}>
                   <Text style={styles.modernStatIcon}>💼</Text>
                   <Text style={[styles.modernStatText, isRejected && styles.rejectedText]}>
-                    {item.completedJobs || 0} заказов
+                    {t('jobs_count', { count: item.completedJobs || 0 })}
                   </Text>
                 </View>
               </View>
@@ -840,7 +844,7 @@ export const OrderDetailsScreen: React.FC = () => {
             ]}>
               <View style={styles.modernPriceHeader}>
                 <Text style={[styles.modernPriceLabel, isRejected && styles.rejectedText]}>
-                  Предложенная цена
+                  {t('proposed_price')}
                 </Text>
                 {order && item.proposedPrice !== order.budget && (
                   <View style={[
@@ -870,7 +874,7 @@ export const OrderDetailsScreen: React.FC = () => {
           {item.message && item.message.trim() && (
             <View style={styles.modernMessageContainer}>
               <Text style={[styles.modernMessageLabel, isRejected && styles.rejectedText]}>
-                💬 Комментарий
+                {t('comment')}
               </Text>
               <Text style={[styles.modernMessageText, isRejected && styles.rejectedText]}>
                 {item.message}
@@ -882,7 +886,7 @@ export const OrderDetailsScreen: React.FC = () => {
           {isAccepted && item.workerPhone && (
             <View style={styles.modernContactInfo}>
               <View style={styles.modernContactHeader}>
-                <Text style={styles.modernContactLabel}>📞 Контакты</Text>
+                <Text style={styles.modernContactLabel}>{t('contacts')}</Text>
               </View>
               <View style={styles.modernContactRow}>
                 <Text style={styles.modernPhoneNumber}>{item.workerPhone}</Text>
@@ -890,7 +894,7 @@ export const OrderDetailsScreen: React.FC = () => {
                   style={styles.modernCallButton}
                   onPress={() => handleCallWorker(item.workerPhone, item.workerName)}
                 >
-                  <Text style={styles.modernCallButtonText}>Позвонить</Text>
+                  <Text style={styles.modernCallButtonText}>{t('call')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -911,7 +915,7 @@ export const OrderDetailsScreen: React.FC = () => {
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 android_ripple={{ color: 'rgba(255, 255, 255, 0.3)' }}
               >
-                <Text style={styles.modernAcceptButtonText}>✓ Принять исполнителя</Text>
+                <Text style={styles.modernAcceptButtonText}>{t('accept_worker')}</Text>
               </Pressable>
             </View>
           )}
@@ -926,7 +930,7 @@ export const OrderDetailsScreen: React.FC = () => {
       <SafeAreaView style={styles.container}>
         <HeaderWithBack />
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Загружаем данные заказа...</Text>
+          <Text style={styles.loadingText}>{t('loading_order')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -937,12 +941,12 @@ export const OrderDetailsScreen: React.FC = () => {
       <SafeAreaView style={styles.container}>
         <HeaderWithBack />
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Заказ не найден</Text>
+          <Text style={styles.errorText}>{t('order_not_found')}</Text>
           <TouchableOpacity
             style={styles.errorButton}
             onPress={() => navigation.goBack()}
           >
-            <Text style={styles.errorButtonText}>Назад</Text>
+            <Text style={styles.errorButtonText}>{t('back')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -969,7 +973,7 @@ export const OrderDetailsScreen: React.FC = () => {
               {order?.title || 'Загрузка...'}
             </Text>
             <Text style={styles.stickyPrice}>
-              {order ? formatBudget(order.budget) + ' сум' : ''}
+              {order ? formatBudget(order.budget) + ' ' + t('sum_currency') : ''}
             </Text>
           </View>
           {canShowCompleteButton(order) ? (
@@ -979,7 +983,7 @@ export const OrderDetailsScreen: React.FC = () => {
               activeOpacity={0.8}
             >
               <Text style={styles.stickyCompleteButtonText}>
-                {isCompletingOrder ? 'Завершаем...' : 'Завершить'}
+                {isCompletingOrder ? t('completing') : t('complete')}
               </Text>
             </TouchableOpacity>
           ) : getDropdownMenuItems().length > 0 ? (
@@ -1019,7 +1023,7 @@ export const OrderDetailsScreen: React.FC = () => {
                     activeOpacity={0.8}
                   >
                     <Text style={styles.completeButtonText}>
-                      {isCompletingOrder ? 'Завершаем...' : 'Завершить'}
+                      {isCompletingOrder ? t('completing') : t('complete')}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -1048,12 +1052,12 @@ export const OrderDetailsScreen: React.FC = () => {
               </View>
               <View style={styles.profileInfo}>
                 <Text style={styles.profileName}>
-                  {currentUser ? `${currentUser.lastName} ${currentUser.firstName}` : 'Пользователь'}
+                  {currentUser ? `${currentUser.lastName} ${currentUser.firstName}` : t('user')}
                 </Text>
-                <Text style={styles.profileRole}>Заказчик</Text>
+                <Text style={styles.profileRole}>{t('customer')}</Text>
               </View>
               <View style={styles.priceContainer}>
-                <Text style={styles.orderPrice}>{formatBudget(order.budget)} сум</Text>
+                <Text style={styles.orderPrice}>{formatBudget(order.budget)} {t('sum_currency')}</Text>
               </View>
             </View>
           </View>
@@ -1102,7 +1106,7 @@ export const OrderDetailsScreen: React.FC = () => {
 
           {/* Details Section */}
           <View style={styles.detailsSection}>
-            <Text style={styles.detailsTitle}>Детали</Text>
+            <Text style={styles.detailsTitle}>{t('details')}</Text>
             <Text style={styles.detailsText}>{order.description}</Text>
           </View>
 
@@ -1112,7 +1116,7 @@ export const OrderDetailsScreen: React.FC = () => {
               latitude={order.latitude}
               longitude={order.longitude}
               address={order.location}
-              title="Куда ехать"
+              title={t('where_to_go')}
             />
           )}
 
@@ -1120,11 +1124,11 @@ export const OrderDetailsScreen: React.FC = () => {
           {applicants.length > 0 && (
             <View style={styles.applicantsSection}>
               <View style={styles.applicantsHeader}>
-                <Text style={styles.applicantsTitle}>Отклики ({applicants.length})</Text>
+                <Text style={styles.applicantsTitle}>{t('applicants_count', { count: applicants.length })}</Text>
                 {order?.workersNeeded && (
                   <View style={styles.progressInfo}>
                     <Text style={styles.applicantsSubtitle}>
-                      Выбрано {acceptedApplicants.size} из {order.workersNeeded} исполнител{order.workersNeeded === 1 ? 'я' : 'ей'}
+                      {t('selected_workers', { selected: acceptedApplicants.size, needed: order.workersNeeded, ending: order.workersNeeded === 1 ? t('worker_ending_single') : t('worker_ending_multiple') })}
                     </Text>
                     <View style={styles.progressBarSmall}>
                       <View
@@ -1203,7 +1207,7 @@ export const OrderDetailsScreen: React.FC = () => {
                           </View>
                           {item.status === 'accepted' && (
                             <View style={styles.modernPreviewSelectedBadge}>
-                              <Text style={styles.modernPreviewSelectedBadgeText}>✓ ВЫБРАН</Text>
+                              <Text style={styles.modernPreviewSelectedBadgeText}>{t('selected_badge')}</Text>
                             </View>
                           )}
                         </View>
@@ -1224,9 +1228,9 @@ export const OrderDetailsScreen: React.FC = () => {
           {/* Если откликов нет */}
           {applicants.length === 0 && !applicantsLoading && (
             <View style={styles.noApplicantsSection}>
-              <Text style={styles.noApplicantsTitle}>Пока нет откликов</Text>
+              <Text style={styles.noApplicantsTitle}>{t('no_applicants_title')}</Text>
               <Text style={styles.noApplicantsText}>
-                Исполнители еще не откликнулись на ваш заказ. Подождите немного или расширьте описание заказа.
+                {t('no_applicants_text')}
               </Text>
             </View>
           )}
@@ -1240,7 +1244,7 @@ export const OrderDetailsScreen: React.FC = () => {
               onPress={() => navigation.navigate('ApplicantsList', { orderId: orderId })}
             >
               <Text style={styles.fixedViewAllApplicantsButtonText}>
-                Посмотреть все отклики ({applicants.length})
+                {t('view_all_applicants', { count: applicants.length })}
               </Text>
             </TouchableOpacity>
           </View>
@@ -1261,10 +1265,10 @@ export const OrderDetailsScreen: React.FC = () => {
             <View style={styles.confirmModalHeader}>
               <Text style={styles.confirmModalIcon}>👤</Text>
               <Text style={styles.confirmModalTitle}>
-                Вы выбрали {selectedApplicant?.workerName} как исполнителя
+                {t('confirm_selection', { name: selectedApplicant?.workerName })}
               </Text>
               <Text style={styles.confirmModalSubtitle}>
-                Подтвердите свой выбор. Данное действие нельзя отменить.
+                {t('confirm_selection_subtitle')}
               </Text>
             </View>
 
@@ -1282,7 +1286,7 @@ export const OrderDetailsScreen: React.FC = () => {
                 disabled={isProcessing}
               >
                 <Text style={styles.confirmButtonText}>
-                  {isProcessing ? 'Обрабатываем...' : 'Подтверждаю'}
+                  {isProcessing ? t('processing') : t('confirm')}
                 </Text>
               </Pressable>
               <Pressable
@@ -1294,7 +1298,7 @@ export const OrderDetailsScreen: React.FC = () => {
                 disabled={isProcessing}
               >
                 <Text style={[styles.modalCancelButtonText, isProcessing && styles.cancelButtonTextDisabled]}>
-                  Отмена
+                  {tCommon('cancel')}
                 </Text>
               </Pressable>
             </View>

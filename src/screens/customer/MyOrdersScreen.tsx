@@ -20,6 +20,7 @@ import { authService } from '../../services/authService';
 import { supabase } from '../../services/supabaseClient';
 import { Order } from '../../types';
 import { ModernOrderCard } from '../../components/cards';
+import { useCustomerTranslation } from '../../hooks/useTranslation';
 
 // Функция для получения высоты статусбара только на Android
 const getAndroidStatusBarHeight = () => {
@@ -30,6 +31,7 @@ type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
 
 export const MyOrdersScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const t = useCustomerTranslation();
 
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -146,15 +148,15 @@ export const MyOrdersScreen: React.FC = () => {
   const getStatusText = (status: Order['status']) => {
     switch (status) {
       case 'new':
-        return 'Новый';
+        return t('status_new');
       case 'response_received':
-        return 'Отклик получен';
+        return t('status_response_received');
       case 'in_progress':
-        return 'В работе';
+        return t('status_in_progress');
       case 'completed':
-        return 'Завершен';
+        return t('status_completed');
       case 'cancelled':
-        return 'Отменен';
+        return t('status_cancelled');
       default:
         return status;
     }
@@ -179,13 +181,13 @@ export const MyOrdersScreen: React.FC = () => {
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / 60000);
 
     if (diffInMinutes < 60) {
-      return `${diffInMinutes} мин назад`;
+      return t('minutes_ago', { count: diffInMinutes });
     } else if (diffInMinutes < 1440) {
       const hours = Math.floor(diffInMinutes / 60);
-      return `${hours} ч назад`;
+      return t('hours_ago', { count: hours });
     } else {
       const days = Math.floor(diffInMinutes / 1440);
-      return `${days} дн назад`;
+      return t('days_ago', { count: days });
     }
   };
 
@@ -208,8 +210,8 @@ export const MyOrdersScreen: React.FC = () => {
       <SafeAreaView style={styles.content}>
         {/* Content Header */}
         <View style={[styles.contentHeader, { paddingTop: theme.spacing.xl + getAndroidStatusBarHeight() }]}>
-          <Text style={styles.title}>Мои заказы</Text>
-          <Text style={styles.subtitle}>Ваши завершенные заказы</Text>
+          <Text style={styles.title}>{t('my_orders_title')}</Text>
+          <Text style={styles.subtitle}>{t('my_orders_subtitle')}</Text>
         </View>
 
 
@@ -217,7 +219,7 @@ export const MyOrdersScreen: React.FC = () => {
         {/* Orders List */}
         {isLoading && allOrders.length === 0 ? (
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Загружаем ваши заказы...</Text>
+            <Text style={styles.loadingText}>{t('loading_my_orders')}</Text>
           </View>
         ) : filteredOrders.length > 0 ? (
           <FlatList
@@ -239,10 +241,10 @@ export const MyOrdersScreen: React.FC = () => {
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateIcon}>📋</Text>
             <Text style={styles.emptyStateTitle}>
-              Нет завершенных заказов
+              {t('no_completed_orders')}
             </Text>
             <Text style={styles.emptyStateText}>
-              У вас пока нет завершенных или отмененных заказов
+              {t('no_completed_orders_text')}
             </Text>
           </View>
         )}

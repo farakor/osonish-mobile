@@ -16,6 +16,7 @@ import { theme } from '../../constants';
 import { HeaderWithBack } from '../../components/common';
 import { notificationService, NotificationItem } from '../../services/notificationService';
 import { authService } from '../../services/authService';
+import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 
 // SVG иконка check-circle-broken
 const checkCircleBrokenSvg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -40,23 +41,25 @@ const getNotificationIcon = (type: string): string => {
   }
 };
 
-const getTimeAgo = (dateString: string): string => {
+const getTimeAgo = (dateString: string, t: any): string => {
   const now = new Date();
   const date = new Date(dateString);
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
   if (diffInSeconds < 60) {
-    return 'Только что';
+    return t('just_now');
   } else if (diffInSeconds < 3600) {
     const minutes = Math.floor(diffInSeconds / 60);
-    return `${minutes} ${minutes === 1 ? 'минуту' : minutes < 5 ? 'минуты' : 'минут'} назад`;
+    const timeWord = minutes === 1 ? t('minute_ago') : minutes < 5 ? t('minutes_ago') : t('minutes_ago_many');
+    return t('time_ago_template', { time: `${minutes} ${timeWord}` });
   } else if (diffInSeconds < 86400) {
     const hours = Math.floor(diffInSeconds / 3600);
-    return `${hours} ${hours === 1 ? 'час' : hours < 5 ? 'часа' : 'часов'} назад`;
+    const timeWord = hours === 1 ? t('hour_ago') : hours < 5 ? t('hours_ago') : t('hours_ago_many');
+    return t('time_ago_template', { time: `${hours} ${timeWord}` });
   } else {
     const days = Math.floor(diffInSeconds / 86400);
-    if (days === 1) return 'Вчера';
-    if (days < 7) return `${days} дней назад`;
+    if (days === 1) return t('yesterday');
+    if (days < 7) return t('days_ago', { count: days });
 
     return date.toLocaleDateString('ru-RU', {
       day: 'numeric',
@@ -69,6 +72,9 @@ const getTimeAgo = (dateString: string): string => {
 
 export const NotificationsListScreen: React.FC = () => {
   const navigation = useNavigation();
+  const t = useCustomerTranslation();
+  const tError = useErrorsTranslation();
+  const tCommon = useCommonTranslation();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -84,7 +90,7 @@ export const NotificationsListScreen: React.FC = () => {
 
       const authState = authService.getAuthState();
       if (!authState.isAuthenticated || !authState.user) {
-        Alert.alert('Ошибка', 'Пользователь не авторизован');
+        Alert.alert(tError('error'), t('user_not_authorized'));
         return;
       }
 
@@ -97,7 +103,7 @@ export const NotificationsListScreen: React.FC = () => {
       setUnreadCount(unreadCountResult);
     } catch (error) {
       console.error('Ошибка загрузки уведомлений:', error);
-      Alert.alert('Ошибка', 'Не удалось загрузить уведомления');
+      Alert.alert(tError('error'), t('load_notifications_error'));
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -132,7 +138,7 @@ export const NotificationsListScreen: React.FC = () => {
     try {
       const authState = authService.getAuthState();
       if (!authState.isAuthenticated || !authState.user) {
-        Alert.alert('Ошибка', 'Пользователь не авторизован');
+        Alert.alert(tError('error'), t('user_not_authorized'));
         return;
       }
 
@@ -141,13 +147,13 @@ export const NotificationsListScreen: React.FC = () => {
         // Обновляем локальное состояние - отмечаем все как прочитанные
         setNotifications(prev => prev.map(item => ({ ...item, isRead: true })));
         setUnreadCount(0);
-        Alert.alert('Успешно', 'Все уведомления отмечены как прочитанные');
+        Alert.alert(t('success'), t('mark_all_read_success'));
       } else {
-        Alert.alert('Ошибка', 'Не удалось отметить уведомления как прочитанные');
+        Alert.alert(tError('error'), t('mark_all_read_error'));
       }
     } catch (error) {
       console.error('Ошибка отметки уведомлений:', error);
-      Alert.alert('Ошибка', 'Произошла ошибка');
+      Alert.alert(tError('error'), t('mark_notifications_error'));
     }
   };
 
@@ -178,7 +184,7 @@ export const NotificationsListScreen: React.FC = () => {
           {item.body}
         </Text>
         <Text style={styles.notificationTime}>
-          {getTimeAgo(item.createdAt)}
+          {getTimeAgo(item.createdAt, t)}
         </Text>
       </View>
     </TouchableOpacity>
@@ -187,9 +193,9 @@ export const NotificationsListScreen: React.FC = () => {
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <Text style={styles.emptyStateIcon}>🔔</Text>
-      <Text style={styles.emptyStateTitle}>Нет уведомлений</Text>
+      <Text style={styles.emptyStateTitle}>{t('no_notifications')}</Text>
       <Text style={styles.emptyStateDescription}>
-        Уведомления о ваших заказах и откликах будут появляться здесь
+        {t('notifications_description')}
       </Text>
     </View>
   );
@@ -207,7 +213,7 @@ export const NotificationsListScreen: React.FC = () => {
             <View style={styles.markAllButtonContent}>
               <SvgXml xml={checkCircleBrokenSvg} style={styles.markAllButtonIcon} />
               <Text style={styles.markAllButtonText}>
-                Отметить все как прочитанные ({unreadCount})
+                {t('mark_all_read', { count: unreadCount })}
               </Text>
             </View>
           </TouchableOpacity>
@@ -219,10 +225,10 @@ export const NotificationsListScreen: React.FC = () => {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <HeaderWithBack title="Уведомления" />
+        <HeaderWithBack title={t('notifications')} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Загружаем уведомления...</Text>
+          <Text style={styles.loadingText}>{t('loading_notifications')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -230,7 +236,7 @@ export const NotificationsListScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <HeaderWithBack title="Уведомления" />
+      <HeaderWithBack title={t('notifications')} />
 
       <FlatList
         data={notifications}
