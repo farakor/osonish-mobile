@@ -11,7 +11,8 @@ export type TranslationKey =
   | `notifications.${string}`
   | `support.${string}`
   | `categories.${string}`
-  | `errors.${string}`;
+  | `errors.${string}`
+  | `customer.${string}`;
 
 export interface UseTranslationReturn {
   t: (key: TranslationKey, options?: any) => string;
@@ -30,7 +31,7 @@ export const useTranslation = (): UseTranslationReturn => {
 };
 
 // Хук для получения переводов определенной категории
-export const useCategoryTranslation = (category: 'common' | 'auth' | 'profile' | 'orders' | 'jobs' | 'notifications' | 'support' | 'categories' | 'errors') => {
+export const useCategoryTranslation = (category: 'common' | 'auth' | 'profile' | 'orders' | 'jobs' | 'notifications' | 'support' | 'categories' | 'errors' | 'customer') => {
   const { t } = useTranslation();
 
   return (key: string, options?: any) => t(`${category}.${key}` as TranslationKey, options);
@@ -79,4 +80,9 @@ export const useCategoriesTranslation = () => {
 // Хук для переводов ошибок
 export const useErrorsTranslation = () => {
   return useCategoryTranslation('errors');
+};
+
+// Хук для переводов заказчика
+export const useCustomerTranslation = () => {
+  return useCategoryTranslation('customer');
 };

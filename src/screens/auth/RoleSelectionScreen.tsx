@@ -16,6 +16,7 @@ import { theme } from '../../constants';
 import type { RootStackParamList } from '../../types';
 import WorkerIcon from '../../../assets/engineer-worker.svg';
 import UserIcon from '../../../assets/user-03.svg';
+import { useAuthTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -40,6 +41,9 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export const RoleSelectionScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const t = useAuthTranslation();
+  const tError = useErrorsTranslation();
+  const tCommon = useCommonTranslation();
 
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
@@ -54,7 +58,7 @@ export const RoleSelectionScreen: React.FC = () => {
       const profileDataString = await AsyncStorage.default.getItem('@temp_profile_data');
 
       if (!profileDataString) {
-        Alert.alert('Ошибка', 'Данные профиля не найдены. Вернитесь к предыдущему шагу.');
+        Alert.alert(tError('error'), t('profile_data_not_found'));
         return;
       }
 
@@ -62,7 +66,7 @@ export const RoleSelectionScreen: React.FC = () => {
       navigation.navigate('CitySelection', { role: selectedRole });
     } catch (error) {
       console.error('Ошибка перехода к выбору города:', error);
-      Alert.alert('Ошибка', 'Произошла ошибка. Попробуйте еще раз.');
+      Alert.alert(tError('error'), t('general_error_try_again'));
     }
   };
 
@@ -118,25 +122,25 @@ export const RoleSelectionScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>Выберите вашу роль</Text>
+          <Text style={styles.title}>{t('role_selection_title')}</Text>
           <Text style={styles.subtitle}>
-            Как вы планируете использовать Oson Ish?
+            {t('role_selection_subtitle')}
           </Text>
         </View>
 
         <View style={styles.rolesContainer}>
           <RoleCard
             role="customer"
-            title="Я заказчик"
-            description="Ищу исполнителей для моих задач"
+            title={t('customer_role_title')}
+            description={t('customer_role_description')}
             isSelected={selectedRole === 'customer'}
             onPress={() => handleRoleSelect('customer')}
           />
 
           <RoleCard
             role="worker"
-            title="Я исполнитель"
-            description="Ищу работу и готов выполнять различные задачи"
+            title={t('worker_role_title')}
+            description={t('worker_role_description')}
             isSelected={selectedRole === 'worker'}
             onPress={() => handleRoleSelect('worker')}
           />
@@ -155,7 +159,7 @@ export const RoleSelectionScreen: React.FC = () => {
             styles.continueButtonText,
             !selectedRole && styles.continueButtonTextDisabled
           ]}>
-            Продолжить
+            {tCommon('continue')}
           </Text>
         </TouchableOpacity>
 

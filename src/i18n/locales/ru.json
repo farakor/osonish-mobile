@@ -99,7 +99,29 @@
     "choose_source": "Выберите источник",
     "profile_step_photo_subtitle": "Добавьте фото профиля чтобы повысить\nшансы одобрения заказчиком (необязательно)",
     "select_birth_date": "Выберите дату рождения",
-    "privacy_agreement_text": "Согласен с обработкой персональных данных"
+    "privacy_agreement_text": "Согласен с обработкой персональных данных",
+    "role_selection_title": "Выберите вашу роль",
+    "role_selection_subtitle": "Как вы планируете использовать Oson Ish?",
+    "customer_role_title": "Я заказчик",
+    "customer_role_description": "Ищу исполнителей для моих задач",
+    "worker_role_title": "Я исполнитель",
+    "worker_role_description": "Ищу работу и готов выполнять различные задачи",
+    "profile_data_not_found": "Данные профиля не найдены. Вернитесь к предыдущему шагу.",
+    "general_error_try_again": "Произошла ошибка. Попробуйте еще раз.",
+    "samarkand_city": "Самарканд и область",
+    "coming_soon": "Скоро будет доступен",
+    "registration_failed": "Не удалось завершить регистрацию",
+    "registration_error": "Произошла ошибка при регистрации. Попробуйте еще раз."
+  },
+  "customer": {
+    "my_orders": "Мои заказы",
+    "active_orders_count": "У вас {{count}} активных заказов",
+    "create_first_order": "Создайте свой первый заказ",
+    "create_new_order": "Создать новый заказ",
+    "create_order": "Создать заказ",
+    "loading_orders": "Загружаем ваши заказы...",
+    "no_active_orders": "У вас пока нет активных заказов",
+    "no_active_orders_description": "Создайте свой первый заказ, чтобы найти надежного исполнителя"
   },
   "profile": {
     "title": "Профиль",

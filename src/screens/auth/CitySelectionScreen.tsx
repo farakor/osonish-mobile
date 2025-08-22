@@ -12,8 +12,10 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RouteProp } from '@react-navigation/native';
 import { theme } from '../../constants';
 import type { RootStackParamList, City } from '../../types';
+import { useAuthTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -33,25 +35,24 @@ const getAndroidStatusBarHeight = () => {
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-type RouteProp = {
-  params: {
-    role: 'customer' | 'worker';
-  };
-};
-
-// Доступные города (пока только Самарканд)
-const AVAILABLE_CITIES: City[] = [
-  {
-    id: 'samarkand',
-    name: 'Самарканд и область',
-    isAvailable: true,
-  },
-];
+type CitySelectionRouteProp = RouteProp<RootStackParamList, 'CitySelection'>;
 
 export const CitySelectionScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
-  const route = useRoute<RouteProp>();
+  const route = useRoute<CitySelectionRouteProp>();
   const { role } = route.params;
+  const t = useAuthTranslation();
+  const tError = useErrorsTranslation();
+  const tCommon = useCommonTranslation();
+
+  // Доступные города (пока только Самарканд)
+  const AVAILABLE_CITIES: City[] = [
+    {
+      id: 'samarkand',
+      name: t('samarkand_city'),
+      isAvailable: true,
+    },
+  ];
 
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
 
@@ -70,7 +71,7 @@ export const CitySelectionScreen: React.FC = () => {
       const profileDataString = await AsyncStorage.default.getItem('@temp_profile_data');
 
       if (!profileDataString) {
-        Alert.alert('Ошибка', 'Данные профиля не найдены. Вернитесь к предыдущему шагу.');
+        Alert.alert(tError('error'), t('profile_data_not_found'));
         return;
       }
 
@@ -104,11 +105,11 @@ export const CitySelectionScreen: React.FC = () => {
           });
         }
       } else {
-        Alert.alert('Ошибка', result.error || 'Не удалось завершить регистрацию');
+        Alert.alert(tError('error'), result.error || t('registration_failed'));
       }
     } catch (error) {
       console.error('Ошибка завершения регистрации:', error);
-      Alert.alert('Ошибка', 'Произошла ошибка при регистрации. Попробуйте еще раз.');
+      Alert.alert(tError('error'), t('registration_error'));
     }
   };
 
@@ -141,7 +142,7 @@ export const CitySelectionScreen: React.FC = () => {
         </Text>
         {!city.isAvailable && (
           <Text style={styles.unavailableText}>
-            Скоро будет доступен
+            {t('coming_soon')}
           </Text>
         )}
       </View>
@@ -157,15 +158,15 @@ export const CitySelectionScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>Выберите город</Text>
+          <Text style={styles.title}>{t('city_selection_title')}</Text>
           <Text style={styles.subtitle}>
-            В каком городе вы проживаете?
+            {t('city_selection_subtitle')}
           </Text>
         </View>
 
         <View style={styles.noticeContainer}>
           <Text style={styles.noticeText}>
-            📍 Данный проект является пилотным и пока доступен только в Самарканде и области
+            {t('city_notice')}
           </Text>
         </View>
 
@@ -193,7 +194,7 @@ export const CitySelectionScreen: React.FC = () => {
             styles.continueButtonText,
             !selectedCity && styles.continueButtonTextDisabled
           ]}>
-            Продолжить
+            {tCommon('continue')}
           </Text>
         </TouchableOpacity>
       </View>

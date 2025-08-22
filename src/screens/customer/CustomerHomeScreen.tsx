@@ -23,6 +23,7 @@ import { notificationService } from '../../services/notificationService';
 import { supabase } from '../../services/supabaseClient';
 import { Order } from '../../types';
 import { ModernOrderCard } from '../../components/cards';
+import { useCustomerTranslation } from '../../hooks/useTranslation';
 
 // Функция для получения высоты статусбара только на Android
 const getAndroidStatusBarHeight = () => {
@@ -35,6 +36,7 @@ export const CustomerHomeScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const navigation = useNavigation<BottomTabNavigationProp<CustomerTabParamList> & NativeStackNavigationProp<CustomerStackParamList>>();
+  const t = useCustomerTranslation();
 
   // Функция для загрузки новых заказов и уведомлений
   const loadNewOrders = useCallback(async () => {
@@ -160,16 +162,16 @@ export const CustomerHomeScreen: React.FC = () => {
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <Text style={styles.emptyStateIcon}>📋</Text>
-      <Text style={styles.emptyStateTitle}>У вас пока нет активных заказов</Text>
+      <Text style={styles.emptyStateTitle}>{t('no_active_orders')}</Text>
       <Text style={styles.emptyStateDescription}>
-        Создайте свой первый заказ, чтобы найти надежного исполнителя
+        {t('no_active_orders_description')}
       </Text>
       <TouchableOpacity
         style={styles.createOrderButton}
         onPress={handleCreateOrder}
         activeOpacity={0.8}
       >
-        <Text style={styles.createOrderButtonText}>➕ Создать заказ</Text>
+        <Text style={styles.createOrderButtonText}>➕ {t('create_order')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -180,11 +182,11 @@ export const CustomerHomeScreen: React.FC = () => {
         {/* Header with notifications */}
         <View style={[styles.header, { paddingTop: theme.spacing.lg + getAndroidStatusBarHeight() }]}>
           <View style={styles.headerLeft}>
-            <Text style={styles.greeting}>Мои заказы</Text>
+            <Text style={styles.greeting}>{t('my_orders')}</Text>
             <Text style={styles.subtitle}>
               {newOrders.length > 0
-                ? `У вас ${newOrders.length} активных заказов`
-                : 'Создайте свой первый заказ'
+                ? t('active_orders_count', { count: newOrders.length })
+                : t('create_first_order')
               }
             </Text>
           </View>
@@ -213,7 +215,7 @@ export const CustomerHomeScreen: React.FC = () => {
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
               <FilePlusIcon width={20} height={20} style={{ marginRight: theme.spacing.sm }} />
-              <Text style={styles.quickCreateText}>Создать новый заказ</Text>
+              <Text style={styles.quickCreateText}>{t('create_new_order')}</Text>
             </View>
           </TouchableOpacity>
         )}
@@ -221,7 +223,7 @@ export const CustomerHomeScreen: React.FC = () => {
         {/* Orders List or Empty State */}
         {isLoading && newOrders.length === 0 ? (
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Загружаем ваши заказы...</Text>
+            <Text style={styles.loadingText}>{t('loading_orders')}</Text>
           </View>
         ) : newOrders.length > 0 ? (
           <FlatList
