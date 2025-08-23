@@ -3,6 +3,7 @@ import { Text, Platform, TouchableOpacity } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { theme } from '../constants';
 import { usePlatformSafeAreaInsets, getBottomTabBarStyle } from '../utils/safeAreaUtils';
+import { useNavigationTranslation } from '../hooks/useTranslation';
 import type { CustomerTabParamList } from '../types';
 import {
   CustomerHomeScreen,
@@ -32,6 +33,7 @@ const AnimatedCustomerProfileScreen = withAnimatedTabScreen(CustomerProfileScree
 export function CustomerTabNavigator() {
   const insets = usePlatformSafeAreaInsets();
   const tabBarStyle = getBottomTabBarStyle(insets);
+  const t = useNavigationTranslation();
 
   return (
     <Tab.Navigator
@@ -80,7 +82,7 @@ export function CustomerTabNavigator() {
           tabBarLabel: ({ focused, color }) => (
             <AnimatedTabLabel focused={focused} color={color}>
               <Text style={{ color, fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.medium }}>
-                Главная
+                {t('home')}
               </Text>
             </AnimatedTabLabel>
           ),
@@ -103,7 +105,7 @@ export function CustomerTabNavigator() {
           tabBarLabel: ({ focused, color }) => (
             <AnimatedTabLabel focused={focused} color={color}>
               <Text style={{ color, fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.medium }}>
-                Создать
+                {t('create_order')}
               </Text>
             </AnimatedTabLabel>
           ),
@@ -126,7 +128,7 @@ export function CustomerTabNavigator() {
           tabBarLabel: ({ focused, color }) => (
             <AnimatedTabLabel focused={focused} color={color}>
               <Text style={{ color, fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.medium }}>
-                Мои заказы
+                {t('my_orders')}
               </Text>
             </AnimatedTabLabel>
           ),
@@ -149,7 +151,7 @@ export function CustomerTabNavigator() {
           tabBarLabel: ({ focused, color }) => (
             <AnimatedTabLabel focused={focused} color={color}>
               <Text style={{ color, fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.medium }}>
-                Профиль
+                {t('profile')}
               </Text>
             </AnimatedTabLabel>
           ),

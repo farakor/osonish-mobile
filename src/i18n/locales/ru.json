@@ -31,6 +31,14 @@
     "uzbek": "O'zbekcha",
     "confirm_selection": "Подтвердить выбор"
   },
+  "navigation": {
+    "home": "Главная",
+    "create_order": "Создать",
+    "my_orders": "Мои заказы",
+    "profile": "Профиль",
+    "jobs": "Работы",
+    "applications": "Заявки"
+  },
   "auth": {
     "welcome_title": "Добро пожаловать в Osonish",
     "welcome_subtitle": "Найдите мастера или предложите свои услуги",
@@ -468,6 +476,18 @@
     "application_rejected": "Заявка отклонена",
     "job_completed": "Работа завершена"
   },
+  "worker": {
+    "available_orders": "Доступные заказы",
+    "orders_found": "Найдено {{count}} заказов",
+    "no_new_orders": "Новых заказов пока нет",
+    "loading_orders": "Загружаем заказы...",
+    "search_orders": "Поиск заказов...",
+    "all_categories": "Все",
+    "no_orders": "Нет заказов",
+    "no_orders_by_search": "По вашему запросу заказы не найдены",
+    "no_new_orders_yet": "Новых заказов пока нет",
+    "pull_to_refresh": "Потяните вниз, чтобы обновить"
+  },
   "notifications": {
     "title": "Уведомления",
     "no_notifications": "У вас нет уведомлений",
@@ -499,6 +519,8 @@
     "electrical": "Электрика",
     "painting": "Покраска",
     "gardening": "Садоводство",
+    "garden": "Сад",
+    "catering": "Общепит",
     "moving": "Переезд",
     "delivery": "Доставка",
     "tutoring": "Репетиторство",

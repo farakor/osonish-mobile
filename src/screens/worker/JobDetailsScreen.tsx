@@ -28,10 +28,11 @@ import { VideoView, useVideoPlayer } from 'expo-video';
 import { HeaderWithBack, PriceConfirmationModal, ProposePriceModal, MediaViewer, OrderLocationMap, StatusBadge } from '../../components/common';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
+import { getCategoryEmoji, getCategoryLabel } from '../../utils/categoryUtils';
 import { locationService, LocationCoords } from '../../services/locationService';
 import { supabase } from '../../services/supabaseClient';
 import { Order, User } from '../../types';
-import { useCustomerTranslation } from '../../hooks/useTranslation';
+import { useCustomerTranslation, useCategoriesTranslation } from '../../hooks/useTranslation';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48; // 24px margin on each side
@@ -208,6 +209,7 @@ export const JobDetailsScreen: React.FC = () => {
   const { orderId } = route.params;
   const insets = usePlatformSafeAreaInsets();
   const t = useCustomerTranslation();
+  const tCategories = useCategoriesTranslation();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -568,7 +570,7 @@ export const JobDetailsScreen: React.FC = () => {
                 <View style={styles.infoIcon}>
                   <CategoryIcon width={20} height={20} color="#679B00" />
                 </View>
-                <Text style={styles.infoValue}>{order.category}</Text>
+                <Text style={styles.infoValue}>{getCategoryLabel(order.category, tCategories)}</Text>
               </View>
 
               <View style={styles.infoCard}>

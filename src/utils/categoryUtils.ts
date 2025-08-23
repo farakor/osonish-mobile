@@ -12,42 +12,44 @@ export interface Category {
 
 // Хук для получения переведенных категорий
 export const useTranslatedCategories = (): Category[] => {
-  const t = useCustomerTranslation();
+  const tCategories = useCategoriesTranslation();
 
   return [
-    { key: 'construction', label: t('category_construction'), emoji: '🏗️' },
-    { key: 'cleaning', label: t('category_cleaning'), emoji: '🧹' },
-    { key: 'garden', label: t('category_garden'), emoji: '🌳' },
-    { key: 'catering', label: t('category_catering'), emoji: '🍽️' },
-    { key: 'moving', label: t('category_moving'), emoji: '🚚' },
-    { key: 'other', label: t('category_other'), emoji: '✨' },
+    { key: 'construction', label: tCategories('construction'), emoji: '🏗️' },
+    { key: 'cleaning', label: tCategories('cleaning'), emoji: '🧹' },
+    { key: 'garden', label: tCategories('garden'), emoji: '🌳' },
+    { key: 'catering', label: tCategories('catering'), emoji: '🍽️' },
+    { key: 'moving', label: tCategories('moving'), emoji: '🚚' },
+    { key: 'other', label: tCategories('other'), emoji: '✨' },
   ];
 };
 
 // Функция для получения эмодзи по названию категории (для обратной совместимости)
 export const getCategoryEmoji = (categoryLabel: string): string => {
   const emojiMap: { [key: string]: string } = {
-    // Русские названия
+    // Старые переведенные названия (для обратной совместимости)
+    'Строительство': '🏗️',
     'Стройка': '🏗️',
     'Уборка': '🧹',
+    'Tozalash': '🧹',
     'Сад': '🌳',
+    'Bog\'dorchilik': '🌳',
     'Общепит': '🍽️',
     'Переезд': '🚚',
-    'Прочее': '✨',
-    // Узбекские названия
-    'Qurilish': '🏗️',
-    'Tozalash': '🧹',
-    'Bog\'dorchilik': '🌳',
-    'Ovqatlanish': '🍽️',
     'Ko\'chish': '🚚',
+    'Прочее': '✨',
+    'Другое': '✨',
     'Boshqa': '✨',
-    // Английские ключи
+    // Новые ключи
     'construction': '🏗️',
     'cleaning': '🧹',
     'garden': '🌳',
     'catering': '🍽️',
     'moving': '🚚',
     'other': '✨',
+    // Узбекские названия (дополнительные)
+    'Qurilish': '🏗️',
+    'Ovqatlanish': '🍽️',
     // Дополнительные категории
     'Ремонт техники': '🔧',
     'Доставка': '🚴',
@@ -61,20 +63,56 @@ export const getCategoryEmoji = (categoryLabel: string): string => {
 // Функция для получения переведенного названия категории по ключу
 export const getCategoryLabel = (categoryKey: string, t: (key: string) => string): string => {
   const keyMap: { [key: string]: string } = {
-    'Стройка': 'category_construction',
-    'Уборка': 'category_cleaning',
-    'Сад': 'category_garden',
-    'Общепит': 'category_catering',
-    'Переезд': 'category_moving',
-    'Прочее': 'category_other',
-    'construction': 'category_construction',
-    'cleaning': 'category_cleaning',
-    'garden': 'category_garden',
-    'catering': 'category_catering',
-    'moving': 'category_moving',
-    'other': 'category_other',
+    // Старые переведенные названия (для обратной совместимости)
+    'Строительство': 'construction',
+    'Стройка': 'construction',
+    'Уборка': 'cleaning',
+    'Tozalash': 'cleaning',
+    'Сад': 'garden',
+    'Bog\'dorchilik': 'garden',
+    'Общепит': 'catering',
+    'Переезд': 'moving',
+    'Ko\'chish': 'moving',
+    'Прочее': 'other',
+    'Другое': 'other',
+    'Boshqa': 'other',
+    // Новые ключи (возвращаем как есть)
+    'construction': 'construction',
+    'cleaning': 'cleaning',
+    'garden': 'garden',
+    'catering': 'catering',
+    'moving': 'moving',
+    'other': 'other',
   };
 
   const translationKey = keyMap[categoryKey];
   return translationKey ? t(translationKey) : categoryKey;
+};
+
+// Функция для получения ключа категории по переведенному названию (для обратной совместимости)
+export const getCategoryKeyFromLabel = (categoryLabel: string): string => {
+  const labelToKeyMap: { [key: string]: string } = {
+    // Старые переведенные названия (для обратной совместимости)
+    'Строительство': 'construction',
+    'Стройка': 'construction',
+    'Уборка': 'cleaning',
+    'Tozalash': 'cleaning',
+    'Сад': 'garden',
+    'Bog\'dorchilik': 'garden',
+    'Общепит': 'catering',
+    'Переезд': 'moving',
+    'Ko\'chish': 'moving',
+    'Прочее': 'other',
+    'Другое': 'other',
+    'Boshqa': 'other',
+    // Новые ключи (возвращаем как есть)
+    'construction': 'construction',
+    'cleaning': 'cleaning',
+    'garden': 'garden',
+    'catering': 'catering',
+    'moving': 'moving',
+    'other': 'other',
+  };
+
+  return labelToKeyMap[categoryLabel] || categoryLabel;
 };

@@ -31,6 +31,14 @@
     "uzbek": "O'zbekcha",
     "confirm_selection": "Tanlovni tasdiqlash"
   },
+  "navigation": {
+    "home": "Bosh sahifa",
+    "create_order": "Yaratish",
+    "my_orders": "Buyurtmalarim",
+    "profile": "Profil",
+    "jobs": "Ishlar",
+    "applications": "Arizalar"
+  },
   "auth": {
     "welcome_title": "Osonish ilovasiga xush kelibsiz",
     "welcome_subtitle": "Usta toping yoki o'z xizmatlaringizni taklif qiling",
@@ -468,6 +476,18 @@
     "application_rejected": "Ariza rad etildi",
     "job_completed": "Ish yakunlandi"
   },
+  "worker": {
+    "available_orders": "Mavjud buyurtmalar",
+    "orders_found": "{{count}} ta buyurtma topildi",
+    "no_new_orders": "Yangi buyurtmalar hali yo'q",
+    "loading_orders": "Buyurtmalar yuklanmoqda...",
+    "search_orders": "Buyurtmalarni qidirish...",
+    "all_categories": "Barchasi",
+    "no_orders": "Buyurtmalar yo'q",
+    "no_orders_by_search": "Qidiruv bo'yicha buyurtmalar topilmadi",
+    "no_new_orders_yet": "Yangi buyurtmalar hali yo'q",
+    "pull_to_refresh": "Yangilash uchun pastga torting"
+  },
   "notifications": {
     "title": "Bildirishnomalar",
     "no_notifications": "Sizda bildirishnomalar yo'q",
@@ -499,6 +519,8 @@
     "electrical": "Elektr",
     "painting": "Bo'yash",
     "gardening": "Bog'dorchilik",
+    "garden": "Bog'dorchilik",
+    "catering": "Ovqatlanish",
     "moving": "Ko'chish",
     "delivery": "Yetkazib berish",
     "tutoring": "Repetitorlik",

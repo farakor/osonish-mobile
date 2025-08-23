@@ -25,7 +25,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
 import { HeaderWithBack } from '../../components/common';
 import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
-import { useTranslatedCategories } from '../../utils/categoryUtils';
+import { useTranslatedCategories, getCategoryKeyFromLabel } from '../../utils/categoryUtils';
 
 type EditOrderRouteProp = RouteProp<CustomerStackParamList, 'EditOrder'>;
 
@@ -111,7 +111,7 @@ export const EditOrderScreen: React.FC = () => {
         // Заполняем форму данными заказа
         setTitle(orderData.title);
         setDescription(orderData.description);
-        setCategory(orderData.category);
+        setCategory(getCategoryKeyFromLabel(orderData.category));
         setBudget(formatNumber(orderData.budget.toString()));
         setWorkersCount(orderData.workersNeeded.toString());
         setSelectedDate(new Date(orderData.serviceDate));
@@ -522,19 +522,19 @@ export const EditOrderScreen: React.FC = () => {
             <View style={styles.categoriesGrid}>
               {categories.map((cat) => (
                 <TouchableOpacity
-                  key={cat.label}
+                  key={cat.key}
                   style={[
                     styles.categoryCard,
-                    category === cat.label && styles.categoryCardSelected,
+                    category === cat.key && styles.categoryCardSelected,
                   ]}
-                  onPress={() => setCategory(cat.label)}
+                  onPress={() => setCategory(cat.key)}
                   activeOpacity={0.8}
                 >
                   <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
                   <Text
                     style={[
                       styles.categoryLabel,
-                      category === cat.label && styles.categoryLabelSelected,
+                      category === cat.key && styles.categoryLabelSelected,
                     ]}
                   >
                     {cat.label}

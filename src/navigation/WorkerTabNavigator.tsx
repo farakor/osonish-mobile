@@ -3,6 +3,7 @@ import { Text, Platform, TouchableOpacity } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { theme } from '../constants';
 import { usePlatformSafeAreaInsets, getBottomTabBarStyle } from '../utils/safeAreaUtils';
+import { useNavigationTranslation } from '../hooks/useTranslation';
 import type { WorkerTabParamList } from '../types';
 import {
   WorkerJobsScreen,
@@ -29,6 +30,7 @@ const AnimatedWorkerProfileScreen = withAnimatedTabScreen(WorkerProfileScreen);
 export function WorkerTabNavigator() {
   const insets = usePlatformSafeAreaInsets();
   const tabBarStyle = getBottomTabBarStyle(insets);
+  const t = useNavigationTranslation();
 
   return (
     <Tab.Navigator
@@ -74,7 +76,7 @@ export function WorkerTabNavigator() {
           tabBarLabel: ({ focused, color }) => (
             <AnimatedTabLabel focused={focused} color={color}>
               <Text style={{ color, fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.medium }}>
-                Заказы
+                {t('jobs')}
               </Text>
             </AnimatedTabLabel>
           ),
@@ -97,7 +99,7 @@ export function WorkerTabNavigator() {
           tabBarLabel: ({ focused, color }) => (
             <AnimatedTabLabel focused={focused} color={color}>
               <Text style={{ color, fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.medium }}>
-                Мои заказы
+                {t('applications')}
               </Text>
             </AnimatedTabLabel>
           ),
@@ -120,7 +122,7 @@ export function WorkerTabNavigator() {
           tabBarLabel: ({ focused, color }) => (
             <AnimatedTabLabel focused={focused} color={color}>
               <Text style={{ color, fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.medium }}>
-                Профиль
+                {t('profile')}
               </Text>
             </AnimatedTabLabel>
           ),

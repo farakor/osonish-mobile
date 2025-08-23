@@ -4,10 +4,12 @@ import { useTranslation as useI18nTranslation } from 'react-i18next';
 export type TranslationKey =
   | `common.${string}`
   | `language.${string}`
+  | `navigation.${string}`
   | `auth.${string}`
   | `profile.${string}`
   | `orders.${string}`
   | `jobs.${string}`
+  | `worker.${string}`
   | `notifications.${string}`
   | `support.${string}`
   | `categories.${string}`
@@ -31,7 +33,7 @@ export const useTranslation = (): UseTranslationReturn => {
 };
 
 // Хук для получения переводов определенной категории
-export const useCategoryTranslation = (category: 'common' | 'auth' | 'profile' | 'orders' | 'jobs' | 'notifications' | 'support' | 'categories' | 'errors' | 'customer') => {
+export const useCategoryTranslation = (category: 'common' | 'language' | 'navigation' | 'auth' | 'profile' | 'orders' | 'jobs' | 'worker' | 'notifications' | 'support' | 'categories' | 'errors' | 'customer') => {
   const { t } = useTranslation();
 
   return (key: string, options?: any) => t(`${category}.${key}` as TranslationKey, options);
@@ -85,4 +87,14 @@ export const useErrorsTranslation = () => {
 // Хук для переводов заказчика
 export const useCustomerTranslation = () => {
   return useCategoryTranslation('customer');
+};
+
+// Хук для переводов навигации
+export const useNavigationTranslation = () => {
+  return useCategoryTranslation('navigation');
+};
+
+// Хук для переводов исполнителя
+export const useWorkerTranslation = () => {
+  return useCategoryTranslation('worker');
 };

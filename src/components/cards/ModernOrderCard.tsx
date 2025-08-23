@@ -9,8 +9,8 @@ import {
 import { theme } from '../../constants/theme';
 import { Order } from '../../types';
 import { locationService, LocationCoords } from '../../services/locationService';
-import { getCategoryEmoji } from '../../utils/categoryUtils';
-import { useCustomerTranslation } from '../../hooks/useTranslation';
+import { getCategoryEmoji, getCategoryLabel } from '../../utils/categoryUtils';
+import { useCustomerTranslation, useCategoriesTranslation } from '../../hooks/useTranslation';
 import { getStatusInfo } from '../../utils/statusUtils';
 
 // SVG импорты
@@ -40,6 +40,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
 }) => {
   const [isPressed, setIsPressed] = useState(false);
   const t = useCustomerTranslation();
+  const tCategories = useCategoriesTranslation();
   const formatBudget = (amount: number) => {
     return `${amount.toLocaleString('ru-RU')} ${t('currency_sum')}`;
   };
@@ -114,7 +115,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
                 {getCategoryIcon(order.category)}
               </Text>
             </View>
-            <Text style={styles.categoryText}>{order.category}</Text>
+            <Text style={styles.categoryText}>{getCategoryLabel(order.category, tCategories)}</Text>
           </View>
           <View style={[
             styles.statusPill,

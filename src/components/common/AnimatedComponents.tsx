@@ -378,7 +378,7 @@ export const AnimatedField: React.FC<{
 
 // Анимированный элемент категории
 const AnimatedCategoryItem: React.FC<{
-  category: { label: string; emoji: string };
+  category: { key: string; label: string; emoji: string };
   selectedCategory: string;
   onSelectCategory: (category: string) => void;
   isActive: boolean;
@@ -434,8 +434,8 @@ const AnimatedCategoryItem: React.FC<{
       <AnimatedCategoryCard
         emoji={category.emoji}
         label={category.label}
-        isSelected={selectedCategory === category.label}
-        onPress={() => onSelectCategory(category.label)}
+        isSelected={selectedCategory === category.key}
+        onPress={() => onSelectCategory(category.key)}
         isSmallScreen={isSmallScreen}
       />
     </Animated.View>
@@ -444,7 +444,7 @@ const AnimatedCategoryItem: React.FC<{
 
 // Анимированная сетка категорий с индивидуальными задержками
 export const AnimatedCategoryGrid: React.FC<{
-  categories: Array<{ label: string; emoji: string }>;
+  categories: Array<{ key: string; label: string; emoji: string }>;
   selectedCategory: string;
   onSelectCategory: (category: string) => void;
   isActive: boolean;
@@ -463,7 +463,7 @@ export const AnimatedCategoryGrid: React.FC<{
         <View key={`row-${rowIndex}`} style={[styles.categoryRow, isSmallScreen && styles.categoryRowSmall]}>
           {row.map((cat, index) => (
             <AnimatedCategoryItem
-              key={`${cat.label}-${resetKey}`}
+              key={`${cat.key}-${resetKey}`}
               category={cat}
               selectedCategory={selectedCategory}
               onSelectCategory={onSelectCategory}

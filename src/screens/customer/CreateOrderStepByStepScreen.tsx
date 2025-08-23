@@ -44,8 +44,8 @@ import {
   AnimatedSummaryGrid,
 } from '../../components/common/AnimatedComponents';
 import { HeaderWithBack } from '../../components/common';
-import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
-import { useTranslatedCategories } from '../../utils/categoryUtils';
+import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation, useCategoriesTranslation } from '../../hooks/useTranslation';
+import { useTranslatedCategories, getCategoryLabel } from '../../utils/categoryUtils';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -132,6 +132,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
   const t = useCustomerTranslation();
   const tError = useErrorsTranslation();
   const tCommon = useCommonTranslation();
+  const tCategories = useCategoriesTranslation();
   const categories = useTranslatedCategories();
 
   // Ref для поля местоположения
@@ -890,7 +891,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                       // Если есть медиа файлы, размещаем их в паре с датой
                       return [
                         { label: t('summary_title'), value: title },
-                        { label: t('summary_category'), value: category },
+                        { label: t('summary_category'), value: getCategoryLabel(category, tCategories) },
                         { label: t('summary_description'), value: description },
                         { label: t('summary_location'), value: location },
                         { label: t('summary_budget'), value: `${formatBudgetInput(budget)} ${t('sum_per_person')}` },
@@ -902,7 +903,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                       // Если нет медиа файлов
                       return [
                         { label: t('summary_title'), value: title },
-                        { label: t('summary_category'), value: category },
+                        { label: t('summary_category'), value: getCategoryLabel(category, tCategories) },
                         { label: t('summary_description'), value: description },
                         { label: t('summary_location'), value: location },
                         { label: t('summary_budget'), value: `${formatBudgetInput(budget)} ${t('sum_per_person')}` },

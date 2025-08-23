@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -27,7 +27,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { WorkerStackParamList } from '../../types/navigation';
 import NotificationIcon from '../../../assets/notification-message.svg';
-import { useCustomerTranslation } from '../../hooks/useTranslation';
+import { useWorkerTranslation, useCustomerTranslation, useCategoriesTranslation } from '../../hooks/useTranslation';
 import { getCategoryEmoji, getCategoryLabel } from '../../utils/categoryUtils';
 
 type WorkerNavigationProp = NativeStackNavigationProp<WorkerStackParamList>;
@@ -70,11 +70,23 @@ const JobCard: React.FC<{
 
 const WorkerJobsScreen: React.FC = () => {
   const navigation = useNavigation<WorkerNavigationProp>();
-  const t = useCustomerTranslation();
+  const t = useWorkerTranslation();
+  const tCustomer = useCustomerTranslation();
+  const tCategories = useCategoriesTranslation();
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>('Все');
+
+  // Мемоизируем переведенную категорию "Все"
+  const allCategoriesLabel = useMemo(() => t('all_categories'), [t]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Инициализируем selectedCategory с ключом "all"
+  useEffect(() => {
+    if (!selectedCategory) {
+      setSelectedCategory('all');
+    }
+  }, [selectedCategory]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [priceConfirmationVisible, setPriceConfirmationVisible] = useState(false);
@@ -221,26 +233,55 @@ const WorkerJobsScreen: React.FC = () => {
     let filtered = orders.filter(order => {
       const matchesSearch = order.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         order.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = !selectedCategory || selectedCategory === 'Все' || order.category === selectedCategory;
+      // Теперь selectedCategory содержит originalKey, поэтому сравниваем с order.category напрямую
+      const matchesCategory = !selectedCategory || selectedCategory === 'all' || order.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
 
     setFilteredOrders(filtered);
   }, [orders, searchQuery, selectedCategory]);
 
-  // Получение категорий с счетчиками
-  const getCategories = () => {
-    const allCategories = [...new Set(orders.map(order => order.category))];
-    const categories = [
-      { label: 'Все', emoji: '📋', count: orders.length },
+  // Мемоизируем категории
+  const categories = useMemo(() => {
+    // Получаем уникальные категории и фильтруем пустые/undefined значения
+    const rawCategories = orders.map(order => order.category);
+    const allCategories = [...new Set(rawCategories)]
+      .filter(category => category && category.trim() !== '');
+
+    // Отладочная информация
+    if (__DEV__) {
+      console.log('Raw categories from orders:', rawCategories);
+      console.log('Unique categories after filtering:', allCategories);
+    }
+
+    const categoriesWithCounts = [
+      {
+        id: 'all',
+        originalKey: 'all',
+        label: allCategoriesLabel,
+        emoji: '📋',
+        count: orders.length
+      },
       ...allCategories.map(category => ({
-        label: category,
+        id: category,
+        originalKey: category, // Сохраняем оригинальный ключ для фильтрации
+        label: getCategoryLabel(category, tCategories), // Используем переведенное название
         emoji: getCategoryEmoji(category),
         count: orders.filter(order => order.category === category).length
       }))
     ];
-    return categories;
-  };
+
+    // Дополнительная проверка на уникальность по originalKey (не по label!)
+    const uniqueCategories = categoriesWithCounts.filter((category, index, self) =>
+      index === self.findIndex(c => c.originalKey === category.originalKey)
+    );
+
+    if (__DEV__) {
+      console.log('Final unique categories:', uniqueCategories.map(c => ({ original: c.originalKey, translated: c.label })));
+    }
+
+    return uniqueCategories;
+  }, [orders, allCategoriesLabel, tCategories]);
 
 
 
@@ -401,14 +442,14 @@ const WorkerJobsScreen: React.FC = () => {
     );
   };
 
-  const categories = getCategories();
+
 
   if (isLoading) {
     return (
       <View style={styles.container}>
         <SafeAreaView style={styles.content}>
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Загружаем заказы...</Text>
+            <Text style={styles.loadingText}>{t('loading_orders')}</Text>
           </View>
         </SafeAreaView>
       </View>
@@ -422,9 +463,9 @@ const WorkerJobsScreen: React.FC = () => {
         {/* Header with notifications */}
         <View style={[styles.header, { paddingTop: theme.spacing.lg + getAndroidStatusBarHeight() }]}>
           <View style={styles.headerLeft}>
-            <Text style={styles.title}>Доступные заказы</Text>
+            <Text style={styles.title}>{t('available_orders')}</Text>
             <Text style={styles.subtitle}>
-              {orders.length > 0 ? `Найдено ${orders.length} заказов` : 'Новых заказов пока нет'}
+              {orders.length > 0 ? t('orders_found', { count: orders.length }) : t('no_new_orders')}
             </Text>
           </View>
           <TouchableOpacity
@@ -446,7 +487,7 @@ const WorkerJobsScreen: React.FC = () => {
         <View style={styles.searchContainer}>
           <TextInput
             style={styles.searchInput}
-            placeholder="Поиск заказов..."
+            placeholder={t('search_orders')}
             placeholderTextColor={theme.colors.text.secondary}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -461,25 +502,25 @@ const WorkerJobsScreen: React.FC = () => {
             style={styles.categoriesContainer}
             contentContainerStyle={styles.categoriesContent}
           >
-            {categories.map((category, index) => (
+            {categories.map((category) => (
               <TouchableOpacity
-                key={index}
+                key={category.id}
                 style={[
                   styles.categoryChip,
-                  selectedCategory === category.label && styles.categoryChipActive
+                  selectedCategory === category.originalKey && styles.categoryChipActive
                 ]}
-                onPress={() => setSelectedCategory(category.label)}
+                onPress={() => setSelectedCategory(category.originalKey)}
               >
                 <Text style={styles.categoryEmoji}>{category.emoji}</Text>
                 <Text style={[
                   styles.categoryChipText,
-                  selectedCategory === category.label && styles.categoryChipTextActive
+                  selectedCategory === category.originalKey && styles.categoryChipTextActive
                 ]}>
                   {category.label}
                 </Text>
                 <Text style={[
                   styles.categoryChipCount,
-                  selectedCategory === category.label && styles.categoryChipCountActive
+                  selectedCategory === category.originalKey && styles.categoryChipCountActive
                 ]}>
                   ({category.count})
                 </Text>
@@ -505,16 +546,16 @@ const WorkerJobsScreen: React.FC = () => {
           ListEmptyComponent={
             <View style={styles.emptyState}>
               {(() => {
-                const hasSearchOrFilter = searchQuery || selectedCategory !== 'Все';
+                const hasSearchOrFilter = searchQuery || (selectedCategory && selectedCategory !== 'all');
 
                 if (hasSearchOrFilter) {
                   // Показываем обычное пустое состояние для поиска/фильтров
                   return (
                     <>
                       <Text style={styles.emptyStateIcon}>📋</Text>
-                      <Text style={styles.emptyStateTitle}>Нет заказов</Text>
+                      <Text style={styles.emptyStateTitle}>{t('no_orders')}</Text>
                       <Text style={styles.emptyStateText}>
-                        По вашему запросу заказы не найдены
+                        {t('no_orders_by_search')}
                       </Text>
                     </>
                   );
@@ -523,9 +564,9 @@ const WorkerJobsScreen: React.FC = () => {
                   return (
                     <>
                       <Text style={styles.emptyStateIcon}>📋</Text>
-                      <Text style={styles.emptyStateTitle}>Новых заказов пока нет</Text>
+                      <Text style={styles.emptyStateTitle}>{t('no_new_orders_yet')}</Text>
                       <Text style={styles.emptyStateText}>
-                        Потяните вниз, чтобы обновить
+                        {t('pull_to_refresh')}
                       </Text>
                       <OrderStatsWidget
                         pendingCount={applicationStats.pending}
