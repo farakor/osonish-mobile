@@ -8,7 +8,9 @@ export type NotificationType =
   | 'worker_selected'
   | 'order_completed'
   | 'order_updated'
-  | 'order_cancelled';
+  | 'order_cancelled'
+  | 'work_reminder'
+  | 'complete_work_reminder';
 
 export type Language = 'ru' | 'uz';
 
@@ -26,7 +28,11 @@ const translations = {
     order_updated_title: 'Заказ обновлен',
     order_updated_body: 'Заказ "{{orderTitle}}" был изменен заказчиком',
     order_cancelled_title: 'Заказ отменен',
-    order_cancelled_body: 'Заказ "{{orderTitle}}" был отменен заказчиком'
+    order_cancelled_body: 'Заказ "{{orderTitle}}" был отменен заказчиком',
+    work_reminder_title: 'Напоминание о работе',
+    work_reminder_body: 'Завтра у вас запланирована работа "{{orderTitle}}" по адресу {{location}}',
+    complete_work_reminder_title: 'Не забудьте завершить работу',
+    complete_work_reminder_body: 'Пожалуйста, завершите заказ "{{orderTitle}}" и оцените работу исполнителя'
   },
   uz: {
     new_order_title: 'Yangi buyurtma!',
@@ -40,7 +46,11 @@ const translations = {
     order_updated_title: 'Buyurtma yangilandi',
     order_updated_body: '"{{orderTitle}}" buyurtmasi buyurtmachi tomonidan o\'zgartirildi',
     order_cancelled_title: 'Buyurtma bekor qilindi',
-    order_cancelled_body: '"{{orderTitle}}" buyurtmasi buyurtmachi tomonidan bekor qilindi'
+    order_cancelled_body: '"{{orderTitle}}" buyurtmasi buyurtmachi tomonidan bekor qilindi',
+    work_reminder_title: 'Ish haqida eslatma',
+    work_reminder_body: 'Ertaga sizda "{{orderTitle}}" ishi {{location}} manzilida rejalashtirilgan',
+    complete_work_reminder_title: 'Ishni tugatishni unutmang',
+    complete_work_reminder_body: 'Iltimos, "{{orderTitle}}" buyurtmasini tugating va ijrochining ishini baholang'
   }
 };
 

@@ -37,6 +37,9 @@ export class OrderService {
       }
 
       console.log('[OrderService] ✅ Supabase подключен успешно');
+
+      // Запускаем периодическую проверку напоминаний
+      this.startReminderChecker();
     } catch (error) {
       console.error('[OrderService] ⚠️ Критическая ошибка инициализации:', error);
       throw error;
@@ -1203,6 +1206,12 @@ export class OrderService {
         const statusUpdated = await this.updateOrderStatus(orderId, 'in_progress');
         if (statusUpdated) {
           console.log(`[OrderService] ✅ Статус заказа ${orderId} изменен на 'in_progress' - набрано ${acceptedApplicants.length} исполнителей`);
+
+          // Планируем напоминание заказчику о завершении работы
+          this.scheduleCompleteWorkReminder(order.customerId, orderId, order.serviceDate).catch(error => {
+            console.error('[OrderService] ❌ Ошибка планирования напоминания о завершении работы:', error);
+          });
+
           return true;
         } else {
           console.error(`[OrderService] ❌ Не удалось обновить статус заказа ${orderId}`);
@@ -1486,6 +1495,11 @@ export class OrderService {
         // Отправляем уведомление исполнителю
         this.sendWorkerSelectedNotification(applicantId).catch(error => {
           console.error('[OrderService] ❌ Ошибка отправки уведомления о выборе исполнителя:', error);
+        });
+
+        // Планируем напоминание за день до работы
+        this.scheduleWorkReminder(workerId, applicantData.order_id, serviceDate).catch(error => {
+          console.error('[OrderService] ❌ Ошибка планирования напоминания о работе:', error);
         });
 
         return true;
@@ -2258,7 +2272,246 @@ export class OrderService {
     }
   }
 
+  /**
+   * Планирование напоминания исполнителю за день до работы
+   */
+  private async scheduleWorkReminder(workerId: string, orderId: string, serviceDate: string): Promise<void> {
+    try {
+      console.log('[OrderService] 📅 Планируем напоминание о работе для исполнителя:', workerId);
+      console.log('[OrderService] 📅 Заказ:', orderId, 'Дата работы:', serviceDate);
 
+      // Получаем данные заказа для уведомления
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select('id, title, location')
+        .eq('id', orderId)
+        .single();
+
+      if (orderError || !orderData) {
+        console.error('[OrderService] ❌ Ошибка получения данных заказа для напоминания:', orderError);
+        return;
+      }
+
+      // Вычисляем дату напоминания (за день до работы)
+      const workDate = new Date(serviceDate);
+      const reminderDate = new Date(workDate);
+      reminderDate.setDate(workDate.getDate() - 1);
+
+      // Устанавливаем время напоминания на 18:00 (6 PM) предыдущего дня
+      reminderDate.setHours(18, 0, 0, 0);
+
+      console.log('[OrderService] ⏰ Дата напоминания:', reminderDate.toISOString());
+
+      // Проверяем, что дата напоминания в будущем
+      const now = new Date();
+      if (reminderDate <= now) {
+        console.log('[OrderService] ⚠️ Дата напоминания уже прошла, пропускаем планирование');
+        return;
+      }
+
+      // Сохраняем запланированное напоминание в базу данных
+      const { error: insertError } = await supabase
+        .from('scheduled_reminders')
+        .insert({
+          worker_id: workerId,
+          order_id: orderId,
+          reminder_date: reminderDate.toISOString(),
+          reminder_type: 'work_reminder',
+          is_sent: false,
+          created_at: new Date().toISOString()
+        });
+
+      if (insertError) {
+        console.error('[OrderService] ❌ Ошибка сохранения запланированного напоминания:', insertError);
+        return;
+      }
+
+      console.log('[OrderService] ✅ Напоминание о работе запланировано на:', reminderDate.toISOString());
+
+      // Если напоминание нужно отправить в ближайшие 5 минут, отправляем сразу
+      const timeDiff = reminderDate.getTime() - now.getTime();
+      if (timeDiff <= 5 * 60 * 1000) { // 5 минут в миллисекундах
+        console.log('[OrderService] 🚀 Напоминание нужно отправить очень скоро, отправляем сразу');
+        await this.sendWorkReminder(workerId, orderData);
+
+        // Отмечаем как отправленное
+        await supabase
+          .from('scheduled_reminders')
+          .update({ is_sent: true, sent_at: new Date().toISOString() })
+          .eq('worker_id', workerId)
+          .eq('order_id', orderId)
+          .eq('reminder_type', 'work_reminder');
+      }
+
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка планирования напоминания о работе:', error);
+    }
+  }
+
+  /**
+   * Отправка напоминания исполнителю о предстоящей работе
+   */
+  private async sendWorkReminder(workerId: string, orderData: any): Promise<void> {
+    try {
+      console.log('[OrderService] 📤 Отправляем напоминание о работе исполнителю:', workerId);
+
+      // Получаем переведенное уведомление для исполнителя
+      const notificationParams = {
+        orderTitle: orderData.title,
+        location: orderData.location
+      };
+
+      const notification = await getTranslatedNotification(
+        workerId,
+        'work_reminder',
+        notificationParams
+      );
+
+      const data = {
+        orderId: orderData.id,
+        orderTitle: orderData.title,
+        orderLocation: orderData.location,
+        type: 'work_reminder'
+      };
+
+      // Отправляем уведомление исполнителю
+      const sent = await notificationService.sendNotificationToUser(
+        workerId,
+        notification.title,
+        notification.body,
+        data,
+        'work_reminder'
+      );
+
+      if (sent) {
+        console.log('[OrderService] ✅ Напоминание о работе отправлено исполнителю');
+      }
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка отправки напоминания о работе:', error);
+    }
+  }
+
+  /**
+   * Планирование напоминания заказчику о завершении работы
+   */
+  private async scheduleCompleteWorkReminder(customerId: string, orderId: string, serviceDate: string): Promise<void> {
+    try {
+      console.log('[OrderService] 📅 Планируем напоминание о завершении работы для заказчика:', customerId);
+      console.log('[OrderService] 📅 Заказ:', orderId, 'Дата работы:', serviceDate);
+
+      // Получаем данные заказа для уведомления
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select('id, title, location')
+        .eq('id', orderId)
+        .single();
+
+      if (orderError || !orderData) {
+        console.error('[OrderService] ❌ Ошибка получения данных заказа для напоминания о завершении:', orderError);
+        return;
+      }
+
+      // Вычисляем дату напоминания о завершении
+      // Кнопка "Завершить" появляется на следующий день после serviceDate
+      // Напоминание отправляем еще через день (т.е. через 2 дня после serviceDate)
+      const workDate = new Date(serviceDate);
+      const completeButtonAvailableDate = new Date(workDate);
+      completeButtonAvailableDate.setDate(workDate.getDate() + 1); // День когда появляется кнопка
+
+      const reminderDate = new Date(completeButtonAvailableDate);
+      reminderDate.setDate(completeButtonAvailableDate.getDate() + 1); // Еще через день
+
+      // Устанавливаем время напоминания на 19:00 (7 PM)
+      reminderDate.setHours(19, 0, 0, 0);
+
+      console.log('[OrderService] ⏰ Дата напоминания о завершении:', reminderDate.toISOString());
+
+      // Проверяем, что дата напоминания в будущем
+      const now = new Date();
+      if (reminderDate <= now) {
+        console.log('[OrderService] ⚠️ Дата напоминания о завершении уже прошла, пропускаем планирование');
+        return;
+      }
+
+      // Сохраняем запланированное напоминание в базу данных
+      const { error: insertError } = await supabase
+        .from('scheduled_reminders')
+        .insert({
+          worker_id: customerId, // Для заказчика используем поле worker_id
+          order_id: orderId,
+          reminder_date: reminderDate.toISOString(),
+          reminder_type: 'complete_work_reminder',
+          is_sent: false,
+          created_at: new Date().toISOString()
+        });
+
+      if (insertError) {
+        console.error('[OrderService] ❌ Ошибка сохранения запланированного напоминания о завершении:', insertError);
+        return;
+      }
+
+      console.log('[OrderService] ✅ Напоминание о завершении работы запланировано на:', reminderDate.toISOString());
+
+      // Если напоминание нужно отправить в ближайшие 5 минут, отправляем сразу
+      const timeDiff = reminderDate.getTime() - now.getTime();
+      if (timeDiff <= 5 * 60 * 1000) { // 5 минут в миллисекундах
+        console.log('[OrderService] 🚀 Напоминание о завершении нужно отправить очень скоро, отправляем сразу');
+        await this.sendCompleteWorkReminder(customerId, orderData);
+
+        // Отмечаем как отправленное
+        await supabase
+          .from('scheduled_reminders')
+          .update({ is_sent: true, sent_at: new Date().toISOString() })
+          .eq('worker_id', customerId)
+          .eq('order_id', orderId)
+          .eq('reminder_type', 'complete_work_reminder');
+      }
+
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка планирования напоминания о завершении работы:', error);
+    }
+  }
+
+  /**
+   * Отправка напоминания заказчику о завершении работы
+   */
+  private async sendCompleteWorkReminder(customerId: string, orderData: any): Promise<void> {
+    try {
+      console.log('[OrderService] 📤 Отправляем напоминание о завершении работы заказчику:', customerId);
+
+      // Получаем переведенное уведомление для заказчика
+      const notificationParams = {
+        orderTitle: orderData.title
+      };
+
+      const notification = await getTranslatedNotification(
+        customerId,
+        'complete_work_reminder',
+        notificationParams
+      );
+
+      const data = {
+        orderId: orderData.id,
+        orderTitle: orderData.title,
+        type: 'complete_work_reminder'
+      };
+
+      // Отправляем уведомление заказчику
+      const sent = await notificationService.sendNotificationToUser(
+        customerId,
+        notification.title,
+        notification.body,
+        data,
+        'complete_work_reminder'
+      );
+
+      if (sent) {
+        console.log('[OrderService] ✅ Напоминание о завершении работы отправлено заказчику');
+      }
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка отправки напоминания о завершении работы:', error);
+    }
+  }
 
   /**
    * Отправка уведомлений о завершении заказа
@@ -2583,6 +2836,154 @@ export class OrderService {
     } catch (error) {
       console.error('[OrderService] ❌ Ошибка получения профиля исполнителя:', error);
       return null;
+    }
+  }
+
+  /**
+   * Проверка и отправка запланированных напоминаний
+   * Этот метод должен вызываться периодически (например, каждые 15 минут)
+   */
+  async checkAndSendScheduledReminders(): Promise<void> {
+    try {
+      console.log('[OrderService] 🔍 Проверяем запланированные напоминания...');
+
+      const now = new Date();
+      const checkTime = new Date(now.getTime() + 15 * 60 * 1000); // Проверяем на 15 минут вперед
+
+      // Получаем все неотправленные напоминания, которые нужно отправить в ближайшие 15 минут
+      const { data: reminders, error } = await supabase
+        .from('scheduled_reminders')
+        .select(`
+          id,
+          worker_id,
+          order_id,
+          reminder_date,
+          reminder_type,
+          orders!inner(id, title, location)
+        `)
+        .eq('is_sent', false)
+        .in('reminder_type', ['work_reminder', 'complete_work_reminder'])
+        .lte('reminder_date', checkTime.toISOString())
+        .gte('reminder_date', now.toISOString());
+
+      if (error) {
+        console.error('[OrderService] ❌ Ошибка получения запланированных напоминаний:', error);
+        return;
+      }
+
+      if (!reminders || reminders.length === 0) {
+        console.log('[OrderService] ℹ️ Нет запланированных напоминаний для отправки');
+        return;
+      }
+
+      console.log(`[OrderService] 📋 Найдено ${reminders.length} напоминаний для отправки`);
+
+      // Отправляем каждое напоминание
+      for (const reminder of reminders) {
+        try {
+          const recipientType = reminder.reminder_type === 'work_reminder' ? 'исполнителю' : 'заказчику';
+          console.log(`[OrderService] 📤 Отправляем напоминание ${reminder.id} ${recipientType} ${reminder.worker_id}`);
+
+          // Выбираем правильный метод отправки в зависимости от типа напоминания
+          if (reminder.reminder_type === 'work_reminder') {
+            await this.sendWorkReminder(reminder.worker_id, reminder.orders);
+          } else if (reminder.reminder_type === 'complete_work_reminder') {
+            await this.sendCompleteWorkReminder(reminder.worker_id, reminder.orders);
+          }
+
+          // Отмечаем напоминание как отправленное
+          const { error: updateError } = await supabase
+            .from('scheduled_reminders')
+            .update({
+              is_sent: true,
+              sent_at: new Date().toISOString()
+            })
+            .eq('id', reminder.id);
+
+          if (updateError) {
+            console.error(`[OrderService] ❌ Ошибка обновления статуса напоминания ${reminder.id}:`, updateError);
+          } else {
+            console.log(`[OrderService] ✅ Напоминание ${reminder.id} отправлено и отмечено как выполненное`);
+          }
+
+        } catch (reminderError) {
+          console.error(`[OrderService] ❌ Ошибка отправки напоминания ${reminder.id}:`, reminderError);
+        }
+      }
+
+      console.log('[OrderService] ✅ Проверка запланированных напоминаний завершена');
+
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка проверки запланированных напоминаний:', error);
+    }
+  }
+
+  /**
+   * Запуск периодической проверки напоминаний
+   * Вызывается при инициализации сервиса
+   */
+  private startReminderChecker(): void {
+    // Проверяем напоминания каждые 15 минут
+    setInterval(() => {
+      this.checkAndSendScheduledReminders().catch(error => {
+        console.error('[OrderService] ❌ Ошибка в периодической проверке напоминаний:', error);
+      });
+    }, 15 * 60 * 1000); // 15 минут в миллисекундах
+
+    // Также запускаем первую проверку через 1 минуту после старта
+    setTimeout(() => {
+      this.checkAndSendScheduledReminders().catch(error => {
+        console.error('[OrderService] ❌ Ошибка в первоначальной проверке напоминаний:', error);
+      });
+    }, 60 * 1000); // 1 минута
+
+    console.log('[OrderService] ⏰ Периодическая проверка напоминаний запущена (каждые 15 минут)');
+  }
+
+  /**
+ * Тестовая функция для отправки напоминания о работе
+ * Используется для проверки работы системы напоминаний
+ */
+  async testWorkReminder(workerId: string, orderTitle: string = 'Тестовый заказ', location: string = 'Тестовый адрес'): Promise<boolean> {
+    try {
+      console.log('[OrderService] 🧪 Тестируем отправку напоминания о работе...');
+
+      const testOrderData = {
+        id: 'test-order-id',
+        title: orderTitle,
+        location: location
+      };
+
+      await this.sendWorkReminder(workerId, testOrderData);
+
+      console.log('[OrderService] ✅ Тестовое напоминание о работе отправлено');
+      return true;
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка тестирования напоминания о работе:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Тестовая функция для отправки напоминания о завершении работы
+   * Используется для проверки работы системы напоминаний
+   */
+  async testCompleteWorkReminder(customerId: string, orderTitle: string = 'Тестовый заказ'): Promise<boolean> {
+    try {
+      console.log('[OrderService] 🧪 Тестируем отправку напоминания о завершении работы...');
+
+      const testOrderData = {
+        id: 'test-order-id',
+        title: orderTitle
+      };
+
+      await this.sendCompleteWorkReminder(customerId, testOrderData);
+
+      console.log('[OrderService] ✅ Тестовое напоминание о завершении работы отправлено');
+      return true;
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка тестирования напоминания о завершении работы:', error);
+      return false;
     }
   }
 }

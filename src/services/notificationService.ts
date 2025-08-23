@@ -25,7 +25,7 @@ export interface PushNotificationData {
   body: string;
   data?: any;
   userId: string;
-  notificationType: 'new_order' | 'new_application' | 'order_update' | 'order_completed';
+  notificationType: 'new_order' | 'new_application' | 'order_update' | 'order_completed' | 'work_reminder' | 'complete_work_reminder';
 }
 
 export interface NotificationItem {
@@ -34,7 +34,7 @@ export interface NotificationItem {
   title: string;
   body: string;
   data?: any;
-  notificationType: 'new_order' | 'new_application' | 'order_update' | 'order_completed';
+  notificationType: 'new_order' | 'new_application' | 'order_update' | 'order_completed' | 'work_reminder' | 'complete_work_reminder';
   isRead: boolean;
   createdAt: string;
 }
