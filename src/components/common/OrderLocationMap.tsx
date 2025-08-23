@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Linking, Alert } from 'react-
 import { WebView } from 'react-native-webview';
 import { theme } from '../../constants';
 import LocationIcon from '../../../assets/card-icons/location.svg';
+import { useCustomerTranslation, useErrorsTranslation } from '../../hooks/useTranslation';
 
 interface OrderLocationMapProps {
   latitude: number;
@@ -17,6 +18,8 @@ export const OrderLocationMap: React.FC<OrderLocationMapProps> = ({
   address,
   title = "Куда ехать"
 }) => {
+  const t = useCustomerTranslation();
+  const tError = useErrorsTranslation();
   // HTML шаблон для Яндекс карты
   const mapHTML = `
     <!DOCTYPE html>
@@ -77,35 +80,35 @@ export const OrderLocationMap: React.FC<OrderLocationMapProps> = ({
       }
     } catch (error) {
       console.error('Ошибка при открытии навигации:', error);
-      Alert.alert('Ошибка', 'Не удалось открыть навигацию');
+      Alert.alert(tError('error'), t('navigation_error'));
     }
   };
 
   // Функция для открытия в других картах
   const openInMaps = () => {
     Alert.alert(
-      'Выберите приложение',
-      'В каком приложении открыть маршрут?',
+      t('choose_app'),
+      t('choose_app_subtitle'),
       [
         {
-          text: 'Яндекс.Навигатор',
+          text: t('yandex_navigator'),
           onPress: openInYandexNavigator,
         },
         {
-          text: 'Google Maps',
+          text: t('google_maps'),
           onPress: () => {
             const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
             Linking.openURL(googleMapsUrl);
           },
         },
         {
-          text: 'Apple Maps',
+          text: t('apple_maps'),
           onPress: () => {
             const appleMapsUrl = `http://maps.apple.com/?daddr=${latitude},${longitude}`;
             Linking.openURL(appleMapsUrl);
           },
         },
-        { text: 'Отмена', style: 'cancel' }
+        { text: tError('cancel'), style: 'cancel' }
       ]
     );
   };
@@ -142,7 +145,7 @@ export const OrderLocationMap: React.FC<OrderLocationMapProps> = ({
             activeOpacity={0.8}
           >
             <LocationIcon width={18} height={18} color={theme.colors.primary} style={styles.buttonIcon} />
-            <Text style={styles.routeButtonText}>Построить маршрут</Text>
+            <Text style={styles.routeButtonText}>{t('build_route')}</Text>
           </TouchableOpacity>
         </View>
       </View>

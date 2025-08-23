@@ -9,6 +9,9 @@ import {
 import { theme } from '../../constants/theme';
 import { Order } from '../../types';
 import { locationService, LocationCoords } from '../../services/locationService';
+import { getCategoryEmoji } from '../../utils/categoryUtils';
+import { useCustomerTranslation } from '../../hooks/useTranslation';
+import { getStatusInfo } from '../../utils/statusUtils';
 
 // SVG импорты
 import CalendarIcon from '../../../assets/card-icons/calendar.svg';
@@ -36,8 +39,9 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
   workerView = false,
 }) => {
   const [isPressed, setIsPressed] = useState(false);
+  const t = useCustomerTranslation();
   const formatBudget = (amount: number) => {
-    return `${amount.toLocaleString('ru-RU')} сум`;
+    return `${amount.toLocaleString('ru-RU')} ${t('currency_sum')}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -55,87 +59,19 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / 60000);
 
     if (diffInMinutes < 60) {
-      return `${diffInMinutes} минут назад`;
+      return t('minutes_ago_full', { count: diffInMinutes });
     } else if (diffInMinutes < 1440) {
       const hours = Math.floor(diffInMinutes / 60);
-      return `${hours} часов назад`;
+      return t('hours_ago_full', { count: hours });
     } else {
       const days = Math.floor(diffInMinutes / 1440);
-      return `${days} дней назад`;
+      return t('days_ago_full', { count: days });
     }
   };
 
-  const getStatusInfo = (status: Order['status']) => {
-    switch (status) {
-      case 'new':
-        return {
-          text: 'Новый',
-          color: theme.colors.primary,
-          backgroundColor: theme.colors.primary + '20',
-        };
-      case 'response_received':
-        // Для исполнителей показываем как "Новый", для заказчиков - "Отклик получен"
-        if (workerView) {
-          return {
-            text: 'Новый',
-            color: theme.colors.primary,
-            backgroundColor: theme.colors.primary + '20',
-          };
-        } else {
-          return {
-            text: 'Отклик получен',
-            color: '#FFFFFF',
-            backgroundColor: theme.colors.primary,
-          };
-        }
-      case 'in_progress':
-        return {
-          text: 'В работе',
-          color: '#F59E0B',
-          backgroundColor: '#FEF3C7',
-        };
-      case 'completed':
-        return {
-          text: 'Завершен',
-          color: '#6B7280',
-          backgroundColor: '#F3F4F6',
-        };
-      case 'cancelled':
-        return {
-          text: 'Отменен',
-          color: '#EF4444',
-          backgroundColor: '#FEE2E2',
-        };
-      case 'rejected':
-        return {
-          text: 'Отклонен',
-          color: '#EF4444',
-          backgroundColor: '#FEE2E2',
-        };
-      default:
-        return {
-          text: status,
-          color: '#6B7280',
-          backgroundColor: '#F3F4F6',
-        };
-    }
-  };
 
-  const getCategoryIcon = (category: string) => {
-    const categoryMap: { [key: string]: string } = {
-      'Стройка': '🏗️',
-      'Уборка': '🧹',
-      'Сад': '🌳',
-      'Общепит': '🍽️',
-      'Переезд': '🚚',
-      'Ремонт техники': '🔧',
-      'Доставка': '🚴',
-      'Красота': '💄',
-      'Обучение': '📚',
-      'Прочее': '✨'
-    };
-    return categoryMap[category] || '✨';
-  };
+
+  const getCategoryIcon = getCategoryEmoji;
 
   // Функция для получения строки с адресом и дистанцией
   const getLocationText = () => {
@@ -183,16 +119,16 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
           <View style={[
             styles.statusPill,
             {
-              backgroundColor: getStatusInfo(order.status).backgroundColor
+              backgroundColor: getStatusInfo(order.status, t, workerView).backgroundColor
             }
           ]}>
             <Text style={[
               styles.statusPillText,
               {
-                color: getStatusInfo(order.status).color
+                color: getStatusInfo(order.status, t, workerView).color
               }
             ]}>
-              {getStatusInfo(order.status).text}
+              {getStatusInfo(order.status, t, workerView).text}
             </Text>
           </View>
         </View>
@@ -255,7 +191,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
                         style={styles.detailIcon}
                       />
                     </View>
-                    <Text style={styles.detailText}>{order.applicantsCount} заявок</Text>
+                    <Text style={styles.detailText}>{t('applications_count', { count: order.applicantsCount })}</Text>
                   </View>
                 </View>
               )}
@@ -284,7 +220,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
                         style={styles.detailIcon}
                       />
                     </View>
-                    <Text style={styles.detailText}>{order.applicantsCount} заявок</Text>
+                    <Text style={styles.detailText}>{t('applications_count', { count: order.applicantsCount })}</Text>
                   </View>
                 )}
               </View>

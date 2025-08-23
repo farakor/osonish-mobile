@@ -31,6 +31,7 @@ import { authService } from '../../services/authService';
 import { locationService, LocationCoords } from '../../services/locationService';
 import { supabase } from '../../services/supabaseClient';
 import { Order, User } from '../../types';
+import { useCustomerTranslation } from '../../hooks/useTranslation';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48; // 24px margin on each side
@@ -206,6 +207,7 @@ export const JobDetailsScreen: React.FC = () => {
   const route = useRoute<JobDetailsRouteProp>();
   const { orderId } = route.params;
   const insets = usePlatformSafeAreaInsets();
+  const t = useCustomerTranslation();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -610,7 +612,7 @@ export const JobDetailsScreen: React.FC = () => {
               latitude={effectiveLatitude as number}
               longitude={effectiveLongitude as number}
               address={order.location}
-              title="Куда ехать"
+              title={t('where_to_go')}
             />
           )}
         </Animated.ScrollView>

@@ -24,6 +24,8 @@ import { UpdateOrderRequest, Order } from '../../types';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
 import { HeaderWithBack } from '../../components/common';
+import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
+import { useTranslatedCategories } from '../../utils/categoryUtils';
 
 type EditOrderRouteProp = RouteProp<CustomerStackParamList, 'EditOrder'>;
 
@@ -44,6 +46,10 @@ export const EditOrderScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<EditOrderRouteProp>();
   const { orderId } = route.params;
+  const t = useCustomerTranslation();
+  const tError = useErrorsTranslation();
+  const tCommon = useCommonTranslation();
+  const categories = useTranslatedCategories();
 
   // Состояния для данных заказа
   const [order, setOrder] = useState<Order | null>(null);
@@ -171,15 +177,7 @@ export const EditOrderScreen: React.FC = () => {
     isFocused && styles.inputFocused,
   ];
 
-  // Показываем только 6 категорий
-  const categories = [
-    { label: 'Стройка', emoji: '🏗️' },
-    { label: 'Уборка', emoji: '🧹' },
-    { label: 'Сад', emoji: '🌳' },
-    { label: 'Общепит', emoji: '🍽️' },
-    { label: 'Переезд', emoji: '🚚' },
-    { label: 'Прочее', emoji: '✨' },
-  ];
+
 
   const handleDateChange = (event: any, date?: Date) => {
     // Для Android закрываем picker после выбора

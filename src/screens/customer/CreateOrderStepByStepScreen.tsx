@@ -45,6 +45,7 @@ import {
 } from '../../components/common/AnimatedComponents';
 import { HeaderWithBack } from '../../components/common';
 import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
+import { useTranslatedCategories } from '../../utils/categoryUtils';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -131,6 +132,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
   const t = useCustomerTranslation();
   const tError = useErrorsTranslation();
   const tCommon = useCommonTranslation();
+  const categories = useTranslatedCategories();
 
   // Ref для поля местоположения
   const locationInputRef = useRef<any>(null);
@@ -157,15 +159,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
     isFocused && styles.stepInputFocused,
   ];
 
-  // Показываем только 6 категорий
-  const categories = [
-    { label: t('category_construction'), emoji: '🏗️' },
-    { label: t('category_cleaning'), emoji: '🧹' },
-    { label: t('category_garden'), emoji: '🌳' },
-    { label: t('category_catering'), emoji: '🍽️' },
-    { label: t('category_moving'), emoji: '🚚' },
-    { label: t('category_other'), emoji: '✨' },
-  ];
+
 
   const handleDateChange = (event: any, date?: Date) => {
     if (Platform.OS === 'android') {

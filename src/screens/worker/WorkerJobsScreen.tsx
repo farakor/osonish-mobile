@@ -27,6 +27,8 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { WorkerStackParamList } from '../../types/navigation';
 import NotificationIcon from '../../../assets/notification-message.svg';
+import { useCustomerTranslation } from '../../hooks/useTranslation';
+import { getCategoryEmoji, getCategoryLabel } from '../../utils/categoryUtils';
 
 type WorkerNavigationProp = NativeStackNavigationProp<WorkerStackParamList>;
 
@@ -68,6 +70,7 @@ const JobCard: React.FC<{
 
 const WorkerJobsScreen: React.FC = () => {
   const navigation = useNavigation<WorkerNavigationProp>();
+  const t = useCustomerTranslation();
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -239,21 +242,7 @@ const WorkerJobsScreen: React.FC = () => {
     return categories;
   };
 
-  const getCategoryEmoji = (category: string) => {
-    const emojiMap: { [key: string]: string } = {
-      'Стройка': '🏗️',
-      'Уборка': '🧹',
-      'Сад': '🌳',
-      'Общепит': '🍽️',
-      'Переезд': '🚚',
-      'Ремонт техники': '🔧',
-      'Доставка': '🚴',
-      'Красота': '💄',
-      'Обучение': '📚',
-      'Прочее': '✨'
-    };
-    return emojiMap[category] || '✨';
-  };
+
 
   const handleApplyToJob = async (orderId: string) => {
     try {
