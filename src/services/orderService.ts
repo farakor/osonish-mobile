@@ -2,6 +2,7 @@ import { Order, CreateOrderRequest, CreateOrderResponse, UpdateOrderRequest, Upd
 import { authService } from './authService';
 import { notificationService } from './notificationService';
 import { supabase, Database } from './supabaseClient';
+import { getTranslatedNotification, getTranslatedNotificationsForUsers } from '../utils/notificationTranslations';
 
 export class OrderService {
   private static instance: OrderService;
@@ -2057,8 +2058,20 @@ export class OrderService {
       }
 
       const workerIds = workers.map(worker => worker.id);
-      const title = 'Новый заказ!';
-      const body = `${order.title} - ${order.budget} сум в ${order.location}`;
+
+      // Получаем переведенные уведомления для всех исполнителей
+      const notificationParams = {
+        title: order.title,
+        budget: order.budget,
+        location: order.location
+      };
+
+      const translatedNotifications = await getTranslatedNotificationsForUsers(
+        workerIds,
+        'new_order',
+        notificationParams
+      );
+
       const data = {
         orderId: order.id,
         orderTitle: order.title,
@@ -2067,14 +2080,21 @@ export class OrderService {
         type: 'new_order'
       };
 
-      // Отправляем уведомления
-      const sentCount = await notificationService.sendNotificationToUsers(
-        workerIds,
-        title,
-        body,
-        data,
-        'new_order'
-      );
+      // Отправляем уведомления каждому пользователю на его языке
+      let sentCount = 0;
+      for (const workerId of workerIds) {
+        const notification = translatedNotifications.get(workerId);
+        if (notification) {
+          const sent = await notificationService.sendNotificationToUser(
+            workerId,
+            notification.title,
+            notification.body,
+            data,
+            'new_order'
+          );
+          if (sent) sentCount++;
+        }
+      }
 
       console.log(`[OrderService] ✅ Отправлено ${sentCount} уведомлений о новом заказе`);
     } catch (error) {
@@ -2118,8 +2138,18 @@ export class OrderService {
         return;
       }
 
-      const title = 'Новый отклик на ваш заказ!';
-      const body = `${worker.firstName} ${worker.lastName} откликнулся на "${orderData.title}"`;
+      // Получаем переведенное уведомление для заказчика
+      const notificationParams = {
+        workerName: `${worker.firstName} ${worker.lastName}`,
+        orderTitle: orderData.title
+      };
+
+      const notification = await getTranslatedNotification(
+        orderData.customer_id,
+        'new_application',
+        notificationParams
+      );
+
       const data = {
         orderId: orderData.id,
         orderTitle: orderData.title,
@@ -2131,8 +2161,8 @@ export class OrderService {
       // Отправляем уведомление заказчику
       const sent = await notificationService.sendNotificationToUser(
         orderData.customer_id,
-        title,
-        body,
+        notification.title,
+        notification.body,
         data,
         'new_application'
       );
@@ -2170,8 +2200,19 @@ export class OrderService {
       }
 
       const order = applicantData.orders;
-      const title = 'Вас выбрали для выполнения заказа!';
-      const body = `Поздравляем! Вас выбрали для заказа "${order.title}" за ${order.budget} сум`;
+
+      // Получаем переведенное уведомление для исполнителя
+      const notificationParams = {
+        orderTitle: order.title,
+        budget: order.budget
+      };
+
+      const notification = await getTranslatedNotification(
+        applicantData.worker_id,
+        'worker_selected',
+        notificationParams
+      );
+
       const data = {
         orderId: order.id,
         orderTitle: order.title,
@@ -2184,8 +2225,8 @@ export class OrderService {
       // Отправляем уведомление исполнителю
       const sent = await notificationService.sendNotificationToUser(
         applicantData.worker_id,
-        title,
-        body,
+        notification.title,
+        notification.body,
         data,
         'order_update'
       );
@@ -2237,8 +2278,18 @@ export class OrderService {
       }
 
       const workerIds = acceptedApplicants.map(applicant => applicant.worker_id);
-      const title = 'Заказ завершен!';
-      const body = `Заказ "${orderData.title}" успешно завершен. Спасибо за отличную работу!`;
+
+      // Получаем переведенные уведомления для всех исполнителей
+      const notificationParams = {
+        orderTitle: orderData.title
+      };
+
+      const translatedNotifications = await getTranslatedNotificationsForUsers(
+        workerIds,
+        'order_completed',
+        notificationParams
+      );
+
       const data = {
         orderId: orderData.id,
         orderTitle: orderData.title,
@@ -2246,14 +2297,21 @@ export class OrderService {
         type: 'order_completed'
       };
 
-      // Отправляем уведомления
-      const sentCount = await notificationService.sendNotificationToUsers(
-        workerIds,
-        title,
-        body,
-        data,
-        'order_completed'
-      );
+      // Отправляем уведомления каждому пользователю на его языке
+      let sentCount = 0;
+      for (const workerId of workerIds) {
+        const notification = translatedNotifications.get(workerId);
+        if (notification) {
+          const sent = await notificationService.sendNotificationToUser(
+            workerId,
+            notification.title,
+            notification.body,
+            data,
+            'order_completed'
+          );
+          if (sent) sentCount++;
+        }
+      }
 
       console.log(`[OrderService] ✅ Отправлено ${sentCount} уведомлений о завершении заказа`);
     } catch (error) {
@@ -2298,8 +2356,18 @@ export class OrderService {
       }
 
       const workerIds = applicants.map(applicant => applicant.worker_id);
-      const title = 'Заказ обновлен';
-      const body = `Заказ "${orderData.title}" был изменен заказчиком`;
+
+      // Получаем переведенные уведомления для всех исполнителей
+      const notificationParams = {
+        orderTitle: orderData.title
+      };
+
+      const translatedNotifications = await getTranslatedNotificationsForUsers(
+        workerIds,
+        'order_updated',
+        notificationParams
+      );
+
       const data = {
         orderId: orderData.id,
         orderTitle: orderData.title,
@@ -2308,14 +2376,21 @@ export class OrderService {
         type: 'order_updated'
       };
 
-      // Отправляем уведомления
-      const sentCount = await notificationService.sendNotificationToUsers(
-        workerIds,
-        title,
-        body,
-        data,
-        'order_update'
-      );
+      // Отправляем уведомления каждому пользователю на его языке
+      let sentCount = 0;
+      for (const workerId of workerIds) {
+        const notification = translatedNotifications.get(workerId);
+        if (notification) {
+          const sent = await notificationService.sendNotificationToUser(
+            workerId,
+            notification.title,
+            notification.body,
+            data,
+            'order_update'
+          );
+          if (sent) sentCount++;
+        }
+      }
 
       console.log(`[OrderService] ✅ Отправлено ${sentCount} уведомлений об обновлении заказа`);
     } catch (error) {
@@ -2331,22 +2406,39 @@ export class OrderService {
       console.log('[OrderService] 📤 Отправляем уведомления об отмене заказа...');
 
       const workerIds = applicants.map(applicant => applicant.worker_id);
-      const title = 'Заказ отменен';
-      const body = `Заказ "${orderTitle}" был отменен заказчиком`;
+
+      // Получаем переведенные уведомления для всех исполнителей
+      const notificationParams = {
+        orderTitle: orderTitle
+      };
+
+      const translatedNotifications = await getTranslatedNotificationsForUsers(
+        workerIds,
+        'order_cancelled',
+        notificationParams
+      );
+
       const data = {
         orderId: orderId,
         orderTitle: orderTitle,
         type: 'order_cancelled'
       };
 
-      // Отправляем уведомления
-      const sentCount = await notificationService.sendNotificationToUsers(
-        workerIds,
-        title,
-        body,
-        data,
-        'order_cancelled'
-      );
+      // Отправляем уведомления каждому пользователю на его языке
+      let sentCount = 0;
+      for (const workerId of workerIds) {
+        const notification = translatedNotifications.get(workerId);
+        if (notification) {
+          const sent = await notificationService.sendNotificationToUser(
+            workerId,
+            notification.title,
+            notification.body,
+            data,
+            'order_cancelled'
+          );
+          if (sent) sentCount++;
+        }
+      }
 
       console.log(`[OrderService] ✅ Отправлено ${sentCount} уведомлений об отмене заказа`);
     } catch (error) {

@@ -23,6 +23,7 @@ import { WorkerApplication, Order } from '../../types';
 import { WorkerStackParamList } from '../../types/navigation';
 import { ModernOrderCard } from '../../components/cards';
 import { ModernActionButton } from '../../components/common';
+import { useWorkerTranslation } from '../../hooks/useTranslation';
 
 
 type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled';
@@ -76,13 +77,14 @@ const ApplicationCard: React.FC<{
   navigation: WorkerNavigationProp;
 }> = ({ application, onAction, userLocation, navigation }) => {
   const order = convertApplicationToOrder(application);
+  const tWorker = useWorkerTranslation();
 
   const getActionButton = () => {
     switch (application.status) {
       case 'pending':
         return (
           <ModernActionButton
-            title="Отменить заявку"
+            title={tWorker('cancel_application')}
             onPress={() => onAction(application.id, 'cancel')}
             variant="secondary"
             size="small"
@@ -121,6 +123,7 @@ export const WorkerApplicationsScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [userLocation, setUserLocation] = useState<LocationCoords | undefined>(undefined);
+  const tWorker = useWorkerTranslation();
 
 
 
@@ -138,7 +141,7 @@ export const WorkerApplicationsScreen: React.FC = () => {
       console.log(`[WorkerApplicationsScreen] Загружено ${workerApplications.length} заявок`);
     } catch (error) {
       console.error('Ошибка загрузки заявок:', error);
-      Alert.alert('Ошибка', 'Не удалось загрузить заявки');
+      Alert.alert(tWorker('general_error'), tWorker('load_applications_error'));
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -210,11 +213,11 @@ export const WorkerApplicationsScreen: React.FC = () => {
   }, []);
 
   const statusFilters = [
-    { key: 'pending', label: 'Ожидание', count: applications.filter(a => a.status === 'pending').length },
-    { key: 'accepted', label: 'В работе', count: applications.filter(a => a.status === 'accepted').length },
-    { key: 'completed', label: 'Завершено', count: applications.filter(a => a.status === 'completed').length },
-    { key: 'rejected', label: 'Отклонено', count: applications.filter(a => a.status === 'rejected').length },
-    { key: 'cancelled', label: 'Отменено', count: applications.filter(a => a.status === 'cancelled').length },
+    { key: 'pending', label: tWorker('waiting_status'), count: applications.filter(a => a.status === 'pending').length },
+    { key: 'accepted', label: tWorker('in_progress_status'), count: applications.filter(a => a.status === 'accepted').length },
+    { key: 'completed', label: tWorker('completed_status'), count: applications.filter(a => a.status === 'completed').length },
+    { key: 'rejected', label: tWorker('rejected_status'), count: applications.filter(a => a.status === 'rejected').length },
+    { key: 'cancelled', label: tWorker('cancelled_status'), count: applications.filter(a => a.status === 'cancelled').length },
   ];
 
   const filteredApplications = applications.filter(app =>
@@ -228,12 +231,12 @@ export const WorkerApplicationsScreen: React.FC = () => {
 
     if (action === 'cancel') {
       Alert.alert(
-        'Отменить заявку',
-        'Вы действительно хотите отменить эту заявку? Заказчик больше не увидит ваш отклик, и вы не сможете восстановить его.',
+        tWorker('cancel_application_title'),
+        tWorker('cancel_application_message'),
         [
-          { text: 'Отмена', style: 'cancel' },
+          { text: tWorker('cancel'), style: 'cancel' },
           {
-            text: 'Отменить заявку',
+            text: tWorker('cancel_application_button'),
             style: 'destructive',
             onPress: async () => {
               try {
@@ -242,16 +245,16 @@ export const WorkerApplicationsScreen: React.FC = () => {
                 console.log(`[WorkerApplicationsScreen] Результат отмены: ${success}`);
 
                 if (success) {
-                  Alert.alert('Успешно', 'Заявка отменена. Заказчик больше не увидит ваш отклик.');
+                  Alert.alert(tWorker('success'), tWorker('application_cancelled_success'));
                   console.log(`[WorkerApplicationsScreen] ✅ Заявка отменена, перезагружаем данные...`);
                   loadApplications(); // Перезагружаем данные
                 } else {
                   console.log(`[WorkerApplicationsScreen] ❌ Не удалось отменить заявку`);
-                  Alert.alert('Ошибка', 'Не удалось отменить заявку. Возможно, заявка уже была принята или отклонена.');
+                  Alert.alert(tWorker('general_error'), tWorker('cancel_application_error'));
                 }
               } catch (error) {
                 console.error('[WorkerApplicationsScreen] ❌ Ошибка отмены заявки:', error);
-                Alert.alert('Ошибка', 'Произошла ошибка при отмене заявки');
+                Alert.alert(tWorker('general_error'), tWorker('cancel_application_general_error'));
               }
             }
           }
@@ -292,9 +295,9 @@ export const WorkerApplicationsScreen: React.FC = () => {
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
       <SafeAreaView style={styles.content}>
         <View style={[styles.contentHeader, { paddingTop: theme.spacing.lg + getAndroidStatusBarHeight() }]}>
-          <Text style={styles.title}>Мои заказы</Text>
+          <Text style={styles.title}>{tWorker('my_orders')}</Text>
           <Text style={styles.subtitle}>
-            Отслеживайте статус ваших заявок на заказы
+            {tWorker('track_applications_status')}
           </Text>
         </View>
 
@@ -329,12 +332,12 @@ export const WorkerApplicationsScreen: React.FC = () => {
             <View style={styles.emptyState}>
               <Text style={styles.emptyStateIcon}>📝</Text>
               <Text style={styles.emptyStateTitle}>
-                {isLoading ? 'Загрузка...' : 'Нет заявок'}
+                {isLoading ? tWorker('loading') : tWorker('no_applications')}
               </Text>
               <Text style={styles.emptyStateText}>
                 {isLoading
-                  ? 'Загружаем ваши заявки...'
-                  : `Нет заявок со статусом "${statusFilters.find(f => f.key === selectedStatus)?.label}"`
+                  ? tWorker('loading_applications')
+                  : `${tWorker('no_applications_with_status')} "${statusFilters.find(f => f.key === selectedStatus)?.label}"`
                 }
               </Text>
             </View>

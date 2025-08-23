@@ -25,6 +25,7 @@ import NotificationMessageIcon from '../../../assets/notification-message.svg';
 import LifeBuoyIcon from '../../../assets/life-buoy-02.svg';
 import LogOutIcon from '../../../assets/log-out-03.svg';
 import { Ionicons } from '@expo/vector-icons';
+import { useWorkerTranslation } from '../../hooks/useTranslation';
 
 // Функция для получения высоты статусбара только на Android
 const getAndroidStatusBarHeight = () => {
@@ -54,6 +55,7 @@ export const WorkerProfileScreen: React.FC = () => {
   const navigation = useNavigation();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const tWorker = useWorkerTranslation();
 
   // Цвет для элементов выхода
   const logoutColor = '#FF3B30';
@@ -111,7 +113,7 @@ export const WorkerProfileScreen: React.FC = () => {
       }
     } catch (error) {
       console.error('Ошибка загрузки профиля:', error);
-      Alert.alert('Ошибка', 'Не удалось загрузить данные профиля');
+      Alert.alert(tWorker('general_error'), tWorker('profile_load_error'));
     } finally {
       setIsLoading(false);
     }
@@ -207,11 +209,21 @@ export const WorkerProfileScreen: React.FC = () => {
 
   const formatEarnings = (amount: number): string => {
     if (amount >= 1000000) {
-      return `${(amount / 1000000).toFixed(1)}М сум`;
+      return `${(amount / 1000000).toFixed(1)}М ${tWorker('currency_sum')}`;
     } else if (amount >= 1000) {
-      return `${Math.floor(amount / 1000)}К сум`;
+      return `${Math.floor(amount / 1000)}К ${tWorker('currency_sum')}`;
     }
-    return `${amount} сум`;
+    return `${amount} ${tWorker('currency_sum')}`;
+  };
+
+  const getReviewsText = (count: number): string => {
+    if (count === 1) {
+      return tWorker('reviews_count_1');
+    } else if (count >= 2 && count <= 4) {
+      return tWorker('reviews_count_2_4');
+    } else {
+      return tWorker('reviews_count_5_plus');
+    }
   };
 
   const mainStatsData: StatItem[] = [
@@ -219,7 +231,7 @@ export const WorkerProfileScreen: React.FC = () => {
       id: 'jobs',
       icon: '',
       value: stats.completedJobs.toString(),
-      label: 'Заказов',
+      label: tWorker('orders_count'),
       color: theme.colors.primary,
       onPress: () => navigation.navigate('Applications' as never),
     },
@@ -227,16 +239,16 @@ export const WorkerProfileScreen: React.FC = () => {
       id: 'rating',
       icon: '',
       value: stats.rating.toString(),
-      label: 'Рейтинг',
+      label: tWorker('rating'),
       color: theme.colors.primary,
     },
     {
       id: 'experience',
       icon: '',
       value: stats.monthsOnPlatform > 12
-        ? `${Math.floor(stats.monthsOnPlatform / 12)} г`
-        : `${stats.monthsOnPlatform} мес`,
-      label: 'На платформе',
+        ? `${Math.floor(stats.monthsOnPlatform / 12)} ${tWorker('years_short')}`
+        : `${stats.monthsOnPlatform} ${tWorker('months_short')}`,
+      label: tWorker('on_platform'),
       color: theme.colors.primary,
     },
   ];
@@ -255,12 +267,12 @@ export const WorkerProfileScreen: React.FC = () => {
 
   const handleLogout = async () => {
     Alert.alert(
-      'Выход',
-      'Вы действительно хотите выйти из аккаунта?',
+      tWorker('logout_title'),
+      tWorker('logout_message'),
       [
-        { text: 'Отмена', style: 'cancel' },
+        { text: tWorker('cancel'), style: 'cancel' },
         {
-          text: 'Выйти',
+          text: tWorker('logout'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -269,7 +281,7 @@ export const WorkerProfileScreen: React.FC = () => {
               navigation.navigate('Auth' as never);
             } catch (error) {
               console.error('Ошибка выхода:', error);
-              Alert.alert('Ошибка', 'Не удалось выйти из аккаунта');
+              Alert.alert(tWorker('general_error'), tWorker('logout_error'));
             }
           }
         },
@@ -278,16 +290,16 @@ export const WorkerProfileScreen: React.FC = () => {
   };
 
   const profileOptions: ProfileOption[] = [
-    { id: '1', title: 'Редактировать профиль', icon: <UserEditIcon width={20} height={20} />, action: handleEditProfile },
-    { id: '2', title: 'Уведомления', icon: <NotificationMessageIcon width={20} height={20} />, action: handleNotifications },
-    { id: '3', title: 'Поддержка', icon: <LifeBuoyIcon width={20} height={20} />, action: handleSupport },
+    { id: '1', title: tWorker('edit_profile'), icon: <UserEditIcon width={20} height={20} />, action: handleEditProfile },
+    { id: '2', title: tWorker('notifications'), icon: <NotificationMessageIcon width={20} height={20} />, action: handleNotifications },
+    { id: '3', title: tWorker('support'), icon: <LifeBuoyIcon width={20} height={20} />, action: handleSupport },
   ];
 
   if (isLoading) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>Загрузка профиля...</Text>
+        <Text style={styles.loadingText}>{tWorker('loading_profile')}</Text>
       </View>
     );
   }
@@ -295,9 +307,9 @@ export const WorkerProfileScreen: React.FC = () => {
   if (!user) {
     return (
       <View style={[styles.container, styles.errorContainer]}>
-        <Text style={styles.errorText}>Ошибка загрузки профиля</Text>
+        <Text style={styles.errorText}>{tWorker('profile_load_error')}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={loadUserProfile}>
-          <Text style={styles.retryButtonText}>Попробовать снова</Text>
+          <Text style={styles.retryButtonText}>{tWorker('try_again')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -309,8 +321,8 @@ export const WorkerProfileScreen: React.FC = () => {
       <SafeAreaView style={styles.content}>
         {/* Custom Header */}
         <View style={[styles.contentHeader, { paddingTop: theme.spacing.lg + getAndroidStatusBarHeight() }]}>
-          <Text style={styles.title}>Профиль</Text>
-          <Text style={styles.subtitle}>Управляйте своим профилем</Text>
+          <Text style={styles.title}>{tWorker('profile')}</Text>
+          <Text style={styles.subtitle}>{tWorker('manage_profile')}</Text>
         </View>
 
         <ScrollView
@@ -365,7 +377,7 @@ export const WorkerProfileScreen: React.FC = () => {
                   <StarIcon filled={true} size={16} />
                   <Text style={styles.ratingText}>{stats.rating}</Text>
                   <Text style={styles.ratingCount}>
-                    ({stats.totalReviews} отзыв{stats.totalReviews === 1 ? '' : stats.totalReviews < 5 ? 'а' : 'ов'})
+                    ({stats.totalReviews} {getReviewsText(stats.totalReviews)})
                   </Text>
                 </View>
               )}
@@ -388,7 +400,7 @@ export const WorkerProfileScreen: React.FC = () => {
                 style={styles.modernEarningsWidget}
               >
                 <View style={styles.earningsMainContent}>
-                  <Text style={styles.earningsTitle}>Заработано</Text>
+                  <Text style={styles.earningsTitle}>{tWorker('earned')}</Text>
                   <Text style={styles.modernEarningsValue}>{formatEarnings(stats.earnings)}</Text>
                   {stats.earningsChange !== undefined && (
                     <View style={styles.earningsChangeContainer}>
@@ -412,19 +424,19 @@ export const WorkerProfileScreen: React.FC = () => {
           <View style={styles.mainStatsContainer}>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>{stats.completedJobs}</Text>
-              <Text style={styles.statLabel}>Заказов</Text>
+              <Text style={styles.statLabel}>{tWorker('orders_count')}</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>{stats.rating}</Text>
-              <Text style={styles.statLabel}>Рейтинг</Text>
+              <Text style={styles.statLabel}>{tWorker('rating')}</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>
                 {stats.monthsOnPlatform > 12
-                  ? `${Math.floor(stats.monthsOnPlatform / 12)} г`
-                  : `${stats.monthsOnPlatform} мес`}
+                  ? `${Math.floor(stats.monthsOnPlatform / 12)} ${tWorker('years_short')}`
+                  : `${stats.monthsOnPlatform} ${tWorker('months_short')}`}
               </Text>
-              <Text style={styles.statLabel}>На платформе</Text>
+              <Text style={styles.statLabel}>{tWorker('on_platform')}</Text>
             </View>
           </View>
 
@@ -435,7 +447,7 @@ export const WorkerProfileScreen: React.FC = () => {
                 <View style={styles.menuIconContainer}>
                   <UserEditIcon width={20} height={20} />
                 </View>
-                <Text style={styles.menuText}>Редактировать профиль</Text>
+                <Text style={styles.menuText}>{tWorker('edit_profile')}</Text>
               </View>
               <Text style={styles.menuArrow}>›</Text>
             </TouchableOpacity>
@@ -445,7 +457,7 @@ export const WorkerProfileScreen: React.FC = () => {
                 <View style={styles.menuIconContainer}>
                   <NotificationMessageIcon width={20} height={20} />
                 </View>
-                <Text style={styles.menuText}>Уведомления</Text>
+                <Text style={styles.menuText}>{tWorker('notifications')}</Text>
               </View>
               <Text style={styles.menuArrow}>›</Text>
             </TouchableOpacity>
@@ -455,7 +467,7 @@ export const WorkerProfileScreen: React.FC = () => {
                 <View style={styles.menuIconContainer}>
                   <LifeBuoyIcon width={20} height={20} />
                 </View>
-                <Text style={styles.menuText}>Поддержка</Text>
+                <Text style={styles.menuText}>{tWorker('support')}</Text>
               </View>
               <Text style={styles.menuArrow}>›</Text>
             </TouchableOpacity>
@@ -465,7 +477,7 @@ export const WorkerProfileScreen: React.FC = () => {
                 <View style={styles.menuIconContainer}>
                   <LogOutIcon width={20} height={20} color={logoutColor} />
                 </View>
-                <Text style={[styles.menuText, styles.logoutText]}>Выйти</Text>
+                <Text style={[styles.menuText, styles.logoutText]}>{tWorker('logout')}</Text>
               </View>
             </TouchableOpacity>
           </View>

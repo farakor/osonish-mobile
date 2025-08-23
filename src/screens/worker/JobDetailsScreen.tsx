@@ -32,7 +32,7 @@ import { getCategoryEmoji, getCategoryLabel } from '../../utils/categoryUtils';
 import { locationService, LocationCoords } from '../../services/locationService';
 import { supabase } from '../../services/supabaseClient';
 import { Order, User } from '../../types';
-import { useCustomerTranslation, useCategoriesTranslation } from '../../hooks/useTranslation';
+import { useCustomerTranslation, useCategoriesTranslation, useWorkerTranslation } from '../../hooks/useTranslation';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48; // 24px margin on each side
@@ -65,12 +65,13 @@ const VideoPreview: React.FC<{ uri: string }> = ({ uri }) => {
 const SafeImage: React.FC<{ uri: string; index: number }> = ({ uri, index }) => {
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const tWorker = useWorkerTranslation();
 
   if (hasError) {
     return (
       <View style={[styles.mediaImage, styles.errorContainer]}>
         <Text style={styles.errorText}>❌</Text>
-        <Text style={styles.errorSubtext}>Ошибка загрузки</Text>
+        <Text style={styles.errorSubtext}>{tWorker('loading_error')}</Text>
       </View>
     );
   }
@@ -210,6 +211,7 @@ export const JobDetailsScreen: React.FC = () => {
   const insets = usePlatformSafeAreaInsets();
   const t = useCustomerTranslation();
   const tCategories = useCategoriesTranslation();
+  const tWorker = useWorkerTranslation();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -263,7 +265,7 @@ export const JobDetailsScreen: React.FC = () => {
         }
       } catch (error) {
         console.error('Ошибка загрузки заказа:', error);
-        Alert.alert('Ошибка', 'Не удалось загрузить данные заказа');
+        Alert.alert(tWorker('general_error'), tWorker('load_job_error'));
       } finally {
         setIsLoading(false);
       }
@@ -337,17 +339,17 @@ export const JobDetailsScreen: React.FC = () => {
   const getApplicationStatusText = (status: 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled' | null) => {
     switch (status) {
       case 'pending':
-        return 'Отклик отправлен';
+        return tWorker('application_pending');
       case 'accepted':
-        return 'Отклик принят';
+        return tWorker('application_accepted');
       case 'rejected':
-        return 'Отклик отклонен';
+        return tWorker('application_rejected');
       case 'completed':
-        return 'Заказ завершен';
+        return tWorker('application_completed');
       case 'cancelled':
-        return 'Отклик отменен';
+        return tWorker('application_cancelled');
       default:
-        return 'Отклик отправлен';
+        return tWorker('application_submitted');
     }
   };
 
@@ -360,12 +362,12 @@ export const JobDetailsScreen: React.FC = () => {
     try {
       const authState = authService.getAuthState();
       if (!authState.isAuthenticated || !authState.user) {
-        Alert.alert('Ошибка', 'Необходимо войти в систему');
+        Alert.alert(tWorker('general_error'), tWorker('login_required'));
         return;
       }
 
       if (!order) {
-        Alert.alert('Ошибка', 'Заказ не найден');
+        Alert.alert(tWorker('general_error'), tWorker('order_not_found'));
         return;
       }
 
@@ -373,7 +375,7 @@ export const JobDetailsScreen: React.FC = () => {
       setPriceConfirmationVisible(true);
     } catch (error) {
       console.error('Ошибка при открытии формы отклика:', error);
-      Alert.alert('Ошибка', 'Произошла ошибка');
+      Alert.alert(tWorker('general_error'), tWorker('general_error'));
     }
   };
 
@@ -381,7 +383,7 @@ export const JobDetailsScreen: React.FC = () => {
     try {
       const authState = authService.getAuthState();
       if (!authState.isAuthenticated || !authState.user || !order) {
-        Alert.alert('Ошибка', 'Необходимо войти в систему');
+        Alert.alert(tWorker('general_error'), tWorker('login_required'));
         return;
       }
 
@@ -400,16 +402,16 @@ export const JobDetailsScreen: React.FC = () => {
         setHasApplied(true);
         setApplicationStatus('pending');
         Alert.alert(
-          'Успешно!',
-          'Отклик отправлен, ожидайте решение заказчика.',
-          [{ text: 'ОК' }]
+          tWorker('success'),
+          tWorker('response_sent_wait'),
+          [{ text: tWorker('ok') }]
         );
       } else {
-        Alert.alert('Ошибка', 'Не удалось отправить отклик');
+        Alert.alert(tWorker('general_error'), tWorker('send_response_error'));
       }
     } catch (error) {
       console.error('Ошибка отклика на заказ:', error);
-      Alert.alert('Ошибка', 'Произошла ошибка при отправке отклика');
+      Alert.alert(tWorker('general_error'), tWorker('send_response_general_error'));
     }
   };
 
@@ -423,7 +425,7 @@ export const JobDetailsScreen: React.FC = () => {
     try {
       const authState = authService.getAuthState();
       if (!authState.isAuthenticated || !authState.user || !order) {
-        Alert.alert('Ошибка', 'Необходимо войти в систему');
+        Alert.alert(tWorker('general_error'), tWorker('login_required'));
         return;
       }
 
@@ -439,16 +441,16 @@ export const JobDetailsScreen: React.FC = () => {
         setHasApplied(true);
         setApplicationStatus('pending');
         Alert.alert(
-          'Успешно!',
-          'Отклик отправлен, ожидайте решение заказчика.',
-          [{ text: 'ОК' }]
+          tWorker('success'),
+          tWorker('response_sent_wait'),
+          [{ text: tWorker('ok') }]
         );
       } else {
-        Alert.alert('Ошибка', 'Не удалось отправить отклик');
+        Alert.alert(tWorker('general_error'), tWorker('send_response_error'));
       }
     } catch (error) {
       console.error('Ошибка отклика на заказ:', error);
-      Alert.alert('Ошибка', 'Произошла ошибка при отправке отклика');
+      Alert.alert(tWorker('general_error'), tWorker('send_response_general_error'));
     }
   };
 
@@ -458,7 +460,7 @@ export const JobDetailsScreen: React.FC = () => {
       <SafeAreaView style={styles.container}>
         <HeaderWithBack />
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Загружаем данные заказа...</Text>
+          <Text style={styles.loadingText}>{tWorker('loading_job')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -469,12 +471,12 @@ export const JobDetailsScreen: React.FC = () => {
       <SafeAreaView style={styles.container}>
         <HeaderWithBack />
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Заказ не найден</Text>
+          <Text style={styles.errorText}>{tWorker('job_not_found')}</Text>
           <TouchableOpacity
             style={styles.errorButton}
             onPress={() => navigation.goBack()}
           >
-            <Text style={styles.errorButtonText}>Назад</Text>
+            <Text style={styles.errorButtonText}>{tWorker('back')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -498,10 +500,10 @@ export const JobDetailsScreen: React.FC = () => {
           </TouchableOpacity>
           <View style={styles.stickyTitleContainer}>
             <Text style={styles.stickyTitle} numberOfLines={1}>
-              {order?.title || 'Загрузка...'}
+              {order?.title || tWorker('loading_job')}
             </Text>
             <Text style={styles.stickyPrice}>
-              {order ? formatBudget(order.budget) + ' сум' : ''}
+              {order ? formatBudget(order.budget) + ' ' + t('sum_currency') : ''}
             </Text>
           </View>
           <View style={styles.rightActionContainer}>
@@ -540,12 +542,12 @@ export const JobDetailsScreen: React.FC = () => {
               </View>
               <View style={styles.profileInfo}>
                 <Text style={styles.profileName}>
-                  {customer ? `${customer.lastName} ${customer.firstName}` : 'Заказчик'}
+                  {customer ? `${customer.lastName} ${customer.firstName}` : tWorker('customer')}
                 </Text>
-                <Text style={styles.profileRole}>Заказчик</Text>
+                <Text style={styles.profileRole}>{tWorker('customer')}</Text>
               </View>
               <View style={styles.priceContainer}>
-                <Text style={styles.orderPrice}>{formatBudget(order.budget)} сум</Text>
+                <Text style={styles.orderPrice}>{formatBudget(order.budget)} {t('sum_currency')}</Text>
               </View>
             </View>
           </View>
@@ -604,7 +606,7 @@ export const JobDetailsScreen: React.FC = () => {
 
           {/* Details Section */}
           <View style={styles.detailsSection}>
-            <Text style={styles.detailsTitle}>Детали</Text>
+            <Text style={styles.detailsTitle}>{tWorker('details')}</Text>
             <Text style={styles.detailsText}>{order.description}</Text>
           </View>
 
@@ -614,7 +616,7 @@ export const JobDetailsScreen: React.FC = () => {
               latitude={effectiveLatitude as number}
               longitude={effectiveLongitude as number}
               address={order.location}
-              title={t('where_to_go')}
+              title={tWorker('where_to_go')}
             />
           )}
         </Animated.ScrollView>
@@ -633,7 +635,7 @@ export const JobDetailsScreen: React.FC = () => {
               styles.applyButtonText,
               hasApplied && styles.appliedButtonText
             ]}>
-              {hasApplied ? getApplicationStatusText(applicationStatus) : 'Подать заявку'}
+              {hasApplied ? getApplicationStatusText(applicationStatus) : tWorker('apply_for_job')}
             </Text>
           </TouchableOpacity>
         </View>

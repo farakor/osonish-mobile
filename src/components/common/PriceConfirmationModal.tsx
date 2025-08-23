@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../constants/theme';
+import { useWorkerTranslation } from '../../hooks/useTranslation';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -36,6 +37,7 @@ export const PriceConfirmationModal: React.FC<PriceConfirmationModalProps> = ({
   orderTitle,
 }) => {
   const insets = useSafeAreaInsets();
+  const tWorker = useWorkerTranslation();
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const modalTranslateY = useRef(new Animated.Value(300)).current;
   const [animationComplete, setAnimationComplete] = useState(false);
@@ -128,7 +130,7 @@ export const PriceConfirmationModal: React.FC<PriceConfirmationModalProps> = ({
           ]}>
             {/* Header */}
             <View style={styles.header}>
-              <Text style={styles.title}>Подтверждение отклика</Text>
+              <Text style={styles.title}>{tWorker('confirm_response')}</Text>
               <TouchableOpacity style={styles.closeButton} onPress={handleAnimatedClose}>
                 <Text style={styles.closeButtonText}>✕</Text>
               </TouchableOpacity>
@@ -137,9 +139,9 @@ export const PriceConfirmationModal: React.FC<PriceConfirmationModalProps> = ({
             {/* Price info */}
             <View style={styles.orderInfo}>
               <View style={styles.priceContainer}>
-                <Text style={styles.priceLabel}>Цена заказа:</Text>
+                <Text style={styles.priceLabel}>{tWorker('order_price')}</Text>
                 <Text style={styles.priceValue}>
-                  {formatPrice(orderPrice)} сум
+                  {formatPrice(orderPrice)} {tWorker('currency_sum')}
                 </Text>
               </View>
             </View>
@@ -147,7 +149,7 @@ export const PriceConfirmationModal: React.FC<PriceConfirmationModalProps> = ({
             {/* Question */}
             <View style={styles.questionSection}>
               <Text style={styles.questionText}>
-                Вы согласны с ценой {formatPrice(orderPrice)} сум?
+                {tWorker('agree_to_work_for')} {formatPrice(orderPrice)} {tWorker('currency_sum')}?
               </Text>
             </View>
 
@@ -165,7 +167,7 @@ export const PriceConfirmationModal: React.FC<PriceConfirmationModalProps> = ({
                 <Text style={[
                   styles.acceptButtonText,
                   !animationComplete && styles.disabledButtonText
-                ]}>Согласен</Text>
+                ]}>{tWorker('agree')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -180,7 +182,7 @@ export const PriceConfirmationModal: React.FC<PriceConfirmationModalProps> = ({
                 <Text style={[
                   styles.proposeButtonText,
                   !animationComplete && styles.disabledButtonText
-                ]}>Предложить свою цену</Text>
+                ]}>{tWorker('propose_own_price')}</Text>
               </TouchableOpacity>
             </View>
           </Animated.View>

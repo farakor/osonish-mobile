@@ -45,9 +45,11 @@ const JobCard: React.FC<{
   navigation: WorkerNavigationProp;
   userLocation?: LocationCoords;
 }> = ({ item, onApply, hasApplied = false, navigation, userLocation }) => {
+  const tWorker = useWorkerTranslation();
+
   const actionButton = (
     <ModernActionButton
-      title={hasApplied ? 'Отклик отправлен' : 'Откликнуться'}
+      title={hasApplied ? tWorker('response_sent') : tWorker('apply_to_job')}
       onPress={hasApplied ? undefined : () => onApply(item.id)}
       disabled={hasApplied}
       variant={hasApplied ? 'disabled' : 'primary'}
@@ -139,7 +141,7 @@ const WorkerJobsScreen: React.FC = () => {
       }
     } catch (error) {
       console.error('Ошибка загрузки заказов:', error);
-      Alert.alert('Ошибка', 'Не удалось загрузить заказы');
+      Alert.alert(t('general_error'), t('load_job_error'));
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -289,14 +291,14 @@ const WorkerJobsScreen: React.FC = () => {
     try {
       const authState = authService.getAuthState();
       if (!authState.isAuthenticated || !authState.user) {
-        Alert.alert('Ошибка', 'Необходимо войти в систему');
+        Alert.alert(t('general_error'), t('login_required'));
         return;
       }
 
       // Находим заказ для показа в модалке
       const order = orders.find(o => o.id === orderId);
       if (!order) {
-        Alert.alert('Ошибка', 'Заказ не найден');
+        Alert.alert(t('general_error'), t('order_not_found'));
         return;
       }
 
@@ -305,7 +307,7 @@ const WorkerJobsScreen: React.FC = () => {
       setPriceConfirmationVisible(true);
     } catch (error) {
       console.error('Ошибка при открытии формы отклика:', error);
-      Alert.alert('Ошибка', 'Произошла ошибка');
+      Alert.alert(t('general_error'), t('general_error'));
     }
   };
 
@@ -313,7 +315,7 @@ const WorkerJobsScreen: React.FC = () => {
     try {
       const authState = authService.getAuthState();
       if (!authState.isAuthenticated || !authState.user || !selectedOrder) {
-        Alert.alert('Ошибка', 'Необходимо войти в систему');
+        Alert.alert(t('general_error'), t('login_required'));
         return;
       }
 
@@ -337,11 +339,11 @@ const WorkerJobsScreen: React.FC = () => {
         setFilteredOrders(prev => prev.filter(order => order.id !== selectedOrder.id));
 
         Alert.alert(
-          'Успешно!',
-          'Отклик отправлен! Заказ перемещен в раздел "История".',
+          t('success'),
+          t('response_sent_moved_to_history'),
           [
             {
-              text: 'ОК',
+              text: t('ok'),
               onPress: () => {
                 setSelectedOrder(null);
               }
@@ -349,11 +351,11 @@ const WorkerJobsScreen: React.FC = () => {
           ]
         );
       } else {
-        Alert.alert('Ошибка', 'Не удалось отправить отклик');
+        Alert.alert(t('general_error'), t('send_response_error'));
       }
     } catch (error) {
       console.error('Ошибка отклика на заказ:', error);
-      Alert.alert('Ошибка', 'Произошла ошибка при отправке отклика');
+      Alert.alert(t('general_error'), t('send_response_general_error'));
     }
   };
 
@@ -367,7 +369,7 @@ const WorkerJobsScreen: React.FC = () => {
     try {
       const authState = authService.getAuthState();
       if (!authState.isAuthenticated || !authState.user || !selectedOrder) {
-        Alert.alert('Ошибка', 'Необходимо войти в систему');
+        Alert.alert(t('general_error'), t('login_required'));
         return;
       }
 
@@ -388,11 +390,11 @@ const WorkerJobsScreen: React.FC = () => {
         setFilteredOrders(prev => prev.filter(order => order.id !== selectedOrder.id));
 
         Alert.alert(
-          'Успешно!',
-          'Отклик отправлен! Заказ перемещен в раздел "История".',
+          t('success'),
+          t('response_sent_moved_to_history'),
           [
             {
-              text: 'ОК',
+              text: t('ok'),
               onPress: () => {
                 setSelectedOrder(null);
               }
@@ -400,11 +402,11 @@ const WorkerJobsScreen: React.FC = () => {
           ]
         );
       } else {
-        Alert.alert('Ошибка', 'Не удалось отправить отклик');
+        Alert.alert(t('general_error'), t('send_response_error'));
       }
     } catch (error) {
       console.error('Ошибка отклика на заказ:', error);
-      Alert.alert('Ошибка', 'Произошла ошибка при отправке отклика');
+      Alert.alert(t('general_error'), t('send_response_general_error'));
     }
   };
 

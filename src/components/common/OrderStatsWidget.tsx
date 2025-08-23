@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
+import { useWorkerTranslation } from '../../hooks/useTranslation';
 
 interface OrderStatsWidgetProps {
   pendingCount: number;
@@ -19,6 +20,8 @@ export const OrderStatsWidget: React.FC<OrderStatsWidgetProps> = ({
   onPendingPress,
   onInProgressPress,
 }) => {
+  const tWorker = useWorkerTranslation();
+
   return (
     <View style={styles.container}>
       {/* Карточка "В ожидании" */}
@@ -30,7 +33,7 @@ export const OrderStatsWidget: React.FC<OrderStatsWidgetProps> = ({
         <View style={styles.cardContent}>
           <View style={styles.textRow}>
             <Text style={styles.number}>{pendingCount}</Text>
-            <Text style={styles.label}>В ожидании</Text>
+            <Text style={styles.label}>{tWorker('pending_status')}</Text>
           </View>
         </View>
         <Text style={styles.arrow}>→</Text>
@@ -45,7 +48,7 @@ export const OrderStatsWidget: React.FC<OrderStatsWidgetProps> = ({
         <View style={styles.cardContent}>
           <View style={styles.textRow}>
             <Text style={styles.number}>{inProgressCount}</Text>
-            <Text style={styles.label}>В работе</Text>
+            <Text style={styles.label}>{tWorker('in_progress_status')}</Text>
           </View>
         </View>
         <Text style={styles.arrow}>→</Text>

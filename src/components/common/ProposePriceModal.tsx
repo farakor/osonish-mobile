@@ -12,6 +12,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { theme } from '../../constants/theme';
+import { useWorkerTranslation } from '../../hooks/useTranslation';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -37,6 +38,7 @@ export const ProposePriceModal: React.FC<ProposePriceModalProps> = ({
   const [message, setMessage] = useState('');
   const [animationComplete, setAnimationComplete] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const tWorker = useWorkerTranslation();
 
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const modalTranslateY = useRef(new Animated.Value(400)).current;
@@ -158,7 +160,7 @@ export const ProposePriceModal: React.FC<ProposePriceModalProps> = ({
           ]}>
             {/* Header */}
             <View style={styles.header}>
-              <Text style={styles.title}>Отправить предложение</Text>
+              <Text style={styles.title}>{tWorker('send_proposal')}</Text>
               <TouchableOpacity onPress={handleAnimatedClose} style={styles.closeButton}>
                 <Text style={styles.closeButtonText}>✕</Text>
               </TouchableOpacity>
@@ -171,7 +173,7 @@ export const ProposePriceModal: React.FC<ProposePriceModalProps> = ({
 
             {/* Price section */}
             <View style={styles.priceSection}>
-              <Text style={styles.sectionTitle}>Ваша цена</Text>
+              <Text style={styles.sectionTitle}>{tWorker('your_price')}</Text>
               <View style={styles.priceContainer}>
                 <TouchableOpacity
                   style={[
@@ -191,7 +193,7 @@ export const ProposePriceModal: React.FC<ProposePriceModalProps> = ({
                   <Text style={styles.priceText}>
                     {formatPrice(proposedPrice)}
                   </Text>
-                  <Text style={styles.currencyText}>сум</Text>
+                  <Text style={styles.currencyText}>{tWorker('currency_sum')}</Text>
                 </View>
 
                 <TouchableOpacity
@@ -211,18 +213,18 @@ export const ProposePriceModal: React.FC<ProposePriceModalProps> = ({
 
               {proposedPrice !== originalPrice && (
                 <Text style={styles.priceChangeNote}>
-                  {proposedPrice > originalPrice ? 'Выше' : 'Ниже'} исходной цены на{' '}
-                  {formatPrice(Math.abs(proposedPrice - originalPrice))} сум
+                  {proposedPrice > originalPrice ? tWorker('higher_than_original') : tWorker('lower_than_original')} {tWorker('price_difference')}{' '}
+                  {formatPrice(Math.abs(proposedPrice - originalPrice))} {tWorker('currency_sum')}
                 </Text>
               )}
             </View>
 
             {/* Comment section */}
             <View style={styles.commentSection}>
-              <Text style={styles.sectionTitle}>Комментарии</Text>
+              <Text style={styles.sectionTitle}>{tWorker('comments')}</Text>
               <TextInput
                 style={styles.commentInput}
-                placeholder="Напишите что нибудь..."
+                placeholder={tWorker('comment_placeholder')}
                 placeholderTextColor="#999"
                 value={message}
                 onChangeText={setMessage}
@@ -245,7 +247,7 @@ export const ProposePriceModal: React.FC<ProposePriceModalProps> = ({
                 <Text style={[
                   styles.submitButtonText,
                   !animationComplete && styles.disabledButtonText
-                ]}>Откликнуться</Text>
+                ]}>{tWorker('respond')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -259,7 +261,7 @@ export const ProposePriceModal: React.FC<ProposePriceModalProps> = ({
                 <Text style={[
                   styles.cancelButtonText,
                   !animationComplete && styles.disabledButtonText
-                ]}>Отмена</Text>
+                ]}>{tWorker('cancel')}</Text>
               </TouchableOpacity>
             </View>
           </Animated.View>

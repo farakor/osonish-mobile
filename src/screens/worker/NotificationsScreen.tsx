@@ -19,6 +19,7 @@ import { usePlatformSafeAreaInsets, getFixedBottomStyle, getContainerBottomStyle
 import { notificationService, NotificationSettings } from '../../services/notificationService';
 import { authService } from '../../services/authService';
 import { HeaderWithBack } from '../../components/common';
+import { useWorkerTranslation } from '../../hooks/useTranslation';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -28,6 +29,7 @@ const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
 export const NotificationsScreen: React.FC = () => {
   const navigation = useNavigation();
   const insets = usePlatformSafeAreaInsets();
+  const tWorker = useWorkerTranslation();
 
   const [allNotificationsEnabled, setAllNotificationsEnabled] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,7 +45,7 @@ export const NotificationsScreen: React.FC = () => {
       const authState = authService.getAuthState();
 
       if (!authState.isAuthenticated || !authState.user) {
-        Alert.alert('Ошибка', 'Пользователь не авторизован');
+        Alert.alert(tWorker('general_error'), tWorker('user_not_authorized_notifications'));
         return;
       }
 
@@ -55,7 +57,7 @@ export const NotificationsScreen: React.FC = () => {
       console.log('[NotificationsScreen] 📱 Состояние переключателя установлено в:', userSettings.allNotificationsEnabled);
     } catch (error) {
       console.error('Ошибка загрузки настроек уведомлений:', error);
-      Alert.alert('Ошибка', 'Не удалось загрузить настройки уведомлений');
+      Alert.alert(tWorker('general_error'), tWorker('load_settings_error'));
     } finally {
       setIsLoading(false);
     }
@@ -63,7 +65,7 @@ export const NotificationsScreen: React.FC = () => {
 
   const handleSaveSettings = async () => {
     if (allNotificationsEnabled === null) {
-      Alert.alert('Ошибка', 'Настройки еще загружаются. Попробуйте еще раз.');
+      Alert.alert(tWorker('general_error'), tWorker('settings_loading_wait'));
       return;
     }
 
@@ -79,18 +81,18 @@ export const NotificationsScreen: React.FC = () => {
       const success = await notificationService.updateNotificationSettings(settings);
 
       if (success) {
-        Alert.alert('Успешно', 'Настройки уведомлений сохранены', [
+        Alert.alert(tWorker('success'), tWorker('settings_saved_success'), [
           {
-            text: 'OK',
+            text: tWorker('ok'),
             onPress: () => navigation.goBack(),
           },
         ]);
       } else {
-        Alert.alert('Ошибка', 'Не удалось сохранить настройки. Попробуйте еще раз.');
+        Alert.alert(tWorker('general_error'), tWorker('save_settings_error'));
       }
     } catch (error) {
       console.error('Ошибка сохранения настроек:', error);
-      Alert.alert('Ошибка', 'Произошла ошибка при сохранении настроек');
+      Alert.alert(tWorker('general_error'), tWorker('save_settings_general_error'));
     } finally {
       setIsSaving(false);
     }
@@ -100,10 +102,10 @@ export const NotificationsScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
-        <HeaderWithBack title="Уведомления" />
+        <HeaderWithBack title={tWorker('notifications_title')} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Загружаем настройки...</Text>
+          <Text style={styles.loadingText}>{tWorker('loading_settings')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -112,20 +114,20 @@ export const NotificationsScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
-      <HeaderWithBack title="Уведомления" />
+      <HeaderWithBack title={tWorker('notifications_title')} />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Form Fields */}
         <View style={styles.form}>
           {/* Main Notification Toggle */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Уведомления</Text>
+            <Text style={styles.label}>{tWorker('notifications_label')}</Text>
             <View style={styles.inputContainer}>
               <View style={styles.switchContainer}>
                 <View style={styles.switchContent}>
-                  <Text style={styles.switchTitle}>Получать уведомления</Text>
+                  <Text style={styles.switchTitle}>{tWorker('receive_notifications')}</Text>
                   <Text style={styles.switchDescription}>
-                    Уведомления о заказах, откликах и обновлениях
+                    {tWorker('notifications_description')}
                   </Text>
                 </View>
                 <Switch
@@ -142,7 +144,7 @@ export const NotificationsScreen: React.FC = () => {
             <View style={styles.infoCard}>
               <Text style={styles.infoIcon}>ℹ️</Text>
               <Text style={styles.infoText}>
-                При отключении уведомлений вы можете пропустить важную информацию о новых заказах и сообщения от заказчиков.
+                {tWorker('notifications_info')}
               </Text>
             </View>
           </View>
@@ -160,7 +162,7 @@ export const NotificationsScreen: React.FC = () => {
           disabled={isSaving || allNotificationsEnabled === null}
         >
           <Text style={styles.saveButtonText}>
-            {isSaving ? 'Сохраняем...' : 'Сохранить'}
+            {isSaving ? tWorker('saving_notifications') : tWorker('save_notifications')}
           </Text>
         </TouchableOpacity>
       </View>
