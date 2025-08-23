@@ -2066,11 +2066,19 @@ export class OrderService {
         location: order.location
       };
 
+      console.log(`[OrderService] 👥 Найдено ${workerIds.length} исполнителей:`, workerIds);
+
       const translatedNotifications = await getTranslatedNotificationsForUsers(
         workerIds,
         'new_order',
         notificationParams
       );
+
+      console.log(`[OrderService] 📝 Получено переводов: ${translatedNotifications.size}`);
+      console.log('[OrderService] 🗂️ Переводы по пользователям:');
+      translatedNotifications.forEach((notification, userId) => {
+        console.log(`  - ${userId}: "${notification.title}" (${notification.body.substring(0, 50)}...)`);
+      });
 
       const data = {
         orderId: order.id,
@@ -2082,9 +2090,13 @@ export class OrderService {
 
       // Отправляем уведомления каждому пользователю на его языке
       let sentCount = 0;
+      console.log('[OrderService] 📤 Начинаем отправку уведомлений...');
+
       for (const workerId of workerIds) {
+        console.log(`[OrderService] 🎯 Обрабатываем пользователя: ${workerId}`);
         const notification = translatedNotifications.get(workerId);
         if (notification) {
+          console.log(`[OrderService] 📨 Отправляем уведомление пользователю ${workerId}: "${notification.title}"`);
           const sent = await notificationService.sendNotificationToUser(
             workerId,
             notification.title,
@@ -2092,7 +2104,14 @@ export class OrderService {
             data,
             'new_order'
           );
-          if (sent) sentCount++;
+          if (sent) {
+            sentCount++;
+            console.log(`[OrderService] ✅ Уведомление отправлено пользователю ${workerId}`);
+          } else {
+            console.log(`[OrderService] ❌ Не удалось отправить уведомление пользователю ${workerId}`);
+          }
+        } else {
+          console.log(`[OrderService] ⚠️ Нет перевода для пользователя ${workerId}`);
         }
       }
 

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18n from '../i18n';
+import { authService } from '../services/authService';
 
 export type Language = 'ru' | 'uz';
 
@@ -31,10 +32,22 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         AsyncStorage.getItem(LANGUAGE_SELECTION_KEY)
       ]);
 
-      if (savedLanguage && (savedLanguage === 'ru' || savedLanguage === 'uz')) {
-        setCurrentLanguage(savedLanguage);
-        await i18n.changeLanguage(savedLanguage);
+      // Проверяем, есть ли авторизованный пользователь с языком в профиле
+      const authState = authService.getAuthState();
+      let finalLanguage: Language = 'ru';
+
+      if (authState.isAuthenticated && authState.user?.preferredLanguage) {
+        // Если пользователь авторизован и у него есть сохраненный язык в профиле
+        finalLanguage = authState.user.preferredLanguage;
+        console.log(`[LanguageContext] Используем язык из профиля: ${finalLanguage}`);
+      } else if (savedLanguage && (savedLanguage === 'ru' || savedLanguage === 'uz')) {
+        // Иначе используем язык из AsyncStorage
+        finalLanguage = savedLanguage;
+        console.log(`[LanguageContext] Используем язык из AsyncStorage: ${finalLanguage}`);
       }
+
+      setCurrentLanguage(finalLanguage);
+      await i18n.changeLanguage(finalLanguage);
 
       if (languageSelected === 'true') {
         setIsLanguageSelected(true);
@@ -54,6 +67,18 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       setCurrentLanguage(language);
       setIsLanguageSelected(true);
+
+      // Если пользователь авторизован, сохраняем язык в базе данных
+      const authState = authService.getAuthState();
+      if (authState.isAuthenticated && authState.user) {
+        try {
+          await authService.updateUserLanguage(language);
+          console.log(`[LanguageContext] ✅ Язык ${language} сохранен в профиле пользователя`);
+        } catch (error) {
+          console.warn('[LanguageContext] ⚠️ Не удалось сохранить язык в профиле:', error);
+          // Не выбрасываем ошибку, так как язык уже сохранен локально
+        }
+      }
     } catch (error) {
       console.error('Error changing language:', error);
       throw error;

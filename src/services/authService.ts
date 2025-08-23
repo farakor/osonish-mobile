@@ -3,6 +3,7 @@ import { User, AuthState, LoginRequest, VerifyCodeRequest, RegisterRequest, Auth
 import { smsService } from './smsService';
 import { supabase } from './supabaseClient';
 import { mediaService } from './mediaService';
+import { getUserLanguage } from '../utils/notificationTranslations';
 
 // Константы для хранения только сессионных данных
 const STORAGE_KEYS = {
@@ -125,6 +126,7 @@ class AuthService {
         profileImage: data.profile_image,
         role: data.role as 'customer' | 'worker',
         city: data.city,
+        preferredLanguage: data.preferred_language as 'ru' | 'uz',
         isVerified: data.is_verified || false,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
@@ -316,6 +318,7 @@ class AuthService {
         profileImage: data.profile_image,
         role: data.role as 'customer' | 'worker',
         city: data.city,
+        preferredLanguage: data.preferred_language as 'ru' | 'uz',
         isVerified: data.is_verified || false,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
@@ -503,6 +506,9 @@ class AuthService {
       const formattedPhone = this.formatPhoneNumber(userData.phone);
       const userId = this.generateUserId();
 
+      // Получаем текущий выбранный язык пользователя
+      const currentLanguage = await getUserLanguage();
+
       // Создаем пользователя в Supabase
       const { data, error } = await supabase
         .from('users')
@@ -516,6 +522,7 @@ class AuthService {
           role: userData.role,
           city: userData.city || null,
           profile_image: userData.profileImage || null,
+          preferred_language: currentLanguage,
           is_verified: true
         })
         .select()
@@ -539,6 +546,7 @@ class AuthService {
         profileImage: data.profile_image,
         role: data.role as 'customer' | 'worker',
         city: data.city,
+        preferredLanguage: data.preferred_language as 'ru' | 'uz',
         isVerified: data.is_verified,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
@@ -687,6 +695,7 @@ class AuthService {
         profileImage: data.profile_image,
         role: data.role as 'customer' | 'worker',
         city: data.city,
+        preferredLanguage: data.preferred_language as 'ru' | 'uz',
         isVerified: data.is_verified,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
@@ -798,6 +807,48 @@ class AuthService {
   getAllUsers(): User[] {
     console.warn('[AuthService] getAllUsers устарел. Используйте getAllUsersFromSupabase()');
     return [];
+  }
+
+  // Обновление языка пользователя
+  async updateUserLanguage(language: 'ru' | 'uz'): Promise<boolean> {
+    try {
+      console.log(`[AuthService] Обновляем язык пользователя на: ${language}`);
+
+      if (!this.authState.isAuthenticated || !this.authState.user) {
+        console.error('[AuthService] Пользователь не авторизован');
+        return false;
+      }
+
+      if (!supabase) {
+        console.error('[AuthService] База данных недоступна');
+        return false;
+      }
+
+      const userId = this.authState.user.id;
+
+      // Обновляем язык в базе данных
+      const { error } = await supabase
+        .from('users')
+        .update({ preferred_language: language })
+        .eq('id', userId);
+
+      if (error) {
+        console.error('[AuthService] Ошибка обновления языка в БД:', error);
+        return false;
+      }
+
+      // Обновляем локальное состояние
+      this.authState.user.preferredLanguage = language;
+
+      // Сохраняем обновленную сессию
+      await this.saveSession(this.authState.user);
+
+      console.log(`[AuthService] ✅ Язык пользователя обновлен на: ${language}`);
+      return true;
+    } catch (error) {
+      console.error('[AuthService] Ошибка обновления языка:', error);
+      return false;
+    }
   }
 }
 

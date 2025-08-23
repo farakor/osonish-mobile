@@ -16,6 +16,7 @@ import { theme } from '../../constants';
 import { HeaderWithBack } from '../../components/common';
 import { notificationService, NotificationItem } from '../../services/notificationService';
 import { authService } from '../../services/authService';
+import { useTranslation } from '../../hooks/useTranslation';
 
 // SVG иконка check-circle-broken
 const checkCircleBrokenSvg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -38,23 +39,39 @@ const getNotificationIcon = (type: string): string => {
   }
 };
 
-const getTimeAgo = (dateString: string): string => {
+const getTimeAgo = (dateString: string, t: any): string => {
   const now = new Date();
   const date = new Date(dateString);
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
   if (diffInSeconds < 60) {
-    return 'Только что';
+    return t('notifications.just_now');
   } else if (diffInSeconds < 3600) {
     const minutes = Math.floor(diffInSeconds / 60);
-    return `${minutes} ${minutes === 1 ? 'минуту' : minutes < 5 ? 'минуты' : 'минут'} назад`;
+    let timeUnit;
+    if (minutes === 1) {
+      timeUnit = t('notifications.minute_ago');
+    } else if (minutes < 5) {
+      timeUnit = t('notifications.minutes_ago');
+    } else {
+      timeUnit = t('notifications.minutes_ago_many');
+    }
+    return t('notifications.time_ago_template', { time: `${minutes} ${timeUnit}` });
   } else if (diffInSeconds < 86400) {
     const hours = Math.floor(diffInSeconds / 3600);
-    return `${hours} ${hours === 1 ? 'час' : hours < 5 ? 'часа' : 'часов'} назад`;
+    let timeUnit;
+    if (hours === 1) {
+      timeUnit = t('notifications.hour_ago');
+    } else if (hours < 5) {
+      timeUnit = t('notifications.hours_ago');
+    } else {
+      timeUnit = t('notifications.hours_ago_many');
+    }
+    return t('notifications.time_ago_template', { time: `${hours} ${timeUnit}` });
   } else {
     const days = Math.floor(diffInSeconds / 86400);
-    if (days === 1) return 'Вчера';
-    if (days < 7) return `${days} дней назад`;
+    if (days === 1) return t('notifications.yesterday');
+    if (days < 7) return t('notifications.days_ago', { count: days });
 
     return date.toLocaleDateString('ru-RU', {
       day: 'numeric',
@@ -67,6 +84,7 @@ const getTimeAgo = (dateString: string): string => {
 
 export const NotificationsListScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -176,7 +194,7 @@ export const NotificationsListScreen: React.FC = () => {
           {item.body}
         </Text>
         <Text style={styles.notificationTime}>
-          {getTimeAgo(item.createdAt)}
+          {getTimeAgo(item.createdAt, t)}
         </Text>
       </View>
     </TouchableOpacity>
@@ -185,9 +203,9 @@ export const NotificationsListScreen: React.FC = () => {
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <Text style={styles.emptyStateIcon}>🔔</Text>
-      <Text style={styles.emptyStateTitle}>Нет уведомлений</Text>
+      <Text style={styles.emptyStateTitle}>{t('notifications.no_notifications_title')}</Text>
       <Text style={styles.emptyStateDescription}>
-        Уведомления о новых заказах и принятых заявках будут появляться здесь
+        {t('notifications.no_notifications_description')}
       </Text>
     </View>
   );
@@ -205,7 +223,7 @@ export const NotificationsListScreen: React.FC = () => {
             <View style={styles.markAllButtonContent}>
               <SvgXml xml={checkCircleBrokenSvg} style={styles.markAllButtonIcon} />
               <Text style={styles.markAllButtonText}>
-                Отметить все как прочитанные ({unreadCount})
+                {t('notifications.mark_all_read_button', { count: unreadCount })}
               </Text>
             </View>
           </TouchableOpacity>
@@ -217,10 +235,10 @@ export const NotificationsListScreen: React.FC = () => {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <HeaderWithBack title="Уведомления" />
+        <HeaderWithBack title={t('notifications.title')} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Загружаем уведомления...</Text>
+          <Text style={styles.loadingText}>{t('notifications.loading_notifications')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -228,7 +246,7 @@ export const NotificationsListScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <HeaderWithBack title="Уведомления" />
+      <HeaderWithBack title={t('notifications.title')} />
 
       <FlatList
         data={notifications}

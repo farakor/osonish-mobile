@@ -11,6 +11,7 @@ export interface User {
   profileImage?: string;
   role: 'customer' | 'worker';
   city?: string;
+  preferredLanguage?: 'ru' | 'uz'; // Предпочитаемый язык интерфейса
   isVerified: boolean;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string

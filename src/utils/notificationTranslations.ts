@@ -69,14 +69,19 @@ export async function getUserLanguageFromDB(userId: string): Promise<Language> {
       .single();
 
     if (error || !data) {
-      // Если нет данных в БД, получаем из AsyncStorage
-      return await getUserLanguage();
+      // Если нет данных в БД, используем русский как язык по умолчанию
+      // НЕ используем AsyncStorage, так как это язык текущего пользователя, а не целевого!
+      console.log(`[NotificationTranslations] Язык не найден для пользователя ${userId}, используем русский по умолчанию`);
+      return 'ru';
     }
 
-    return (data.preferred_language === 'uz') ? 'uz' : 'ru';
+    const language = (data.preferred_language === 'uz') ? 'uz' : 'ru';
+    console.log(`[NotificationTranslations] Язык пользователя ${userId} из БД: ${language}`);
+    return language;
   } catch (error) {
     console.error('[NotificationTranslations] Ошибка получения языка из БД:', error);
-    return await getUserLanguage();
+    // Fallback к русскому языку (НЕ к AsyncStorage!)
+    return 'ru';
   }
 }
 
@@ -183,15 +188,16 @@ export async function getTranslatedNotificationsForUsers(
       userLanguages.set(user.id, language);
     });
 
-    // Для пользователей без данных в БД используем AsyncStorage (текущий язык)
-    const currentLanguage = await getUserLanguage();
-
     // Генерируем уведомления для каждого пользователя
     userIds.forEach(userId => {
-      const language = userLanguages.get(userId) || currentLanguage;
+      // Если язык пользователя найден в БД, используем его
+      // Иначе используем русский как язык по умолчанию (не текущий язык!)
+      const language = userLanguages.get(userId) || 'ru';
       const title = getNotificationTitle(type, language);
       const body = getNotificationBody(type, params, language);
       result.set(userId, { title, body });
+
+      console.log(`[NotificationTranslations] Пользователь ${userId}: язык ${language}, заголовок: "${title}"`);
     });
 
     console.log(`[NotificationTranslations] Сгенерированы уведомления для ${userIds.length} пользователей`);
