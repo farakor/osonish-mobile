@@ -33,7 +33,8 @@ import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { supabase } from '../../services/supabaseClient';
 import { Order, Applicant, User } from '../../types';
-import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
+import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation, useCategoriesTranslation } from '../../hooks/useTranslation';
+import { getCategoryLabel } from '../../utils/categoryUtils';
 
 const { width, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = width - 48; // 24px margin on each side
@@ -214,6 +215,7 @@ export const OrderDetailsScreen: React.FC = () => {
   const t = useCustomerTranslation();
   const tError = useErrorsTranslation();
   const tCommon = useCommonTranslation();
+  const tCategories = useCategoriesTranslation();
 
 
 
@@ -1084,7 +1086,7 @@ export const OrderDetailsScreen: React.FC = () => {
                 <View style={styles.infoIcon}>
                   <CategoryIcon width={22} height={22} color="#679B00" />
                 </View>
-                <Text style={styles.infoValue}>{order.category}</Text>
+                <Text style={styles.infoValue}>{getCategoryLabel(order.category, tCategories)}</Text>
               </View>
 
               <View style={styles.infoCard}>

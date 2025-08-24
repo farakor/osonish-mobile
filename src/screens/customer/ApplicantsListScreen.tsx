@@ -13,6 +13,8 @@ import {
   Image,
   Pressable,
   Animated,
+  Dimensions,
+  Platform,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../constants';
@@ -25,6 +27,12 @@ import type { CustomerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StyleSheet } from 'react-native';
 import { Applicant, Order } from '../../types';
+import { useCustomerTranslation } from '../../hooks/useTranslation';
+
+const { height: screenHeight } = Dimensions.get('window');
+
+// Определяем маленький экран для Android (высота меньше 1080px)
+const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
 
 type ApplicantsListNavigationProp = NativeStackNavigationProp<CustomerStackParamList, 'ApplicantsList'>;
 type ApplicantsListRouteProp = RouteProp<CustomerStackParamList, 'ApplicantsList'>;
@@ -33,6 +41,7 @@ export const ApplicantsListScreen: React.FC = () => {
   const navigation = useNavigation<ApplicantsListNavigationProp>();
   const route = useRoute<ApplicantsListRouteProp>();
   const { orderId } = route.params;
+  const t = useCustomerTranslation();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [applicants, setApplicants] = useState<Applicant[]>([]);
@@ -79,7 +88,7 @@ export const ApplicantsListScreen: React.FC = () => {
       setAcceptedApplicants(accepted);
     } catch (error) {
       console.error('Ошибка загрузки данных:', error);
-      Alert.alert('Ошибка', 'Не удалось загрузить данные');
+      Alert.alert(t('error'), t('load_order_error'));
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -183,21 +192,21 @@ export const ApplicantsListScreen: React.FC = () => {
 
   const getStatusText = (status: string): string => {
     switch (status) {
-      case 'pending': return 'Ожидает';
-      case 'accepted': return 'Выбран';
-      case 'rejected': return 'Отклонен';
-      default: return 'Неизвестно';
+      case 'pending': return t('status_pending');
+      case 'accepted': return t('status_accepted');
+      case 'rejected': return t('status_rejected');
+      default: return t('status_unknown');
     }
   };
 
   const handleSelectApplicant = (applicant: Applicant) => {
     if (acceptedApplicants.has(applicant.id)) {
-      Alert.alert('Информация', 'Этот исполнитель уже выбран для выполнения заказа');
+      Alert.alert(t('info'), t('applicant_info'));
       return;
     }
 
     if (applicant.status === 'rejected') {
-      Alert.alert('Информация', 'Вы уже отклонили этого исполнителя');
+      Alert.alert(t('info'), t('applicant_rejected_info'));
       return;
     }
 
@@ -212,12 +221,12 @@ export const ApplicantsListScreen: React.FC = () => {
 
   const handleCallWorker = (workerPhone: string, workerName: string) => {
     Alert.alert(
-      'Позвонить исполнителю',
-      `Позвонить ${workerName} по номеру ${workerPhone}?`,
+      t('call_worker_title'),
+      t('call_worker_message', { name: workerName, phone: workerPhone }),
       [
-        { text: 'Отмена', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         {
-          text: 'Позвонить',
+          text: t('call_button'),
           onPress: () => {
             Linking.openURL(`tel:${workerPhone}`);
           }
@@ -258,34 +267,36 @@ export const ApplicantsListScreen: React.FC = () => {
             // Проверяем и обновляем статус заказа при достижении нужного количества исполнителей
             await orderService.checkAndUpdateOrderStatus(order.id);
 
+            const ending = selectedCount === 1 ? t('worker_ending_ya') : t('worker_ending_ey');
             Alert.alert(
-              'Исполнители выбраны',
-              `Выбрано ${selectedCount} исполнител${selectedCount === 1 ? 'ь' : 'ей'}. Остальные отклики автоматически отклонены.`
+              t('workers_selected_title'),
+              t('workers_selected_message', { count: selectedCount, ending })
             );
           } else {
             // Проверяем и обновляем статус заказа при достижении нужного количества исполнителей
             await orderService.checkAndUpdateOrderStatus(order.id);
 
-            Alert.alert('Успешно', `Исполнитель ${selectedApplicant.workerName} выбран для выполнения заказа`);
+            Alert.alert(t('success'), t('worker_selected_success', { name: selectedApplicant.workerName }));
           }
         } else {
           const remaining = workersNeeded - selectedCount;
+          const ending = remaining === 1 ? t('worker_ending_ya') : t('worker_ending_ey');
           Alert.alert(
-            'Исполнитель выбран',
-            `${selectedApplicant.workerName} выбран. Осталось выбрать еще ${remaining} исполнител${remaining === 1 ? 'я' : 'ей'}.`
+            t('worker_selected_title'),
+            t('worker_selected_remaining', { name: selectedApplicant.workerName, remaining, ending })
           );
         }
 
         await loadData(true);
       } else {
         Alert.alert(
-          'Исполнитель недоступен',
-          'Этот исполнитель уже занят в указанную дату. Возможно, его выбрал другой заказчик. Попробуйте выбрать другого исполнителя.'
+          t('worker_unavailable_title'),
+          t('worker_unavailable_message')
         );
       }
     } catch (error) {
       console.error('Ошибка выбора исполнителя:', error);
-      Alert.alert('Ошибка', 'Произошла ошибка при выборе исполнителя');
+      Alert.alert(t('error'), t('select_worker_error'));
     } finally {
       setIsProcessing(false);
       setShowConfirmModal(false);
@@ -302,12 +313,12 @@ export const ApplicantsListScreen: React.FC = () => {
 
       if (diffHours < 1) {
         const diffMins = Math.floor(diffMs / (1000 * 60));
-        return `${diffMins} мин назад`;
+        return t('time_ago_minutes', { count: diffMins });
       } else if (diffHours < 24) {
-        return `${diffHours} ч назад`;
+        return t('time_ago_hours', { count: diffHours });
       } else {
         const diffDays = Math.floor(diffHours / 24);
-        return `${diffDays} дн назад`;
+        return t('time_ago_days', { count: diffDays });
       }
     };
 
@@ -410,7 +421,7 @@ export const ApplicantsListScreen: React.FC = () => {
                   >
                     <View style={styles.reviewsButtonContent}>
                       <StarIcon filled={true} size={14} color="#FDB022" />
-                      <Text style={styles.reviewsButtonText}>Отзывы</Text>
+                      <Text style={styles.reviewsButtonText}>{t('reviews_button')}</Text>
                     </View>
                   </TouchableOpacity>
                 </View>
@@ -437,7 +448,7 @@ export const ApplicantsListScreen: React.FC = () => {
             ]}>
               <View style={styles.modernPriceHeader}>
                 <Text style={[styles.modernPriceLabel, isRejected && styles.rejectedText]}>
-                  Предложенная цена
+                  {t('proposed_price_label')}
                 </Text>
                 {order && item.proposedPrice !== order.budget && (
                   <View style={[
@@ -467,7 +478,7 @@ export const ApplicantsListScreen: React.FC = () => {
           {item.message && item.message.trim() && (
             <View style={styles.modernMessageContainer}>
               <Text style={[styles.modernMessageLabel, isRejected && styles.rejectedText]}>
-                💬 Комментарий
+                {t('comment_label')}
               </Text>
               <Text style={[styles.modernMessageText, isRejected && styles.rejectedText]}>
                 {item.message}
@@ -479,7 +490,7 @@ export const ApplicantsListScreen: React.FC = () => {
           {isAccepted && item.workerPhone && (
             <View style={styles.modernContactInfo}>
               <View style={styles.modernContactHeader}>
-                <Text style={styles.modernContactLabel}>Контакты</Text>
+                <Text style={styles.modernContactLabel}>{t('contacts_label')}</Text>
               </View>
               <View style={styles.modernContactRow}>
                 <Text style={styles.modernPhoneNumber}>{item.workerPhone}</Text>
@@ -487,7 +498,7 @@ export const ApplicantsListScreen: React.FC = () => {
                   style={styles.modernCallButton}
                   onPress={() => handleCallWorker(item.workerPhone, item.workerName)}
                 >
-                  <Text style={styles.modernCallButtonText}>Позвонить</Text>
+                  <Text style={styles.modernCallButtonText}>{t('call_worker_button')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -510,7 +521,7 @@ export const ApplicantsListScreen: React.FC = () => {
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 android_ripple={{ color: 'rgba(255, 255, 255, 0.3)' }}
               >
-                <Text style={styles.modernAcceptButtonText}>✓ Принять исполнителя</Text>
+                <Text style={styles.modernAcceptButtonText}>{t('accept_worker_button')}</Text>
               </Pressable>
             </View>
           )}
@@ -523,9 +534,9 @@ export const ApplicantsListScreen: React.FC = () => {
     return (
       <View style={styles.container}>
         <SafeAreaView style={styles.content}>
-          <HeaderWithBack title="Отклики на заказ" />
+          <HeaderWithBack title={t('applicants_list_title')} />
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Загружаем отклики...</Text>
+            <Text style={styles.loadingText}>{t('loading_applicants')}</Text>
           </View>
         </SafeAreaView>
       </View>
@@ -536,13 +547,17 @@ export const ApplicantsListScreen: React.FC = () => {
     <View style={styles.container}>
       <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <SafeAreaView style={styles.content}>
-        <HeaderWithBack title={`Отклики (${applicants.length})`} />
+        <HeaderWithBack title={t('applicants_count_title', { count: applicants.length })} />
 
         {/* Прогресс выбора исполнителей */}
         {order && order.workersNeeded && (
           <View style={styles.progressOnlyContainer}>
             <Text style={styles.workersNeededLarge}>
-              Выбрано {acceptedApplicants.size} из {order.workersNeeded} исполнител{order.workersNeeded === 1 ? 'я' : 'ей'}
+              {t('workers_selected_progress', {
+                selected: acceptedApplicants.size,
+                needed: order.workersNeeded,
+                ending: order.workersNeeded === 1 ? t('worker_ending_ya') : t('worker_ending_ey')
+              })}
             </Text>
             <View style={styles.progressBarLarge}>
               <View
@@ -573,7 +588,7 @@ export const ApplicantsListScreen: React.FC = () => {
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <Text style={styles.emptyStateText}>
-                На этот заказ пока нет откликов
+                {t('no_applicants')}
               </Text>
             </View>
           }
@@ -588,18 +603,18 @@ export const ApplicantsListScreen: React.FC = () => {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Выбрать исполнителя</Text>
+              <Text style={styles.modalTitle}>{t('select_applicant_title')}</Text>
               <Text style={styles.modalText}>
-                Вы уверены, что хотите выбрать {selectedApplicant?.workerName} для выполнения заказа?
+                {t('select_applicant_message', { name: selectedApplicant?.workerName })}
               </Text>
               {selectedApplicant && (
                 <Text style={styles.modalPrice}>
-                  Цена: {formatBudget(selectedApplicant.proposedPrice)}
+                  {t('price_label', { price: formatBudget(selectedApplicant.proposedPrice) })}
                 </Text>
               )}
               {order && order.workersNeeded && acceptedApplicants.size + 1 >= order.workersNeeded && (
                 <Text style={styles.modalWarning}>
-                  ⚠️ После выбора этого исполнителя остальные отклики будут автоматически отклонены
+                  {t('auto_reject_warning')}
                 </Text>
               )}
               <View style={styles.modalButtons}>
@@ -607,7 +622,7 @@ export const ApplicantsListScreen: React.FC = () => {
                   style={styles.modalCancelButton}
                   onPress={() => setShowConfirmModal(false)}
                 >
-                  <Text style={styles.modalCancelButtonText}>Отмена</Text>
+                  <Text style={styles.modalCancelButtonText}>{t('cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.modalConfirmButton, isProcessing && styles.disabledButton]}
@@ -615,7 +630,7 @@ export const ApplicantsListScreen: React.FC = () => {
                   disabled={isProcessing}
                 >
                   <Text style={styles.modalConfirmButtonText}>
-                    {isProcessing ? 'Выбираю...' : 'Выбрать'}
+                    {isProcessing ? t('selecting_worker') : t('select_worker')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -645,22 +660,22 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
   },
   progressOnlyContainer: {
-    padding: theme.spacing.lg,
+    padding: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
     backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
   },
   workersNeededLarge: {
-    fontSize: theme.fonts.sizes.lg,
+    fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
+    marginBottom: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
     textAlign: 'center',
   },
   progressBarLarge: {
-    height: 16,
+    height: isSmallScreen ? 12 : 16,
     backgroundColor: '#F3F4F6',
-    borderRadius: 8,
+    borderRadius: isSmallScreen ? 6 : 8,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#E5E7EB',
@@ -673,13 +688,13 @@ const styles = StyleSheet.create({
   progressFillLarge: {
     height: '100%',
     backgroundColor: theme.colors.primary,
-    borderRadius: 8,
+    borderRadius: isSmallScreen ? 6 : 8,
   },
   applicantsList: {
     flex: 1,
   },
   applicantsListContent: {
-    padding: theme.spacing.md,
+    padding: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
   },
   applicantCard: {
     backgroundColor: '#fff',
@@ -918,8 +933,8 @@ const styles = StyleSheet.create({
   // Современные стили для откликов
   modernApplicantCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    marginBottom: theme.spacing.lg,
+    borderRadius: isSmallScreen ? 12 : 16,
+    marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
     overflow: 'hidden',
     elevation: 3,
     shadowColor: '#000',
@@ -944,29 +959,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF6B6B',
   },
   modernCardContent: {
-    padding: 16,
-    minHeight: 140,
+    padding: isSmallScreen ? 12 : 16,
+    minHeight: isSmallScreen ? 120 : 140,
   },
   modernApplicantHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: isSmallScreen ? 8 : 12,
   },
   modernAvatarContainer: {
     position: 'relative',
-    marginRight: 12,
+    marginRight: isSmallScreen ? 8 : 12,
   },
   modernAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: isSmallScreen ? 40 : 48,
+    height: isSmallScreen ? 40 : 48,
+    borderRadius: isSmallScreen ? 20 : 24,
     backgroundColor: theme.colors.surface,
     overflow: 'hidden',
   },
   modernAvatarPlaceholder: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: isSmallScreen ? 40 : 48,
+    height: isSmallScreen ? 40 : 48,
+    borderRadius: isSmallScreen ? 20 : 24,
     backgroundColor: '#F0F2F5',
     justifyContent: 'center',
     alignItems: 'center',
@@ -975,31 +990,31 @@ const styles = StyleSheet.create({
   },
   modernRatingBadge: {
     position: 'absolute',
-    bottom: -6,
-    right: -6,
+    bottom: isSmallScreen ? -4 : -6,
+    right: isSmallScreen ? -4 : -6,
     backgroundColor: '#679B00',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    minWidth: 24,
+    borderRadius: isSmallScreen ? 10 : 12,
+    paddingHorizontal: isSmallScreen ? 6 : 8,
+    paddingVertical: isSmallScreen ? 2 : 3,
+    minWidth: isSmallScreen ? 20 : 24,
     alignItems: 'center',
     borderWidth: 2,
     borderColor: '#FFFFFF',
   },
   modernRatingText: {
-    fontSize: 11,
+    fontSize: isSmallScreen ? 10 : 11,
     fontWeight: '800',
     color: '#FFFFFF',
   },
   modernApplicantInfo: {
     flex: 1,
-    marginRight: 8,
+    marginRight: isSmallScreen ? 4 : 8,
   },
   modernNameRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 2,
+    marginBottom: isSmallScreen ? 1 : 2,
   },
   modernNameActions: {
     flexDirection: 'row',
@@ -1009,12 +1024,12 @@ const styles = StyleSheet.create({
 
   reviewsButton: {
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: isSmallScreen ? 10 : 14,
+    paddingVertical: isSmallScreen ? 6 : 8,
+    borderRadius: isSmallScreen ? 6 : 8,
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    minHeight: 32,
+    minHeight: isSmallScreen ? 28 : 32,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1024,7 +1039,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   reviewsButtonText: {
-    fontSize: 13,
+    fontSize: isSmallScreen ? 12 : 13,
     fontWeight: '600',
     color: '#FDB022',
   },
@@ -1035,22 +1050,22 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   modernApplicantName: {
-    fontSize: 18,
+    fontSize: isSmallScreen ? 16 : 18,
     fontWeight: '700',
     color: '#1A1A1A',
-    lineHeight: 22,
+    lineHeight: isSmallScreen ? 20 : 22,
   },
   verifiedBadge: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: isSmallScreen ? 16 : 18,
+    height: isSmallScreen ? 16 : 18,
+    borderRadius: isSmallScreen ? 8 : 9,
     backgroundColor: '#679B00',
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 6,
+    marginLeft: isSmallScreen ? 4 : 6,
   },
   verifiedIcon: {
-    fontSize: 12,
+    fontSize: isSmallScreen ? 10 : 12,
     fontWeight: '800',
     color: '#FFFFFF',
   },
@@ -1059,33 +1074,33 @@ const styles = StyleSheet.create({
   modernStatsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
+    marginTop: isSmallScreen ? 1 : 2,
   },
   modernStatItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: isSmallScreen ? 8 : 12,
   },
   modernStatIcon: {
-    fontSize: 12,
-    marginRight: 4,
+    fontSize: isSmallScreen ? 11 : 12,
+    marginRight: isSmallScreen ? 3 : 4,
   },
   modernStatText: {
-    fontSize: 13,
+    fontSize: isSmallScreen ? 12 : 13,
     color: '#6B7280',
     fontWeight: '500',
   },
   modernTimeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
+    marginTop: isSmallScreen ? 1 : 2,
   },
 
   modernPriceContainer: {
     backgroundColor: '#F8FAFC',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 10,
+    borderRadius: isSmallScreen ? 8 : 10,
+    padding: isSmallScreen ? 10 : 12,
+    marginBottom: isSmallScreen ? 8 : 10,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
@@ -1097,26 +1112,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: isSmallScreen ? 6 : 8,
   },
   modernPriceLabel: {
-    fontSize: 13,
+    fontSize: isSmallScreen ? 12 : 13,
     color: '#64748B',
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   modernPriceDiffBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
+    paddingHorizontal: isSmallScreen ? 6 : 8,
+    paddingVertical: isSmallScreen ? 2 : 3,
+    borderRadius: isSmallScreen ? 6 : 8,
   },
   modernPriceDiffText: {
-    fontSize: 11,
+    fontSize: isSmallScreen ? 10 : 11,
     fontWeight: '700',
   },
   modernPriceValue: {
-    fontSize: 24,
+    fontSize: isSmallScreen ? 20 : 24,
     fontWeight: '800',
     color: '#1A1A1A',
     letterSpacing: -0.5,
@@ -1126,31 +1141,31 @@ const styles = StyleSheet.create({
   },
   modernMessageContainer: {
     backgroundColor: '#F8FAFC',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 10,
+    borderRadius: isSmallScreen ? 8 : 10,
+    padding: isSmallScreen ? 10 : 12,
+    marginBottom: isSmallScreen ? 8 : 10,
     borderLeftWidth: 3,
     borderLeftColor: '#679B00',
   },
   modernMessageLabel: {
-    fontSize: 13,
+    fontSize: isSmallScreen ? 12 : 13,
     color: '#64748B',
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: isSmallScreen ? 6 : 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   modernMessageText: {
-    fontSize: 15,
+    fontSize: isSmallScreen ? 14 : 15,
     color: '#374151',
-    lineHeight: 22,
+    lineHeight: isSmallScreen ? 20 : 22,
     fontWeight: '400',
   },
   modernContactInfo: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 10,
+    borderRadius: isSmallScreen ? 8 : 10,
+    padding: isSmallScreen ? 10 : 12,
+    marginBottom: isSmallScreen ? 8 : 10,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
@@ -1158,10 +1173,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: isSmallScreen ? 6 : 8,
   },
   modernContactLabel: {
-    fontSize: 13,
+    fontSize: isSmallScreen ? 12 : 13,
     color: '#64748B',
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -1173,18 +1188,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modernPhoneNumber: {
-    fontSize: 16,
+    fontSize: isSmallScreen ? 14 : 16,
     fontWeight: '600',
     color: '#1F2937',
   },
   modernCallButton: {
     backgroundColor: theme.colors.primary,
     borderRadius: theme.borderRadius.lg,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
+    paddingVertical: isSmallScreen ? theme.spacing.xs : theme.spacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 40,
+    minHeight: isSmallScreen ? 36 : 40,
     shadowColor: theme.colors.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -1197,12 +1212,12 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
   },
   modernApplicantActions: {
-    marginTop: 4,
+    marginTop: isSmallScreen ? 2 : 4,
   },
   modernAcceptButton: {
     backgroundColor: '#679B00',
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingVertical: isSmallScreen ? 12 : 14,
+    borderRadius: isSmallScreen ? 10 : 12,
     alignItems: 'center',
     elevation: 3,
     shadowColor: '#679B00',
@@ -1211,7 +1226,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
   modernAcceptButtonText: {
-    fontSize: 15,
+    fontSize: isSmallScreen ? 14 : 15,
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: 0.5,

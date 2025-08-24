@@ -21,6 +21,7 @@ import { WorkerProfile, Review } from '../../types';
 import { CustomerStackParamList } from '../../types/navigation';
 import { orderService } from '../../services/orderService';
 import UserIcon from '../../../assets/user-01.svg';
+import { useCustomerTranslation, useTranslation } from '../../hooks/useTranslation';
 
 type WorkerProfileNavigationProp = NativeStackNavigationProp<CustomerStackParamList, 'WorkerProfile'>;
 type WorkerProfileRouteProp = RouteProp<CustomerStackParamList, 'WorkerProfile'>;
@@ -29,6 +30,8 @@ export const WorkerProfileScreen: React.FC = () => {
   const navigation = useNavigation<WorkerProfileNavigationProp>();
   const route = useRoute<WorkerProfileRouteProp>();
   const { workerId, workerName } = route.params;
+  const t = useCustomerTranslation();
+  const { t: tCommon } = useTranslation();
 
   const [workerProfile, setWorkerProfile] = useState<WorkerProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,11 +50,11 @@ export const WorkerProfileScreen: React.FC = () => {
         setWorkerProfile(profile);
       } else {
         console.warn(`[WorkerProfileScreen] ⚠️ Профиль исполнителя ${workerId} не найден`);
-        Alert.alert('Ошибка', 'Профиль исполнителя не найден');
+        Alert.alert(t('error'), t('profile_not_found_error'));
       }
     } catch (error) {
       console.error('[WorkerProfileScreen] ❌ Ошибка загрузки профиля исполнителя:', error);
-      Alert.alert('Ошибка', 'Не удалось загрузить профиль исполнителя');
+      Alert.alert(t('error'), t('profile_load_error'));
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -71,7 +74,9 @@ export const WorkerProfileScreen: React.FC = () => {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU', {
+    // Определяем локаль на основе текущего языка
+    const locale = tCommon('common.locale') === 'uz' ? 'uz-UZ' : 'ru-RU';
+    return date.toLocaleDateString(locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -106,7 +111,9 @@ export const WorkerProfileScreen: React.FC = () => {
       </View>
 
       {review.orderTitle && (
-        <Text style={styles.reviewOrderTitle}>📋 {review.orderTitle}</Text>
+        <Text style={styles.reviewOrderTitle}>
+          {t('order_title_prefix', { title: review.orderTitle })}
+        </Text>
       )}
 
       {review.comment && (
@@ -119,10 +126,10 @@ export const WorkerProfileScreen: React.FC = () => {
     return (
       <View style={styles.container}>
         <SafeAreaView style={styles.content}>
-          <HeaderWithBack title="Профиль исполнителя" />
+          <HeaderWithBack title={t('worker_profile_title')} />
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={theme.colors.primary} />
-            <Text style={styles.loadingText}>Загружаем профиль...</Text>
+            <Text style={styles.loadingText}>{t('loading_profile')}</Text>
           </View>
         </SafeAreaView>
       </View>
@@ -133,9 +140,9 @@ export const WorkerProfileScreen: React.FC = () => {
     return (
       <View style={styles.container}>
         <SafeAreaView style={styles.content}>
-          <HeaderWithBack title="Профиль исполнителя" />
+          <HeaderWithBack title={t('worker_profile_title')} />
           <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>Профиль не найден</Text>
+            <Text style={styles.errorText}>{t('profile_not_found')}</Text>
           </View>
         </SafeAreaView>
       </View>
@@ -145,7 +152,7 @@ export const WorkerProfileScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.content}>
-        <HeaderWithBack title="Профиль исполнителя" />
+        <HeaderWithBack title={t('worker_profile_title')} />
 
         <ScrollView
           style={styles.scrollContainer}
@@ -199,7 +206,7 @@ export const WorkerProfileScreen: React.FC = () => {
                   {workerProfile.firstName} {workerProfile.lastName}
                 </Text>
                 <Text style={styles.joinedDate}>
-                  На платформе с {formatDate(workerProfile.joinedAt)}
+                  {t('on_platform_since', { date: formatDate(workerProfile.joinedAt) })}
                 </Text>
               </View>
             </View>
@@ -208,17 +215,17 @@ export const WorkerProfileScreen: React.FC = () => {
             <View style={styles.statsContainer}>
               <View style={styles.statItem}>
                 <Text style={styles.statValue}>{workerProfile.completedJobs}</Text>
-                <Text style={styles.statLabel}>Заказов</Text>
+                <Text style={styles.statLabel}>{t('orders_stat')}</Text>
               </View>
               <View style={styles.statItem}>
                 <Text style={styles.statValue}>{workerProfile.totalReviews}</Text>
-                <Text style={styles.statLabel}>Отзывов</Text>
+                <Text style={styles.statLabel}>{t('reviews_stat')}</Text>
               </View>
               <View style={styles.statItem}>
                 <Text style={styles.statValue}>
                   {workerProfile.averageRating > 0 ? workerProfile.averageRating.toFixed(1) : '—'}
                 </Text>
-                <Text style={styles.statLabel}>Рейтинг</Text>
+                <Text style={styles.statLabel}>{t('rating_stat')}</Text>
               </View>
             </View>
           </LinearGradient>
@@ -226,14 +233,14 @@ export const WorkerProfileScreen: React.FC = () => {
           {/* Отзывы */}
           <View style={styles.reviewsSection}>
             <Text style={styles.reviewsTitle}>
-              Отзывы ({workerProfile.reviews.length})
+              {t('reviews_title', { count: workerProfile.reviews.length })}
             </Text>
 
             {workerProfile.reviews.length > 0 ? (
               workerProfile.reviews.map(renderReview)
             ) : (
               <View style={styles.noReviewsContainer}>
-                <Text style={styles.noReviewsText}>Пока нет отзывов</Text>
+                <Text style={styles.noReviewsText}>{t('no_reviews')}</Text>
               </View>
             )}
           </View>
