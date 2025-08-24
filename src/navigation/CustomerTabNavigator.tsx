@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, Platform, TouchableOpacity } from 'react-native';
+import { Text, Platform, TouchableOpacity, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { theme } from '../constants';
 import { usePlatformSafeAreaInsets, getBottomTabBarStyle } from '../utils/safeAreaUtils';
@@ -40,7 +40,7 @@ export function CustomerTabNavigator() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.text.secondary,
+        tabBarInactiveTintColor: '#333333',
         tabBarStyle: {
           backgroundColor: '#fff',
           borderTopWidth: 0,
@@ -91,8 +91,7 @@ export function CustomerTabNavigator() {
               <HomeIcon
                 width={25}
                 height={25}
-                fill={focused ? `${color}1F` : `${theme.colors.text.secondary}1F`}
-                stroke={focused ? color : theme.colors.text.secondary}
+                color={focused ? color : '#333333'}
               />
             </AnimatedTabIcon>
           ),
@@ -114,8 +113,7 @@ export function CustomerTabNavigator() {
               <CreateOrderIcon
                 width={25}
                 height={25}
-                fill={focused ? `${color}1F` : `${theme.colors.text.secondary}1F`}
-                stroke={focused ? color : theme.colors.text.secondary}
+                color={focused ? color : '#333333'}
               />
             </AnimatedTabIcon>
           ),
@@ -137,8 +135,7 @@ export function CustomerTabNavigator() {
               <MyOrdersIcon
                 width={25}
                 height={25}
-                fill={focused ? `${color}1F` : `${theme.colors.text.secondary}1F`}
-                stroke={focused ? color : theme.colors.text.secondary}
+                color={focused ? color : '#333333'}
               />
             </AnimatedTabIcon>
           ),
@@ -160,8 +157,7 @@ export function CustomerTabNavigator() {
               <ProfileIcon
                 width={25}
                 height={25}
-                fill={focused ? `${color}1F` : `${theme.colors.text.secondary}1F`}
-                stroke={focused ? color : theme.colors.text.secondary}
+                color={focused ? color : '#333333'}
               />
             </AnimatedTabIcon>
           ),
