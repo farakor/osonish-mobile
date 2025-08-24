@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -66,7 +66,7 @@ export const CustomerProfileScreen: React.FC = () => {
   useEffect(() => {
     loadUserProfile();
     loadCustomerStats();
-  }, []);
+  }, [loadUserProfile, loadCustomerStats]);
 
   // Обновляем профиль при возврате на экран (например, после редактирования)
   useFocusEffect(
@@ -80,10 +80,10 @@ export const CustomerProfileScreen: React.FC = () => {
       if (Platform.OS === 'android') {
         StatusBar.setBackgroundColor('#F8F9FA', true);
       }
-    }, [])
+    }, [loadUserProfile, loadCustomerStats])
   );
 
-  const loadUserProfile = async () => {
+  const loadUserProfile = useCallback(async () => {
     try {
       const authState = authService.getAuthState();
       if (authState.isAuthenticated && authState.user) {
@@ -112,9 +112,9 @@ export const CustomerProfileScreen: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [t, tError]);
 
-  const loadCustomerStats = async () => {
+  const loadCustomerStats = useCallback(async () => {
     try {
       // Получаем заказы заказчика
       const orders = await orderService.getCustomerOrders();
@@ -174,7 +174,7 @@ export const CustomerProfileScreen: React.FC = () => {
         monthsOnPlatform
       });
     }
-  };
+  }, []);
 
 
 

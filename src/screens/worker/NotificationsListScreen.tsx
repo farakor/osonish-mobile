@@ -39,39 +39,35 @@ const getNotificationIcon = (type: string): string => {
   }
 };
 
-const getTimeAgo = (dateString: string, t: any): string => {
+const getTimeAgo = (dateString: string): string => {
   const now = new Date();
   const date = new Date(dateString);
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
   if (diffInSeconds < 60) {
-    return t('notifications.just_now');
+    return 'только что';
   } else if (diffInSeconds < 3600) {
     const minutes = Math.floor(diffInSeconds / 60);
-    let timeUnit;
     if (minutes === 1) {
-      timeUnit = t('notifications.minute_ago');
+      return '1 минуту назад';
     } else if (minutes < 5) {
-      timeUnit = t('notifications.minutes_ago');
+      return `${minutes} минуты назад`;
     } else {
-      timeUnit = t('notifications.minutes_ago_many');
+      return `${minutes} минут назад`;
     }
-    return t('notifications.time_ago_template', { time: `${minutes} ${timeUnit}` });
   } else if (diffInSeconds < 86400) {
     const hours = Math.floor(diffInSeconds / 3600);
-    let timeUnit;
     if (hours === 1) {
-      timeUnit = t('notifications.hour_ago');
+      return '1 час назад';
     } else if (hours < 5) {
-      timeUnit = t('notifications.hours_ago');
+      return `${hours} часа назад`;
     } else {
-      timeUnit = t('notifications.hours_ago_many');
+      return `${hours} часов назад`;
     }
-    return t('notifications.time_ago_template', { time: `${hours} ${timeUnit}` });
   } else {
     const days = Math.floor(diffInSeconds / 86400);
-    if (days === 1) return t('notifications.yesterday');
-    if (days < 7) return t('notifications.days_ago', { count: days });
+    if (days === 1) return 'вчера';
+    if (days < 7) return `${days} дней назад`;
 
     return date.toLocaleDateString('ru-RU', {
       day: 'numeric',
@@ -126,7 +122,7 @@ export const NotificationsListScreen: React.FC = () => {
     }, [loadNotifications])
   );
 
-  const handleNotificationPress = async (notification: NotificationItem) => {
+  const handleNotificationPress = useCallback(async (notification: NotificationItem) => {
     // Отмечаем как прочитанное (симуляция)
     await notificationService.markNotificationAsRead(notification.id);
 
@@ -142,9 +138,9 @@ export const NotificationsListScreen: React.FC = () => {
     if (notification.data?.orderId) {
       (navigation as any).navigate('JobDetails', { orderId: notification.data.orderId });
     }
-  };
+  }, [navigation]);
 
-  const handleMarkAllAsRead = async () => {
+  const handleMarkAllAsRead = useCallback(async () => {
     try {
       const authState = authService.getAuthState();
       if (!authState.isAuthenticated || !authState.user) {
@@ -165,7 +161,7 @@ export const NotificationsListScreen: React.FC = () => {
       console.error('Ошибка отметки уведомлений:', error);
       Alert.alert('Ошибка', 'Произошла ошибка');
     }
-  };
+  }, []);
 
   const renderNotificationItem = ({ item }: { item: NotificationItem }) => (
     <TouchableOpacity
@@ -194,7 +190,7 @@ export const NotificationsListScreen: React.FC = () => {
           {item.body}
         </Text>
         <Text style={styles.notificationTime}>
-          {getTimeAgo(item.createdAt, t)}
+          {getTimeAgo(item.createdAt)}
         </Text>
       </View>
     </TouchableOpacity>

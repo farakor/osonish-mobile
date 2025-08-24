@@ -625,14 +625,14 @@ export const JobDetailsScreen: React.FC = () => {
               {/* Верхний ряд: Категория и Дата */}
               <View style={styles.infoCard}>
                 <View style={styles.infoIcon}>
-                  <CategoryIcon width={20} height={20} color="#679B00" />
+                  <CategoryIcon width={22} height={22} color="#679B00" />
                 </View>
                 <Text style={styles.infoValue}>{getCategoryLabel(order.category, tCategories)}</Text>
               </View>
 
               <View style={styles.infoCard}>
                 <View style={styles.infoIcon}>
-                  <CalendarIcon width={20} height={20} color="#679B00" />
+                  <CalendarIcon width={22} height={22} color="#679B00" />
                 </View>
                 <Text style={styles.infoValue}>{formatDate(order.serviceDate)}</Text>
               </View>
@@ -640,7 +640,7 @@ export const JobDetailsScreen: React.FC = () => {
               {/* Нижний ряд: Адрес на всю ширину */}
               <View style={styles.infoCardFullWidth}>
                 <View style={styles.infoIcon}>
-                  <LocationIcon width={20} height={20} color="#679B00" />
+                  <LocationIcon width={22} height={22} color="#679B00" />
                 </View>
                 <Text style={styles.infoValue}>
                   {userLocation && order.latitude && order.longitude ?
@@ -929,7 +929,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md, // Одинаковые отступы между карточками
   },
   infoCard: {
-    flexBasis: '47%', // Используем flexBasis для точной сетки 2x2
+    flex: 1, // Используем flex для равномерного распределения
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.md,

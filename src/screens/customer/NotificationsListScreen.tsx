@@ -41,25 +41,35 @@ const getNotificationIcon = (type: string): string => {
   }
 };
 
-const getTimeAgo = (dateString: string, t: any): string => {
+const getTimeAgo = (dateString: string): string => {
   const now = new Date();
   const date = new Date(dateString);
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
   if (diffInSeconds < 60) {
-    return t('just_now');
+    return 'только что';
   } else if (diffInSeconds < 3600) {
     const minutes = Math.floor(diffInSeconds / 60);
-    const timeWord = minutes === 1 ? t('minute_ago') : minutes < 5 ? t('minutes_ago') : t('minutes_ago_many');
-    return t('time_ago_template', { time: `${minutes} ${timeWord}` });
+    if (minutes === 1) {
+      return '1 минуту назад';
+    } else if (minutes < 5) {
+      return `${minutes} минуты назад`;
+    } else {
+      return `${minutes} минут назад`;
+    }
   } else if (diffInSeconds < 86400) {
     const hours = Math.floor(diffInSeconds / 3600);
-    const timeWord = hours === 1 ? t('hour_ago') : hours < 5 ? t('hours_ago') : t('hours_ago_many');
-    return t('time_ago_template', { time: `${hours} ${timeWord}` });
+    if (hours === 1) {
+      return '1 час назад';
+    } else if (hours < 5) {
+      return `${hours} часа назад`;
+    } else {
+      return `${hours} часов назад`;
+    }
   } else {
     const days = Math.floor(diffInSeconds / 86400);
-    if (days === 1) return t('yesterday');
-    if (days < 7) return t('days_ago', { count: days });
+    if (days === 1) return 'вчера';
+    if (days < 7) return `${days} дней назад`;
 
     return date.toLocaleDateString('ru-RU', {
       day: 'numeric',
@@ -90,7 +100,7 @@ export const NotificationsListScreen: React.FC = () => {
 
       const authState = authService.getAuthState();
       if (!authState.isAuthenticated || !authState.user) {
-        Alert.alert(tError('error'), t('user_not_authorized'));
+        Alert.alert('Ошибка', 'Пользователь не авторизован');
         return;
       }
 
@@ -103,7 +113,7 @@ export const NotificationsListScreen: React.FC = () => {
       setUnreadCount(unreadCountResult);
     } catch (error) {
       console.error('Ошибка загрузки уведомлений:', error);
-      Alert.alert(tError('error'), t('load_notifications_error'));
+      Alert.alert('Ошибка', 'Не удалось загрузить уведомления');
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -116,7 +126,7 @@ export const NotificationsListScreen: React.FC = () => {
     }, [loadNotifications])
   );
 
-  const handleNotificationPress = async (notification: NotificationItem) => {
+  const handleNotificationPress = useCallback(async (notification: NotificationItem) => {
     // Отмечаем как прочитанное (симуляция)
     await notificationService.markNotificationAsRead(notification.id);
 
@@ -132,13 +142,13 @@ export const NotificationsListScreen: React.FC = () => {
     if (notification.data?.orderId) {
       (navigation as any).navigate('OrderDetails', { orderId: notification.data.orderId });
     }
-  };
+  }, [navigation]);
 
-  const handleMarkAllAsRead = async () => {
+  const handleMarkAllAsRead = useCallback(async () => {
     try {
       const authState = authService.getAuthState();
       if (!authState.isAuthenticated || !authState.user) {
-        Alert.alert(tError('error'), t('user_not_authorized'));
+        Alert.alert('Ошибка', 'Пользователь не авторизован');
         return;
       }
 
@@ -147,15 +157,15 @@ export const NotificationsListScreen: React.FC = () => {
         // Обновляем локальное состояние - отмечаем все как прочитанные
         setNotifications(prev => prev.map(item => ({ ...item, isRead: true })));
         setUnreadCount(0);
-        Alert.alert(t('success'), t('mark_all_read_success'));
+        Alert.alert('Успех', 'Все уведомления отмечены как прочитанные');
       } else {
-        Alert.alert(tError('error'), t('mark_all_read_error'));
+        Alert.alert('Ошибка', 'Не удалось отметить уведомления');
       }
     } catch (error) {
       console.error('Ошибка отметки уведомлений:', error);
-      Alert.alert(tError('error'), t('mark_notifications_error'));
+      Alert.alert('Ошибка', 'Произошла ошибка при отметке уведомлений');
     }
-  };
+  }, []);
 
   const renderNotificationItem = ({ item }: { item: NotificationItem }) => (
     <TouchableOpacity
@@ -184,7 +194,7 @@ export const NotificationsListScreen: React.FC = () => {
           {item.body}
         </Text>
         <Text style={styles.notificationTime}>
-          {getTimeAgo(item.createdAt, t)}
+          {getTimeAgo(item.createdAt)}
         </Text>
       </View>
     </TouchableOpacity>

@@ -65,6 +65,8 @@ export const MyOrdersScreen: React.FC = () => {
   );
 
   // Real-time обновления для заказов пользователя
+  // ВРЕМЕННО ОТКЛЮЧЕНО: для диагностики ошибки Maximum update depth
+  /*
   useEffect(() => {
     const authState = authService.getAuthState();
     if (!authState.isAuthenticated || !authState.user) {
@@ -95,8 +97,10 @@ export const MyOrdersScreen: React.FC = () => {
       ordersSubscription.unsubscribe();
     };
   }, [loadOrders]);
+  */
 
   // Real-time обновления для откликов (влияют на статус заказов)
+  /*
   useEffect(() => {
     const authState = authService.getAuthState();
     if (!authState.isAuthenticated || !authState.user) {
@@ -127,6 +131,7 @@ export const MyOrdersScreen: React.FC = () => {
       applicantsSubscription.unsubscribe();
     };
   }, [loadOrders]);
+  */
 
   const getStatusColor = (status: Order['status']) => {
     switch (status) {

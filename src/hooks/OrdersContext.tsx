@@ -93,6 +93,8 @@ export const OrdersProvider: React.FC<OrdersProviderProps> = ({ children }) => {
   }, []);
 
   // Real-time обновления через Supabase
+  // ВРЕМЕННО ОТКЛЮЧЕНО: для диагностики ошибки Maximum update depth
+  /*
   useEffect(() => {
     const authState = authService.getAuthState();
     if (!authState.isAuthenticated || !authState.user) {
@@ -152,15 +154,27 @@ export const OrdersProvider: React.FC<OrdersProviderProps> = ({ children }) => {
 
           // При изменении откликов обновляем соответствующий заказ
           if (payload.new?.order_id) {
-            // Проверяем, принадлежит ли этот заказ текущему пользователю
-            const order = orders.find(o => o.id === payload.new.order_id);
-            if (order) {
-              updateApplicantInOrder(
-                payload.new.order_id,
-                payload.new.id,
-                payload.new.status
-              );
-            }
+            // Используем setOrders напрямую, чтобы избежать зависимости от orders
+            setOrders(currentOrders => {
+              const order = currentOrders.find(o => o.id === payload.new.order_id);
+              if (order) {
+                return currentOrders.map(o => {
+                  if (o.id === payload.new.order_id) {
+                    let applicantsCount = o.applicantsCount || 0;
+                    if (payload.new.status === 'accepted') {
+                      applicantsCount = Math.max(applicantsCount, 1);
+                    }
+                    return {
+                      ...o,
+                      applicantsCount,
+                      status: (o.workersNeeded && applicantsCount >= o.workersNeeded) ? 'in_progress' as const : o.status
+                    };
+                  }
+                  return o;
+                });
+              }
+              return currentOrders;
+            });
           }
         }
       )
@@ -171,7 +185,8 @@ export const OrdersProvider: React.FC<OrdersProviderProps> = ({ children }) => {
       ordersSubscription.unsubscribe();
       applicantsSubscription.unsubscribe();
     };
-  }, [orders, updateOrderInCache, removeOrderFromCache, updateApplicantInOrder, refreshOrders]);
+  }, [updateOrderInCache, removeOrderFromCache, refreshOrders]); // Убираем orders и updateApplicantInOrder из зависимостей
+  */
 
   // Загружаем заказы при инициализации
   useEffect(() => {

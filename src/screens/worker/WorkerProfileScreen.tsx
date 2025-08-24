@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -72,23 +72,24 @@ export const WorkerProfileScreen: React.FC = () => {
   useEffect(() => {
     loadUserProfile();
     loadWorkerStats();
-  }, []);
+  }, [loadUserProfile, loadWorkerStats]);
 
   // Обновляем профиль при возврате на экран (например, после редактирования)
   useFocusEffect(
     React.useCallback(() => {
       console.log('[WorkerProfile] 🔄 useFocusEffect: перезагружаем профиль');
       loadUserProfile();
+      loadWorkerStats();
 
       // Сбрасываем настройки статус-бара при фокусе на экран
       StatusBar.setBarStyle('dark-content', true);
       if (Platform.OS === 'android') {
         StatusBar.setBackgroundColor('#F8F9FA', true);
       }
-    }, [])
+    }, [loadUserProfile, loadWorkerStats])
   );
 
-  const loadUserProfile = async () => {
+  const loadUserProfile = useCallback(async () => {
     try {
       const authState = authService.getAuthState();
       if (authState.isAuthenticated && authState.user) {
@@ -117,11 +118,11 @@ export const WorkerProfileScreen: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [tWorker]);
 
 
 
-  const loadWorkerStats = async () => {
+  const loadWorkerStats = useCallback(async () => {
     try {
       setIsLoading(true);
 
@@ -199,7 +200,7 @@ export const WorkerProfileScreen: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const getInitials = (firstName?: string, lastName?: string): string => {
     const first = firstName?.charAt(0)?.toUpperCase() || '';

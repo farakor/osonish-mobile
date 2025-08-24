@@ -38,8 +38,8 @@ export class OrderService {
 
       console.log('[OrderService] ✅ Supabase подключен успешно');
 
-      // Запускаем периодическую проверку напоминаний
-      this.startReminderChecker();
+      // ВРЕМЕННО ОТКЛЮЧЕНО: для диагностики ошибки Maximum update depth
+      // this.startReminderChecker();
     } catch (error) {
       console.error('[OrderService] ⚠️ Критическая ошибка инициализации:', error);
       throw error;
@@ -2850,6 +2850,18 @@ export class OrderService {
       // Проверяем доступность Supabase
       if (!supabase) {
         console.error('[OrderService] ❌ Supabase клиент недоступен');
+        return;
+      }
+
+      // ВРЕМЕННАЯ ПРОВЕРКА: проверяем существование таблицы scheduled_reminders
+      const { error: tableCheckError } = await supabase
+        .from('scheduled_reminders')
+        .select('id')
+        .limit(1);
+
+      if (tableCheckError?.message?.includes('relation "scheduled_reminders" does not exist')) {
+        console.warn('[OrderService] ⚠️ Таблица scheduled_reminders не существует. Пропускаем проверку напоминаний.');
+        console.warn('[OrderService] 💡 Выполните SQL скрипт: osonish-admin/SQL/scheduled_reminders_table.sql');
         return;
       }
 
