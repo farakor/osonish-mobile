@@ -1,5 +1,5 @@
 // Navigation types
-import { Applicant } from './index';
+import { Applicant, User } from './index';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -27,7 +27,7 @@ export type CustomerStackParamList = {
   MainTabs: undefined;
   OrderDetails: { orderId: string };
   EditOrder: { orderId: string };
-  ApplicantsList: { orderId: string };
+  ApplicantsList: { orderId: string; currentUser?: User };
   WorkerProfile: { workerId: string; workerName: string };
   Rating: { orderId: string; acceptedWorkers: Applicant[] };
   EditProfile: undefined;

@@ -613,7 +613,15 @@ export const OrderDetailsScreen: React.FC = () => {
   };
 
   // Завершить заказ
-  const handleCallWorker = (workerPhone: string, workerName: string) => {
+  const handleCallWorker = async (workerPhone: string, workerName: string, workerId: string) => {
+    console.log('[OrderDetailsScreen] 🔍 handleCallWorker вызван:', {
+      workerPhone,
+      workerName,
+      workerId,
+      orderId: order?.id,
+      currentUserId: currentUser?.id
+    });
+
     Alert.alert(
       t('call_worker'),
       t('call_worker_confirmation', { name: workerName, phone: workerPhone }),
@@ -621,8 +629,46 @@ export const OrderDetailsScreen: React.FC = () => {
         { text: tCommon('cancel'), style: 'cancel' },
         {
           text: t('call'),
-          onPress: () => {
-            Linking.openURL(`tel:${workerPhone}`);
+          onPress: async () => {
+            try {
+              console.log('[OrderDetailsScreen] 📞 Пользователь подтвердил звонок');
+
+              // Логируем попытку звонка перед открытием диалера
+              if (order && currentUser) {
+                console.log('[OrderDetailsScreen] 📝 Отправляем данные для логирования:', {
+                  orderId: order.id,
+                  callerId: currentUser.id,
+                  receiverId: workerId,
+                  callerType: 'customer',
+                  receiverType: 'worker',
+                  phoneNumber: workerPhone,
+                  callSource: 'order_details'
+                });
+
+                await orderService.logCallAttempt({
+                  orderId: order.id,
+                  callerId: currentUser.id,
+                  receiverId: workerId,
+                  callerType: 'customer',
+                  receiverType: 'worker',
+                  phoneNumber: workerPhone,
+                  callSource: 'order_details'
+                });
+                console.log('[OrderDetailsScreen] ✅ Звонок успешно залогирован');
+              } else {
+                console.warn('[OrderDetailsScreen] ⚠️ Не удалось залогировать звонок - отсутствуют данные:', {
+                  hasOrder: !!order,
+                  hasCurrentUser: !!currentUser
+                });
+              }
+
+              // Открываем диалер
+              Linking.openURL(`tel:${workerPhone}`);
+            } catch (error) {
+              console.error('[OrderDetailsScreen] ❌ Ошибка логирования звонка:', error);
+              // Все равно открываем диалер, даже если логирование не удалось
+              Linking.openURL(`tel:${workerPhone}`);
+            }
           }
         }
       ]
@@ -894,7 +940,7 @@ export const OrderDetailsScreen: React.FC = () => {
                 <Text style={styles.modernPhoneNumber}>{item.workerPhone}</Text>
                 <TouchableOpacity
                   style={styles.modernCallButton}
-                  onPress={() => handleCallWorker(item.workerPhone, item.workerName)}
+                  onPress={() => handleCallWorker(item.workerPhone, item.workerName, item.workerId)}
                 >
                   <Text style={styles.modernCallButtonText}>{t('call')}</Text>
                 </TouchableOpacity>
@@ -1243,7 +1289,7 @@ export const OrderDetailsScreen: React.FC = () => {
           <View style={[styles.fixedBottomSection, getEdgeToEdgeBottomStyle(insets)]}>
             <TouchableOpacity
               style={styles.fixedViewAllApplicantsButton}
-              onPress={() => navigation.navigate('ApplicantsList', { orderId: orderId })}
+              onPress={() => navigation.navigate('ApplicantsList', { orderId: orderId, currentUser: currentUser || undefined })}
             >
               <Text style={styles.fixedViewAllApplicantsButtonText}>
                 {t('view_all_applicants', { count: applicants.length })}

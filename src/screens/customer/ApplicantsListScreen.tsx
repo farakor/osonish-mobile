@@ -40,13 +40,14 @@ type ApplicantsListRouteProp = RouteProp<CustomerStackParamList, 'ApplicantsList
 export const ApplicantsListScreen: React.FC = () => {
   const navigation = useNavigation<ApplicantsListNavigationProp>();
   const route = useRoute<ApplicantsListRouteProp>();
-  const { orderId } = route.params;
+  const { orderId, currentUser: passedCurrentUser } = route.params;
   const t = useCustomerTranslation();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [currentUser, setCurrentUser] = useState(passedCurrentUser || null);
 
   // Состояния для модального окна подтверждения
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -59,7 +60,20 @@ export const ApplicantsListScreen: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, [orderId]);
+
+    // Если currentUser не передан через параметры, получаем его из authService
+    if (!currentUser) {
+      const authState = authService.getAuthState();
+      if (authState.isAuthenticated && authState.user) {
+        setCurrentUser(authState.user);
+        console.log('[ApplicantsListScreen] 👤 CurrentUser получен из authService:', authState.user.id);
+      } else {
+        console.warn('[ApplicantsListScreen] ⚠️ Пользователь не авторизован');
+      }
+    } else {
+      console.log('[ApplicantsListScreen] 👤 CurrentUser передан через параметры:', currentUser.id);
+    }
+  }, [orderId, currentUser]);
 
   // Создаем функцию для переиспользования
   const loadData = useCallback(async (isRefresh = false) => {
@@ -219,7 +233,15 @@ export const ApplicantsListScreen: React.FC = () => {
 
   // Удалена функция handleRejectApplicant - теперь используется автоматическое отклонение
 
-  const handleCallWorker = (workerPhone: string, workerName: string) => {
+  const handleCallWorker = async (workerPhone: string, workerName: string, workerId: string) => {
+    console.log('[ApplicantsListScreen] 🔍 handleCallWorker вызван:', {
+      workerPhone,
+      workerName,
+      workerId,
+      orderId: order?.id,
+      currentUserId: currentUser?.id
+    });
+
     Alert.alert(
       t('call_worker_title'),
       t('call_worker_message', { name: workerName, phone: workerPhone }),
@@ -227,8 +249,46 @@ export const ApplicantsListScreen: React.FC = () => {
         { text: t('cancel'), style: 'cancel' },
         {
           text: t('call_button'),
-          onPress: () => {
-            Linking.openURL(`tel:${workerPhone}`);
+          onPress: async () => {
+            try {
+              console.log('[ApplicantsListScreen] 📞 Пользователь подтвердил звонок');
+
+              // Логируем попытку звонка перед открытием диалера
+              if (order && currentUser) {
+                console.log('[ApplicantsListScreen] 📝 Отправляем данные для логирования:', {
+                  orderId: order.id,
+                  callerId: currentUser.id,
+                  receiverId: workerId,
+                  callerType: 'customer',
+                  receiverType: 'worker',
+                  phoneNumber: workerPhone,
+                  callSource: 'applicants_list'
+                });
+
+                await orderService.logCallAttempt({
+                  orderId: order.id,
+                  callerId: currentUser.id,
+                  receiverId: workerId,
+                  callerType: 'customer',
+                  receiverType: 'worker',
+                  phoneNumber: workerPhone,
+                  callSource: 'applicants_list'
+                });
+                console.log('[ApplicantsListScreen] ✅ Звонок успешно залогирован');
+              } else {
+                console.warn('[ApplicantsListScreen] ⚠️ Не удалось залогировать звонок - отсутствуют данные:', {
+                  hasOrder: !!order,
+                  hasCurrentUser: !!currentUser
+                });
+              }
+
+              // Открываем диалер
+              Linking.openURL(`tel:${workerPhone}`);
+            } catch (error) {
+              console.error('[ApplicantsListScreen] ❌ Ошибка логирования звонка:', error);
+              // Все равно открываем диалер, даже если логирование не удалось
+              Linking.openURL(`tel:${workerPhone}`);
+            }
           }
         }
       ]
@@ -496,7 +556,7 @@ export const ApplicantsListScreen: React.FC = () => {
                 <Text style={styles.modernPhoneNumber}>{item.workerPhone}</Text>
                 <TouchableOpacity
                   style={styles.modernCallButton}
-                  onPress={() => handleCallWorker(item.workerPhone, item.workerName)}
+                  onPress={() => handleCallWorker(item.workerPhone, item.workerName, item.workerId)}
                 >
                   <Text style={styles.modernCallButtonText}>{t('call_worker_button')}</Text>
                 </TouchableOpacity>

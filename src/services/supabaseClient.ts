@@ -211,6 +211,41 @@ export interface Database {
           created_at?: string;
         };
       };
+      scheduled_reminders: {
+        Row: {
+          id: string;
+          worker_id: string;
+          order_id: string;
+          reminder_date: string;
+          reminder_type: string;
+          is_sent: boolean;
+          sent_at?: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          worker_id: string;
+          order_id: string;
+          reminder_date: string;
+          reminder_type?: string;
+          is_sent?: boolean;
+          sent_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          worker_id?: string;
+          order_id?: string;
+          reminder_date?: string;
+          reminder_type?: string;
+          is_sent?: boolean;
+          sent_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
   };
 }

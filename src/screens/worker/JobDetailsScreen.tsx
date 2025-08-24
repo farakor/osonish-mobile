@@ -457,7 +457,7 @@ export const JobDetailsScreen: React.FC = () => {
   };
 
   // Функция для звонка заказчику
-  const handleCallCustomer = () => {
+  const handleCallCustomer = async () => {
     if (!customer?.phone) {
       Alert.alert(tWorker('general_error'), tWorker('phone_call_error'));
       return;
@@ -473,11 +473,36 @@ export const JobDetailsScreen: React.FC = () => {
         },
         {
           text: tWorker('call_customer'),
-          onPress: () => {
-            const phoneUrl = `tel:${customer.phone}`;
-            Linking.openURL(phoneUrl).catch(() => {
-              Alert.alert(tWorker('general_error'), tWorker('phone_call_error'));
-            });
+          onPress: async () => {
+            try {
+              // Логируем попытку звонка перед открытием диалера
+              const authState = authService.getAuthState();
+              if (order && customer && authState.user) {
+                await orderService.logCallAttempt({
+                  orderId: order.id,
+                  callerId: authState.user.id,
+                  receiverId: customer.id,
+                  callerType: 'worker',
+                  receiverType: 'customer',
+                  phoneNumber: customer.phone,
+                  callSource: 'job_details'
+                });
+                console.log('[JobDetailsScreen] ✅ Звонок залогирован');
+              }
+
+              // Открываем диалер
+              const phoneUrl = `tel:${customer.phone}`;
+              Linking.openURL(phoneUrl).catch(() => {
+                Alert.alert(tWorker('general_error'), tWorker('phone_call_error'));
+              });
+            } catch (error) {
+              console.error('[JobDetailsScreen] ❌ Ошибка логирования звонка:', error);
+              // Все равно открываем диалер, даже если логирование не удалось
+              const phoneUrl = `tel:${customer.phone}`;
+              Linking.openURL(phoneUrl).catch(() => {
+                Alert.alert(tWorker('general_error'), tWorker('phone_call_error'));
+              });
+            }
           },
         },
       ]

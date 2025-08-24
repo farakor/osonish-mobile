@@ -2847,6 +2847,12 @@ export class OrderService {
     try {
       console.log('[OrderService] 🔍 Проверяем запланированные напоминания...');
 
+      // Проверяем доступность Supabase
+      if (!supabase) {
+        console.error('[OrderService] ❌ Supabase клиент недоступен');
+        return;
+      }
+
       const now = new Date();
       const checkTime = new Date(now.getTime() + 15 * 60 * 1000); // Проверяем на 15 минут вперед
 
@@ -2868,6 +2874,19 @@ export class OrderService {
 
       if (error) {
         console.error('[OrderService] ❌ Ошибка получения запланированных напоминаний:', error);
+
+        // Детальная диагностика ошибки
+        if (error.message?.includes('relation "scheduled_reminders" does not exist')) {
+          console.error('[OrderService] 💡 Таблица scheduled_reminders не существует в базе данных');
+          console.error('[OrderService] 💡 Выполните SQL скрипт: osonish-admin/SQL/create_reminders_table_simple.sql');
+        } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+          console.error('[OrderService] 💡 Проблема с сетевым подключением. Проверьте интернет.');
+        } else if (error.message?.includes('JWT') || error.message?.includes('session')) {
+          console.error('[OrderService] 💡 Проблема с аутентификацией Supabase');
+        } else if (error.message?.includes('policy')) {
+          console.error('[OrderService] 💡 Проблема с RLS политиками для таблицы scheduled_reminders');
+        }
+
         return;
       }
 
@@ -2984,6 +3003,218 @@ export class OrderService {
     } catch (error) {
       console.error('[OrderService] ❌ Ошибка тестирования напоминания о завершении работы:', error);
       return false;
+    }
+  }
+
+  // ==================== ЛОГИРОВАНИЕ ЗВОНКОВ ====================
+
+  /**
+   * Логирует попытку звонка между пользователями
+   */
+  async logCallAttempt(callData: {
+    orderId: string;
+    callerId: string;
+    receiverId: string;
+    callerType: 'customer' | 'worker';
+    receiverType: 'customer' | 'worker';
+    phoneNumber: string;
+    callSource: 'order_details' | 'applicants_list' | 'job_details';
+  }): Promise<boolean> {
+    try {
+      console.log('[OrderService] 🔍 logCallAttempt начал выполнение с данными:', callData);
+
+      // Проверяем доступность Supabase
+      if (!supabase) {
+        console.error('[OrderService] ❌ Supabase не инициализирован');
+        return false;
+      }
+
+      console.log('[OrderService] 📋 Получаем информацию о заказе:', callData.orderId);
+
+      // Получаем информацию о заказе для дополнительного контекста
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select('status, created_at')
+        .eq('id', callData.orderId)
+        .single();
+
+      if (orderError) {
+        console.error('[OrderService] ❌ Ошибка получения данных заказа для логирования звонка:', orderError);
+        return false;
+      }
+
+      console.log('[OrderService] 📋 Информация о заказе получена:', orderData);
+
+      // Вычисляем количество дней с момента создания заказа
+      const orderCreatedAt = new Date(orderData.created_at);
+      const now = new Date();
+      const daysSinceOrderCreated = Math.floor((now.getTime() - orderCreatedAt.getTime()) / (1000 * 60 * 60 * 24));
+
+      const logEntry = {
+        order_id: callData.orderId,
+        caller_id: callData.callerId,
+        receiver_id: callData.receiverId,
+        caller_type: callData.callerType,
+        receiver_type: callData.receiverType,
+        phone_number: callData.phoneNumber,
+        call_source: callData.callSource,
+        order_status: orderData.status,
+        days_since_order_created: daysSinceOrderCreated,
+        call_initiated_at: new Date().toISOString()
+      };
+
+      console.log('[OrderService] 📝 Подготовлены данные для вставки в call_logs:', logEntry);
+
+      // Создаем запись в таблице call_logs
+      const { error: insertError } = await supabase
+        .from('call_logs')
+        .insert(logEntry);
+
+      if (insertError) {
+        console.error('[OrderService] ❌ Ошибка вставки в call_logs:', insertError);
+        return false;
+      }
+
+      console.log('[OrderService] ✅ Звонок успешно залогирован в базу данных');
+      return true;
+
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка логирования звонка:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Получает статистику звонков по заказу
+   */
+  async getCallStatsByOrder(orderId: string): Promise<{
+    totalCalls: number;
+    customerCalls: number;
+    workerCalls: number;
+    callsByDay: Array<{ date: string; count: number }>;
+  } | null> {
+    try {
+      console.log('[OrderService] 📊 Получаем статистику звонков для заказа:', orderId);
+
+      const { data: callLogs, error } = await supabase
+        .from('call_logs')
+        .select('*')
+        .eq('order_id', orderId)
+        .order('call_initiated_at', { ascending: true });
+
+      if (error) {
+        console.error('[OrderService] ❌ Ошибка получения статистики звонков:', error);
+        return null;
+      }
+
+      const totalCalls = callLogs.length;
+      const customerCalls = callLogs.filter(log => log.caller_type === 'customer').length;
+      const workerCalls = callLogs.filter(log => log.caller_type === 'worker').length;
+
+      // Группируем звонки по дням
+      const callsByDay = callLogs.reduce((acc: { [key: string]: number }, log) => {
+        const date = new Date(log.call_initiated_at).toISOString().split('T')[0];
+        acc[date] = (acc[date] || 0) + 1;
+        return acc;
+      }, {});
+
+      const callsByDayArray = Object.entries(callsByDay).map(([date, count]) => ({
+        date,
+        count
+      }));
+
+      return {
+        totalCalls,
+        customerCalls,
+        workerCalls,
+        callsByDay: callsByDayArray
+      };
+
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка получения статистики звонков:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Получает общую статистику звонков для аналитики
+   */
+  async getCallAnalytics(dateFrom?: string, dateTo?: string): Promise<{
+    totalCalls: number;
+    callsByType: { customer: number; worker: number };
+    callsBySource: { [key: string]: number };
+    callsByOrderStatus: { [key: string]: number };
+    avgCallsPerOrder: number;
+    peakHours: Array<{ hour: number; count: number }>;
+  } | null> {
+    try {
+      console.log('[OrderService] 📈 Получаем общую аналитику звонков');
+
+      let query = supabase
+        .from('call_logs')
+        .select('*');
+
+      if (dateFrom) {
+        query = query.gte('call_initiated_at', dateFrom);
+      }
+      if (dateTo) {
+        query = query.lte('call_initiated_at', dateTo);
+      }
+
+      const { data: callLogs, error } = await query;
+
+      if (error) {
+        console.error('[OrderService] ❌ Ошибка получения аналитики звонков:', error);
+        return null;
+      }
+
+      const totalCalls = callLogs.length;
+
+      // Статистика по типу звонящего
+      const callsByType = {
+        customer: callLogs.filter(log => log.caller_type === 'customer').length,
+        worker: callLogs.filter(log => log.caller_type === 'worker').length
+      };
+
+      // Статистика по источнику звонка
+      const callsBySource = callLogs.reduce((acc: { [key: string]: number }, log) => {
+        acc[log.call_source] = (acc[log.call_source] || 0) + 1;
+        return acc;
+      }, {});
+
+      // Статистика по статусу заказа
+      const callsByOrderStatus = callLogs.reduce((acc: { [key: string]: number }, log) => {
+        acc[log.order_status] = (acc[log.order_status] || 0) + 1;
+        return acc;
+      }, {});
+
+      // Среднее количество звонков на заказ
+      const uniqueOrders = new Set(callLogs.map(log => log.order_id));
+      const avgCallsPerOrder = uniqueOrders.size > 0 ? totalCalls / uniqueOrders.size : 0;
+
+      // Пиковые часы звонков
+      const callsByHour = callLogs.reduce((acc: { [key: number]: number }, log) => {
+        const hour = new Date(log.call_initiated_at).getHours();
+        acc[hour] = (acc[hour] || 0) + 1;
+        return acc;
+      }, {});
+
+      const peakHours = Object.entries(callsByHour)
+        .map(([hour, count]) => ({ hour: parseInt(hour), count }))
+        .sort((a, b) => b.count - a.count);
+
+      return {
+        totalCalls,
+        callsByType,
+        callsBySource,
+        callsByOrderStatus,
+        avgCallsPerOrder: Math.round(avgCallsPerOrder * 100) / 100,
+        peakHours
+      };
+
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка получения аналитики звонков:', error);
+      return null;
     }
   }
 }
