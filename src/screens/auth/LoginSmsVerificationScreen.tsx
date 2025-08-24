@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  TextInput,
   StatusBar,
   SafeAreaView,
   Alert,
@@ -16,6 +15,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
 import { authService } from '../../services/authService';
 import type { RootStackParamList } from '../../types';
+import { StableSmsInput, StableSmsInputRef } from '../../components/common';
 import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -42,17 +42,17 @@ export function LoginSmsVerificationScreen() {
   const route = useRoute();
   const { phone } = route.params as { phone: string };
 
-  const [code, setCode] = useState(['', '', '', '', '', '']);
+  const [code, setCode] = useState('');
   const [timer, setTimer] = useState(60);
   const [isResendAvailable, setIsResendAvailable] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const inputRefs = useRef<TextInput[]>([]);
+  const smsInputRef = useRef<StableSmsInputRef>(null);
 
   useEffect(() => {
-    // Автоматически фокусируем первый инпут при открытии экрана
+    // Автоматически фокусируем SMS input при открытии экрана
     setTimeout(() => {
-      inputRefs.current[0]?.focus();
+      smsInputRef.current?.focus();
     }, 300);
   }, []);
 
@@ -71,26 +71,12 @@ export function LoginSmsVerificationScreen() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleCodeChange = (value: string, index: number) => {
-    const newCode = [...code];
-    newCode[index] = value;
+  const handleCodeChange = (newCode: string) => {
     setCode(newCode);
-
-    // Автоматический переход к следующему полю
-    if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
-
-    // Автоматическая проверка при заполнении всех полей
-    if (newCode.every(digit => digit !== '') && value) {
-      verifyCode(newCode.join(''));
-    }
   };
 
-  const handleKeyPress = (key: string, index: number) => {
-    if (key === 'Backspace' && !code[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
+  const handleCodeComplete = (completedCode: string) => {
+    verifyCode(completedCode);
   };
 
   const verifyCode = async (smsCode: string) => {
@@ -133,8 +119,9 @@ export function LoginSmsVerificationScreen() {
         );
       } else {
         Alert.alert('Ошибка', result.error || 'Неверный код подтверждения');
-        setCode(['', '', '', '', '', '']);
-        inputRefs.current[0]?.focus();
+        setCode('');
+        smsInputRef.current?.clear();
+        smsInputRef.current?.focus();
       }
     } catch (error) {
       Alert.alert('Ошибка', 'Не удалось проверить код. Попробуйте еще раз.');
@@ -146,14 +133,15 @@ export function LoginSmsVerificationScreen() {
   const handleResendCode = async () => {
     setIsResendAvailable(false);
     setTimer(60);
-    setCode(['', '', '', '', '', '']);
+    setCode('');
+    smsInputRef.current?.clear();
 
     try {
       const result = await authService.login({ phone });
 
       if (result.success) {
         Alert.alert('Успешно', 'SMS код отправлен повторно');
-        inputRefs.current[0]?.focus();
+        smsInputRef.current?.focus();
 
         // Запускаем таймер заново
         const interval = setInterval(() => {
@@ -208,25 +196,15 @@ export function LoginSmsVerificationScreen() {
 
         {/* SMS Code Input */}
         <View style={styles.codeSection}>
-          <View style={styles.codeInputs}>
-            {code.map((digit, index) => (
-              <TextInput
-                key={index}
-                ref={(ref) => { if (ref) inputRefs.current[index] = ref; }}
-                style={[
-                  styles.codeInput,
-                  digit && styles.codeInputFilled
-                ]}
-                value={digit}
-                onChangeText={(value) => handleCodeChange(value, index)}
-                onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
-                keyboardType="number-pad"
-                maxLength={1}
-                textAlign="center"
-                selectTextOnFocus
-              />
-            ))}
-          </View>
+          <StableSmsInput
+            ref={smsInputRef}
+            length={6}
+            value={code}
+            onCodeChange={handleCodeChange}
+            onComplete={handleCodeComplete}
+            disabled={isLoading}
+            autoFocus={false} // Управляем фокусом вручную
+          />
 
           <Text style={styles.codeHint}>
             Введите 6-значный код для входа в аккаунт
@@ -316,28 +294,6 @@ const styles = StyleSheet.create({
   codeSection: {
     marginBottom: isSmallScreen ? theme.spacing.xl : theme.spacing.xxxl,
     alignItems: 'center',
-  },
-  codeInputs: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: theme.spacing.md,
-    paddingHorizontal: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
-  },
-  codeInput: {
-    width: isSmallScreen ? 42 : 48,
-    height: isSmallScreen ? 48 : 56,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
-    borderRadius: 12,
-    fontSize: isSmallScreen ? theme.fonts.sizes.lg : theme.fonts.sizes.xl,
-    fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.text.primary,
-    backgroundColor: theme.colors.background,
-    marginHorizontal: isSmallScreen ? 2 : 4,
-  },
-  codeInputFilled: {
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.surface,
   },
   codeHint: {
     fontSize: theme.fonts.sizes.sm,
