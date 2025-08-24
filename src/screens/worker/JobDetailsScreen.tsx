@@ -13,6 +13,7 @@ import {
   Animated,
   StatusBar,
   Platform,
+  Linking,
 } from 'react-native';
 import { theme } from '../../constants';
 import { usePlatformSafeAreaInsets, getFixedBottomStyle, getEdgeToEdgeBottomStyle } from '../../utils/safeAreaUtils';
@@ -24,6 +25,7 @@ import LocationIcon from '../../../assets/card-icons/location.svg';
 import CategoryIcon from '../../../assets/card-icons/category.svg';
 import UserIcon from '../../../assets/user-01.svg';
 import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
+import PhoneIcon from '../../../assets/phone-call-01-white.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { HeaderWithBack, PriceConfirmationModal, ProposePriceModal, MediaViewer, OrderLocationMap, StatusBadge } from '../../components/common';
 import { orderService } from '../../services/orderService';
@@ -454,6 +456,34 @@ export const JobDetailsScreen: React.FC = () => {
     }
   };
 
+  // Функция для звонка заказчику
+  const handleCallCustomer = () => {
+    if (!customer?.phone) {
+      Alert.alert(tWorker('general_error'), tWorker('phone_call_error'));
+      return;
+    }
+
+    Alert.alert(
+      tWorker('call_customer'),
+      t('call_worker_confirmation', { name: `${customer.firstName} ${customer.lastName}` || 'Заказчик', phone: customer.phone }),
+      [
+        {
+          text: tWorker('cancel'),
+          style: 'cancel',
+        },
+        {
+          text: tWorker('call_customer'),
+          onPress: () => {
+            const phoneUrl = `tel:${customer.phone}`;
+            Linking.openURL(phoneUrl).catch(() => {
+              Alert.alert(tWorker('general_error'), tWorker('phone_call_error'));
+            });
+          },
+        },
+      ]
+    );
+  };
+
   // Состояния загрузки и ошибок
   if (isLoading) {
     return (
@@ -623,21 +653,34 @@ export const JobDetailsScreen: React.FC = () => {
 
         {/* Fixed Bottom Section */}
         <View style={[styles.fixedBottomSection, getEdgeToEdgeBottomStyle(insets)]}>
-          <TouchableOpacity
-            style={[
-              styles.applyButton,
-              hasApplied && styles.appliedButton
-            ]}
-            onPress={hasApplied ? undefined : handleApplyToJob}
-            disabled={hasApplied}
-          >
-            <Text style={[
-              styles.applyButtonText,
-              hasApplied && styles.appliedButtonText
-            ]}>
-              {hasApplied ? getApplicationStatusText(applicationStatus) : tWorker('apply_for_job')}
-            </Text>
-          </TouchableOpacity>
+          {order.status === 'in_progress' && customer?.phone ? (
+            <TouchableOpacity
+              style={styles.callButtonAccepted}
+              onPress={handleCallCustomer}
+            >
+              <PhoneIcon width={24} height={24} />
+              <View style={styles.callButtonTextContainer}>
+                <Text style={styles.callButtonAcceptedText}>{tWorker('application_accepted')}</Text>
+                <Text style={styles.callButtonSubText}>{tWorker('call_customer')}</Text>
+              </View>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={[
+                styles.applyButton,
+                hasApplied && styles.appliedButton
+              ]}
+              onPress={hasApplied ? undefined : handleApplyToJob}
+              disabled={hasApplied}
+            >
+              <Text style={[
+                styles.applyButtonText,
+                hasApplied && styles.appliedButtonText
+              ]}>
+                {hasApplied ? getApplicationStatusText(applicationStatus) : tWorker('apply_for_job')}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -962,6 +1005,43 @@ const styles = StyleSheet.create({
   },
   appliedButtonText: {
     color: theme.colors.text.secondary,
+  },
+
+
+  callButtonAccepted: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.lg,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+    marginBottom: Platform.OS === 'ios' ? 16 : 0,
+  },
+
+  callButtonTextContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  callButtonAcceptedText: {
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.bold,
+    color: theme.colors.white,
+    textAlign: 'center',
+  },
+  callButtonSubText: {
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.medium,
+    color: theme.colors.white,
+    textAlign: 'center',
+    opacity: 0.9,
+    marginTop: 2,
   },
 
   // Sticky Header Styles
