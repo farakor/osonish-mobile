@@ -10,6 +10,7 @@ interface LanguageContextType {
   changeLanguage: (language: Language) => Promise<void>;
   isLanguageSelected: boolean;
   setLanguageSelected: (selected: boolean) => void;
+  isLoading: boolean;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -20,6 +21,7 @@ const LANGUAGE_SELECTION_KEY = 'osonish_language_selected';
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentLanguage, setCurrentLanguage] = useState<Language>('ru');
   const [isLanguageSelected, setIsLanguageSelected] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadLanguageSettings();
@@ -54,6 +56,9 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
     } catch (error) {
       console.error('Error loading language settings:', error);
+    } finally {
+      // Всегда устанавливаем isLoading в false после завершения загрузки
+      setIsLoading(false);
     }
   };
 
@@ -101,6 +106,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         changeLanguage,
         isLanguageSelected,
         setLanguageSelected,
+        isLoading,
       }}
     >
       {children}

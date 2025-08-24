@@ -11,11 +11,16 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export function SplashScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const { isLanguageSelected } = useLanguage();
+  const { isLanguageSelected, isLoading } = useLanguage();
 
   useEffect(() => {
     const checkAuthAndNavigate = async () => {
       try {
+        // Ждем завершения загрузки языковых настроек
+        if (isLoading) {
+          return;
+        }
+
         // Небольшая задержка для показа splash экрана
         await new Promise(resolve => setTimeout(resolve, 2000));
 
@@ -69,7 +74,7 @@ export function SplashScreen() {
     };
 
     checkAuthAndNavigate();
-  }, [navigation, isLanguageSelected]);
+  }, [navigation, isLanguageSelected, isLoading]);
 
   return (
     <SafeAreaView style={styles.container}>
