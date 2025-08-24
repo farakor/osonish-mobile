@@ -457,7 +457,7 @@ export const WorkerProfileScreen: React.FC = () => {
                 <View style={styles.menuIconContainer}>
                   <NotificationMessageIcon width={20} height={20} />
                 </View>
-                <Text style={styles.menuText}>{tWorker('notifications')}</Text>
+                <Text style={styles.menuText}>{tWorker('settings_and_notifications')}</Text>
               </View>
               <Text style={styles.menuArrow}>›</Text>
             </TouchableOpacity>

@@ -18,7 +18,7 @@ import { theme } from '../../constants';
 import { usePlatformSafeAreaInsets, getFixedBottomStyle, getContainerBottomStyle } from '../../utils/safeAreaUtils';
 import { notificationService, NotificationSettings } from '../../services/notificationService';
 import { authService } from '../../services/authService';
-import { HeaderWithBack } from '../../components/common';
+import { HeaderWithBack, LanguageSwitcher } from '../../components/common';
 import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -104,7 +104,7 @@ export const NotificationsScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
-        <HeaderWithBack title={t('notifications')} />
+        <HeaderWithBack title={t('settings_and_notifications')} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={styles.loadingText}>{t('loading_settings')}</Text>
@@ -116,7 +116,7 @@ export const NotificationsScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
-      <HeaderWithBack title={t('notifications')} />
+      <HeaderWithBack title={t('settings_and_notifications')} />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Form Fields */}
@@ -138,6 +138,14 @@ export const NotificationsScreen: React.FC = () => {
                   disabled={allNotificationsEnabled === null}
                 />
               </View>
+            </View>
+          </View>
+
+          {/* Language Switcher */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Язык / Til</Text>
+            <View style={styles.inputContainer}>
+              <LanguageSwitcher showLabel={false} />
             </View>
           </View>
 
