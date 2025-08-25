@@ -37,7 +37,7 @@ export function WorkerTabNavigator() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: '#333333',
+        tabBarInactiveTintColor: '#1a1a1a',
         tabBarStyle: {
           backgroundColor: '#fff',
           borderTopWidth: 0,
@@ -85,7 +85,7 @@ export function WorkerTabNavigator() {
               <HomeIcon
                 width={25}
                 height={25}
-                color={focused ? color : '#333333'}
+                color={focused ? color : '#1a1a1a'}
               />
             </AnimatedTabIcon>
           ),
@@ -107,7 +107,7 @@ export function WorkerTabNavigator() {
               <FileIcon
                 width={25}
                 height={25}
-                color={focused ? color : '#333333'}
+                color={focused ? color : '#1a1a1a'}
               />
             </AnimatedTabIcon>
           ),
@@ -129,7 +129,7 @@ export function WorkerTabNavigator() {
               <ProfileIcon
                 width={25}
                 height={25}
-                color={focused ? color : '#333333'}
+                color={focused ? color : '#1a1a1a'}
               />
             </AnimatedTabIcon>
           ),
