@@ -69,6 +69,16 @@ export const typography = {
   fontWeight: fonts.weights,
 } as const;
 
+// Order validation constants
+export const orderValidation = {
+  title: {
+    maxLength: 70,
+  },
+  description: {
+    maxLength: 500,
+  },
+} as const;
+
 // Main theme object
 export const theme = {
   colors,
@@ -76,6 +86,7 @@ export const theme = {
   spacing,
   borderRadius,
   typography,
+  orderValidation,
 } as const;
 
 export type Theme = typeof theme;

@@ -334,11 +334,11 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
   const isCurrentStepValid = (): boolean => {
     switch (currentStep) {
       case 1: // Название
-        return title.trim().length > 0;
+        return title.trim().length > 0 && title.length <= theme.orderValidation.title.maxLength;
       case 2: // Категория
         return category.length > 0;
       case 3: // Описание
-        return description.trim().length > 0;
+        return description.trim().length > 0 && description.length <= theme.orderValidation.description.maxLength;
       case 4: // Местоположение
         return location.trim().length > 0;
       case 5: // Бюджет
@@ -363,6 +363,10 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           Alert.alert(tError('error'), t('fill_title_error'));
           return false;
         }
+        if (title.length > theme.orderValidation.title.maxLength) {
+          Alert.alert(tError('error'), t('title_too_long_error'));
+          return false;
+        }
         return true;
       case 2: // Категория
         if (!category) {
@@ -373,6 +377,10 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
       case 3: // Описание
         if (!description.trim()) {
           Alert.alert(tError('error'), t('fill_description_error'));
+          return false;
+        }
+        if (description.length > theme.orderValidation.description.maxLength) {
+          Alert.alert(tError('error'), t('description_too_long_error'));
           return false;
         }
         return true;
@@ -433,7 +441,19 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
         Alert.alert(tError('error'), t('fill_required_fields'));
         return;
       }
-      console.log('[CreateOrder] ✅ Все поля заполнены');
+      
+      // Проверяем ограничения по длине
+      if (title.length > theme.orderValidation.title.maxLength) {
+        Alert.alert(tError('error'), t('title_too_long_error'));
+        return;
+      }
+      
+      if (description.length > theme.orderValidation.description.maxLength) {
+        Alert.alert(tError('error'), t('description_too_long_error'));
+        return;
+      }
+      
+      console.log('[CreateOrder] ✅ Все поля заполнены и валидны');
 
       console.log('[CreateOrder] 🔄 Устанавливаем isLoading...');
       setIsLoading(true);
@@ -603,10 +623,14 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                     onChangeText={setTitle}
                     placeholder={t('title_placeholder')}
                     placeholderTextColor={theme.colors.text.secondary}
+                    maxLength={theme.orderValidation.title.maxLength}
                     autoFocus
                     onFocus={() => setTitleFocused(true)}
                     onBlur={() => setTitleFocused(false)}
                   />
+                  <Text style={styles.characterCount}>
+                    {title.length}/{theme.orderValidation.title.maxLength}
+                  </Text>
                 </View>
               </AnimatedField>
             </View>
@@ -657,6 +681,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                     onChangeText={setDescription}
                     placeholder={t('description_placeholder')}
                     placeholderTextColor={theme.colors.text.secondary}
+                    maxLength={theme.orderValidation.description.maxLength}
                     multiline
                     numberOfLines={6}
                     textAlignVertical="top"
@@ -664,6 +689,9 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                     onFocus={() => setDescriptionFocused(true)}
                     onBlur={() => setDescriptionFocused(false)}
                   />
+                  <Text style={styles.characterCount}>
+                    {description.length}/{theme.orderValidation.description.maxLength}
+                  </Text>
                 </View>
               </AnimatedField>
             </View>
@@ -1372,5 +1400,11 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
     fontSize: theme.fonts.sizes.sm,
     fontWeight: theme.fonts.weights.medium,
+  },
+  characterCount: {
+    fontSize: theme.fonts.sizes.xs,
+    color: theme.colors.text.secondary,
+    textAlign: 'right',
+    marginTop: theme.spacing.xs,
   },
 });

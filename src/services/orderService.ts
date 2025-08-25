@@ -54,6 +54,35 @@ export class OrderService {
       console.log('[OrderService] 🔨 Создание заказа:', request.title);
       console.log('[OrderService] 🕒 Время создания:', new Date().toISOString());
 
+      // Валидация входных данных
+      if (!request.title?.trim()) {
+        return {
+          success: false,
+          error: 'Название заказа обязательно'
+        };
+      }
+
+      if (request.title.length > 70) {
+        return {
+          success: false,
+          error: 'Название заказа не должно превышать 70 символов'
+        };
+      }
+
+      if (!request.description?.trim()) {
+        return {
+          success: false,
+          error: 'Описание заказа обязательно'
+        };
+      }
+
+      if (request.description.length > 500) {
+        return {
+          success: false,
+          error: 'Описание заказа не должно превышать 500 символов'
+        };
+      }
+
       const authState = authService.getAuthState();
       if (!authState.isAuthenticated || !authState.user) {
         return {

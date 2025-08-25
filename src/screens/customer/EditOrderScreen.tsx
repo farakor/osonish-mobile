@@ -313,8 +313,16 @@ export const EditOrderScreen: React.FC = () => {
       Alert.alert('Ошибка', 'Введите название заказа');
       return false;
     }
+    if (title.length > theme.orderValidation.title.maxLength) {
+      Alert.alert('Ошибка', t('title_too_long_error'));
+      return false;
+    }
     if (!description.trim()) {
       Alert.alert('Ошибка', 'Введите описание заказа');
+      return false;
+    }
+    if (description.length > theme.orderValidation.description.maxLength) {
+      Alert.alert('Ошибка', t('description_too_long_error'));
       return false;
     }
     if (!category) {
@@ -494,9 +502,13 @@ export const EditOrderScreen: React.FC = () => {
               onChangeText={setTitle}
               placeholder="Например: Покрасить забор"
               placeholderTextColor={theme.colors.text.secondary}
+              maxLength={theme.orderValidation.title.maxLength}
               onFocus={() => setTitleFocused(true)}
               onBlur={() => setTitleFocused(false)}
             />
+            <Text style={styles.characterCount}>
+              {title.length}/{theme.orderValidation.title.maxLength}
+            </Text>
           </View>
 
           {/* Описание */}
@@ -508,12 +520,16 @@ export const EditOrderScreen: React.FC = () => {
               onChangeText={setDescription}
               placeholder="Опишите подробно, что нужно сделать..."
               placeholderTextColor={theme.colors.text.secondary}
+              maxLength={theme.orderValidation.description.maxLength}
               multiline
               numberOfLines={4}
               textAlignVertical="top"
               onFocus={() => setDescriptionFocused(true)}
               onBlur={() => setDescriptionFocused(false)}
             />
+            <Text style={styles.characterCount}>
+              {description.length}/{theme.orderValidation.description.maxLength}
+            </Text>
           </View>
 
           {/* Категория */}
@@ -1053,5 +1069,11 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
+  },
+  characterCount: {
+    fontSize: theme.fonts.sizes.xs,
+    color: theme.colors.text.secondary,
+    textAlign: 'right',
+    marginTop: theme.spacing.xs,
   },
 });
