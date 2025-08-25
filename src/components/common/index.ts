@@ -40,3 +40,4 @@ export { default as SimpleSmsInput } from './SimpleSmsInput';
 export type { SimpleSmsInputRef } from './SimpleSmsInput';
 export { default as StableSmsInput } from './StableSmsInput';
 export type { StableSmsInputRef } from './StableSmsInput';
+export { WebViewModal } from './WebViewModal';

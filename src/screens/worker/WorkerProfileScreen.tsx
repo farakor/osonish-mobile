@@ -26,6 +26,7 @@ import LifeBuoyIcon from '../../../assets/life-buoy-02.svg';
 import LogOutIcon from '../../../assets/log-out-03.svg';
 import { Ionicons } from '@expo/vector-icons';
 import { useWorkerTranslation } from '../../hooks/useTranslation';
+import { WebViewModal } from '../../components/common';
 
 // Функция для получения высоты статусбара только на Android
 const getAndroidStatusBarHeight = () => {
@@ -56,6 +57,15 @@ export const WorkerProfileScreen: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const tWorker = useWorkerTranslation();
+  const [webViewModal, setWebViewModal] = useState<{
+    visible: boolean;
+    url: string;
+    title: string;
+  }>({
+    visible: false,
+    url: '',
+    title: '',
+  });
 
   // Цвет для элементов выхода
   const logoutColor = '#FF3B30';
@@ -290,6 +300,22 @@ export const WorkerProfileScreen: React.FC = () => {
     );
   };
 
+  const handleOpenWebView = (url: string, title: string) => {
+    setWebViewModal({
+      visible: true,
+      url,
+      title,
+    });
+  };
+
+  const handleCloseWebView = () => {
+    setWebViewModal({
+      visible: false,
+      url: '',
+      title: '',
+    });
+  };
+
   const profileOptions: ProfileOption[] = [
     { id: '1', title: tWorker('edit_profile'), icon: <UserEditIcon width={20} height={20} />, action: handleEditProfile },
     { id: '2', title: tWorker('notifications'), icon: <NotificationMessageIcon width={20} height={20} />, action: handleNotifications },
@@ -473,6 +499,37 @@ export const WorkerProfileScreen: React.FC = () => {
               <Text style={styles.menuArrow}>›</Text>
             </TouchableOpacity>
 
+            {/* Information Section */}
+            <View style={styles.sectionDivider}>
+              <Text style={styles.sectionTitle}>{tWorker('info')}</Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => handleOpenWebView('https://oson-ish.uz/terms-of-service.html', tWorker('terms_of_service'))}
+            >
+              <View style={styles.menuLeft}>
+                <View style={styles.menuIconContainer}>
+                  <Ionicons name="document-text-outline" size={20} color="#666" />
+                </View>
+                <Text style={styles.menuText}>{tWorker('terms_of_service')}</Text>
+              </View>
+              <Text style={styles.menuArrow}>›</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => handleOpenWebView('https://oson-ish.uz/privacy-policy.html', tWorker('privacy_policy'))}
+            >
+              <View style={styles.menuLeft}>
+                <View style={styles.menuIconContainer}>
+                  <Ionicons name="shield-checkmark-outline" size={20} color="#666" />
+                </View>
+                <Text style={styles.menuText}>{tWorker('privacy_policy')}</Text>
+              </View>
+              <Text style={styles.menuArrow}>›</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity style={[styles.menuItem, styles.logoutMenuItem]} onPress={handleLogout}>
               <View style={styles.menuLeft}>
                 <View style={styles.menuIconContainer}>
@@ -484,6 +541,14 @@ export const WorkerProfileScreen: React.FC = () => {
           </View>
         </ScrollView>
       </SafeAreaView>
+
+      {/* WebView Modal */}
+      <WebViewModal
+        visible={webViewModal.visible}
+        url={webViewModal.url}
+        title={webViewModal.title}
+        onClose={handleCloseWebView}
+      />
     </View>
   );
 };
@@ -749,6 +814,20 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     color: '#FF3B30', // Используем тот же цвет, что и для иконки
+  },
+
+  // Section Divider
+  sectionDivider: {
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+  },
+  sectionTitle: {
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.text.secondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 
   // Modern Earnings Widget
