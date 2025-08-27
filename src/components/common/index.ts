@@ -41,3 +41,6 @@ export type { SimpleSmsInputRef } from './SimpleSmsInput';
 export { default as StableSmsInput } from './StableSmsInput';
 export type { StableSmsInputRef } from './StableSmsInput';
 export { WebViewModal } from './WebViewModal';
+export { LogoOsonish } from './LogoOsonish';
+export { LogoOsonishWhite } from './LogoOsonishWhite';
+export { AppIconOsonish } from './AppIconOsonish';

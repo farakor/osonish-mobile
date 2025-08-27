@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, StatusBar, SafeAreaView, Dime
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
 import { useAuthTranslation } from '../../hooks/useTranslation';
+import { LogoOsonish } from '../../components/common';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -20,9 +21,10 @@ export function AuthScreen() {
       <View style={styles.content}>
         {/* Logo Section */}
         <View style={styles.logoSection}>
-          <View style={styles.logoPlaceholder}>
-            <Text style={styles.logoText}>LOGO</Text>
-          </View>
+          <LogoOsonish
+            width={isSmallScreen ? 200 : 280}
+            height={isSmallScreen ? 36 : 51}
+          />
         </View>
 
         {/* Welcome Section */}

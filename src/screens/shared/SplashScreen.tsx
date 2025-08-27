@@ -6,6 +6,7 @@ import { theme } from '../../constants';
 import { authService } from '../../services/authService';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { RootStackParamList } from '../../types';
+import { LogoOsonishWhite } from '../../components/common';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -80,10 +81,7 @@ export function SplashScreen() {
     <SafeAreaView style={styles.container}>
       {/* Logo Section */}
       <View style={styles.logoSection}>
-        <View style={styles.logoPlaceholder}>
-          <Text style={styles.logoText}>OSONISH</Text>
-        </View>
-        <Text style={styles.tagline}>Платформа для поиска работы и исполнителей</Text>
+        <LogoOsonishWhite width={280} height={51} />
       </View>
 
       {/* Loading indicator */}
@@ -105,33 +103,6 @@ const styles = StyleSheet.create({
   logoSection: {
     alignItems: 'center',
     marginBottom: theme.spacing.xxxl,
-  },
-  logoPlaceholder: {
-    width: 120,
-    height: 120,
-    backgroundColor: theme.colors.background,
-    borderRadius: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: theme.spacing.lg,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  logoText: {
-    fontSize: theme.fonts.sizes.xl,
-    fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.primary,
-    letterSpacing: 2,
-  },
-  tagline: {
-    fontSize: theme.fonts.sizes.md,
-    color: theme.colors.background,
-    textAlign: 'center',
-    fontWeight: theme.fonts.weights.medium,
-    opacity: 0.9,
   },
   loadingSection: {
     position: 'absolute',

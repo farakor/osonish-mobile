@@ -15,7 +15,7 @@ import { theme } from '../../constants';
 import { usePlatformSafeAreaInsets, getTabScreenScrollViewContentStyle, getSafeAreaViewWithWhiteBackground, getAndroidNavigationBarBackground } from '../../utils/safeAreaUtils';
 import TelegramIcon from '../../../assets/telegram-icon.svg';
 import PhoneCallIcon from '../../../assets/phone-call-01.svg';
-import { HeaderWithBack } from '../../components/common';
+import { HeaderWithBack, LogoOsonish } from '../../components/common';
 import { useCustomerTranslation, useErrorsTranslation } from '../../hooks/useTranslation';
 
 export const SupportScreen: React.FC = () => {
@@ -65,9 +65,7 @@ export const SupportScreen: React.FC = () => {
       >
         {/* Logo Section */}
         <View style={styles.logoSection}>
-          <View style={styles.logoPlaceholder}>
-            <Text style={styles.logoText}>LOGO</Text>
-          </View>
+          <LogoOsonish width={200} height={36} />
         </View>
 
         {/* Form Fields */}
