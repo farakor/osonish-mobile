@@ -16,6 +16,7 @@ import { theme } from '../../constants';
 import type { RootStackParamList } from '../../types';
 import WorkerIcon from '../../../assets/engineer-worker.svg';
 import UserIcon from '../../../assets/user-03.svg';
+import { LogoOsonish } from '../../components/common';
 import { useAuthTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -121,6 +122,13 @@ export const RoleSelectionScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
+        <View style={styles.logoSection}>
+          <LogoOsonish
+            width={isSmallScreen ? 120 : 160}
+            height={isSmallScreen ? 22 : 29}
+          />
+        </View>
+
         <View style={styles.header}>
           <Text style={styles.title}>{t('role_selection_title')}</Text>
           <Text style={styles.subtitle}>
@@ -180,6 +188,10 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.xl + getAndroidStatusBarHeight(),
+  },
+  logoSection: {
+    alignItems: 'center',
+    marginBottom: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
   },
   header: {
     alignItems: 'center',

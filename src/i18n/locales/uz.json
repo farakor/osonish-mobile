@@ -41,8 +41,8 @@
     "applications": "Arizalar"
   },
   "auth": {
-    "welcome_title": "Osonish ilovasiga xush kelibsiz",
-    "welcome_subtitle": "Usta toping yoki o'z xizmatlaringizni taklif qiling",
+    "welcome_title": "Xush kelibsiz!",
+    "welcome_subtitle": "Ijrochi toping yoki o'z xizmatlaringizni taklif qiling",
     "login": "Kirish",
     "register": "Ro'yxatdan o'tish",
     "login_title": "Hisobga kirish",

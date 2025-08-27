@@ -41,8 +41,8 @@
     "applications": "Заявки"
   },
   "auth": {
-    "welcome_title": "Добро пожаловать в Osonish",
-    "welcome_subtitle": "Найдите мастера или предложите свои услуги",
+    "welcome_title": "Добро пожаловать!",
+    "welcome_subtitle": "Найдите исполнителя или предложите свои услуги",
     "login": "Войти",
     "register": "Регистрация",
     "login_title": "Вход в аккаунт",

@@ -15,7 +15,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
 import { authService } from '../../services/authService';
 import type { RootStackParamList } from '../../types';
-import { StableSmsInput, StableSmsInputRef } from '../../components/common';
+import { StableSmsInput, StableSmsInputRef, LogoOsonish } from '../../components/common';
 import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -183,6 +183,13 @@ export function LoginSmsVerificationScreen() {
           >
             <ArrowBackIcon width={20} height={20} stroke={theme.colors.text.primary} />
           </TouchableOpacity>
+          <View style={styles.logoContainer}>
+            <LogoOsonish
+              width={isSmallScreen ? 120 : 160}
+              height={isSmallScreen ? 22 : 29}
+            />
+          </View>
+          <View style={styles.headerRight} />
         </View>
 
         {/* Title Section */}
@@ -258,16 +265,29 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingTop: theme.spacing.md,
     marginBottom: theme.spacing.lg,
+  },
+  logoContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerRight: {
+    width: 40,
   },
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.surface,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
   },
 
   titleSection: {

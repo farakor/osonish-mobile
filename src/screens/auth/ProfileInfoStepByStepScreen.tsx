@@ -40,7 +40,7 @@ import {
   AnimatedNavigationButton,
   AnimatedInteractiveContainer,
 } from '../../components/common/AnimatedComponents';
-import { CustomPrivacyModal } from '../../components/common';
+import { CustomPrivacyModal, LogoOsonish } from '../../components/common';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -526,9 +526,12 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
         >
           {/* Header */}
           <View style={styles.header}>
-            <View style={styles.headerRight} />
-            <Text style={styles.headerTitle}>{getStepTitle()}</Text>
-            <View style={styles.headerRight} />
+            <View style={styles.logoContainer}>
+              <LogoOsonish
+                width={isSmallScreen ? 120 : 160}
+                height={isSmallScreen ? 22 : 29}
+              />
+            </View>
           </View>
 
           {/* Progress */}
@@ -648,24 +651,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
     paddingTop: theme.spacing.md + getAndroidStatusBarHeight(),
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
   },
-
-
-  headerTitle: {
-    fontSize: theme.fonts.sizes.lg,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.text.primary,
-  },
-  headerRight: {
-    width: 40,
+  logoContainer: {
+    alignItems: 'center',
   },
   stepCounterContainer: {
     paddingHorizontal: theme.spacing.lg,

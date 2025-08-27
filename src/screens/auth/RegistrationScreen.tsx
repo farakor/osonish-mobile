@@ -17,6 +17,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
 import type { RootStackParamList } from '../../types';
 import { useAuthTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
+import { LogoOsonish } from '../../components/common';
 import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -107,6 +108,13 @@ export function RegistrationScreen() {
             >
               <ArrowBackIcon width={20} height={20} stroke={theme.colors.text.primary} />
             </TouchableOpacity>
+            <View style={styles.logoContainer}>
+              <LogoOsonish
+                width={isSmallScreen ? 120 : 160}
+                height={isSmallScreen ? 22 : 29}
+              />
+            </View>
+            <View style={styles.headerRight} />
           </View>
 
           {/* Title Section */}
@@ -173,8 +181,16 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingTop: theme.spacing.md,
     marginBottom: theme.spacing.lg,
+  },
+  logoContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerRight: {
+    width: 40,
   },
   backButton: {
     width: 40,

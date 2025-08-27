@@ -15,6 +15,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import { theme } from '../../constants';
 import type { RootStackParamList, City } from '../../types';
+import { LogoOsonish } from '../../components/common';
 import { useAuthTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -157,6 +158,13 @@ export const CitySelectionScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
+        <View style={styles.logoSection}>
+          <LogoOsonish
+            width={isSmallScreen ? 120 : 160}
+            height={isSmallScreen ? 22 : 29}
+          />
+        </View>
+
         <View style={styles.header}>
           <Text style={styles.title}>{t('city_selection_title')}</Text>
           <Text style={styles.subtitle}>
@@ -211,6 +219,10 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.xl + getAndroidStatusBarHeight(),
+  },
+  logoSection: {
+    alignItems: 'center',
+    marginBottom: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
   },
   header: {
     alignItems: 'center',

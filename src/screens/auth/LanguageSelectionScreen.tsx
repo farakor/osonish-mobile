@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
 import { useLanguage, Language } from '../../contexts/LanguageContext';
+import { LogoOsonish } from '../../components/common';
 import { RootStackParamList } from '../../types/navigation';
 
 // Импортируем SVG флаги
@@ -109,9 +110,10 @@ export const LanguageSelectionScreen: React.FC = () => {
       <View style={styles.content}>
         {/* Logo Section */}
         <View style={styles.logoSection}>
-          <View style={styles.logoPlaceholder}>
-            <Text style={styles.logoText}>LOGO</Text>
-          </View>
+          <LogoOsonish
+            width={isSmallScreen ? 160 : 200}
+            height={isSmallScreen ? 29 : 36}
+          />
         </View>
 
         {/* Welcome Section */}
@@ -181,21 +183,6 @@ const styles = StyleSheet.create({
   logoSection: {
     alignItems: 'center',
     marginBottom: isSmallScreen ? theme.spacing.lg : theme.spacing.xxl,
-  },
-  logoPlaceholder: {
-    width: isSmallScreen ? 120 : 160,
-    height: isSmallScreen ? 120 : 160,
-    backgroundColor: '#E5E5E5',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: isSmallScreen ? 12 : 16,
-  },
-  logoText: {
-    fontSize: isSmallScreen ? 20 : 28,
-    fontWeight: 'bold',
-    color: '#888',
-    letterSpacing: 2,
   },
   welcomeSection: {
     alignItems: 'center',

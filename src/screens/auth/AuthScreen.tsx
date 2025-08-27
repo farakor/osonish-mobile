@@ -22,8 +22,8 @@ export function AuthScreen() {
         {/* Logo Section */}
         <View style={styles.logoSection}>
           <LogoOsonish
-            width={isSmallScreen ? 200 : 280}
-            height={isSmallScreen ? 36 : 51}
+            width={isSmallScreen ? 240 : 320}
+            height={isSmallScreen ? 43 : 58}
           />
         </View>
 
