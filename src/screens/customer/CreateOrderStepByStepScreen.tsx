@@ -13,6 +13,8 @@ import {
   KeyboardAvoidingView,
   ActivityIndicator,
   Modal,
+  ScrollView,
+  FlatList,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -111,6 +113,8 @@ const StepCounter: React.FC<{ currentStep: number; totalSteps: number; t: any }>
 
 
 
+
+
 export const CreateOrderStepByStepScreen: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [title, setTitle] = useState('');
@@ -119,7 +123,15 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
   const [budget, setBudget] = useState('');
   const [workersCount, setWorkersCount] = useState('1');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [timePickerValue, setTimePickerValue] = useState<Date>(() => {
+    const date = new Date();
+    date.setHours(9, 0, 0, 0);
+    return date;
+  });
+
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [mediaFiles, setMediaFiles] = useState<Array<{ uri: string; type: 'image' | 'video'; name: string; size: number }>>([]);
@@ -189,6 +201,27 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
       year: 'numeric',
     });
   };
+
+
+
+  const formatTime = (time: string | null) => {
+    if (!time) return t('select_time');
+    return time;
+  };
+
+  // Синхронизируем timePickerValue с selectedTime при открытии пикера
+  useEffect(() => {
+    if (showTimePicker && selectedTime) {
+      const [hours, minutes] = selectedTime.split(':');
+      const date = new Date();
+      date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      setTimePickerValue(date);
+    }
+  }, [showTimePicker, selectedTime]);
+
+
+
+
 
   function formatBudgetInput(value: string) {
     const digits = value.replace(/\D/g, '');
@@ -352,8 +385,8 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
         return true;
       case 7: // Количество работников
         return !!workersCount && !isNaN(parseInt(workersCount)) && parseInt(workersCount) >= 1;
-      case 8: // Дата
-        return selectedDate !== null;
+      case 8: // Дата и время
+        return selectedDate !== null && selectedTime !== null;
       case 9: // Медиа (необязательно)
         return true;
       case 10: // Подтверждение
@@ -411,9 +444,13 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           return false;
         }
         return true;
-      case 8: // Дата
+      case 8: // Дата и время
         if (!selectedDate) {
           Alert.alert(tError('error'), t('select_date_error'));
+          return false;
+        }
+        if (!selectedTime) {
+          Alert.alert(tError('error'), t('select_time_error'));
           return false;
         }
         return true;
@@ -445,7 +482,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
 
     try {
       console.log('[CreateOrder] 📋 Проверяем поля...');
-      if (!title.trim() || !description.trim() || !category || !budget.trim() || !selectedDate || !location.trim()) {
+      if (!title.trim() || !description.trim() || !category || !budget.trim() || !selectedDate || !selectedTime || !location.trim()) {
         console.log('[CreateOrder] ❌ Не все поля заполнены');
         Alert.alert(tError('error'), t('fill_required_fields'));
         return;
@@ -523,7 +560,12 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
         longitude: coordinates?.longitude,
         budget: parseFloat(budget.replace(/[^\d]/g, '')),
         workersNeeded: parseInt(workersCount),
-        serviceDate: selectedDate!.toISOString(),
+        serviceDate: (() => {
+          const [hours, minutes] = selectedTime!.split(':').map(Number);
+          const dateWithTime = new Date(selectedDate!);
+          dateWithTime.setHours(hours, minutes, 0, 0);
+          return dateWithTime.toISOString();
+        })(),
         photos: mediaUrls,
         // Дополнительные удобства
         transportPaid,
@@ -562,6 +604,12 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                   setBudget('');
                   setWorkersCount('1');
                   setSelectedDate(null);
+                  setSelectedTime(null);
+                  setTimePickerValue(() => {
+                    const date = new Date();
+                    date.setHours(9, 0, 0, 0);
+                    return date;
+                  });
                   setLocation('');
                   setCoordinates(null);
                   setIsGettingLocation(false);
@@ -933,6 +981,23 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                   </TouchableOpacity>
                 </View>
               </AnimatedInteractiveContainer>
+
+              <AnimatedInteractiveContainer isActive={currentStep === 8} delay={250} resetKey={`${animationResetKey}-step-8`}>
+                <View style={styles.inputContainer}>
+                  <TouchableOpacity
+                    style={styles.timeSelector}
+                    onPress={() => setShowTimePicker(true)}
+                  >
+                    <CalendarDateIcon width={24} height={24} stroke={theme.colors.primary} />
+                    <Text style={[
+                      styles.timeText,
+                      !selectedTime && styles.timeTextPlaceholder
+                    ]}>
+                      {formatTime(selectedTime)}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </AnimatedInteractiveContainer>
             </View>
           </AnimatedStepContainer>
         );
@@ -1027,8 +1092,9 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                       baseItems.push({ label: t('summary_media'), value: `${mediaFiles.length} ${t('files_count')}` });
                     }
 
-                    // Добавляем дату
-                    baseItems.push({ label: t('summary_date'), value: formatDate(selectedDate) });
+                    // Добавляем дату и время
+                    const dateTimeValue = selectedTime ? `${formatDate(selectedDate)} ${t('at_time')} ${selectedTime}` : formatDate(selectedDate);
+                    baseItems.push({ label: t('summary_date'), value: dateTimeValue });
 
                     return baseItems;
                   })()}
@@ -1143,6 +1209,52 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 display={Platform.OS === 'android' ? 'calendar' : 'spinner'}
                 onChange={handleDateChange}
                 minimumDate={new Date()}
+                locale="ru-RU"
+              />
+            </View>
+          )}
+
+          {/* Time Picker */}
+          {showTimePicker && (
+            <View style={styles.timePickerContainer}>
+              {Platform.OS === 'ios' && (
+                <View style={styles.timePickerHeader}>
+                  <TouchableOpacity
+                    style={styles.doneButton}
+                    onPress={() => {
+                      const hours = timePickerValue.getHours().toString().padStart(2, '0');
+                      const minutes = timePickerValue.getMinutes().toString().padStart(2, '0');
+                      setSelectedTime(`${hours}:${minutes}`);
+                      setShowTimePicker(false);
+                    }}
+                  >
+                    <Text style={styles.doneButtonText}>{tCommon('done')}</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              <DateTimePicker
+                value={timePickerValue}
+                mode="time"
+                is24Hour={true}
+                display={Platform.OS === 'android' ? 'default' : 'spinner'}
+                onChange={(event, date) => {
+                  if (Platform.OS === 'android') {
+                    // На Android закрываем сразу после выбора
+                    if (event.type === 'set' && date) {
+                      const hours = date.getHours().toString().padStart(2, '0');
+                      const minutes = date.getMinutes().toString().padStart(2, '0');
+                      setSelectedTime(`${hours}:${minutes}`);
+                      setTimePickerValue(date);
+                    }
+                    setShowTimePicker(false);
+                  } else {
+                    // На iOS только обновляем значение, не закрываем
+                    if (date) {
+                      setTimePickerValue(date);
+                    }
+                  }
+                }}
+                minuteInterval={15}
                 locale="ru-RU"
               />
             </View>
@@ -1297,6 +1409,27 @@ const styles = StyleSheet.create({
   dateTextPlaceholder: {
     color: theme.colors.text.secondary,
   },
+  timeSelector: {
+    backgroundColor: theme.colors.surface,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.lg,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timeText: {
+    fontSize: theme.fonts.sizes.lg,
+    color: theme.colors.text.primary,
+    marginLeft: theme.spacing.md,
+    fontWeight: theme.fonts.weights.medium,
+  },
+  timeTextPlaceholder: {
+    color: theme.colors.text.secondary,
+  },
+
   mediaContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1424,6 +1557,24 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   datePickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.sm,
+  },
+  timePickerContainer: {
+    backgroundColor: theme.colors.white,
+    borderTopLeftRadius: theme.borderRadius.lg,
+    borderTopRightRadius: theme.borderRadius.lg,
+    paddingTop: theme.spacing.md,
+    paddingBottom: Platform.OS === 'ios' ? theme.spacing.xl : 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  timePickerHeader: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     paddingHorizontal: theme.spacing.md,

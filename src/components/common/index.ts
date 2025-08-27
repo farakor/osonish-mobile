@@ -41,6 +41,7 @@ export type { SimpleSmsInputRef } from './SimpleSmsInput';
 export { default as StableSmsInput } from './StableSmsInput';
 export type { StableSmsInputRef } from './StableSmsInput';
 export { WebViewModal } from './WebViewModal';
+export { TimePickerModal } from './TimePickerModal';
 export { LogoOsonish } from './LogoOsonish';
 export { LogoOsonishWhite } from './LogoOsonishWhite';
 export { AppIconOsonish } from './AppIconOsonish';
