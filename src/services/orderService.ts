@@ -113,6 +113,10 @@ export class OrderService {
           customer_id: authState.user.id,
           status: 'new',
           applicants_count: 0,
+          // Дополнительные удобства
+          transport_paid: request.transportPaid || false,
+          meal_included: request.mealIncluded || false,
+          meal_paid: request.mealPaid || false,
           created_at: currentTime,
           updated_at: currentTime
         })
@@ -142,6 +146,10 @@ export class OrderService {
         status: data.status as 'new' | 'in_progress' | 'completed' | 'cancelled',
         customerId: data.customer_id,
         applicantsCount: data.applicants_count,
+        // Дополнительные удобства
+        transportPaid: data.transport_paid || false,
+        mealIncluded: data.meal_included || false,
+        mealPaid: data.meal_paid || false,
         createdAt: data.created_at,
         updatedAt: data.updated_at
       };
@@ -436,6 +444,10 @@ export class OrderService {
         status: item.status as 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled',
         customerId: item.customer_id,
         applicantsCount: item.applicants_count,
+        // Дополнительные удобства
+        transportPaid: item.transport_paid || false,
+        mealIncluded: item.meal_included || false,
+        mealPaid: item.meal_paid || false,
         createdAt: item.created_at,
         updatedAt: item.updated_at
       }));
@@ -485,6 +497,10 @@ export class OrderService {
         status: item.status as 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled',
         customerId: item.customer_id,
         applicantsCount: item.applicants_count,
+        // Дополнительные удобства
+        transportPaid: item.transport_paid || false,
+        mealIncluded: item.meal_included || false,
+        mealPaid: item.meal_paid || false,
         createdAt: item.created_at,
         updatedAt: item.updated_at
       }));
@@ -528,6 +544,10 @@ export class OrderService {
         status: item.status as 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled',
         customerId: item.customer_id,
         applicantsCount: item.applicants_count,
+        // Дополнительные удобства
+        transportPaid: item.transport_paid || false,
+        mealIncluded: item.meal_included || false,
+        mealPaid: item.meal_paid || false,
         createdAt: item.created_at,
         updatedAt: item.updated_at
       }));
@@ -602,6 +622,10 @@ export class OrderService {
         status: item.status as 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled',
         customerId: item.customer_id,
         applicantsCount: item.applicants_count,
+        // Дополнительные удобства
+        transportPaid: item.transport_paid || false,
+        mealIncluded: item.meal_included || false,
+        mealPaid: item.meal_paid || false,
         createdAt: item.created_at,
         updatedAt: item.updated_at
       }));
@@ -645,6 +669,10 @@ export class OrderService {
         status: data.status as 'new' | 'in_progress' | 'completed' | 'cancelled',
         customerId: data.customer_id,
         applicantsCount: data.applicants_count,
+        // Дополнительные удобства
+        transportPaid: data.transport_paid || false,
+        mealIncluded: data.meal_included || false,
+        mealPaid: data.meal_paid || false,
         createdAt: data.created_at,
         updatedAt: data.updated_at
       };

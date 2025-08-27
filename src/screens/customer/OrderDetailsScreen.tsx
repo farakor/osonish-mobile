@@ -1152,6 +1152,28 @@ export const OrderDetailsScreen: React.FC = () => {
             </View>
           </View>
 
+          {/* Amenities Section */}
+          <View style={styles.amenitiesSection}>
+            <Text style={styles.sectionTitle}>Дополнительные удобства</Text>
+            <View style={styles.amenitiesContainer}>
+              <View style={styles.amenityItem}>
+                <Text style={styles.amenityIcon}>🚗</Text>
+                <Text style={order.transportPaid ? styles.amenityText : styles.amenityTextNegative}>
+                  {order.transportPaid ? t('transport_paid_yes') : t('transport_paid_no')}
+                </Text>
+              </View>
+
+              <View style={styles.amenityItem}>
+                <Text style={styles.amenityIcon}>🍽️</Text>
+                <Text style={order.mealIncluded || order.mealPaid ? styles.amenityText : styles.amenityTextNegative}>
+                  {order.mealIncluded ? t('meal_included_yes') :
+                    order.mealPaid ? t('meal_paid_yes') :
+                      t('meal_included_no')}
+                </Text>
+              </View>
+            </View>
+          </View>
+
           {/* Details Section */}
           <View style={styles.detailsSection}>
             <Text style={styles.detailsTitle}>{t('details')}</Text>
@@ -2661,5 +2683,50 @@ const styles = StyleSheet.create({
     gap: 8,
     overflow: 'visible',
     minWidth: 120,
+  },
+
+  // Amenities Section Styles
+  amenitiesSection: {
+    backgroundColor: theme.colors.white,
+    marginHorizontal: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  amenitiesContainer: {
+    gap: theme.spacing.md,
+  },
+  amenityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+  },
+  amenityIcon: {
+    fontSize: 20,
+    marginRight: theme.spacing.md,
+  },
+  amenityText: {
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.primary,
+    fontWeight: theme.fonts.weights.medium,
+  },
+  amenityTextNegative: {
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.text.secondary,
+    fontWeight: theme.fonts.weights.medium,
+  },
+  sectionTitle: {
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.bold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.md,
   },
 }); 

@@ -144,9 +144,14 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
   const [locationFocused, setLocationFocused] = useState(false);
   const [budgetFocused, setBudgetFocused] = useState(false);
 
+  // Состояния для дополнительных удобств
+  const [transportPaid, setTransportPaid] = useState(false);
+  const [mealIncluded, setMealIncluded] = useState(false);
+  const [mealPaid, setMealPaid] = useState(false);
+
   const navigation = useNavigation();
 
-  const totalSteps = 9;
+  const totalSteps = 10;
 
   // Отладка изменений location
   useEffect(() => {
@@ -343,13 +348,15 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
         return location.trim().length > 0;
       case 5: // Бюджет
         return budget.trim().length > 0;
-      case 6: // Количество работников
-        return !!workersCount && !isNaN(parseInt(workersCount)) && parseInt(workersCount) >= 1;
-      case 7: // Дата
-        return selectedDate !== null;
-      case 8: // Медиа (необязательно)
+      case 6: // Дополнительные удобства (необязательно)
         return true;
-      case 9: // Подтверждение
+      case 7: // Количество работников
+        return !!workersCount && !isNaN(parseInt(workersCount)) && parseInt(workersCount) >= 1;
+      case 8: // Дата
+        return selectedDate !== null;
+      case 9: // Медиа (необязательно)
+        return true;
+      case 10: // Подтверждение
         return true;
       default:
         return true;
@@ -396,21 +403,23 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           return false;
         }
         return true;
-      case 6: // Количество работников
+      case 6: // Дополнительные удобства (необязательно)
+        return true;
+      case 7: // Количество работников
         if (!workersCount || parseInt(workersCount) < 1) {
           Alert.alert(tError('error'), t('select_workers_error'));
           return false;
         }
         return true;
-      case 7: // Дата
+      case 8: // Дата
         if (!selectedDate) {
           Alert.alert(tError('error'), t('select_date_error'));
           return false;
         }
         return true;
-      case 8: // Медиа (необязательно)
+      case 9: // Медиа (необязательно)
         return true;
-      case 9: // Подтверждение
+      case 10: // Подтверждение
         return true;
       default:
         return true;
@@ -441,18 +450,18 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
         Alert.alert(tError('error'), t('fill_required_fields'));
         return;
       }
-      
+
       // Проверяем ограничения по длине
       if (title.length > theme.orderValidation.title.maxLength) {
         Alert.alert(tError('error'), t('title_too_long_error'));
         return;
       }
-      
+
       if (description.length > theme.orderValidation.description.maxLength) {
         Alert.alert(tError('error'), t('description_too_long_error'));
         return;
       }
-      
+
       console.log('[CreateOrder] ✅ Все поля заполнены и валидны');
 
       console.log('[CreateOrder] 🔄 Устанавливаем isLoading...');
@@ -516,6 +525,10 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
         workersNeeded: parseInt(workersCount),
         serviceDate: selectedDate!.toISOString(),
         photos: mediaUrls,
+        // Дополнительные удобства
+        transportPaid,
+        mealIncluded,
+        mealPaid,
       };
 
       console.log('[CreateOrder] 📋 Создаем заказ с данными:', {
@@ -555,6 +568,10 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                   setMediaFiles([]);
                   setMediaError('');
                   setCurrentStep(1);
+                  // Сброс дополнительных удобств
+                  setTransportPaid(false);
+                  setMealIncluded(false);
+                  setMealPaid(false);
                   // Сброс ключа анимации для повторного срабатывания анимаций
                   setAnimationResetKey(prev => prev + 1);
 
@@ -597,6 +614,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
       case 7: return t('header_step7');
       case 8: return t('header_step8');
       case 9: return t('header_step9');
+      case 10: return t('header_step10');
       default: return '';
     }
   };
@@ -788,11 +806,77 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
 
               <AnimatedField isActive={currentStep === 6} delay={200} resetKey={`${animationResetKey}-step-6`}>
                 <View style={styles.inputContainer}>
+                  <TouchableOpacity
+                    style={[styles.checkboxContainer, transportPaid && styles.checkboxContainerActive]}
+                    onPress={() => setTransportPaid(!transportPaid)}
+                  >
+                    <View style={[styles.checkbox, transportPaid && styles.checkboxActive]}>
+                      {transportPaid && <Text style={styles.checkboxCheck}>✓</Text>}
+                    </View>
+                    <Text style={styles.checkboxLabel}>{t('transport_paid')}</Text>
+                  </TouchableOpacity>
+                </View>
+              </AnimatedField>
+
+              <AnimatedField isActive={currentStep === 6} delay={250} resetKey={`${animationResetKey}-step-6`}>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.sectionTitle}>{t('meal_section')}</Text>
+                  <View style={styles.mealOptionsContainer}>
+                    <TouchableOpacity
+                      style={[styles.checkboxContainer, mealIncluded && styles.checkboxContainerActive]}
+                      onPress={() => {
+                        setMealIncluded(!mealIncluded);
+                        if (!mealIncluded) {
+                          setMealPaid(false); // Если включено, то не оплачивается
+                        }
+                      }}
+                    >
+                      <View style={[styles.checkbox, mealIncluded && styles.checkboxActive]}>
+                        {mealIncluded && <Text style={styles.checkboxCheck}>✓</Text>}
+                      </View>
+                      <Text style={styles.checkboxLabel}>{t('meal_included')}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.checkboxContainer, mealPaid && styles.checkboxContainerActive]}
+                      onPress={() => {
+                        setMealPaid(!mealPaid);
+                        if (!mealPaid) {
+                          setMealIncluded(false); // Если оплачивается, то не включено
+                        }
+                      }}
+                    >
+                      <View style={[styles.checkbox, mealPaid && styles.checkboxActive]}>
+                        {mealPaid && <Text style={styles.checkboxCheck}>✓</Text>}
+                      </View>
+                      <Text style={styles.checkboxLabel}>{t('meal_paid')}</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </AnimatedField>
+            </View>
+          </AnimatedStepContainer>
+        );
+
+      case 7:
+        return (
+          <AnimatedStepContainer isActive={currentStep === 7} direction="right">
+            <View style={styles.stepContent}>
+              <AnimatedField isActive={currentStep === 7} delay={0} resetKey={`${animationResetKey}-step-7`}>
+                <Text style={styles.stepTitle}>{t('step7_title')}</Text>
+              </AnimatedField>
+
+              <AnimatedField isActive={currentStep === 7} delay={150} resetKey={`${animationResetKey}-step-7`}>
+                <Text style={styles.stepSubtitle}>{t('step7_subtitle')}</Text>
+              </AnimatedField>
+
+              <AnimatedField isActive={currentStep === 7} delay={200} resetKey={`${animationResetKey}-step-7`}>
+                <View style={styles.inputContainer}>
                   <Text style={styles.fieldLabel}>{t('workers_count')}</Text>
                 </View>
               </AnimatedField>
 
-              <AnimatedInteractiveContainer isActive={currentStep === 6} delay={250} resetKey={`${animationResetKey}-step-6`}>
+              <AnimatedInteractiveContainer isActive={currentStep === 7} delay={250} resetKey={`${animationResetKey}-step-7`}>
                 <View style={styles.workersContainer}>
                   <TouchableOpacity
                     style={styles.workersButton}
@@ -821,19 +905,19 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           </AnimatedStepContainer>
         );
 
-      case 7:
+      case 8:
         return (
-          <AnimatedStepContainer isActive={currentStep === 7} direction="right">
+          <AnimatedStepContainer isActive={currentStep === 8} direction="right">
             <View style={styles.stepContent}>
-              <AnimatedField isActive={currentStep === 7} delay={0} resetKey={`${animationResetKey}-step-7`}>
-                <Text style={styles.stepTitle}>{t('step7_title')}</Text>
+              <AnimatedField isActive={currentStep === 8} delay={0} resetKey={`${animationResetKey}-step-8`}>
+                <Text style={styles.stepTitle}>{t('step8_title')}</Text>
               </AnimatedField>
 
-              <AnimatedField isActive={currentStep === 7} delay={150} resetKey={`${animationResetKey}-step-7`}>
-                <Text style={styles.stepSubtitle}>{t('step7_subtitle')}</Text>
+              <AnimatedField isActive={currentStep === 8} delay={150} resetKey={`${animationResetKey}-step-8`}>
+                <Text style={styles.stepSubtitle}>{t('step8_subtitle')}</Text>
               </AnimatedField>
 
-              <AnimatedInteractiveContainer isActive={currentStep === 7} delay={200} resetKey={`${animationResetKey}-step-7`}>
+              <AnimatedInteractiveContainer isActive={currentStep === 8} delay={200} resetKey={`${animationResetKey}-step-8`}>
                 <View style={styles.inputContainer}>
                   <TouchableOpacity
                     style={styles.dateSelector}
@@ -853,22 +937,22 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           </AnimatedStepContainer>
         );
 
-      case 8:
+      case 9:
         return (
-          <AnimatedStepContainer isActive={currentStep === 8} direction="right">
+          <AnimatedStepContainer isActive={currentStep === 9} direction="right">
             <View style={styles.stepContent}>
-              <AnimatedField isActive={currentStep === 8} delay={0} resetKey={`${animationResetKey}-step-8`}>
-                <Text style={styles.stepTitle}>{t('step8_title')}</Text>
+              <AnimatedField isActive={currentStep === 9} delay={0} resetKey={`${animationResetKey}-step-9`}>
+                <Text style={styles.stepTitle}>{t('step9_title')}</Text>
               </AnimatedField>
 
-              <AnimatedField isActive={currentStep === 8} delay={150} resetKey={`${animationResetKey}-step-8`}>
-                <Text style={styles.stepSubtitle}>{t('step8_subtitle')}</Text>
+              <AnimatedField isActive={currentStep === 9} delay={150} resetKey={`${animationResetKey}-step-9`}>
+                <Text style={styles.stepSubtitle}>{t('step9_subtitle')}</Text>
               </AnimatedField>
 
-              <AnimatedField isActive={currentStep === 8} delay={200} resetKey={`${animationResetKey}-step-8`}>
+              <AnimatedField isActive={currentStep === 9} delay={200} resetKey={`${animationResetKey}-step-9`}>
                 <View style={styles.mediaContainer}>
                   {mediaFiles.map((file, idx) => (
-                    <AnimatedField key={file.uri} isActive={currentStep === 8} delay={250 + idx * 50} resetKey={`${animationResetKey}-${file.uri}`}>
+                    <AnimatedField key={file.uri} isActive={currentStep === 9} delay={250 + idx * 50} resetKey={`${animationResetKey}-${file.uri}`}>
                       <View style={styles.mediaItem}>
                         {file.type === 'image' ? (
                           <Image source={{ uri: file.uri }} style={styles.mediaImage} resizeMode="cover" />
@@ -882,7 +966,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                     </AnimatedField>
                   ))}
                   {mediaFiles.length < 5 && (
-                    <AnimatedInteractiveContainer isActive={currentStep === 8} delay={300} resetKey={`${animationResetKey}-step-8`}>
+                    <AnimatedInteractiveContainer isActive={currentStep === 9} delay={300} resetKey={`${animationResetKey}-step-9`}>
                       <TouchableOpacity style={styles.addMediaButton} onPress={pickMedia}>
                         <ImageIcon width={32} height={32} stroke={theme.colors.primary} />
                         <Text style={styles.addMediaText}>{t('add_media')}</Text>
@@ -892,7 +976,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 </View>
               </AnimatedField>
               {mediaError && (
-                <AnimatedField isActive={currentStep === 8} delay={200} resetKey={`${animationResetKey}-step-8`}>
+                <AnimatedField isActive={currentStep === 9} delay={200} resetKey={`${animationResetKey}-step-9`}>
                   <Text style={styles.mediaError}>{mediaError}</Text>
                 </AnimatedField>
               )}
@@ -900,48 +984,56 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           </AnimatedStepContainer>
         );
 
-      case 9:
+      case 10:
         return (
-          <AnimatedStepContainer isActive={currentStep === 9} direction="right">
+          <AnimatedStepContainer isActive={currentStep === 10} direction="right">
             <View style={styles.stepContent}>
-              <AnimatedField isActive={currentStep === 9} delay={0} resetKey={`${animationResetKey}-step-9`}>
-                <Text style={styles.stepTitle}>{t('step9_title')}</Text>
+              <AnimatedField isActive={currentStep === 10} delay={0} resetKey={`${animationResetKey}-step-10`}>
+                <Text style={styles.stepTitle}>{t('step10_title')}</Text>
               </AnimatedField>
 
-              <AnimatedField isActive={currentStep === 9} delay={150} resetKey={`${animationResetKey}-step-9`}>
-                <Text style={styles.stepSubtitle}>{t('step9_subtitle')}</Text>
+              <AnimatedField isActive={currentStep === 10} delay={150} resetKey={`${animationResetKey}-step-10`}>
+                <Text style={styles.stepSubtitle}>{t('step10_subtitle')}</Text>
               </AnimatedField>
 
               <View style={styles.summaryContainer}>
                 <AnimatedSummaryGrid
                   items={(() => {
-                    if (mediaFiles.length > 0) {
-                      // Если есть медиа файлы, размещаем их в паре с датой
-                      return [
-                        { label: t('summary_title'), value: title },
-                        { label: t('summary_category'), value: getCategoryLabel(category, tCategories) },
-                        { label: t('summary_description'), value: description },
-                        { label: t('summary_location'), value: location },
-                        { label: t('summary_budget'), value: `${formatBudgetInput(budget)} ${t('sum_per_person')}` },
-                        { label: t('summary_workers'), value: `${workersCount} ${t('person_count')}` },
-                        { label: t('summary_media'), value: `${mediaFiles.length} ${t('files_count')}` },
-                        { label: t('summary_date'), value: formatDate(selectedDate) }
-                      ];
-                    } else {
-                      // Если нет медиа файлов
-                      return [
-                        { label: t('summary_title'), value: title },
-                        { label: t('summary_category'), value: getCategoryLabel(category, tCategories) },
-                        { label: t('summary_description'), value: description },
-                        { label: t('summary_location'), value: location },
-                        { label: t('summary_budget'), value: `${formatBudgetInput(budget)} ${t('sum_per_person')}` },
-                        { label: t('summary_workers'), value: `${workersCount} ${t('person_count')}` },
-                        { label: t('summary_date'), value: formatDate(selectedDate) }
-                      ];
+                    const baseItems = [
+                      { label: t('summary_title'), value: title },
+                      { label: t('summary_category'), value: getCategoryLabel(category, tCategories) },
+                      { label: t('summary_description'), value: description },
+                      { label: t('summary_location'), value: location },
+                      { label: t('summary_budget'), value: `${formatBudgetInput(budget)} ${t('sum_per_person')}` },
+                      { label: t('summary_workers'), value: `${workersCount} ${t('person_count')}` }
+                    ];
+
+                    // Добавляем информацию о дополнительных удобствах
+                    if (transportPaid || mealIncluded || mealPaid) {
+                      const transportText = transportPaid ? t('transport_paid_yes') : t('transport_paid_no');
+                      baseItems.push({ label: t('transport_info'), value: transportText });
+
+                      if (mealIncluded) {
+                        baseItems.push({ label: t('meal_info'), value: t('meal_included_yes') });
+                      } else if (mealPaid) {
+                        baseItems.push({ label: t('meal_info'), value: t('meal_paid_yes') });
+                      } else {
+                        baseItems.push({ label: t('meal_info'), value: t('meal_included_no') });
+                      }
                     }
+
+                    // Добавляем медиа файлы если есть
+                    if (mediaFiles.length > 0) {
+                      baseItems.push({ label: t('summary_media'), value: `${mediaFiles.length} ${t('files_count')}` });
+                    }
+
+                    // Добавляем дату
+                    baseItems.push({ label: t('summary_date'), value: formatDate(selectedDate) });
+
+                    return baseItems;
                   })()}
-                  isActive={currentStep === 9}
-                  resetKey={`${animationResetKey}-step-9`}
+                  isActive={currentStep === 10}
+                  resetKey={`${animationResetKey}-step-10`}
                 />
               </View>
             </View>
@@ -1406,5 +1498,56 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     textAlign: 'right',
     marginTop: theme.spacing.xs,
+  },
+  // Стили для дополнительных удобств
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
+    marginBottom: theme.spacing.md,
+  },
+  checkboxContainerActive: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary + '10',
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: theme.spacing.md,
+  },
+  checkboxActive: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary,
+  },
+  checkboxCheck: {
+    color: theme.colors.white,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  checkboxLabel: {
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.text.primary,
+    fontWeight: theme.fonts.weights.medium,
+    flex: 1,
+  },
+  sectionTitle: {
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.md,
+  },
+  mealOptionsContainer: {
+    gap: theme.spacing.sm,
   },
 });

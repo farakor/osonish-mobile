@@ -69,6 +69,10 @@ export interface Order {
   status: 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled' | 'rejected';
   customerId: string;
   applicantsCount: number;
+  // Дополнительные удобства
+  transportPaid?: boolean; // Проезд оплачивается отдельно
+  mealIncluded?: boolean; // Питание включено
+  mealPaid?: boolean; // Питание оплачивается
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }
@@ -85,6 +89,10 @@ export interface CreateOrderRequest {
   workersNeeded: number;
   serviceDate: string;
   photos?: string[];
+  // Дополнительные удобства
+  transportPaid?: boolean; // Проезд оплачивается отдельно
+  mealIncluded?: boolean; // Питание включено
+  mealPaid?: boolean; // Питание оплачивается
 }
 
 // API Response Types
@@ -106,6 +114,10 @@ export interface UpdateOrderRequest {
   budget?: number;
   workersNeeded?: number;
   photos?: string[];
+  // Дополнительные удобства
+  transportPaid?: boolean;
+  mealIncluded?: boolean;
+  mealPaid?: boolean;
   // Примечание: serviceDate намеренно исключена - дату нельзя изменять
 }
 
