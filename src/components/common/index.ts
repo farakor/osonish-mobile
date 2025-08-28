@@ -46,3 +46,4 @@ export { TimePickerModal } from './TimePickerModal';
 export { LogoOsonish } from './LogoOsonish';
 export { LogoOsonishWhite } from './LogoOsonishWhite';
 export { AppIconOsonish } from './AppIconOsonish';
+export { DeleteAccountModal } from './DeleteAccountModal';

@@ -27,8 +27,8 @@ import LogOutIcon from '../../../assets/log-out-03.svg';
 import FileIcon from '../../../assets/file-05.svg';
 import FileShieldIcon from '../../../assets/file-shield-02.svg';
 import { Ionicons } from '@expo/vector-icons';
-import { useWorkerTranslation } from '../../hooks/useTranslation';
-import { WebViewModal } from '../../components/common';
+import { useWorkerTranslation, useErrorsTranslation } from '../../hooks/useTranslation';
+import { WebViewModal, DeleteAccountModal } from '../../components/common';
 
 // Функция для получения высоты статусбара только на Android
 const getAndroidStatusBarHeight = () => {
@@ -59,6 +59,7 @@ export const WorkerProfileScreen: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const tWorker = useWorkerTranslation();
+  const tError = useErrorsTranslation();
   const [webViewModal, setWebViewModal] = useState<{
     visible: boolean;
     url: string;
@@ -68,6 +69,8 @@ export const WorkerProfileScreen: React.FC = () => {
     url: '',
     title: '',
   });
+  const [deleteAccountModal, setDeleteAccountModal] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   // Цвет для элементов выхода
   const logoutColor = '#FF3B30';
@@ -318,6 +321,37 @@ export const WorkerProfileScreen: React.FC = () => {
     });
   };
 
+  const handleDeleteAccount = async () => {
+    try {
+      setIsDeletingAccount(true);
+
+      const result = await authService.deleteAccount();
+
+      if (result.success) {
+        Alert.alert(
+          tWorker('delete_account_success'),
+          '',
+          [
+            {
+              text: tWorker('ok'),
+              onPress: () => {
+                setDeleteAccountModal(false);
+                navigation.navigate('Auth' as never);
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert(tError('error'), result.error || tWorker('delete_account_error'));
+      }
+    } catch (error) {
+      console.error('Ошибка удаления аккаунта:', error);
+      Alert.alert(tError('error'), tWorker('delete_account_error'));
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
+
   const profileOptions: ProfileOption[] = [
     { id: '1', title: tWorker('edit_profile'), icon: <UserEditIcon width={20} height={20} />, action: handleEditProfile },
     { id: '2', title: tWorker('notifications'), icon: <NotificationMessageIcon width={20} height={20} />, action: handleNotifications },
@@ -540,6 +574,13 @@ export const WorkerProfileScreen: React.FC = () => {
                 <Text style={[styles.menuText, styles.logoutText]}>{tWorker('logout')}</Text>
               </View>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.menuItem, styles.deleteAccountMenuItem]}
+              onPress={() => setDeleteAccountModal(true)}
+            >
+              <Text style={[styles.menuText, styles.deleteAccountText]}>{tWorker('delete_account')}</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -550,6 +591,18 @@ export const WorkerProfileScreen: React.FC = () => {
         url={webViewModal.url}
         title={webViewModal.title}
         onClose={handleCloseWebView}
+      />
+
+      {/* Delete Account Modal */}
+      <DeleteAccountModal
+        visible={deleteAccountModal}
+        onClose={() => setDeleteAccountModal(false)}
+        onConfirm={handleDeleteAccount}
+        isDeleting={isDeletingAccount}
+        title={tWorker('delete_account_title')}
+        message={tWorker('delete_account_message')}
+        confirmText={tWorker('delete_account_confirm')}
+        cancelText={tWorker('cancel')}
       />
     </View>
   );
@@ -816,6 +869,19 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     color: '#FF3B30', // Используем тот же цвет, что и для иконки
+  },
+  deleteAccountMenuItem: {
+    borderWidth: 0,
+    backgroundColor: 'transparent',
+    paddingVertical: 12,
+    marginTop: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteAccountText: {
+    color: '#FF3B30',
+    fontSize: 16,
+    fontWeight: '500',
   },
 
   // Section Divider

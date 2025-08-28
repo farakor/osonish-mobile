@@ -731,6 +731,52 @@ class AuthService {
     }
   }
 
+  // Удаление аккаунта пользователя
+  async deleteAccount(): Promise<{ success: boolean; error?: string }> {
+    try {
+      console.log('[AuthService] 🗑️ Начинаем удаление аккаунта...');
+
+      if (!this.authState.user || !supabase) {
+        return {
+          success: false,
+          error: 'Пользователь не авторизован или база данных недоступна'
+        };
+      }
+
+      const userId = this.authState.user.id;
+      console.log(`[AuthService] 🗑️ Удаляем аккаунт пользователя: ${userId}`);
+
+      // Используем функцию каскадного удаления для безопасного удаления всех связанных данных
+      const { error: deleteError } = await supabase.rpc('delete_user_cascade', {
+        target_user_id: userId
+      });
+
+      if (deleteError) {
+        console.error('[AuthService] ❌ Ошибка каскадного удаления пользователя из Supabase:', deleteError);
+        return {
+          success: false,
+          error: 'Не удалось удалить аккаунт из базы данных'
+        };
+      }
+
+      console.log('[AuthService] ✅ Пользователь и все связанные данные успешно удалены из базы данных');
+
+      // Очищаем локальную сессию
+      await this.clearSession();
+
+      console.log('[AuthService] ✅ Аккаунт успешно удален');
+      return {
+        success: true
+      };
+    } catch (error) {
+      console.error('[AuthService] ❌ Ошибка удаления аккаунта:', error);
+      return {
+        success: false,
+        error: 'Произошла ошибка при удалении аккаунта'
+      };
+    }
+  }
+
   // Получение всех пользователей из Supabase (для отображения заказчиков)
   async getAllUsersFromSupabase(): Promise<User[]> {
     try {
