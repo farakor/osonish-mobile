@@ -100,7 +100,7 @@
     "camera_permission_error": "Нет доступа к камере",
     "add_profile_photo": "Добавить фото профиля",
     "choose_source": "Выберите источник",
-    "profile_step_photo_subtitle": "Добавьте фото профиля чтобы повысить\nшансы одобрения заказчиком (необязательно)",
+    "profile_step_photo_subtitle": "Добавьте фото профиля чтобы повысить доверие пользователей\n(Необязательно)",
     "select_birth_date": "Выберите дату рождения",
     "privacy_agreement_text": "Согласен с обработкой персональных данных",
     "role_selection_title": "Выберите вашу роль",

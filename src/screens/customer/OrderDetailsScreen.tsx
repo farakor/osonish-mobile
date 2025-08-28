@@ -27,6 +27,7 @@ import CalendarIcon from '../../../assets/card-icons/calendar.svg';
 import LocationIcon from '../../../assets/card-icons/location.svg';
 import CategoryIcon from '../../../assets/card-icons/category.svg';
 import UserIcon from '../../../assets/user-01.svg';
+import NoImagePlaceholder from '../../../assets/no-image-placeholder.svg';
 import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
 import CarIcon from '../../../assets/car-01.svg';
 import BankNoteIcon from '../../../assets/bank-note-01.svg';
@@ -921,7 +922,7 @@ export const OrderDetailsScreen: React.FC = () => {
                 <Image source={{ uri: item.avatar }} style={styles.modernAvatar} />
               ) : (
                 <View style={styles.modernAvatarPlaceholder}>
-                  <UserIcon width={22} height={22} stroke={theme.colors.text.secondary} />
+                  <NoImagePlaceholder width={48} height={48} />
                 </View>
               )}
               {/* Рейтинг бейдж на аватаре */}
@@ -1176,7 +1177,7 @@ export const OrderDetailsScreen: React.FC = () => {
                   <Image source={{ uri: currentUser.profileImage }} style={styles.avatar} />
                 ) : (
                   <View style={styles.avatarPlaceholder}>
-                    <UserIcon width={22} height={22} stroke={theme.colors.text.secondary} />
+                    <NoImagePlaceholder width={48} height={48} />
                   </View>
                 )}
               </View>
@@ -1344,7 +1345,7 @@ export const OrderDetailsScreen: React.FC = () => {
                             <Image source={{ uri: item.avatar }} style={styles.modernPreviewAvatar} />
                           ) : (
                             <View style={styles.modernPreviewAvatarPlaceholder}>
-                              <UserIcon width={22} height={22} stroke={theme.colors.text.secondary} />
+                              <NoImagePlaceholder width={52} height={52} />
                             </View>
                           )}
                           {/* Мини рейтинг */}
@@ -1534,7 +1535,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1898,11 +1898,8 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#F0F2F5',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
   },
   modernRatingBadge: {
     position: 'absolute',
@@ -2160,11 +2157,8 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#F0F2F5',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
   },
   modernPreviewRatingMini: {
     position: 'absolute',

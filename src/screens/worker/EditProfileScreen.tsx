@@ -19,7 +19,7 @@ import { theme } from '../../constants';
 import { usePlatformSafeAreaInsets, getFixedBottomStyle, getContainerBottomStyle } from '../../utils/safeAreaUtils';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
-import { HeaderWithBack } from '../../components/common';
+import { HeaderWithBack, PlusIcon } from '../../components/common';
 import { authService } from '../../services/authService';
 import { User } from '../../types';
 import { useWorkerTranslation } from '../../hooks/useTranslation';
@@ -266,7 +266,7 @@ export const EditProfileScreen: React.FC = () => {
               </View>
             )}
             <TouchableOpacity style={styles.editPhotoButton} onPress={pickImage}>
-              <Text style={styles.editPhotoIcon}>+</Text>
+              <PlusIcon size={16} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
         </View>
@@ -472,11 +472,7 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#FFFFFF',
   },
-  editPhotoIcon: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
+
 
   // Form
   form: {

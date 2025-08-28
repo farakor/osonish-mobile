@@ -17,6 +17,7 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CustomerTabParamList, CustomerStackParamList } from '../../types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import FilePlusIcon from '../../../assets/file-plus-03_2.svg';
+import PlusSquareIcon from '../../../assets/plus-square.svg';
 import NotificationIcon from '../../../assets/notification-message.svg';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
@@ -217,7 +218,10 @@ export const CustomerHomeScreen: React.FC = () => {
         onPress={handleCreateOrder}
         activeOpacity={0.8}
       >
-        <Text style={styles.createOrderButtonText}>➕ {t('create_order')}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+          <PlusSquareIcon width={20} height={20} style={{ marginRight: theme.spacing.sm }} />
+          <Text style={styles.createOrderButtonText}>{t('create_order')}</Text>
+        </View>
       </TouchableOpacity>
     </View>
   );
@@ -260,7 +264,7 @@ export const CustomerHomeScreen: React.FC = () => {
             activeOpacity={0.8}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-              <FilePlusIcon width={20} height={20} style={{ marginRight: theme.spacing.sm }} />
+              <PlusSquareIcon width={20} height={20} style={{ marginRight: theme.spacing.sm }} />
               <Text style={styles.quickCreateText}>{t('create_new_order')}</Text>
             </View>
           </TouchableOpacity>
@@ -338,8 +342,9 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
     marginHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.md,
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: 24,
     paddingHorizontal: theme.spacing.xl,
+    minHeight: 64,
     borderRadius: 12,
     shadowColor: theme.colors.primary,
     shadowOffset: {
@@ -368,13 +373,14 @@ const styles = StyleSheet.create({
   emptyState: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'stretch',
     paddingHorizontal: theme.spacing.lg,
   },
   emptyStateIcon: {
     width: 80,
     height: 80,
     marginBottom: theme.spacing.lg,
+    alignSelf: 'center',
   },
   emptyStateTitle: {
     fontSize: theme.fonts.sizes.xl,
@@ -382,6 +388,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.md,
     textAlign: 'center',
+    alignSelf: 'center',
   },
   emptyStateDescription: {
     fontSize: theme.fonts.sizes.md,
@@ -389,11 +396,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: theme.spacing.xl,
+    alignSelf: 'center',
   },
   createOrderButton: {
     backgroundColor: theme.colors.primary,
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: 24,
+    minHeight: 64,
+    width: '100%',
     borderRadius: theme.borderRadius.md,
     shadowColor: theme.colors.shadow,
     shadowOffset: {
