@@ -71,6 +71,7 @@ export const WorkerProfileScreen: React.FC = () => {
   });
   const [deleteAccountModal, setDeleteAccountModal] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [isScreenFocused, setIsScreenFocused] = useState(false);
 
   // Цвет для элементов выхода
   const logoutColor = '#FF3B30';
@@ -93,6 +94,7 @@ export const WorkerProfileScreen: React.FC = () => {
   useFocusEffect(
     React.useCallback(() => {
       console.log('[WorkerProfile] 🔄 useFocusEffect: перезагружаем профиль');
+      setIsScreenFocused(true);
       loadUserProfile();
       loadWorkerStats();
 
@@ -101,6 +103,12 @@ export const WorkerProfileScreen: React.FC = () => {
       if (Platform.OS === 'android') {
         StatusBar.setBackgroundColor('#F8F9FA', true);
       }
+
+      return () => {
+        setIsScreenFocused(false);
+        // Закрываем модальное окно при уходе с экрана
+        setDeleteAccountModal(false);
+      };
     }, [loadUserProfile, loadWorkerStats])
   );
 
@@ -593,17 +601,19 @@ export const WorkerProfileScreen: React.FC = () => {
         onClose={handleCloseWebView}
       />
 
-      {/* Delete Account Modal */}
-      <DeleteAccountModal
-        visible={deleteAccountModal}
-        onClose={() => setDeleteAccountModal(false)}
-        onConfirm={handleDeleteAccount}
-        isDeleting={isDeletingAccount}
-        title={tWorker('delete_account_title')}
-        message={tWorker('delete_account_message')}
-        confirmText={tWorker('delete_account_confirm')}
-        cancelText={tWorker('cancel')}
-      />
+      {/* Delete Account Modal - только если экран активен и пользователь авторизован */}
+      {isScreenFocused && user && (
+        <DeleteAccountModal
+          visible={deleteAccountModal}
+          onClose={() => setDeleteAccountModal(false)}
+          onConfirm={handleDeleteAccount}
+          isDeleting={isDeletingAccount}
+          title={tWorker('delete_account_title')}
+          message={tWorker('delete_account_message')}
+          confirmText={tWorker('delete_account_confirm')}
+          cancelText={tWorker('cancel')}
+        />
+      )}
     </View>
   );
 };

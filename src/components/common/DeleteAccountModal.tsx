@@ -30,6 +30,11 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
   confirmText,
   cancelText,
 }) => {
+  // Не рендерим модальное окно если нет заголовка или сообщения
+  if (!title || !message || !confirmText || !cancelText) {
+    return null;
+  }
+
   return (
     <Modal
       visible={visible}

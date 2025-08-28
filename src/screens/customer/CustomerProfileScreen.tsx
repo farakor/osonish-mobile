@@ -66,6 +66,7 @@ export const CustomerProfileScreen: React.FC = () => {
   });
   const [deleteAccountModal, setDeleteAccountModal] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [isScreenFocused, setIsScreenFocused] = useState(false);
 
   // Цвет для элементов выхода
   const logoutColor = '#FF3B30';
@@ -86,6 +87,7 @@ export const CustomerProfileScreen: React.FC = () => {
   useFocusEffect(
     React.useCallback(() => {
       console.log('[CustomerProfile] 🔄 useFocusEffect: перезагружаем профиль');
+      setIsScreenFocused(true);
       loadUserProfile();
       loadCustomerStats();
 
@@ -94,6 +96,12 @@ export const CustomerProfileScreen: React.FC = () => {
       if (Platform.OS === 'android') {
         StatusBar.setBackgroundColor('#F8F9FA', true);
       }
+
+      return () => {
+        setIsScreenFocused(false);
+        // Закрываем модальное окно при уходе с экрана
+        setDeleteAccountModal(false);
+      };
     }, [loadUserProfile, loadCustomerStats])
   );
 
@@ -503,17 +511,19 @@ export const CustomerProfileScreen: React.FC = () => {
         onClose={handleCloseWebView}
       />
 
-      {/* Delete Account Modal */}
-      <DeleteAccountModal
-        visible={deleteAccountModal}
-        onClose={() => setDeleteAccountModal(false)}
-        onConfirm={handleDeleteAccount}
-        isDeleting={isDeletingAccount}
-        title={t('delete_account_title')}
-        message={t('delete_account_message')}
-        confirmText={t('delete_account_confirm')}
-        cancelText={t('cancel')}
-      />
+      {/* Delete Account Modal - только если экран активен и пользователь авторизован */}
+      {isScreenFocused && user && (
+        <DeleteAccountModal
+          visible={deleteAccountModal}
+          onClose={() => setDeleteAccountModal(false)}
+          onConfirm={handleDeleteAccount}
+          isDeleting={isDeletingAccount}
+          title={t('delete_account_title')}
+          message={t('delete_account_message')}
+          confirmText={t('delete_account_confirm')}
+          cancelText={t('cancel')}
+        />
+      )}
     </View>
   );
 };
