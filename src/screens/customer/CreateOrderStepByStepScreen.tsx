@@ -211,11 +211,19 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
 
   // Синхронизируем timePickerValue с selectedTime при открытии пикера
   useEffect(() => {
-    if (showTimePicker && selectedTime) {
-      const [hours, minutes] = selectedTime.split(':');
-      const date = new Date();
-      date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-      setTimePickerValue(date);
+    if (showTimePicker) {
+      if (selectedTime) {
+        // Если время уже выбрано, используем его
+        const [hours, minutes] = selectedTime.split(':');
+        const date = new Date();
+        date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+        setTimePickerValue(date);
+      } else {
+        // Если время не выбрано, используем время по умолчанию (09:00)
+        const date = new Date();
+        date.setHours(9, 0, 0, 0);
+        setTimePickerValue(date);
+      }
     }
   }, [showTimePicker, selectedTime]);
 
@@ -605,11 +613,9 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                   setWorkersCount('1');
                   setSelectedDate(null);
                   setSelectedTime(null);
-                  setTimePickerValue(() => {
-                    const date = new Date();
-                    date.setHours(9, 0, 0, 0);
-                    return date;
-                  });
+                  const resetDate = new Date();
+                  resetDate.setHours(9, 0, 0, 0);
+                  setTimePickerValue(resetDate);
                   setLocation('');
                   setCoordinates(null);
                   setIsGettingLocation(false);

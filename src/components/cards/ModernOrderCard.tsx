@@ -142,7 +142,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
         {/* Time Info */}
         {showCreateTime && (
           <View style={styles.timeInfo}>
-            <Text style={styles.timeInfoText}>
+            <Text style={styles.timeInfoText} numberOfLines={1} ellipsizeMode="tail">
               {formatCreatedAt(order.createdAt)}
             </Text>
           </View>
@@ -168,7 +168,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
                       style={styles.detailIcon}
                     />
                   </View>
-                  <Text style={styles.detailText}>{formatDate(order.serviceDate)}</Text>
+                  <Text style={styles.detailText} numberOfLines={1} ellipsizeMode="tail">{formatDate(order.serviceDate)}</Text>
                 </View>
               </View>
 
@@ -207,7 +207,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
               {/* Режим для заказчиков */}
               {/* Первая строка: Дата + Количество заявок */}
               <View style={styles.detailsRow}>
-                <View style={styles.detailItem}>
+                <View style={styles.detailItemDate}>
                   <View style={styles.iconWrapper}>
                     <CalendarIcon
                       width={20}
@@ -215,10 +215,10 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
                       style={styles.detailIcon}
                     />
                   </View>
-                  <Text style={styles.detailText}>{formatDate(order.serviceDate)}</Text>
+                  <Text style={styles.detailText} numberOfLines={1} ellipsizeMode="tail">{formatDate(order.serviceDate)}</Text>
                 </View>
                 {showApplicantsCount && (
-                  <View style={styles.detailItem}>
+                  <View style={styles.detailItemApplicants}>
                     <View style={styles.iconWrapper}>
                       <OtklikiIcon
                         width={20}
@@ -357,6 +357,7 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.sm,
     color: '#9AA0A6',
     fontWeight: theme.fonts.weights.regular,
+    flexShrink: 1,
   },
   statusPill: {
     paddingHorizontal: theme.spacing.md,
@@ -389,6 +390,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: theme.spacing.xs,
   },
+  detailItemDate: {
+    flex: 2, // Больше места для даты
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xs,
+  },
+  detailItemApplicants: {
+    flex: 1, // Меньше места для заявок
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xs,
+    justifyContent: 'flex-end', // Выравниваем по правому краю
+  },
   detailItemFullWidth: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -407,6 +421,7 @@ const styles = StyleSheet.create({
     color: '#5F6368',
     fontWeight: theme.fonts.weights.medium,
     flex: 1,
+    flexShrink: 1,
   },
   footer: {
     flexDirection: 'row',

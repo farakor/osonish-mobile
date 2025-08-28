@@ -25,6 +25,8 @@ import LocationIcon from '../../../assets/card-icons/location.svg';
 import CategoryIcon from '../../../assets/card-icons/category.svg';
 import UserIcon from '../../../assets/user-01.svg';
 import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
+import CarIcon from '../../../assets/car-01.svg';
+import BankNoteIcon from '../../../assets/bank-note-01.svg';
 import PhoneIcon from '../../../assets/phone-call-01-white.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { HeaderWithBack, PriceConfirmationModal, ProposePriceModal, MediaViewer, OrderLocationMap, StatusBadge } from '../../components/common';
@@ -669,14 +671,18 @@ export const JobDetailsScreen: React.FC = () => {
             <Text style={styles.sectionTitle}>Дополнительные удобства</Text>
             <View style={styles.amenitiesContainer}>
               <View style={styles.amenityItem}>
-                <Text style={styles.amenityIcon}>🚗</Text>
+                <View style={styles.amenityIconContainer}>
+                  <CarIcon width={20} height={20} color={order.transportPaid ? theme.colors.primary : theme.colors.text.secondary} />
+                </View>
                 <Text style={order.transportPaid ? styles.amenityText : styles.amenityTextNegative}>
                   {order.transportPaid ? t('transport_paid_yes') : t('transport_paid_no')}
                 </Text>
               </View>
 
               <View style={styles.amenityItem}>
-                <Text style={styles.amenityIcon}>🍽️</Text>
+                <View style={styles.amenityIconContainer}>
+                  <BankNoteIcon width={20} height={20} color={order.mealIncluded || order.mealPaid ? theme.colors.primary : theme.colors.text.secondary} />
+                </View>
                 <Text style={order.mealIncluded || order.mealPaid ? styles.amenityText : styles.amenityTextNegative}>
                   {order.mealIncluded ? t('meal_included_yes') :
                     order.mealPaid ? t('meal_paid_yes') :
@@ -1183,6 +1189,11 @@ const styles = StyleSheet.create({
   amenityIcon: {
     fontSize: 20,
     marginRight: theme.spacing.md,
+  },
+  amenityIconContainer: {
+    marginRight: theme.spacing.md,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   amenityText: {
     fontSize: theme.fonts.sizes.md,
