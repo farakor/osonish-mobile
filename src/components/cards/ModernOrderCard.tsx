@@ -13,6 +13,9 @@ import { getCategoryEmoji, getCategoryLabel } from '../../utils/categoryUtils';
 import { useCustomerTranslation, useCategoriesTranslation } from '../../hooks/useTranslation';
 import { getStatusInfo } from '../../utils/statusUtils';
 
+// Константа для цвета иконок в деталях карточки
+const DETAIL_ICON_COLOR = '#5F6368';
+
 // SVG импорты
 import CalendarIcon from '../../../assets/card-icons/calendar.svg';
 import LocationIcon from '../../../assets/card-icons/location.svg';
@@ -165,6 +168,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
                     <CalendarIcon
                       width={20}
                       height={20}
+                      color={DETAIL_ICON_COLOR}
                       style={styles.detailIcon}
                     />
                   </View>
@@ -179,6 +183,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
                     <LocationIcon
                       width={20}
                       height={20}
+                      color={DETAIL_ICON_COLOR}
                       style={styles.detailIcon}
                     />
                   </View>
@@ -194,6 +199,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
                       <OtklikiIcon
                         width={20}
                         height={20}
+                        color={DETAIL_ICON_COLOR}
                         style={styles.detailIcon}
                       />
                     </View>
@@ -212,6 +218,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
                     <CalendarIcon
                       width={20}
                       height={20}
+                      color={DETAIL_ICON_COLOR}
                       style={styles.detailIcon}
                     />
                   </View>
@@ -223,6 +230,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
                       <OtklikiIcon
                         width={20}
                         height={20}
+                        color={DETAIL_ICON_COLOR}
                         style={styles.detailIcon}
                       />
                     </View>
@@ -238,6 +246,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
                     <LocationIcon
                       width={20}
                       height={20}
+                      color={DETAIL_ICON_COLOR}
                       style={styles.detailIcon}
                     />
                   </View>
@@ -411,14 +420,15 @@ const styles = StyleSheet.create({
   },
   iconWrapper: {
     marginRight: theme.spacing.sm,
-    color: '#5F6368',
+    color: DETAIL_ICON_COLOR,
   },
   detailIcon: {
-    // SVG иконка наследует цвет от родительского элемента
+    // Явно задаем цвет для SVG иконок, чтобы избежать нежелательного наследования
+    color: DETAIL_ICON_COLOR,
   },
   detailText: {
     fontSize: theme.fonts.sizes.sm,
-    color: '#5F6368',
+    color: DETAIL_ICON_COLOR,
     fontWeight: theme.fonts.weights.medium,
     flex: 1,
     flexShrink: 1,
