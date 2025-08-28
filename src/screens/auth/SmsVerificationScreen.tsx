@@ -294,6 +294,7 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
     textAlign: 'center',
+    marginTop: theme.spacing.lg,
   },
   resendSection: {
     alignItems: 'center',

@@ -239,14 +239,6 @@ export function LoginSmsVerificationScreen() {
             <Text style={styles.loadingText}>Проверяем код...</Text>
           </View>
         )}
-
-        {/* Help Section */}
-        <View style={styles.helpSection}>
-          <Text style={styles.helpText}>
-            Не получили SMS?{' '}
-            <Text style={styles.helpLink}>Проверьте настройки</Text>
-          </Text>
-        </View>
       </View>
     </SafeAreaView>
   );
@@ -319,6 +311,7 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
     textAlign: 'center',
+    marginTop: theme.spacing.lg,
   },
   resendSection: {
     alignItems: 'center',
@@ -340,19 +333,6 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     color: theme.colors.primary,
-    fontWeight: theme.fonts.weights.medium,
-  },
-  helpSection: {
-    alignItems: 'center',
-    paddingBottom: theme.spacing.lg,
-  },
-  helpText: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
-  },
-  helpLink: {
-    color: theme.colors.secondary,
     fontWeight: theme.fonts.weights.medium,
   },
 }); 

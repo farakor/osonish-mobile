@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, StatusBar, SafeAreaView, Dimensions, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
 import { useAuthTranslation } from '../../hooks/useTranslation';
-import { LogoOsonish } from '../../components/common';
+import { LogoOsonish, TermsModal, PrivacyPolicyModal } from '../../components/common';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -13,6 +13,24 @@ const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
 export function AuthScreen() {
   const navigation = useNavigation();
   const t = useAuthTranslation();
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+
+  const handleTermsPress = () => {
+    setShowTermsModal(true);
+  };
+
+  const handlePrivacyPress = () => {
+    setShowPrivacyModal(true);
+  };
+
+  const handleCloseTermsModal = () => {
+    setShowTermsModal(false);
+  };
+
+  const handleClosePrivacyModal = () => {
+    setShowPrivacyModal(false);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -58,14 +76,36 @@ export function AuthScreen() {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            {t('terms_agreement')}{' '}
-            <Text style={styles.linkText}>{t('terms_of_use')}</Text>
-            {' '}{t('and')}{' '}
-            <Text style={styles.linkText}>{t('privacy_policy')}</Text>
-          </Text>
+          <View style={styles.footerTextContainer}>
+            <Text style={styles.footerText}>
+              {t('terms_agreement')}{' '}
+            </Text>
+            <TouchableOpacity onPress={handleTermsPress}>
+              <Text style={[styles.footerText, styles.linkText]}>{t('terms_of_use')}</Text>
+            </TouchableOpacity>
+            <Text style={styles.footerText}>
+              {' '}{t('and')}{' '}
+            </Text>
+            <TouchableOpacity onPress={handlePrivacyPress}>
+              <Text style={[styles.footerText, styles.linkText]}>{t('privacy_policy')}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
+
+      {/* Terms Modal */}
+      <TermsModal
+        visible={showTermsModal}
+        onClose={handleCloseTermsModal}
+      />
+
+      {/* Privacy Policy Modal */}
+      <PrivacyPolicyModal
+        visible={showPrivacyModal}
+        onClose={handleClosePrivacyModal}
+        onAccept={handleClosePrivacyModal}
+        privacyAccepted={false}
+      />
     </SafeAreaView>
   );
 }
@@ -165,6 +205,12 @@ const styles = StyleSheet.create({
   footer: {
     alignItems: 'center',
     paddingBottom: theme.spacing.lg,
+  },
+  footerTextContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   footerText: {
     fontSize: theme.fonts.sizes.sm,

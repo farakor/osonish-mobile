@@ -24,6 +24,8 @@ import UserEditIcon from '../../../assets/user-edit.svg';
 import NotificationMessageIcon from '../../../assets/notification-message.svg';
 import LifeBuoyIcon from '../../../assets/life-buoy-02.svg';
 import LogOutIcon from '../../../assets/log-out-03.svg';
+import FileIcon from '../../../assets/file-05.svg';
+import FileShieldIcon from '../../../assets/file-shield-02.svg';
 import { Ionicons } from '@expo/vector-icons';
 import { useWorkerTranslation } from '../../hooks/useTranslation';
 import { WebViewModal } from '../../components/common';
@@ -510,7 +512,7 @@ export const WorkerProfileScreen: React.FC = () => {
             >
               <View style={styles.menuLeft}>
                 <View style={styles.menuIconContainer}>
-                  <Ionicons name="document-text-outline" size={20} color="#666" />
+                  <FileIcon width={20} height={20} />
                 </View>
                 <Text style={styles.menuText}>{tWorker('terms_of_service')}</Text>
               </View>
@@ -523,7 +525,7 @@ export const WorkerProfileScreen: React.FC = () => {
             >
               <View style={styles.menuLeft}>
                 <View style={styles.menuIconContainer}>
-                  <Ionicons name="shield-checkmark-outline" size={20} color="#666" />
+                  <FileShieldIcon width={20} height={20} />
                 </View>
                 <Text style={styles.menuText}>{tWorker('privacy_policy')}</Text>
               </View>
