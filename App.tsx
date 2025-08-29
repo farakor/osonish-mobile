@@ -9,9 +9,14 @@ import { LanguageProvider } from './src/contexts/LanguageContext';
 import './src/i18n';
 
 // Инициализация сервисов
-import { initSMSService } from './src/services/smsService';
+import { initializeSMSServices } from './src/services/smsServiceInitializer';
 import { authService } from './src/services/authService';
 import { notificationService } from './src/services/notificationService';
+// Принудительный импорт eskizSMSService для отладки
+import { eskizSMSService } from './src/services/eskizSMSService';
+
+console.log('[App] 🔄 App.tsx загружается...');
+console.log('[App] 📦 eskizSMSService импортирован:', !!eskizSMSService);
 
 
 // Подключаем тестовые утилиты в dev режиме
@@ -24,8 +29,11 @@ export default function App() {
     // Инициализируем сервисы при запуске приложения
     const initializeServices = async () => {
       try {
-        // Инициализируем SMS сервис
-        initSMSService();
+        // Инициализируем SMS сервисы
+        const smsResult = await initializeSMSServices();
+        if (!smsResult.success) {
+          console.error('❌ Ошибка инициализации SMS:', smsResult.error);
+        }
 
         // Инициализируем сервис авторизации
         await authService.init();

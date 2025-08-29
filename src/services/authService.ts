@@ -1,9 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, AuthState, LoginRequest, VerifyCodeRequest, RegisterRequest, AuthResponse } from '../types';
 import { smsService } from './smsService';
+import { eskizSMSService } from './eskizSMSService';
 import { supabase } from './supabaseClient';
 import { mediaService } from './mediaService';
 import { getUserLanguage } from '../utils/notificationTranslations';
+import { smsConfig, SMSProvider } from '../config/smsConfig';
+
+// Отладочное логирование импорта
+console.log('[AuthService] 🔄 Модуль authService загружается...');
+console.log('[AuthService] 📦 eskizSMSService импортирован:', !!eskizSMSService);
 
 // Константы для хранения только сессионных данных
 const STORAGE_KEYS = {
@@ -12,10 +18,25 @@ const STORAGE_KEYS = {
   SUPABASE_SESSION: '@osonish_supabase_session' // Новый ключ для Supabase сессии
 };
 
+// Используем конфигурацию SMS из файла конфигурации
+
 class AuthService {
   private authState: AuthState = {
     isAuthenticated: false,
     user: null
+  }
+
+  /**
+   * Получение активного SMS сервиса в зависимости от конфигурации
+   */
+  private getSMSService() {
+    switch (smsConfig.provider) {
+      case 'eskiz':
+        return eskizSMSService;
+      case 'twilio':
+      default:
+        return smsService;
+    }
   };
 
   // Инициализация сервиса
@@ -350,7 +371,7 @@ class AuthService {
       }
 
       // Отправляем SMS-код
-      const smsResult = await smsService.sendVerificationCode(formattedPhone);
+      const smsResult = await this.getSMSService().sendVerificationCode(formattedPhone);
       if (!smsResult.success) {
         return {
           success: false,
@@ -380,7 +401,7 @@ class AuthService {
       const formattedPhone = this.formatPhoneNumber(request.phone);
 
       // Проверяем SMS-код
-      const verificationResult = await smsService.verifyCode(formattedPhone, request.code);
+      const verificationResult = await this.getSMSService().verifyCode(formattedPhone, request.code);
       if (!verificationResult.success) {
         return {
           success: false,
@@ -439,7 +460,7 @@ class AuthService {
       }
 
       // Отправляем SMS-код
-      const smsResult = await smsService.sendVerificationCode(formattedPhone);
+      const smsResult = await this.getSMSService().sendVerificationCode(formattedPhone);
       if (!smsResult.success) {
         return {
           success: false,
@@ -469,7 +490,7 @@ class AuthService {
       const formattedPhone = this.formatPhoneNumber(request.phone);
 
       // Проверяем SMS-код
-      const verificationResult = await smsService.verifyCode(formattedPhone, request.code);
+      const verificationResult = await this.getSMSService().verifyCode(formattedPhone, request.code);
       if (!verificationResult.success) {
         return {
           success: false,

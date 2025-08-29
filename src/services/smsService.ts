@@ -96,10 +96,12 @@ class SMSService {
       }
 
       const code = this.generateCode();
-      const message = `Ваш код подтверждения для Osonish: ${code}. Не сообщайте этот код никому.`;
+      const message = `${code} - Код подтверждения авторизации в приложении Oson Ish`;
 
-      // В режиме разработки используем тестовый код
-      if (__DEV__) {
+      // В режиме разработки используем тестовый код (если не принудительно включен продакшн)
+      const { shouldSendRealSMS } = require('../config/smsMode.js');
+
+      if (!shouldSendRealSMS()) {
         console.log(`[DEV] SMS код для ${formattedPhone}: ${code}`);
 
         // Сохраняем код для верификации

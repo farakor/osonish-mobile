@@ -1235,48 +1235,6 @@ export const OrderDetailsScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Amenities Section */}
-          <View style={styles.amenitiesSection}>
-            <Text style={styles.sectionTitle}>Дополнительные удобства</Text>
-            <View style={styles.amenitiesContainer}>
-              <View style={styles.amenityItem}>
-                <View style={styles.amenityIconContainer}>
-                  <CarIcon width={20} height={20} color={order.transportPaid ? theme.colors.primary : theme.colors.text.secondary} />
-                </View>
-                <Text style={order.transportPaid ? styles.amenityText : styles.amenityTextNegative}>
-                  {order.transportPaid ? t('transport_paid_yes') : t('transport_paid_no')}
-                </Text>
-              </View>
-
-              <View style={styles.amenityItem}>
-                <View style={styles.amenityIconContainer}>
-                  <BankNoteIcon width={20} height={20} color={order.mealIncluded || order.mealPaid ? theme.colors.primary : theme.colors.text.secondary} />
-                </View>
-                <Text style={order.mealIncluded || order.mealPaid ? styles.amenityText : styles.amenityTextNegative}>
-                  {order.mealIncluded ? t('meal_included_yes') :
-                    order.mealPaid ? t('meal_paid_yes') :
-                      t('meal_included_no')}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Details Section */}
-          <View style={styles.detailsSection}>
-            <Text style={styles.detailsTitle}>{t('details')}</Text>
-            <Text style={styles.detailsText}>{order.description}</Text>
-          </View>
-
-          {/* Location Map Section */}
-          {order.latitude && order.longitude && (
-            <OrderLocationMap
-              latitude={order.latitude}
-              longitude={order.longitude}
-              address={order.location}
-              title={t('where_to_go')}
-            />
-          )}
-
           {/* Краткий обзор откликов */}
           {applicants.length > 0 && (
             <View style={styles.applicantsSection}>
@@ -1391,6 +1349,48 @@ export const OrderDetailsScreen: React.FC = () => {
                 {t('no_applicants_text')}
               </Text>
             </View>
+          )}
+
+          {/* Amenities Section */}
+          <View style={styles.amenitiesSection}>
+            <Text style={styles.sectionTitle}>Дополнительные удобства</Text>
+            <View style={styles.amenitiesContainer}>
+              <View style={styles.amenityItem}>
+                <View style={styles.amenityIconContainer}>
+                  <CarIcon width={20} height={20} color={order.transportPaid ? theme.colors.primary : theme.colors.text.secondary} />
+                </View>
+                <Text style={order.transportPaid ? styles.amenityText : styles.amenityTextNegative}>
+                  {order.transportPaid ? t('transport_paid_yes') : t('transport_paid_no')}
+                </Text>
+              </View>
+
+              <View style={styles.amenityItem}>
+                <View style={styles.amenityIconContainer}>
+                  <BankNoteIcon width={20} height={20} color={order.mealIncluded || order.mealPaid ? theme.colors.primary : theme.colors.text.secondary} />
+                </View>
+                <Text style={order.mealIncluded || order.mealPaid ? styles.amenityText : styles.amenityTextNegative}>
+                  {order.mealIncluded ? t('meal_included_yes') :
+                    order.mealPaid ? t('meal_paid_yes') :
+                      t('meal_included_no')}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Details Section */}
+          <View style={styles.detailsSection}>
+            <Text style={styles.detailsTitle}>{t('details')}</Text>
+            <Text style={styles.detailsText}>{order.description}</Text>
+          </View>
+
+          {/* Location Map Section */}
+          {order.latitude && order.longitude && (
+            <OrderLocationMap
+              latitude={order.latitude}
+              longitude={order.longitude}
+              address={order.location}
+              title={t('where_to_go')}
+            />
           )}
         </Animated.ScrollView>
 
