@@ -10,6 +10,7 @@ import {
   Animated,
 } from 'react-native';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 
 const { height: screenHeight } = Dimensions.get('window');
 const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
@@ -278,8 +279,7 @@ const styles = StyleSheet.create({
   cell: {
     width: isSmallScreen ? 42 : 48,
     height: isSmallScreen ? 48 : 56,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
     borderRadius: 12,
     backgroundColor: theme.colors.background,
     marginHorizontal: isSmallScreen ? 2 : 4,
@@ -292,13 +292,8 @@ const styles = StyleSheet.create({
   },
   cellFocused: {
     borderColor: theme.colors.primary,
-    borderWidth: 2,
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
-  },
+    borderWidth: 0, shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   cellDisabled: {
     opacity: 0.5,
     backgroundColor: theme.colors.disabled,

@@ -13,6 +13,7 @@ import {
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { SvgXml } from 'react-native-svg';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import { HeaderWithBack } from '../../components/common';
 import { notificationService, NotificationItem } from '../../services/notificationService';
 import { authService } from '../../services/authService';
@@ -333,12 +334,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   markAllButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -359,22 +355,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderRadius: 12,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   unreadNotification: {
     backgroundColor: '#ECFDF5', // светло-зеленый фон как в карточке "Отклик получен"
     borderColor: theme.colors.primary,
     borderWidth: 0.5,
-    shadowColor: '#10B981', // зеленый glow
-    shadowOpacity: 0.14,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 3,
-  },
+    shadowColor: 'transparent', // зеленый glow
+    shadowOpacity: 0, shadowRadius: 0, shadowOffset: { width: 0, height: 0 }, elevation: 0, },
   notificationIcon: {
     width: 50,
     height: 50,
@@ -396,8 +383,7 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     backgroundColor: theme.colors.primary,
-    borderWidth: 2,
-    borderColor: theme.colors.surface,
+    borderWidth: 0, borderColor: theme.colors.surface,
   },
   notificationContent: {
     flex: 1,

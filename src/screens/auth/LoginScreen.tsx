@@ -15,6 +15,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import { authService } from '../../services/authService';
 import type { RootStackParamList } from '../../types';
 import { useAuthTranslation, useErrorsTranslation } from '../../hooks/useTranslation';
@@ -212,12 +213,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
-  },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
 
   titleSection: {
     marginBottom: isSmallScreen ? theme.spacing.xl : theme.spacing.xxxl,
@@ -244,8 +240,7 @@ const styles = StyleSheet.create({
   },
   phoneInput: {
     height: isSmallScreen ? 48 : 56,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
     borderRadius: 12,
     paddingHorizontal: theme.spacing.md,
     fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,
@@ -266,16 +261,10 @@ const styles = StyleSheet.create({
     minHeight: isSmallScreen ? 48 : 56,
     marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.xl,
     shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   continueButtonDisabled: {
     backgroundColor: theme.colors.surface,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
+    shadowOpacity: 0, elevation: 0, },
   continueButtonText: {
     fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,
     fontWeight: theme.fonts.weights.semiBold,

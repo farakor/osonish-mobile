@@ -12,6 +12,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import { useLanguage, Language } from '../../contexts/LanguageContext';
 import { LogoOsonish } from '../../components/common';
 import { RootStackParamList } from '../../types/navigation';
@@ -206,26 +207,13 @@ const styles = StyleSheet.create({
   },
   languageCard: {
     backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
     borderRadius: 12,
     marginBottom: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
-    shadowColor: 'transparent',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    elevation: 0,
-  },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   languageCardSelected: {
     backgroundColor: 'transparent',
-    borderColor: '#4CAF50',
-    borderWidth: 2,
-    shadowColor: 'transparent',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    elevation: 0,
-  },
+    borderColor: 'transparent', borderWidth: 0, shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   languageCardContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -262,14 +250,12 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   radioButtonSelected: {
-    borderColor: '#4CAF50',
-  },
+    borderColor: 'transparent', },
   radioButtonInner: {
     width: 10,
     height: 10,
@@ -288,11 +274,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: isSmallScreen ? 48 : 56,
     shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   continueButtonDisabled: {
     backgroundColor: theme.colors.border,
   },

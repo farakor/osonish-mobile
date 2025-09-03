@@ -8,6 +8,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import { useLanguage, Language } from '../../contexts/LanguageContext';
 import { useTranslation } from '../../hooks/useTranslation';
 
@@ -185,8 +186,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     backgroundColor: theme.colors.background,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
   },
   triggerContent: {
     flexDirection: 'row',
@@ -256,14 +256,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
     borderRadius: 12,
     marginBottom: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    shadowColor: 'transparent',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    elevation: 0,
-  },
+    borderWidth: 0, borderColor: theme.colors.border,
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   languageOptionSelected: {
     borderColor: theme.colors.primary,
     backgroundColor: `${theme.colors.primary}10`,
@@ -311,8 +305,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },

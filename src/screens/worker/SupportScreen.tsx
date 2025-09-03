@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import { usePlatformSafeAreaInsets, getTabScreenScrollViewContentStyle, getSafeAreaViewWithWhiteBackground, getAndroidNavigationBarBackground } from '../../utils/safeAreaUtils';
 import TelegramIcon from '../../../assets/telegram-icon.svg';
 import PhoneCallIcon from '../../../assets/phone-call-01.svg';
@@ -177,12 +178,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
 
   // Support specific styles
   supportIcon: {

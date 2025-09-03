@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { theme } from '../../constants/theme';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import { useCommonTranslation } from '../../hooks/useTranslation';
 
 interface TimePickerModalProps {
@@ -117,12 +118,7 @@ const styles = StyleSheet.create({
     width: '85%',
     maxWidth: 320,
     aspectRatio: 1.2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 8,
-  },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

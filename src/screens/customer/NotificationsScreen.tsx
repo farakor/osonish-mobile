@@ -15,16 +15,14 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
-import { usePlatformSafeAreaInsets, getFixedBottomStyle, getContainerBottomStyle } from '../../utils/safeAreaUtils';
+import { noElevationStyles } from '../../utils/noShadowStyles';
+import { usePlatformSafeAreaInsets, getFixedBottomStyle, getContainerBottomStyle, isSmallScreen } from '../../utils/safeAreaUtils';
 import { notificationService, NotificationSettings } from '../../services/notificationService';
 import { authService } from '../../services/authService';
 import { HeaderWithBack, LanguageSwitcher } from '../../components/common';
 import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 
 const { height: screenHeight } = Dimensions.get('window');
-
-// Определяем маленький экран для Android (высота меньше 1080px)
-const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
 
 export const NotificationsScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -197,25 +195,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   inputGroup: {
-    marginBottom: isSmallScreen ? 16 : 20,
+    marginBottom: isSmallScreen() ? 16 : 20,
   },
   label: {
-    fontSize: isSmallScreen ? 16 : 18,
+    fontSize: isSmallScreen() ? 16 : 18,
     fontWeight: '700',
     color: '#1A1A1A',
-    marginBottom: isSmallScreen ? 8 : 10,
+    marginBottom: isSmallScreen() ? 8 : 10,
   },
   inputContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    paddingHorizontal: isSmallScreen ? 16 : 20,
-    paddingVertical: isSmallScreen ? 16 : 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
+    paddingHorizontal: isSmallScreen() ? 16 : 20,
+    paddingVertical: isSmallScreen() ? 16 : 20,
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
 
   // Switch specific styles
   switchContainer: {
@@ -228,29 +221,27 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   switchTitle: {
-    fontSize: isSmallScreen ? 16 : 18,
+    fontSize: isSmallScreen() ? 16 : 18,
     fontWeight: '600',
     color: '#1A1A1A',
     marginBottom: 6,
   },
   switchDescription: {
-    fontSize: isSmallScreen ? 14 : 16,
+    fontSize: isSmallScreen() ? 14 : 16,
     color: '#8E8E93',
-    lineHeight: isSmallScreen ? 18 : 22,
+    lineHeight: isSmallScreen() ? 18 : 22,
   },
 
   // Info section
   infoGroup: {
-    marginBottom: isSmallScreen ? 16 : 20,
+    marginBottom: isSmallScreen() ? 16 : 20,
   },
   infoCard: {
     flexDirection: 'row',
     backgroundColor: '#F1F8E9',
     borderRadius: 12,
-    padding: isSmallScreen ? 12 : 16,
-    borderWidth: 1,
-    borderColor: '#E8F5E8',
-  },
+    padding: isSmallScreen() ? 12 : 16,
+    borderWidth: 0, borderColor: 'transparent', },
   infoIcon: {
     fontSize: 16,
     marginRight: 12,
@@ -258,9 +249,9 @@ const styles = StyleSheet.create({
   },
   infoText: {
     flex: 1,
-    fontSize: isSmallScreen ? 12 : 14,
+    fontSize: isSmallScreen() ? 12 : 14,
     color: '#666666',
-    lineHeight: isSmallScreen ? 16 : 20,
+    lineHeight: isSmallScreen() ? 16 : 20,
   },
 
   // Bottom Section (copied from EditProfileScreen)
@@ -276,27 +267,18 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
     // Убираем тени для чистого вида
-    elevation: 0,
-    shadowOpacity: 0,
-  },
+    elevation: 0, shadowOpacity: 0, },
   saveButton: {
     backgroundColor: '#679B00',
     borderRadius: 12,
-    paddingVertical: isSmallScreen ? 12 : 16,
+    paddingVertical: isSmallScreen() ? 12 : 16,
     alignItems: 'center',
-    shadowColor: '#679B00',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
-  },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   saveButtonDisabled: {
     backgroundColor: '#C7C7CC',
-    shadowOpacity: 0,
-    elevation: 0,
-  },
+    shadowOpacity: 0, elevation: 0, },
   saveButtonText: {
-    fontSize: isSmallScreen ? 14 : 16,
+    fontSize: isSmallScreen() ? 14 : 16,
     fontWeight: '700',
     color: '#FFFFFF',
     textAlign: 'center',

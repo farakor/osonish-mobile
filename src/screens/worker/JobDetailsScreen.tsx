@@ -16,6 +16,7 @@ import {
   Linking,
 } from 'react-native';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import { usePlatformSafeAreaInsets, getFixedBottomStyle, getEdgeToEdgeBottomStyle } from '../../utils/safeAreaUtils';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { WorkerStackParamList } from '../../types/navigation';
@@ -913,10 +914,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
   navButtonLeft: {
     left: theme.spacing.xl,
@@ -1035,8 +1033,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
     // Убираем только тени, границу оставляем
-    elevation: 0,
-    shadowOpacity: 0,
+    elevation: 0, shadowOpacity: 0,
   },
   applyButton: {
     backgroundColor: theme.colors.primary,
@@ -1044,16 +1041,11 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
     alignItems: 'center',
     shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
-    marginBottom: Platform.OS === 'ios' ? 16 : 0, // Отступ только на iOS
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, marginBottom: Platform.OS === 'ios' ? 16 : 0, // Отступ только на iOS
   },
   appliedButton: {
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
   },
   applyButtonText: {
     fontSize: theme.fonts.sizes.md,
@@ -1076,11 +1068,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: theme.spacing.sm,
     shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
-    marginBottom: Platform.OS === 'ios' ? 16 : 0,
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, marginBottom: Platform.OS === 'ios' ? 16 : 0,
   },
 
   callButtonTextContainer: {
@@ -1113,10 +1101,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
     shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
   stickyHeaderContent: {
     flexDirection: 'row',
@@ -1133,11 +1118,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
 
   stickyTitleContainer: {

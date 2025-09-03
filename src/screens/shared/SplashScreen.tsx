@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, AppState } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
@@ -13,20 +13,61 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export function SplashScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { isLanguageSelected, isLoading } = useLanguage();
+  const [isAuthServiceInitialized, setIsAuthServiceInitialized] = useState(false);
 
   useEffect(() => {
+    console.log('[SplashScreen] 🚀 Инициализация SplashScreen...');
+
+    // Слушатель изменений состояния приложения
+    const handleAppStateChange = (nextAppState: string) => {
+      console.log('[SplashScreen] 📱 Состояние приложения изменилось:', nextAppState);
+      if (nextAppState === 'active' && isAuthServiceInitialized) {
+        // Когда приложение становится активным, проверяем аутентификацию заново
+        setTimeout(() => {
+          checkAuthAndNavigate();
+        }, 500);
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    const initializeAndCheck = async () => {
+      try {
+        console.log('[SplashScreen] 🔄 Ожидание инициализации AuthService...');
+
+        // Ждем полной инициализации AuthService
+        await authService.init();
+        console.log('[SplashScreen] ✅ AuthService инициализирован');
+
+        setIsAuthServiceInitialized(true);
+
+        // Только после инициализации проверяем аутентификацию
+        await checkAuthAndNavigate();
+      } catch (error) {
+        console.error('[SplashScreen] ❌ Ошибка инициализации:', error);
+        setIsAuthServiceInitialized(true); // Все равно продолжаем
+        await checkAuthAndNavigate();
+      }
+    };
+
     const checkAuthAndNavigate = async () => {
       try {
+        console.log('[SplashScreen] 🔍 Проверка аутентификации...');
+
         // Ждем завершения загрузки языковых настроек
         if (isLoading) {
+          console.log('[SplashScreen] ⏳ Ожидание загрузки языковых настроек...');
           return;
         }
 
-        // Небольшая задержка для показа splash экрана
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Небольшая задержка для показа splash экрана (только при первом запуске)
+        if (!isAuthServiceInitialized) {
+          await new Promise(resolve => setTimeout(resolve, 1500));
+        }
 
         // Сначала проверяем выбор языка
         if (!isLanguageSelected) {
+          console.log('[SplashScreen] 🌐 Язык не выбран, переходим к выбору языка');
           navigation.reset({
             index: 0,
             routes: [{ name: 'LanguageSelection' }],
@@ -36,9 +77,16 @@ export function SplashScreen() {
 
         // Проверяем состояние авторизации
         const authState = authService.getAuthState();
+        console.log('[SplashScreen] 🔐 Состояние аутентификации:', {
+          isAuthenticated: authState.isAuthenticated,
+          hasUser: !!authState.user,
+          userRole: authState.user?.role,
+          userId: authState.user?.id
+        });
 
         if (authState.isAuthenticated && authState.user) {
           // Пользователь авторизован - переходим в основное приложение
+          console.log(`[SplashScreen] ✅ Пользователь авторизован как ${authState.user.role}`);
           if (authState.user.role === 'customer') {
             navigation.reset({
               index: 0,
@@ -52,13 +100,14 @@ export function SplashScreen() {
           }
         } else {
           // Пользователь не авторизован - переходим к экрану авторизации
+          console.log('[SplashScreen] ❌ Пользователь не авторизован, переходим к Auth');
           navigation.reset({
             index: 0,
             routes: [{ name: 'Auth' }],
           });
         }
       } catch (error) {
-        console.error('Ошибка проверки авторизации:', error);
+        console.error('[SplashScreen] ❌ Ошибка проверки авторизации:', error);
         // В случае ошибки переходим к экрану выбора языка или авторизации
         if (!isLanguageSelected) {
           navigation.reset({
@@ -74,8 +123,12 @@ export function SplashScreen() {
       }
     };
 
-    checkAuthAndNavigate();
-  }, [navigation, isLanguageSelected, isLoading]);
+    initializeAndCheck();
+
+    return () => {
+      subscription?.remove();
+    };
+  }, [navigation, isLanguageSelected, isLoading, isAuthServiceInitialized]);
 
   return (
     <SafeAreaView style={styles.container}>

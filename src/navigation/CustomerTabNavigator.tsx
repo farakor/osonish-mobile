@@ -2,6 +2,7 @@ import React from 'react';
 import { Text, Platform, TouchableOpacity, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { theme } from '../constants';
+import { noElevationStyles } from '../utils/noShadowStyles';
 import { usePlatformSafeAreaInsets, getBottomTabBarStyle } from '../utils/safeAreaUtils';
 import { useNavigationTranslation } from '../hooks/useTranslation';
 import type { CustomerTabParamList } from '../types';
@@ -44,12 +45,7 @@ export function CustomerTabNavigator() {
         tabBarStyle: {
           backgroundColor: '#fff',
           borderTopWidth: 0,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.06,
-          shadowRadius: 8,
-          elevation: 8,
-          paddingTop: theme.spacing.sm,
+          shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, paddingTop: theme.spacing.sm,
           justifyContent: 'center',
           ...tabBarStyle, // Применяем стили с учетом платформы в конце
         },

@@ -28,9 +28,25 @@ try {
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false,
+        // Добавляем настройки для улучшения persistence в React Native
+        storage: undefined, // Используем стандартное хранилище
+        storageKey: 'sb-auth-token', // Кастомный ключ для хранения
+        flowType: 'pkce', // Используем PKCE flow для мобильных приложений
+      },
+      // Настройки для React Native
+      realtime: {
+        params: {
+          eventsPerSecond: 10,
+        },
+      },
+      // Добавляем таймауты для стабильности
+      global: {
+        headers: {
+          'X-Client-Info': 'osonish-mobile@1.0.0',
+        },
       },
     });
-    console.log('✅ Supabase клиент создан успешно');
+    console.log('✅ Supabase клиент создан успешно с улучшенной конфигурацией');
   } else {
     console.warn('⚠️ Supabase не настроен, используется fallback режим');
   }

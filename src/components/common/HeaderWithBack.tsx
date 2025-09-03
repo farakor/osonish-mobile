@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
+import { lightElevationStyles } from '../../utils/noShadowStyles';
 import { DropdownMenu, DropdownMenuItem } from './DropdownMenu';
 import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
 
@@ -101,11 +102,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
+    ...lightElevationStyles,
   },
 
   headerTitle: {
@@ -124,11 +121,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    ...lightElevationStyles,
   },
   rightActionButtonText: {
     fontSize: theme.fonts.sizes.sm,

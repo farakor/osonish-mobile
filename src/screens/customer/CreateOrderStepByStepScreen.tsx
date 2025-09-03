@@ -26,6 +26,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import CalendarDateIcon from '../../../assets/calendar-date.svg';
 import * as ImagePicker from 'expo-image-picker';
 import { VideoView, useVideoPlayer } from 'expo-video';
@@ -44,8 +45,8 @@ import {
   AnimatedNavigationButton,
   AnimatedInteractiveContainer,
   AnimatedSummaryGrid,
-} from '../../components/common/AnimatedComponents';
-import { HeaderWithBack } from '../../components/common';
+  HeaderWithBack,
+} from '../../components/common';
 import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation, useCategoriesTranslation } from '../../hooks/useTranslation';
 import { useTranslatedCategories, getCategoryLabel } from '../../utils/categoryUtils';
 
@@ -1318,8 +1319,7 @@ const styles = StyleSheet.create({
   },
   stepInput: {
     backgroundColor: theme.colors.surface,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.lg,
     paddingHorizontal: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
     paddingVertical: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
@@ -1333,10 +1333,7 @@ const styles = StyleSheet.create({
   stepInputFocused: {
     borderColor: theme.colors.primary,
     shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
   textArea: {
     height: isSmallScreen ? 80 : 120,
@@ -1364,8 +1361,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.surface,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.lg,
     paddingVertical: theme.spacing.md,
   },
@@ -1397,8 +1393,7 @@ const styles = StyleSheet.create({
   },
   dateSelector: {
     backgroundColor: theme.colors.surface,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.lg,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.lg,
@@ -1417,8 +1412,7 @@ const styles = StyleSheet.create({
   },
   timeSelector: {
     backgroundColor: theme.colors.surface,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.lg,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.lg,
@@ -1448,8 +1442,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
     overflow: 'hidden',
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
   },
   mediaImage: {
     width: '100%',
@@ -1475,8 +1468,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: theme.borderRadius.lg,
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
+    borderWidth: 0, borderColor: theme.colors.primary,
     backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
@@ -1512,8 +1504,7 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     backgroundColor: theme.colors.surface,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.lg,
     paddingHorizontal: theme.spacing.xl,
     paddingVertical: theme.spacing.md,
@@ -1530,20 +1521,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.xl,
     paddingVertical: theme.spacing.md,
     shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
   primaryButtonDisabled: {
     backgroundColor: theme.colors.disabled,
-    shadowOpacity: 0,
-    elevation: 0,
+    shadowOpacity: 0, elevation: 0,
   },
   disabledButton: {
     backgroundColor: theme.colors.disabled,
-    shadowOpacity: 0,
-    elevation: 0,
+    shadowOpacity: 0, elevation: 0,
   },
   primaryButtonText: {
     color: theme.colors.white,
@@ -1556,11 +1542,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: theme.borderRadius.lg,
     paddingTop: theme.spacing.md,
     paddingBottom: Platform.OS === 'ios' ? theme.spacing.xl : 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
   datePickerHeader: {
     flexDirection: 'row',
@@ -1574,11 +1556,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: theme.borderRadius.lg,
     paddingTop: theme.spacing.md,
     paddingBottom: Platform.OS === 'ios' ? theme.spacing.xl : 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
   timePickerHeader: {
     flexDirection: 'row',
@@ -1608,11 +1586,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.xl,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
   loadingText: {
     marginTop: theme.spacing.md,
@@ -1624,8 +1598,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
   },
   videoErrorText: {
     fontSize: 32,
@@ -1639,11 +1612,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: theme.spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
   locationButtonText: {
     color: theme.colors.white,
@@ -1664,8 +1633,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
     marginBottom: theme.spacing.md,
   },
   checkboxContainerActive: {
@@ -1676,8 +1644,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 6,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
     backgroundColor: theme.colors.white,
     justifyContent: 'center',
     alignItems: 'center',

@@ -73,15 +73,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     minHeight: 60,
     flex: 1,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   cardContent: {
     flex: 1,
     alignItems: 'flex-start',

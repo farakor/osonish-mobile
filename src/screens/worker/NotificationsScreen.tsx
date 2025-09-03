@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import { usePlatformSafeAreaInsets, getFixedBottomStyle, getContainerBottomStyle } from '../../utils/safeAreaUtils';
 import { notificationService, NotificationSettings } from '../../services/notificationService';
 import { authService } from '../../services/authService';
@@ -206,12 +207,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: isSmallScreen ? 16 : 20,
     paddingVertical: isSmallScreen ? 16 : 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
 
   // Switch specific styles
   switchContainer: {
@@ -244,9 +240,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F8E9',
     borderRadius: 12,
     padding: isSmallScreen ? 12 : 16,
-    borderWidth: 1,
-    borderColor: '#E8F5E8',
-  },
+    borderWidth: 0, borderColor: 'transparent', },
   infoIcon: {
     fontSize: 16,
     marginRight: 12,
@@ -272,25 +266,16 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
     // Убираем тени для чистого вида
-    elevation: 0,
-    shadowOpacity: 0,
-  },
+    elevation: 0, shadowOpacity: 0, },
   saveButton: {
     backgroundColor: '#679B00',
     borderRadius: 12,
     paddingVertical: isSmallScreen ? 12 : 16,
     alignItems: 'center',
-    shadowColor: '#679B00',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
-  },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   saveButtonDisabled: {
     backgroundColor: '#C7C7CC',
-    shadowOpacity: 0,
-    elevation: 0,
-  },
+    shadowOpacity: 0, elevation: 0, },
   saveButtonText: {
     fontSize: isSmallScreen ? 14 : 16,
     fontWeight: '700',

@@ -12,6 +12,7 @@ import {
   BackHandler,
 } from 'react-native';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -222,15 +223,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -3,
-    },
-    shadowOpacity: 0.27,
-    shadowRadius: 4.65,
-    elevation: 6,
-  },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

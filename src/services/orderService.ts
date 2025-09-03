@@ -38,8 +38,8 @@ export class OrderService {
 
       console.log('[OrderService] ✅ Supabase подключен успешно');
 
-      // ВРЕМЕННО ОТКЛЮЧЕНО: для диагностики ошибки Maximum update depth
-      // this.startReminderChecker();
+      // Запускаем проверку напоминаний
+      this.startReminderChecker();
     } catch (error) {
       console.error('[OrderService] ⚠️ Критическая ошибка инициализации:', error);
       throw error;
@@ -2370,7 +2370,7 @@ export class OrderService {
       const { error: insertError } = await supabase
         .from('scheduled_reminders')
         .insert({
-          worker_id: workerId,
+          user_id: workerId,
           order_id: orderId,
           reminder_date: reminderDate.toISOString(),
           reminder_type: 'work_reminder',
@@ -2469,14 +2469,10 @@ export class OrderService {
       }
 
       // Вычисляем дату напоминания о завершении
-      // Кнопка "Завершить" появляется на следующий день после serviceDate
-      // Напоминание отправляем еще через день (т.е. через 2 дня после serviceDate)
+      // Напоминание отправляем на следующий день после serviceDate
       const workDate = new Date(serviceDate);
-      const completeButtonAvailableDate = new Date(workDate);
-      completeButtonAvailableDate.setDate(workDate.getDate() + 1); // День когда появляется кнопка
-
-      const reminderDate = new Date(completeButtonAvailableDate);
-      reminderDate.setDate(completeButtonAvailableDate.getDate() + 1); // Еще через день
+      const reminderDate = new Date(workDate);
+      reminderDate.setDate(workDate.getDate() + 1); // На следующий день после работы
 
       // Устанавливаем время напоминания на 19:00 (7 PM)
       reminderDate.setHours(19, 0, 0, 0);
@@ -2494,7 +2490,7 @@ export class OrderService {
       const { error: insertError } = await supabase
         .from('scheduled_reminders')
         .insert({
-          worker_id: customerId, // Для заказчика используем поле worker_id
+          user_id: customerId, // ID заказчика
           order_id: orderId,
           reminder_date: reminderDate.toISOString(),
           reminder_type: 'complete_work_reminder',
@@ -2519,7 +2515,7 @@ export class OrderService {
         await supabase
           .from('scheduled_reminders')
           .update({ is_sent: true, sent_at: new Date().toISOString() })
-          .eq('worker_id', customerId)
+          .eq('user_id', customerId)
           .eq('order_id', orderId)
           .eq('reminder_type', 'complete_work_reminder');
       }
@@ -2930,11 +2926,10 @@ export class OrderService {
         .from('scheduled_reminders')
         .select(`
           id,
-          worker_id,
+          user_id,
           order_id,
           reminder_date,
-          reminder_type,
-          orders!inner(id, title, location)
+          reminder_type
         `)
         .eq('is_sent', false)
         .in('reminder_type', ['work_reminder', 'complete_work_reminder'])
@@ -2970,13 +2965,25 @@ export class OrderService {
       for (const reminder of reminders) {
         try {
           const recipientType = reminder.reminder_type === 'work_reminder' ? 'исполнителю' : 'заказчику';
-          console.log(`[OrderService] 📤 Отправляем напоминание ${reminder.id} ${recipientType} ${reminder.worker_id}`);
+          console.log(`[OrderService] 📤 Отправляем напоминание ${reminder.id} ${recipientType} ${reminder.user_id}`);
+
+          // Получаем данные заказа
+          const { data: orderData, error: orderError } = await supabase
+            .from('orders')
+            .select('id, title, location')
+            .eq('id', reminder.order_id)
+            .single();
+
+          if (orderError || !orderData) {
+            console.error(`[OrderService] ❌ Ошибка получения данных заказа ${reminder.order_id}:`, orderError);
+            continue;
+          }
 
           // Выбираем правильный метод отправки в зависимости от типа напоминания
           if (reminder.reminder_type === 'work_reminder') {
-            await this.sendWorkReminder(reminder.worker_id, reminder.orders);
+            await this.sendWorkReminder(reminder.user_id, orderData);
           } else if (reminder.reminder_type === 'complete_work_reminder') {
-            await this.sendCompleteWorkReminder(reminder.worker_id, reminder.orders);
+            await this.sendCompleteWorkReminder(reminder.user_id, orderData);
           }
 
           // Отмечаем напоминание как отправленное

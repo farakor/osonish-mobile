@@ -16,7 +16,8 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
-import { usePlatformSafeAreaInsets, getFixedBottomStyle, getContainerBottomStyle } from '../../utils/safeAreaUtils';
+import { noElevationStyles } from '../../utils/noShadowStyles';
+import { usePlatformSafeAreaInsets, getFixedBottomStyle, getContainerBottomStyle, isSmallScreen } from '../../utils/safeAreaUtils';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import { HeaderWithBack, PlusIcon } from '../../components/common';
@@ -25,9 +26,6 @@ import { User } from '../../types';
 import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 
 const { height: screenHeight } = Dimensions.get('window');
-
-// Определяем маленький экран для Android (высота меньше 1080px)
-const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
 
 export const EditProfileScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -438,26 +436,26 @@ const styles = StyleSheet.create({
   // Photo Section
   photoSection: {
     alignItems: 'center',
-    paddingVertical: isSmallScreen ? 20 : 30,
+    paddingVertical: isSmallScreen() ? 20 : 30,
   },
   photoContainer: {
     position: 'relative',
   },
   profileImage: {
-    width: isSmallScreen ? 100 : 120,
-    height: isSmallScreen ? 100 : 120,
-    borderRadius: isSmallScreen ? 50 : 60,
+    width: isSmallScreen() ? 100 : 120,
+    height: isSmallScreen() ? 100 : 120,
+    borderRadius: isSmallScreen() ? 50 : 60,
   },
   avatar: {
-    width: isSmallScreen ? 100 : 120,
-    height: isSmallScreen ? 100 : 120,
-    borderRadius: isSmallScreen ? 50 : 60,
+    width: isSmallScreen() ? 100 : 120,
+    height: isSmallScreen() ? 100 : 120,
+    borderRadius: isSmallScreen() ? 50 : 60,
     backgroundColor: '#679B00',
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    fontSize: isSmallScreen ? 32 : 40,
+    fontSize: isSmallScreen() ? 32 : 40,
     fontWeight: '600',
     color: '#FFFFFF',
   },
@@ -471,9 +469,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#679B00',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-  },
+    borderWidth: 0, borderColor: 'transparent', },
 
 
   // Form
@@ -481,30 +477,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   inputGroup: {
-    marginBottom: isSmallScreen ? 12 : 20,
+    marginBottom: isSmallScreen() ? 12 : 20,
   },
   label: {
-    fontSize: isSmallScreen ? 14 : 16,
+    fontSize: isSmallScreen() ? 14 : 16,
     fontWeight: '700',
     color: '#1A1A1A',
-    marginBottom: isSmallScreen ? 6 : 8,
+    marginBottom: isSmallScreen() ? 6 : 8,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    paddingHorizontal: isSmallScreen ? 12 : 16,
+    paddingHorizontal: isSmallScreen() ? 12 : 16,
     paddingVertical: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   input: {
     flex: 1,
-    fontSize: isSmallScreen ? 14 : 16,
+    fontSize: isSmallScreen() ? 14 : 16,
     color: '#1A1A1A',
     paddingRight: 12,
     paddingVertical: 0, // Убираем дефолтный padding чтобы высота совпадала с полем даты
@@ -531,27 +522,18 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
     // Убираем тени для чистого вида
-    elevation: 0,
-    shadowOpacity: 0,
-  },
+    elevation: 0, shadowOpacity: 0, },
   saveButton: {
     backgroundColor: '#679B00',
     borderRadius: 12,
-    paddingVertical: isSmallScreen ? 12 : 16,
+    paddingVertical: isSmallScreen() ? 12 : 16,
     alignItems: 'center',
-    shadowColor: '#679B00',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
-  },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   saveButtonDisabled: {
     backgroundColor: '#C7C7CC',
-    shadowOpacity: 0,
-    elevation: 0,
-  },
+    shadowOpacity: 0, elevation: 0, },
   saveButtonText: {
-    fontSize: isSmallScreen ? 14 : 16,
+    fontSize: isSmallScreen() ? 14 : 16,
     fontWeight: '700',
     color: '#FFFFFF',
     textAlign: 'center',
@@ -568,12 +550,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 16,
     paddingTop: 16,
     paddingBottom: Platform.OS === 'ios' ? 40 : 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   datePickerHeader: {
     flexDirection: 'row',
     justifyContent: 'flex-end',

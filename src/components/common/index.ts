@@ -14,6 +14,11 @@ export {
   AnimatedStepContainer,
   AnimatedCategoryCard,
   AnimatedLoadingIndicator,
+  AnimatedField,
+  AnimatedCategoryGrid,
+  AnimatedNavigationButton,
+  AnimatedInteractiveContainer,
+  AnimatedSummaryItem,
   AnimatedSummaryGrid,
 } from './AnimatedComponents';
 export {
@@ -48,3 +53,4 @@ export { LogoOsonishWhite } from './LogoOsonishWhite';
 export { AppIconOsonish } from './AppIconOsonish';
 export { DeleteAccountModal } from './DeleteAccountModal';
 export { PlusIcon } from './PlusIcon';
+export { AnimatedIcon } from './AnimatedIcon';

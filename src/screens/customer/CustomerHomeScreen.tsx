@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import { theme } from '../../constants';
+import { lightElevationStyles } from '../../utils/noShadowStyles';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CustomerTabParamList, CustomerStackParamList } from '../../types';
@@ -347,13 +348,7 @@ const styles = StyleSheet.create({
     minHeight: 64,
     borderRadius: 12,
     shadowColor: theme.colors.primary,
-    shadowOffset: {
-      width: 0,
-      height: 0,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
   quickCreateIcon: {
     fontSize: 18,
@@ -405,14 +400,7 @@ const styles = StyleSheet.create({
     minHeight: 64,
     width: '100%',
     borderRadius: theme.borderRadius.md,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 4,
+    ...lightElevationStyles,
   },
   createOrderButtonText: {
     fontSize: theme.fonts.sizes.md,
@@ -439,14 +427,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    shadowColor: theme.colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    ...lightElevationStyles,
   },
   notificationIcon: {
     opacity: 0.7,

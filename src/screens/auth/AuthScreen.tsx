@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, StatusBar, SafeAreaView, Dimensions, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import { useAuthTranslation } from '../../hooks/useTranslation';
 import { LogoOsonish, TermsModal, PrivacyPolicyModal } from '../../components/common';
 
@@ -182,15 +183,10 @@ const styles = StyleSheet.create({
   primaryButton: {
     backgroundColor: theme.colors.primary,
     shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   secondaryButton: {
     backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
   },
   primaryButtonText: {
     fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,

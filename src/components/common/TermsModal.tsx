@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 
 interface TermsModalProps {
   visible: boolean;
@@ -186,14 +187,9 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-      },
+        shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, },
       android: {
-        elevation: 2,
-      },
+        elevation: 0, },
     }),
   },
   closeButton: {

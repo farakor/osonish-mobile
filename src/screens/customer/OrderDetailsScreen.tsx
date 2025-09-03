@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import { usePlatformSafeAreaInsets, getFixedBottomStyle, getEdgeToEdgeBottomStyle } from '../../utils/safeAreaUtils';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
@@ -1621,10 +1622,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
   navButtonLeft: {
     left: theme.spacing.xl,
@@ -1787,10 +1785,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
     alignItems: 'center',
     shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
   manageButtonText: {
     color: theme.colors.white,
@@ -1837,8 +1832,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     borderRadius: theme.borderRadius.lg,
     marginBottom: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
     position: 'relative',
     paddingTop: theme.spacing.xl,
   },
@@ -1849,18 +1843,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginBottom: theme.spacing.lg,
     overflow: 'hidden',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    borderWidth: 1,
-    borderColor: '#F0F2F5',
+    elevation: 0, shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, borderWidth: 0, borderColor: 'transparent',
   },
   modernAcceptedCard: {
-    borderColor: '#679B00',
-    borderWidth: 2,
-    backgroundColor: '#FAFFFE',
+    borderColor: 'transparent', borderWidth: 0, backgroundColor: '#FAFFFE',
   },
   modernRejectedCard: {
     opacity: 0.7,
@@ -1911,8 +1897,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     minWidth: 28,
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
+    borderWidth: 0, borderColor: 'transparent',
   },
   modernRatingText: {
     fontSize: 13,
@@ -1985,12 +1970,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderWidth: 0, borderColor: 'transparent',
   },
   modernPriceContainerAccepted: {
     backgroundColor: '#F0FDFA',
-    borderColor: '#679B00',
+    borderColor: 'transparent',
   },
   modernPriceHeader: {
     flexDirection: 'row',
@@ -2050,8 +2034,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderWidth: 0, borderColor: 'transparent',
   },
   modernContactHeader: {
     marginBottom: 12,
@@ -2078,11 +2061,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    elevation: 2,
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    elevation: 0, shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0,
   },
   modernCallButtonText: {
     fontSize: 14,
@@ -2097,11 +2076,7 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     borderRadius: 14,
     alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#679B00',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
+    elevation: 0, shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0,
   },
   modernAcceptButtonText: {
     fontSize: 17,
@@ -2116,17 +2091,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    borderWidth: 1,
-    borderColor: '#F0F2F5',
+    elevation: 0, shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, borderWidth: 0, borderColor: 'transparent',
   },
   modernPreviewAccepted: {
-    borderColor: '#679B00',
-    backgroundColor: '#FAFFFE',
+    borderColor: 'transparent', backgroundColor: '#FAFFFE',
   },
   modernPreviewRejected: {
     opacity: 0.7,
@@ -2170,8 +2138,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     minWidth: 24,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderWidth: 0, borderColor: 'transparent',
   },
   modernPreviewRatingMiniText: {
     fontSize: 11,
@@ -2280,8 +2247,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.sm,
     borderRadius: theme.borderRadius.md,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
   },
   rejectButtonText: {
     color: theme.colors.text.primary,
@@ -2331,9 +2297,7 @@ const styles = StyleSheet.create({
 
   // Стили для статусов карточек
   acceptedCard: {
-    borderWidth: 2,
-    borderColor: '#679B00',
-    backgroundColor: '#f0fffe',
+    borderWidth: 0, borderColor: 'transparent', backgroundColor: '#f0fffe',
   },
   rejectedCard: {
     backgroundColor: '#f8f9fa',
@@ -2430,14 +2394,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg,
     width: '100%',
     maxWidth: 350,
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    elevation: 0, shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0,
   },
   confirmModalHeader: {
     alignItems: 'center',
@@ -2485,8 +2442,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     borderRadius: theme.borderRadius.lg,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderWidth: 0, borderColor: 'transparent',
   },
   modalCancelButtonText: {
     color: theme.colors.text.secondary,
@@ -2525,10 +2481,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: theme.spacing.sm,
     shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
   viewAllApplicantsButtonText: {
     color: '#fff',
@@ -2540,9 +2493,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
     padding: theme.spacing.lg,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#AAB2C5',
-    borderRadius: theme.borderRadius.lg,
+    borderWidth: 0, borderColor: 'transparent', borderRadius: theme.borderRadius.lg,
   },
   noApplicantsIcon: {
     width: 80,
@@ -2570,8 +2521,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     overflow: 'hidden',
     marginTop: theme.spacing.xs,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
   },
   progressFillSmall: {
     height: '100%',
@@ -2601,8 +2551,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
     // Убираем только тени, границу оставляем
-    elevation: 0,
-    shadowOpacity: 0,
+    elevation: 0, shadowOpacity: 0,
   },
   fixedViewAllApplicantsButton: {
     backgroundColor: theme.colors.primary,
@@ -2611,11 +2560,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
     alignItems: 'center',
     shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
-    marginBottom: Platform.OS === 'ios' ? 16 : 0, // Отступ только на iOS
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, marginBottom: Platform.OS === 'ios' ? 16 : 0, // Отступ только на iOS
   },
   fixedViewAllApplicantsButtonText: {
     color: '#fff',
@@ -2635,10 +2580,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
     shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
   stickyHeaderContent: {
     flexDirection: 'row',
@@ -2668,11 +2610,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
 
   stickyCompleteButton: {
@@ -2683,11 +2621,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#DC2626',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
   stickyCompleteButtonText: {
     fontSize: theme.fonts.sizes.sm,
@@ -2751,11 +2685,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
   completeButtonText: {
     fontSize: theme.fonts.sizes.sm,

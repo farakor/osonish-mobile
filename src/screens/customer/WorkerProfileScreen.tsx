@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import { HeaderWithBack, StarIcon } from '../../components/common';
 import { WorkerProfile, Review } from '../../types';
 import { CustomerStackParamList } from '../../types/navigation';
@@ -340,12 +341,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    position: 'relative',
+    elevation: 0, shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, position: 'relative',
     overflow: 'hidden',
   },
   profileHeader: {
@@ -361,9 +357,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    borderWidth: 4,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
+    borderWidth: 0, borderColor: 'transparent', },
   avatarPlaceholder: {
     width: 80,
     height: 80,
@@ -371,9 +365,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 4,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
+    borderWidth: 0, borderColor: 'transparent', },
   ratingBadge: {
     position: 'absolute',
     bottom: -5,
@@ -382,9 +374,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
+    borderWidth: 0, borderColor: 'transparent', },
   ratingText: {
     fontSize: 12,
     fontWeight: '800',
@@ -439,9 +429,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#F0F2F5',
-  },
+    borderWidth: 0, borderColor: 'transparent', },
   reviewHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',

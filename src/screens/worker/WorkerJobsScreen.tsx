@@ -16,6 +16,7 @@ import {
 import { SvgXml } from 'react-native-svg';
 import { useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../constants/theme';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { notificationService } from '../../services/notificationService';
@@ -698,8 +699,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.sm,
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
   },
   categoriesSection: {
     backgroundColor: theme.colors.primary,
@@ -719,9 +719,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     marginRight: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: '#5A8A00',
-  },
+    borderWidth: 0, borderColor: 'transparent', },
   categoryChipActive: {
     backgroundColor: 'transparent',
     borderColor: theme.colors.white,
@@ -759,11 +757,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     marginBottom: theme.spacing.md,
     shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   jobHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -839,8 +833,7 @@ const styles = StyleSheet.create({
   },
   appliedButton: {
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
   },
   applyButtonText: {
     fontSize: theme.fonts.sizes.sm,
@@ -882,14 +875,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
     shadowColor: theme.colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   notificationIcon: {
     opacity: 0.7,
   },

@@ -22,6 +22,35 @@ import Animated, {
   withDelay,
 } from 'react-native-reanimated';
 import { theme } from '../../constants';
+import { AnimatedIcon } from './AnimatedIcon';
+
+// Импортируем анимированные иконки категорий
+const BricksAnimation = require('../../../assets/bricks.json');
+const CleaningToolsAnimation = require('../../../assets/cleaning-tools.json');
+const OliveTreeAnimation = require('../../../assets/olive-tree.json');
+const FoodDeliveryAnimation = require('../../../assets/food-delivery.json');
+const DeliveryTruckAnimation = require('../../../assets/delivery-truck.json');
+const DiscussionAnimation = require('../../../assets/discussion.json');
+
+// Функция для получения анимированной иконки по ключу категории
+const getCategoryAnimation = (categoryKey: string) => {
+  switch (categoryKey) {
+    case 'construction':
+      return BricksAnimation;
+    case 'cleaning':
+      return CleaningToolsAnimation;
+    case 'garden':
+      return OliveTreeAnimation;
+    case 'catering':
+      return FoodDeliveryAnimation;
+    case 'moving':
+      return DeliveryTruckAnimation;
+    case 'other':
+      return DiscussionAnimation;
+    default:
+      return DiscussionAnimation;
+  }
+};
 
 // Функция для haptic feedback (вне анимированного контекста)
 const triggerHapticFeedback = () => {
@@ -186,10 +215,11 @@ export const AnimatedStepContainer: React.FC<{
 export const AnimatedCategoryCard: React.FC<{
   emoji: string;
   label: string;
+  categoryKey: string;
   isSelected: boolean;
   onPress: () => void;
   isSmallScreen?: boolean;
-}> = ({ emoji, label, isSelected, onPress, isSmallScreen = false }) => {
+}> = ({ emoji, label, categoryKey, isSelected, onPress, isSmallScreen = false }) => {
   const scale = useSharedValue(1);
   const elevation = useSharedValue(2);
   const rotateY = useSharedValue(0);
@@ -248,7 +278,17 @@ export const AnimatedCategoryCard: React.FC<{
           animatedStyle,
         ]}
       >
-        <Text style={[styles.categoryEmoji, isSmallScreen && styles.categoryEmojiSmall]}>{emoji}</Text>
+        <View style={[styles.categoryIconContainer, isSmallScreen && styles.categoryIconContainerSmall]}>
+          <AnimatedIcon
+            source={getCategoryAnimation(categoryKey)}
+            width={isSmallScreen ? 32 : 40}
+            height={isSmallScreen ? 32 : 40}
+            loop={true}
+            autoPlay={false}
+            speed={0.8}
+            isSelected={isSelected}
+          />
+        </View>
         <Text style={[
           styles.categoryLabel,
           isSelected && styles.categoryLabelSelected,
@@ -434,6 +474,7 @@ const AnimatedCategoryItem: React.FC<{
       <AnimatedCategoryCard
         emoji={category.emoji}
         label={category.label}
+        categoryKey={category.key}
         isSelected={selectedCategory === category.key}
         onPress={() => onSelectCategory(category.key)}
         isSmallScreen={isSmallScreen}
@@ -827,10 +868,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
   },
   categoryCard: {
-    backgroundColor: theme.colors.surface,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     padding: theme.spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
@@ -845,8 +884,29 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   categoryCardSelected: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
     borderColor: theme.colors.primary,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  categoryIconContainer: {
+    width: 48,
+    height: 48,
+    backgroundColor: 'transparent',
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  categoryIconContainerSmall: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginBottom: 6,
   },
   categoryEmoji: {
     fontSize: 32,
@@ -855,13 +915,13 @@ const styles = StyleSheet.create({
   },
   categoryLabel: {
     fontSize: 12,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.text.primary,
+    fontWeight: '600',
+    color: '#1A1A1A',
     textAlign: 'center',
     lineHeight: 14,
   },
   categoryLabelSelected: {
-    color: theme.colors.white,
+    color: '#1A1A1A',
   },
   categoriesGrid: {
     paddingVertical: theme.spacing.lg,

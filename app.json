@@ -45,6 +45,10 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
+      "navigationBar": {
+        "visible": "immersive",
+        "backgroundColor": "transparent"
+      },
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",

@@ -14,6 +14,7 @@ try {
 }
 import { supabase } from './supabaseClient';
 import { authService } from './authService';
+import { getFCMToken, initializeFirebase } from '../config/firebase';
 
 // Типы для уведомлений
 export interface NotificationSettings {
@@ -161,13 +162,38 @@ class NotificationService {
     this.isRegistering = true;
 
     try {
-      if (!Notifications) {
-        console.log('[NotificationService] ⚠️ Notifications недоступны - пропускаем регистрацию push токена');
+      if (!Device.isDevice) {
+        console.log('[NotificationService] ⚠️ Не на реальном устройстве - пропускаем регистрацию push токена');
         return;
       }
 
-      if (!Device.isDevice) {
-        console.log('[NotificationService] ⚠️ Не на реальном устройстве - пропускаем регистрацию push токена');
+      // Инициализируем Firebase
+      initializeFirebase();
+
+      // Для Android в production - пробуем получить FCM токен
+      if (Platform.OS === 'android' && !__DEV__) {
+        console.log('[NotificationService] 🔥 Попытка получить FCM токен для Android production...');
+        const fcmToken = await getFCMToken();
+        if (fcmToken) {
+          console.log('[NotificationService] ✅ FCM токен получен для Android');
+
+          // Проверяем, не изменился ли токен
+          if (this.currentPushToken === fcmToken) {
+            console.log('[NotificationService] 📱 FCM token не изменился, пропускаем сохранение');
+            return;
+          }
+
+          this.currentPushToken = fcmToken;
+          await this.savePushTokenToDatabase(fcmToken);
+          return;
+        } else {
+          console.log('[NotificationService] ⚠️ FCM токен не получен, используем Expo fallback');
+        }
+      }
+
+      // Fallback на Expo токен для development и iOS
+      if (!Notifications) {
+        console.log('[NotificationService] ⚠️ Notifications недоступны - пропускаем регистрацию push токена');
         return;
       }
 
@@ -182,6 +208,8 @@ class NotificationService {
         return;
       }
 
+      console.log('[NotificationService] 📱 Получение Expo push токена...');
+
       // Получаем Expo push token
       const tokenData = await Notifications.getExpoPushTokenAsync({
         projectId: projectId,
@@ -189,12 +217,12 @@ class NotificationService {
 
       // Проверяем, не изменился ли токен
       if (this.currentPushToken === tokenData.data) {
-        console.log('[NotificationService] 📱 Push token не изменился, пропускаем сохранение');
+        console.log('[NotificationService] 📱 Expo push token не изменился, пропускаем сохранение');
         return;
       }
 
       this.currentPushToken = tokenData.data;
-      console.log('[NotificationService] 📱 Push token получен:', this.currentPushToken);
+      console.log('[NotificationService] ✅ Expo push token получен:', this.currentPushToken?.substring(0, 20) + '...');
 
       // Сохраняем токен в базе данных
       await this.savePushTokenToDatabase(tokenData.data);

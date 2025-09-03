@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 
 interface DeleteAccountModalProps {
   visible: boolean;
@@ -88,12 +89,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.xl,
     width: '100%',
     maxWidth: 400,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 8,
-  },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   title: {
     fontSize: theme.fonts.sizes.xl,
     fontWeight: theme.fonts.weights.bold,
@@ -122,8 +118,7 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     backgroundColor: theme.colors.background,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
   },
   confirmButton: {
     backgroundColor: '#FF3B30',

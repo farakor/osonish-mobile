@@ -14,6 +14,8 @@ import { authService } from './src/services/authService';
 import { notificationService } from './src/services/notificationService';
 // Принудительный импорт eskizSMSService для отладки
 import { eskizSMSService } from './src/services/eskizSMSService';
+// Утилиты для navigation bar
+import { setupTransparentNavigationBar } from './src/utils/navigationBarUtils';
 
 console.log('[App] 🔄 App.tsx загружается...');
 console.log('[App] 📦 eskizSMSService импортирован:', !!eskizSMSService);
@@ -26,24 +28,32 @@ if (__DEV__) {
 
 export default function App() {
   useEffect(() => {
-    // Инициализируем сервисы при запуске приложения
+    // Инициализируем базовые сервисы при запуске приложения (кроме authService, он инициализируется в SplashScreen)
     const initializeServices = async () => {
       try {
+        console.log('[App] 🚀 Инициализация базовых сервисов...');
+
         // Инициализируем SMS сервисы
         const smsResult = await initializeSMSServices();
         if (!smsResult.success) {
-          console.error('❌ Ошибка инициализации SMS:', smsResult.error);
+          console.error('[App] ❌ Ошибка инициализации SMS:', smsResult.error);
+        } else {
+          console.log('[App] ✅ SMS сервисы инициализированы');
         }
-
-        // Инициализируем сервис авторизации
-        await authService.init();
 
         // Инициализируем сервис уведомлений
         await notificationService.init();
+        console.log('[App] ✅ Сервис уведомлений инициализирован');
 
-        console.log('Сервисы успешно инициализированы');
+        // Настраиваем прозрачный navigation bar для Android
+        await setupTransparentNavigationBar();
+
+        // ВАЖНО: authService.init() НЕ вызываем здесь, 
+        // он инициализируется в SplashScreen для правильной последовательности
+
+        console.log('[App] ✅ Базовые сервисы успешно инициализированы');
       } catch (error) {
-        console.error('Ошибка инициализации сервисов:', error);
+        console.error('[App] ❌ Ошибка инициализации сервисов:', error);
       }
     };
 

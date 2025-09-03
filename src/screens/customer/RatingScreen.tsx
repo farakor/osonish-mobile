@@ -11,6 +11,7 @@ import {
   TextInput,
 } from 'react-native';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import { usePlatformSafeAreaInsets, getFixedBottomStyle } from '../../utils/safeAreaUtils';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
@@ -411,8 +412,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
   },
   workerHeader: {
     flexDirection: 'row',
@@ -529,9 +529,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   commentInput: {
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: theme.borderRadius.md,
+    borderWidth: 0, borderColor: 'transparent', borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md,
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,

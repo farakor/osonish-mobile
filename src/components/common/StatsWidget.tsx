@@ -8,6 +8,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 
 export interface StatItem {
   id: string;
@@ -172,12 +173,8 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
     paddingVertical: theme.spacing.lg,
     marginHorizontal: theme.spacing.lg,
-    elevation: 2,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
+    elevation: 0, shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, },
   defaultStatItem: {
     flex: 1,
     alignItems: 'center',
@@ -219,14 +216,9 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    elevation: 3,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    aspectRatio: 1,
+    borderWidth: 0, borderColor: theme.colors.border,
+    elevation: 0, shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, aspectRatio: 1,
   },
   cardInner: {
     flex: 1,
@@ -262,14 +254,8 @@ const styles = StyleSheet.create({
   gradientCard: {
     backgroundColor: theme.colors.white,
     borderRadius: theme.borderRadius.lg,
-    elevation: 4,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    borderWidth: 1,
-    borderColor: `${theme.colors.primary}10`,
-  },
+    elevation: 0, shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, borderWidth: 0, borderColor: 'transparent', },
   gradientContent: {
     flexDirection: 'row',
     alignItems: 'center',

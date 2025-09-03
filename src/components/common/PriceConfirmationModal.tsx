@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../constants/theme';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import { useWorkerTranslation } from '../../hooks/useTranslation';
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -285,8 +286,7 @@ const styles = StyleSheet.create({
   },
   proposeButton: {
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
   },
   proposeButtonText: {
     fontSize: theme.fonts.sizes.md,

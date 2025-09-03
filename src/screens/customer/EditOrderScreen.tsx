@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import CalendarDateIcon from '../../../assets/calendar-date.svg';
 import * as ImagePicker from 'expo-image-picker';
 import { VideoView, useVideoPlayer } from 'expo-video';
@@ -805,20 +806,11 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    borderWidth: 0,
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, borderWidth: 0,
   },
   inputFocused: {
     shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 6,
-  },
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   textArea: {
     height: 100,
     textAlignVertical: 'top',
@@ -835,8 +827,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.md,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
   },
   categoryCardSelected: {
     backgroundColor: theme.colors.primary + '20',
@@ -883,8 +874,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
     overflow: 'hidden',
   },
   counterButton: {
@@ -914,8 +904,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
     gap: theme.spacing.sm,
   },
   dateButtonDisabled: {
@@ -967,12 +956,7 @@ const styles = StyleSheet.create({
     height: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 4,
-  },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   removeMediaButtonText: {
     color: theme.colors.white,
     fontSize: 16,
@@ -985,8 +969,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
     paddingVertical: theme.spacing.lg,
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
+    borderWidth: 0, borderColor: theme.colors.primary,
     borderStyle: 'dashed',
     gap: theme.spacing.sm,
   },
@@ -1012,27 +995,17 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
     shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-  },
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   updateButton: {
     backgroundColor: theme.colors.primary,
     borderRadius: theme.borderRadius.lg,
     paddingVertical: theme.spacing.md,
     alignItems: 'center',
     shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
-  },
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   updateButtonDisabled: {
     backgroundColor: theme.colors.disabled,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
+    shadowOpacity: 0, elevation: 0, },
   updateButtonText: {
     color: theme.colors.white,
     fontSize: theme.fonts.sizes.md,
@@ -1047,11 +1020,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: theme.borderRadius.xl,
     borderTopRightRadius: theme.borderRadius.xl,
     shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 8,
-  },
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   datePickerHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',

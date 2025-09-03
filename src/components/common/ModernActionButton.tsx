@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { theme } from '../../constants/theme';
+import { lightElevationStyles } from '../../utils/noShadowStyles';
 
 interface ModernActionButtonProps {
   title: string;
@@ -86,6 +87,7 @@ const styles = StyleSheet.create({
   },
   buttonPrimary: {
     backgroundColor: theme.colors.primary,
+    ...lightElevationStyles,
   },
   buttonSecondary: {
     backgroundColor: '#F8F9FA',

@@ -12,6 +12,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { theme } from '../../constants/theme';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import { useWorkerTranslation } from '../../hooks/useTranslation';
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -345,15 +346,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   priceButtonText: {
     fontSize: 24,
     fontWeight: '600',
@@ -388,9 +381,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   commentInput: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 12,
+    borderWidth: 0, borderColor: 'transparent', borderRadius: 12,
     padding: 16,
     fontSize: 16,
     color: '#000',

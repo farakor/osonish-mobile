@@ -13,10 +13,13 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import type { RootStackParamList } from '../../types';
-import WorkerIcon from '../../../assets/engineer-worker.svg';
-import UserIcon from '../../../assets/user-03.svg';
-import { LogoOsonish } from '../../components/common';
+import { LogoOsonish, AnimatedIcon } from '../../components/common';
+
+// Импортируем анимированные иконки
+const DeliveryManAnimation = require('../../../assets/delivery-man.json');
+const OfficeWorkerAnimation = require('../../../assets/office-worker.json');
 import { useAuthTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -93,11 +96,15 @@ export const RoleSelectionScreen: React.FC = () => {
       activeOpacity={0.8}
     >
       <View style={styles.iconContainer}>
-        {role === 'worker' ? (
-          <WorkerIcon width={32} height={32} fill={isSelected ? theme.colors.primary : '#666666'} />
-        ) : (
-          <UserIcon width={32} height={32} stroke={isSelected ? theme.colors.primary : '#666666'} />
-        )}
+        <AnimatedIcon
+          source={role === 'worker' ? DeliveryManAnimation : OfficeWorkerAnimation}
+          width={isSmallScreen ? 60 : 80}
+          height={isSmallScreen ? 60 : 80}
+          loop={true}
+          autoPlay={false}
+          speed={0.8}
+          isSelected={isSelected}
+        />
       </View>
       <Text style={[
         styles.roleTitle,
@@ -215,55 +222,47 @@ const styles = StyleSheet.create({
     marginBottom: isSmallScreen ? theme.spacing.xl : theme.spacing.xxl,
   },
   roleCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     padding: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
     alignItems: 'center',
     position: 'relative',
-    shadowColor: theme.colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   roleCardSelected: {
-    borderColor: theme.colors.primary,
     backgroundColor: `${theme.colors.primary}08`,
-  },
+    borderWidth: 0, borderColor: theme.colors.primary,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   iconContainer: {
-    width: isSmallScreen ? 50 : 60,
-    height: isSmallScreen ? 50 : 60,
-    backgroundColor: theme.colors.background,
-    borderRadius: isSmallScreen ? 25 : 30,
+    width: isSmallScreen ? 80 : 100,
+    height: isSmallScreen ? 80 : 100,
+    backgroundColor: 'transparent',
+    borderRadius: isSmallScreen ? 40 : 50,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
+    marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
   },
   icon: {
     fontSize: 28,
   },
   roleTitle: {
-    fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.text.primary,
+    fontSize: isSmallScreen ? 16 : 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
     marginBottom: theme.spacing.sm,
+    textAlign: 'center',
   },
   roleTitleSelected: {
     color: theme.colors.primary,
   },
   roleDescription: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
+    fontSize: 14,
+    color: '#8E8E93',
     textAlign: 'center',
     lineHeight: isSmallScreen ? 18 : 20,
   },
   roleDescriptionSelected: {
-    color: theme.colors.text.primary,
+    color: '#1A1A1A',
   },
   checkmark: {
     position: 'absolute',

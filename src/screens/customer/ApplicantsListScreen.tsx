@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import { authService } from '../../services/authService';
 import { orderService } from '../../services/orderService';
 import { supabase } from '../../services/supabaseClient';
@@ -737,13 +738,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     borderRadius: isSmallScreen ? 6 : 8,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
+    borderWidth: 0, borderColor: 'transparent', shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
   progressFillLarge: {
     height: '100%',
@@ -761,13 +756,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: theme.spacing.md,
     marginBottom: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 0, borderColor: theme.colors.border,
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
   applicantHeader: {
     flexDirection: 'row',
@@ -853,10 +843,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
   selectButtonText: {
     fontSize: theme.fonts.sizes.md,
@@ -996,18 +983,10 @@ const styles = StyleSheet.create({
     borderRadius: isSmallScreen ? 12 : 16,
     marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
     overflow: 'hidden',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    borderWidth: 1,
-    borderColor: '#F0F2F5',
+    elevation: 0, shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, borderWidth: 0, borderColor: 'transparent',
   },
   modernAcceptedCard: {
-    borderColor: '#679B00',
-    borderWidth: 2,
-    backgroundColor: '#FAFFFE',
+    borderColor: 'transparent', borderWidth: 0, backgroundColor: '#FAFFFE',
   },
   modernRejectedCard: {
     opacity: 0.7,
@@ -1045,8 +1024,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F2F5',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
+    borderWidth: 0, borderColor: 'transparent',
   },
   modernRatingBadge: {
     position: 'absolute',
@@ -1058,8 +1036,7 @@ const styles = StyleSheet.create({
     paddingVertical: isSmallScreen ? 2 : 3,
     minWidth: isSmallScreen ? 20 : 24,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderWidth: 0, borderColor: 'transparent',
   },
   modernRatingText: {
     fontSize: isSmallScreen ? 10 : 11,
@@ -1087,9 +1064,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: isSmallScreen ? 10 : 14,
     paddingVertical: isSmallScreen ? 6 : 8,
     borderRadius: isSmallScreen ? 6 : 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    minHeight: isSmallScreen ? 28 : 32,
+    borderWidth: 0, borderColor: 'transparent', minHeight: isSmallScreen ? 28 : 32,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1161,12 +1136,11 @@ const styles = StyleSheet.create({
     borderRadius: isSmallScreen ? 8 : 10,
     padding: isSmallScreen ? 10 : 12,
     marginBottom: isSmallScreen ? 8 : 10,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderWidth: 0, borderColor: 'transparent',
   },
   modernPriceContainerAccepted: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#E5E7EB',
+    borderColor: 'transparent',
   },
   modernPriceHeader: {
     flexDirection: 'row',
@@ -1226,8 +1200,7 @@ const styles = StyleSheet.create({
     borderRadius: isSmallScreen ? 8 : 10,
     padding: isSmallScreen ? 10 : 12,
     marginBottom: isSmallScreen ? 8 : 10,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderWidth: 0, borderColor: 'transparent',
   },
   modernContactHeader: {
     flexDirection: 'row',
@@ -1261,10 +1234,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: isSmallScreen ? 36 : 40,
     shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
   modernCallButtonText: {
     fontSize: theme.fonts.sizes.sm,
@@ -1279,11 +1249,7 @@ const styles = StyleSheet.create({
     paddingVertical: isSmallScreen ? 12 : 14,
     borderRadius: isSmallScreen ? 10 : 12,
     alignItems: 'center',
-    elevation: 3,
-    shadowColor: '#679B00',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
+    elevation: 0, shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0,
   },
   modernAcceptButtonText: {
     fontSize: isSmallScreen ? 14 : 15,

@@ -786,6 +786,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
   },
   deleteAccountText: {
     color: '#FF3B30',

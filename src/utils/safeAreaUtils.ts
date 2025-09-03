@@ -1,9 +1,27 @@
-import { Platform, StatusBar } from 'react-native';
+import { Platform, StatusBar, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 /**
  * Утилиты для работы с безопасными зонами на Android и iOS
  */
+
+const { height: screenHeight } = Dimensions.get('window');
+
+/**
+ * Определяет, является ли экран маленьким (1080p и меньше)
+ * Для таких экранов нужен дополнительный отступ от navigation bar
+ */
+export const isSmallScreen = (): boolean => {
+  return Platform.OS === 'android' && screenHeight <= 1080;
+};
+
+/**
+ * Определяет, используется ли прозрачный navigation bar
+ * С прозрачным navigation bar контент может отображаться под ним
+ */
+export const hasTransparentNavigationBar = (): boolean => {
+  return Platform.OS === 'android';
+};
 
 /**
  * Получает высоту статус-бара на Android
@@ -21,16 +39,20 @@ export const getAndroidStatusBarHeight = (): number => {
 
 /**
  * Хук для получения безопасных отступов с учетом платформы
- * Применяет минимальные отступы только на Android
+ * Применяет минимальные отступы только на Android, учитывает прозрачный navigation bar
  */
 export const usePlatformSafeAreaInsets = () => {
   const insets = useSafeAreaInsets();
 
   if (Platform.OS === 'android') {
+    // С прозрачным navigation bar используем реальные insets от системы
+    // но добавляем минимальный отступ для комфорта использования
+    const minBottomInset = hasTransparentNavigationBar() ? 8 : 16;
+
     return {
       ...insets,
-      // На Android добавляем дополнительную проверку для navigation bar
-      bottom: Math.max(insets.bottom, 16), // минимум 16px для Android navigation bar
+      // На Android с прозрачным navigation bar используем системные insets + минимальный отступ
+      bottom: Math.max(insets.bottom, minBottomInset),
       top: Math.max(insets.top, getAndroidStatusBarHeight()),
     };
   }
@@ -62,12 +84,7 @@ export const getBottomTabBarStyle = (insets: ReturnType<typeof usePlatformSafeAr
       // Обеспечиваем белый фон под навигацией на Android
       backgroundColor: '#ffffff',
       borderBottomWidth: 0,
-      shadowColor: '#ffffff',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 1,
-      shadowRadius: 0,
-      elevation: 0,
-    };
+      shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, };
   }
 
   // На iOS используем только системные safe area insets
@@ -79,13 +96,16 @@ export const getBottomTabBarStyle = (insets: ReturnType<typeof usePlatformSafeAr
 
 /**
  * Получает стили для фиксированных элементов внизу экрана с дополнительным padding
- * Android: дополнительные отступы для navigation bar
+ * Android: учитывает прозрачный navigation bar + дополнительный отступ для маленьких экранов
  * iOS: минимальный отступ для комфорта использования
  */
 export const getFixedBottomStyle = (insets: ReturnType<typeof usePlatformSafeAreaInsets>, additionalPadding: number = 8) => {
   if (Platform.OS === 'android') {
+    // С прозрачным navigation bar используем системные insets
+    const baseBottomPadding = hasTransparentNavigationBar() ? insets.bottom : Math.max(insets.bottom, 16);
+    const smallScreenExtraPadding = isSmallScreen() ? 16 : 0; // дополнительные 16px для маленьких экранов
     return {
-      paddingBottom: Math.max(insets.bottom, 16) + additionalPadding,
+      paddingBottom: baseBottomPadding + additionalPadding + smallScreenExtraPadding,
     };
   }
 
@@ -118,12 +138,15 @@ export const getScrollViewContentStyle = (insets: ReturnType<typeof usePlatformS
 
 /**
  * Получает стили для контейнеров, которые должны быть прижаты к самому краю экрана
- * Android: учитывает navigation bar, iOS: прижимается к краю
+ * Android: учитывает прозрачный navigation bar + дополнительный отступ для маленьких экранов, iOS: прижимается к краю
  */
 export const getEdgeToEdgeBottomStyle = (insets: ReturnType<typeof usePlatformSafeAreaInsets>) => {
   if (Platform.OS === 'android') {
+    // С прозрачным navigation bar используем системные insets для правильного позиционирования
+    const baseBottomPadding = hasTransparentNavigationBar() ? insets.bottom : Math.max(insets.bottom, 16);
+    const smallScreenExtraPadding = isSmallScreen() ? 16 : 0; // дополнительные 16px для маленьких экранов
     return {
-      paddingBottom: Math.max(insets.bottom, 16), // минимум для Android navigation bar
+      paddingBottom: baseBottomPadding + smallScreenExtraPadding, // системные insets + дополнительный отступ
     };
   }
 
@@ -135,12 +158,15 @@ export const getEdgeToEdgeBottomStyle = (insets: ReturnType<typeof usePlatformSa
 
 /**
  * Получает стили для контейнеров с учетом safe area
- * Для экранов где контейнер должен учитывать safe area но без дополнительных отступов
+ * Для экранов где контейнер должен учитывать safe area + дополнительный отступ для маленьких экранов
  */
 export const getContainerBottomStyle = (insets: ReturnType<typeof usePlatformSafeAreaInsets>) => {
   if (Platform.OS === 'android') {
+    // С прозрачным navigation bar используем системные insets
+    const baseBottomPadding = hasTransparentNavigationBar() ? insets.bottom : Math.max(insets.bottom, 16);
+    const smallScreenExtraPadding = isSmallScreen() ? 16 : 0; // дополнительные 16px для маленьких экранов
     return {
-      paddingBottom: Math.max(insets.bottom, 16), // минимум для Android navigation bar
+      paddingBottom: baseBottomPadding + smallScreenExtraPadding, // системные insets + дополнительный отступ
     };
   }
 

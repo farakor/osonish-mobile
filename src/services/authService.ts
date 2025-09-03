@@ -74,17 +74,24 @@ class AuthService {
             userId: session.user?.id
           });
 
-          const { data, error } = await supabase.auth.setSession(session);
+          // Проверяем не истекла ли сессия
+          const now = Math.floor(Date.now() / 1000);
+          if (session.expires_at && session.expires_at > now) {
+            const { data, error } = await supabase.auth.setSession(session);
 
-          if (error) {
-            console.error('[AuthService] ❌ Ошибка восстановления Supabase сессии:', error.message);
-            await AsyncStorage.removeItem(STORAGE_KEYS.SUPABASE_SESSION);
-            console.log('[AuthService] 🗑️ Поврежденная сессия удалена');
-          } else {
-            console.log('[AuthService] ✅ Supabase сессия успешно восстановлена');
-            if (data.user) {
-              console.log('[AuthService] 👤 Supabase пользователь:', data.user.id);
+            if (error) {
+              console.error('[AuthService] ❌ Ошибка восстановления Supabase сессии:', error.message);
+              await AsyncStorage.removeItem(STORAGE_KEYS.SUPABASE_SESSION);
+              console.log('[AuthService] 🗑️ Поврежденная сессия удалена');
+            } else {
+              console.log('[AuthService] ✅ Supabase сессия успешно восстановлена');
+              if (data.user) {
+                console.log('[AuthService] 👤 Supabase пользователь:', data.user.id);
+              }
             }
+          } else {
+            console.log('[AuthService] ⏰ Supabase сессия истекла, удаляем...');
+            await AsyncStorage.removeItem(STORAGE_KEYS.SUPABASE_SESSION);
           }
         } catch (error) {
           console.error('[AuthService] ❌ Ошибка парсинга Supabase сессии:', error);
@@ -107,6 +114,13 @@ class AuthService {
             user
           };
           console.log(`[AuthService] ✅ Сессия восстановлена для пользователя: ${user.firstName} ${user.lastName}`);
+
+          // Пересоздаем Supabase Auth сессию если её нет
+          const currentSupabaseSession = await AsyncStorage.getItem(STORAGE_KEYS.SUPABASE_SESSION);
+          if (!currentSupabaseSession) {
+            console.log('[AuthService] 🔄 Пересоздаем Supabase Auth сессию...');
+            await this.createSupabaseAuthSession(user);
+          }
         } else {
           console.warn('[AuthService] ❌ Пользователь не найден в Supabase, очищаем сессию');
           // Сессия невалидна, очищаем
@@ -116,7 +130,14 @@ class AuthService {
         console.log('[AuthService] 💡 Пользовательская сессия не найдена');
       }
 
-      console.log('[AuthService] 🏁 Инициализация завершена');
+      // Финальная проверка состояния
+      const finalState = this.getAuthState();
+      console.log('[AuthService] 🏁 Инициализация завершена. Финальное состояние:', {
+        isAuthenticated: finalState.isAuthenticated,
+        hasUser: !!finalState.user,
+        userRole: finalState.user?.role,
+        userId: finalState.user?.id
+      });
     } catch (error) {
       console.error('[AuthService] ❌ Ошибка инициализации AuthService:', error);
       await this.clearSession();

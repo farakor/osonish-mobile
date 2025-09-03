@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking, Alert } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import LocationIcon from '../../../assets/card-icons/location.svg';
 import { useCustomerTranslation, useErrorsTranslation } from '../../hooks/useTranslation';
 

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -378,17 +379,9 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.md,
     marginBottom: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
     shadowColor: theme.colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -428,8 +421,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border + '30',
+    borderWidth: 0, borderColor: theme.colors.border + '30',
   },
   detailValue: {
     flexDirection: 'row',
@@ -454,8 +446,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border + '30',
+    borderWidth: 0, borderColor: theme.colors.border + '30',
   },
   statusBadge: {
     paddingHorizontal: theme.spacing.sm,

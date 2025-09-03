@@ -14,9 +14,13 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import type { RootStackParamList, City } from '../../types';
-import { LogoOsonish } from '../../components/common';
+import { LogoOsonish, AnimatedIcon } from '../../components/common';
 import { useAuthTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
+
+// Импортируем анимированную иконку пина
+const PinAnimation = require('../../../assets/pin.json');
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -133,6 +137,17 @@ export const CitySelectionScreen: React.FC = () => {
       activeOpacity={city.isAvailable ? 0.8 : 1}
       disabled={!city.isAvailable}
     >
+      <View style={styles.iconContainer}>
+        <AnimatedIcon
+          source={PinAnimation}
+          width={isSmallScreen ? 32 : 40}
+          height={isSmallScreen ? 32 : 40}
+          loop={true}
+          autoPlay={false}
+          speed={0.8}
+          isSelected={isSelected && city.isAvailable}
+        />
+      </View>
       <View style={styles.cityInfo}>
         <Text style={[
           styles.cityName,
@@ -258,49 +273,48 @@ const styles = StyleSheet.create({
     marginBottom: isSmallScreen ? theme.spacing.xl : theme.spacing.xxl,
   },
   cityCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     padding: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     position: 'relative',
-    shadowColor: theme.colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   cityCardSelected: {
-    borderColor: theme.colors.primary,
     backgroundColor: `${theme.colors.primary}08`,
-  },
+    borderWidth: 0, borderColor: theme.colors.primary,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   cityCardDisabled: {
-    backgroundColor: theme.colors.disabled + '20',
-    borderColor: theme.colors.disabled,
+    backgroundColor: '#F5F5F5',
+    shadowOpacity: 0, elevation: 0, },
+  iconContainer: {
+    width: isSmallScreen ? 48 : 56,
+    height: isSmallScreen ? 48 : 56,
+    backgroundColor: 'transparent',
+    borderRadius: isSmallScreen ? 24 : 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
   },
   cityInfo: {
     flex: 1,
   },
   cityName: {
-    fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.text.primary,
+    fontSize: isSmallScreen ? 16 : 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
   },
   cityNameSelected: {
-    color: theme.colors.primary,
+    color: '#1A1A1A',
   },
   cityNameDisabled: {
     color: theme.colors.text.disabled,
   },
   unavailableText: {
-    fontSize: theme.fonts.sizes.xs,
-    color: theme.colors.text.secondary,
+    fontSize: 12,
+    color: '#8E8E93',
     marginTop: theme.spacing.xs,
   },
   checkmark: {

@@ -24,11 +24,13 @@ import Animated, {
 } from 'react-native-reanimated';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { theme } from '../../constants';
+import { noElevationStyles } from '../../utils/noShadowStyles';
 import * as ImagePicker from 'expo-image-picker';
 import Svg, { Path } from 'react-native-svg';
 import CalendarDateIcon from '../../../assets/calendar-date.svg';
 import NoImagePlaceholder from '../../../assets/no-image-placeholder.svg';
 import PlusIcon from '../../../assets/plus.svg';
+import PaperIcon from '../../../assets/paper.svg';
 import { useAuthTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 
 
@@ -42,7 +44,7 @@ import {
   AnimatedNavigationButton,
   AnimatedInteractiveContainer,
 } from '../../components/common/AnimatedComponents';
-import { CustomPrivacyModal, LogoOsonish } from '../../components/common';
+import { WebViewModal, LogoOsonish } from '../../components/common';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -89,7 +91,15 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [animationResetKey, setAnimationResetKey] = useState(0);
-  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [webViewModal, setWebViewModal] = useState<{
+    visible: boolean;
+    url: string;
+    title: string;
+  }>({
+    visible: false,
+    url: '',
+    title: '',
+  });
 
   // Состояния фокуса для полей ввода
   const [lastNameFocused, setLastNameFocused] = useState(false);
@@ -103,6 +113,22 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
     styles.stepInput,
     isFocused && styles.stepInputFocused,
   ];
+
+  const handleOpenWebView = (url: string, title: string) => {
+    setWebViewModal({
+      visible: true,
+      url,
+      title,
+    });
+  };
+
+  const handleCloseWebView = () => {
+    setWebViewModal({
+      visible: false,
+      url: '',
+      title: '',
+    });
+  };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     if (Platform.OS === 'android') {
@@ -476,9 +502,15 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                 <View style={styles.privacySection}>
                   <TouchableOpacity
                     style={styles.privacyDocumentButton}
-                    onPress={() => setShowPrivacyModal(true)}
+                    onPress={() => handleOpenWebView('https://oson-ish.uz/privacy-policy.html', t('privacy_document_title'))}
                   >
-                    <Text style={styles.privacyDocumentIcon}>📄</Text>
+                    <View style={styles.privacyDocumentIconContainer}>
+                      <PaperIcon
+                        width={isSmallScreen ? 28 : 32}
+                        height={isSmallScreen ? 28 : 32}
+                        fill={theme.colors.primary}
+                      />
+                    </View>
                     <View style={styles.privacyDocumentContent}>
                       <Text style={styles.privacyDocumentTitle}>{t('privacy_document_title')}</Text>
                     </View>
@@ -622,11 +654,11 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
           )}
 
           {/* Privacy Policy Modal */}
-          <CustomPrivacyModal
-            visible={showPrivacyModal}
-            onClose={() => setShowPrivacyModal(false)}
-            onAccept={() => { }}
-            privacyAccepted={privacyAccepted}
+          <WebViewModal
+            visible={webViewModal.visible}
+            url={webViewModal.url}
+            title={webViewModal.title}
+            onClose={handleCloseWebView}
           />
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -693,8 +725,7 @@ const styles = StyleSheet.create({
   },
   stepInput: {
     backgroundColor: theme.colors.surface,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.lg,
     paddingHorizontal: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
     paddingVertical: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
@@ -708,11 +739,7 @@ const styles = StyleSheet.create({
   stepInputFocused: {
     borderColor: theme.colors.primary,
     shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   photoSection: {
     alignItems: 'center',
     paddingVertical: isSmallScreen ? theme.spacing.md : theme.spacing.xl,
@@ -748,8 +775,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: theme.colors.background,
+    borderWidth: 0, borderColor: theme.colors.background,
   },
 
   addPhotoTextButton: {
@@ -766,8 +792,7 @@ const styles = StyleSheet.create({
   },
   changePhotoButton: {
     backgroundColor: theme.colors.surface,
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
+    borderWidth: 0, borderColor: theme.colors.primary,
     borderRadius: theme.borderRadius.md,
     paddingVertical: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
     paddingHorizontal: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
@@ -779,8 +804,7 @@ const styles = StyleSheet.create({
   },
   dateSelector: {
     backgroundColor: theme.colors.surface,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.lg,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.lg,
@@ -801,26 +825,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
   },
   privacyDocumentButton: {
-    backgroundColor: theme.colors.surface,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     padding: theme.spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: theme.spacing.lg,
-  },
-  privacyDocumentIcon: {
-    fontSize: 32,
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+  privacyDocumentIconContainer: {
+    width: isSmallScreen ? 44 : 48,
+    height: isSmallScreen ? 44 : 48,
+    backgroundColor: 'transparent',
+    borderRadius: isSmallScreen ? 22 : 24,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: theme.spacing.md,
   },
   privacyDocumentContent: {
     flex: 1,
   },
   privacyDocumentTitle: {
-    fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.text.primary,
+    fontSize: isSmallScreen ? 16 : 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
     marginBottom: 4,
   },
   privacyDocumentSubtitle: {
@@ -830,7 +857,7 @@ const styles = StyleSheet.create({
   },
   privacyDocumentArrow: {
     fontSize: 24,
-    color: theme.colors.text.secondary,
+    color: '#8E8E93',
     marginLeft: theme.spacing.sm,
   },
   privacyCheckboxContainer: {
@@ -843,8 +870,7 @@ const styles = StyleSheet.create({
   privacyCheckboxBox: {
     width: 24,
     height: 24,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
+    borderWidth: 0, borderColor: theme.colors.border,
     borderRadius: 6,
     marginRight: theme.spacing.md,
     alignItems: 'center',
@@ -898,12 +924,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: theme.borderRadius.lg,
     paddingTop: theme.spacing.md,
     paddingBottom: Platform.OS === 'ios' ? theme.spacing.xl : 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   datePickerHeader: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -932,12 +953,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.xl,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 8,
-  },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
   loadingText: {
     marginTop: theme.spacing.md,
     fontSize: theme.fonts.sizes.md,
