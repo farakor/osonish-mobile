@@ -168,11 +168,11 @@ class NotificationService {
       }
 
       // Инициализируем Firebase
-      initializeFirebase();
+      await initializeFirebase();
 
-      // Для Android в production - пробуем получить FCM токен
-      if (Platform.OS === 'android' && !__DEV__) {
-        console.log('[NotificationService] 🔥 Попытка получить FCM токен для Android production...');
+      // Для Android - всегда пробуем получить FCM токен (в production это будет настоящий FCM)
+      if (Platform.OS === 'android') {
+        console.log('[NotificationService] 🔥 Попытка получить FCM токен для Android...');
         const fcmToken = await getFCMToken();
         if (fcmToken) {
           console.log('[NotificationService] ✅ FCM токен получен для Android');

@@ -145,7 +145,7 @@ export const OrderLocationMap: React.FC<OrderLocationMapProps> = ({
             onPress={openInMaps}
             activeOpacity={0.8}
           >
-            <LocationIcon width={18} height={18} color={theme.colors.primary} style={styles.buttonIcon} />
+            <LocationIcon width={18} height={18} color="#679B00" style={styles.buttonIcon} />
             <Text style={styles.routeButtonText}>{t('build_route')}</Text>
           </TouchableOpacity>
         </View>
@@ -156,8 +156,8 @@ export const OrderLocationMap: React.FC<OrderLocationMapProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 24,
-    marginBottom: 24,
+    marginHorizontal: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
   },
   title: {
     fontSize: 18,
@@ -169,11 +169,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
   webViewMap: {
     height: 200,
@@ -181,7 +177,9 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 16,
   },
   addressSection: {
-    padding: 16,
+    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   addressText: {
     fontSize: 14,
@@ -192,16 +190,24 @@ const styles = StyleSheet.create({
   routeButton: {
     backgroundColor: '#FFFFFF',
     borderWidth: 2,
-    borderColor: theme.colors.primary,
-    paddingVertical: 14,
+    borderColor: '#679B00',
+    paddingVertical: 16,
     paddingHorizontal: 20,
-    borderRadius: 12,
+    marginHorizontal: 0,
+    marginTop: 0,
+    marginBottom: 0,
+    borderRadius: 16,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
+    shadowColor: '#679B00',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   routeButtonText: {
-    color: theme.colors.primary,
+    color: '#679B00',
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,

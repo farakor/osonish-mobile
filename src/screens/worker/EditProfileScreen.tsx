@@ -46,6 +46,11 @@ export const EditProfileScreen: React.FC = () => {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
+  // Состояния фокуса для полей ввода
+  const [firstNameFocused, setFirstNameFocused] = useState(false);
+  const [lastNameFocused, setLastNameFocused] = useState(false);
+  const [middleNameFocused, setMiddleNameFocused] = useState(false);
+
   useEffect(() => {
     loadUserProfile();
   }, []);
@@ -206,6 +211,12 @@ export const EditProfileScreen: React.FC = () => {
     return first + last || 'У';
   };
 
+  // Функция для получения стиля контейнера поля ввода с учетом фокуса
+  const getInputContainerStyle = (isFocused: boolean) => [
+    styles.inputContainer,
+    isFocused && styles.inputFocused,
+  ];
+
   const hasChanges = (): boolean => {
     if (!user) return false;
 
@@ -250,7 +261,12 @@ export const EditProfileScreen: React.FC = () => {
 
       <HeaderWithBack title={tWorker('edit_profile_title')} />
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.scrollViewContent}
+      >
         {/* Profile Photo Section */}
         <View style={styles.photoSection}>
           <View style={styles.photoContainer}>
@@ -264,7 +280,7 @@ export const EditProfileScreen: React.FC = () => {
               </View>
             )}
             <TouchableOpacity style={styles.editPhotoButton} onPress={pickImage}>
-              <PlusIcon size={16} color="#FFFFFF" />
+              <PlusIcon size={16} color="#679B00" />
             </TouchableOpacity>
           </View>
         </View>
@@ -290,11 +306,16 @@ export const EditProfileScreen: React.FC = () => {
             <Text style={styles.label}>{tWorker('last_name')}</Text>
             <View style={styles.inputContainer}>
               <TextInput
-                style={styles.input}
+                style={[styles.input, lastNameFocused && { borderColor: '#679B00', backgroundColor: '#F0F8FF' }]}
                 value={lastName}
                 onChangeText={setLastName}
                 placeholder="Иванов"
                 placeholderTextColor="#C7C7CC"
+                autoCapitalize="words"
+                returnKeyType="next"
+                editable={true}
+                onFocus={() => setLastNameFocused(true)}
+                onBlur={() => setLastNameFocused(false)}
               />
             </View>
           </View>
@@ -304,11 +325,16 @@ export const EditProfileScreen: React.FC = () => {
             <Text style={styles.label}>{tWorker('first_name')}</Text>
             <View style={styles.inputContainer}>
               <TextInput
-                style={styles.input}
+                style={[styles.input, firstNameFocused && { borderColor: '#679B00', backgroundColor: '#F0F8FF' }]}
                 value={firstName}
                 onChangeText={setFirstName}
                 placeholder="Иван"
                 placeholderTextColor="#C7C7CC"
+                autoCapitalize="words"
+                returnKeyType="next"
+                editable={true}
+                onFocus={() => setFirstNameFocused(true)}
+                onBlur={() => setFirstNameFocused(false)}
               />
             </View>
           </View>
@@ -318,11 +344,16 @@ export const EditProfileScreen: React.FC = () => {
             <Text style={styles.label}>{tWorker('middle_name')}</Text>
             <View style={styles.inputContainer}>
               <TextInput
-                style={styles.input}
+                style={[styles.input, middleNameFocused && { borderColor: '#679B00', backgroundColor: '#F0F8FF' }]}
                 value={middleName}
                 onChangeText={setMiddleName}
                 placeholder="Иванович"
                 placeholderTextColor="#C7C7CC"
+                autoCapitalize="words"
+                returnKeyType="done"
+                editable={true}
+                onFocus={() => setMiddleNameFocused(true)}
+                onBlur={() => setMiddleNameFocused(false)}
               />
             </View>
           </View>
@@ -331,10 +362,10 @@ export const EditProfileScreen: React.FC = () => {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>{tWorker('birth_date')}</Text>
             <TouchableOpacity
-              style={styles.inputContainer}
+              style={styles.dateInputContainer}
               onPress={() => setShowDatePicker(true)}
             >
-              <Text style={[styles.input, styles.dateInput]}>
+              <Text style={styles.dateInput}>
                 {birthDate ? formatDate(birthDate) : tWorker('select_birth_date_placeholder')}
               </Text>
             </TouchableOpacity>
@@ -430,6 +461,10 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  scrollViewContent: {
+    flexGrow: 1,
+    paddingBottom: isSmallScreen() ? 100 : 120,
+  },
 
   // Photo Section
   photoSection: {
@@ -464,10 +499,17 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#679B00',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 0, borderColor: 'transparent', },
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
 
 
   // Form
@@ -484,27 +526,44 @@ const styles = StyleSheet.create({
     marginBottom: isSmallScreen() ? 6 : 8,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingHorizontal: isSmallScreen() ? 12 : 16,
-    paddingVertical: 16,
-    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    // Простой контейнер без стилей, чтобы не мешать фокусу
+  },
   input: {
     flex: 1,
     fontSize: isSmallScreen() ? 14 : 16,
     color: '#1A1A1A',
     paddingRight: 12,
-    paddingVertical: 0, // Убираем дефолтный padding чтобы высота совпадала с полем даты
+    borderWidth: 1,
+    borderColor: '#D5D7DA',
+    borderRadius: 12,
+    paddingHorizontal: isSmallScreen() ? 12 : 16,
+    paddingVertical: 16,
+    backgroundColor: '#FFFFFF',
+  },
+  inputFocused: {
+    borderColor: '#679B00',
+    backgroundColor: '#F0F8FF',
+    shadowColor: '#679B00',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   inputDisabled: {
     color: '#8E8E93',
     backgroundColor: 'transparent',
   },
+  dateInputContainer: {
+    borderWidth: 1,
+    borderColor: '#D5D7DA',
+    borderRadius: 12,
+    paddingHorizontal: isSmallScreen() ? 12 : 16,
+    paddingVertical: 16,
+    backgroundColor: '#FFFFFF',
+  },
   dateInput: {
-    // Поле даты использует тот же padding что и inputContainer, без дополнительного padding
-    paddingVertical: 0,
+    fontSize: isSmallScreen() ? 14 : 16,
+    color: '#1A1A1A',
   },
 
   // Bottom Section
@@ -520,16 +579,19 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
     // Убираем тени для чистого вида
-    elevation: 0, shadowOpacity: 0, },
+    elevation: 0, shadowOpacity: 0,
+  },
   saveButton: {
     backgroundColor: '#679B00',
     borderRadius: 12,
     paddingVertical: isSmallScreen() ? 12 : 16,
     alignItems: 'center',
-    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+  },
   saveButtonDisabled: {
     backgroundColor: '#C7C7CC',
-    shadowOpacity: 0, elevation: 0, },
+    shadowOpacity: 0, elevation: 0,
+  },
   saveButtonText: {
     fontSize: isSmallScreen() ? 14 : 16,
     fontWeight: '700',
@@ -548,7 +610,8 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 16,
     paddingTop: 16,
     paddingBottom: Platform.OS === 'ios' ? 40 : 0,
-    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+  },
   datePickerHeader: {
     flexDirection: 'row',
     justifyContent: 'flex-end',

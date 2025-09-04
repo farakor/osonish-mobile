@@ -19,7 +19,7 @@ import { noElevationStyles } from '../../utils/noShadowStyles';
 import { usePlatformSafeAreaInsets, getFixedBottomStyle, getContainerBottomStyle, isSmallScreen } from '../../utils/safeAreaUtils';
 import { notificationService, NotificationSettings } from '../../services/notificationService';
 import { authService } from '../../services/authService';
-import { HeaderWithBack, LanguageSwitcher } from '../../components/common';
+import { HeaderWithBack, LanguageRadioSelector } from '../../components/common';
 import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -139,12 +139,10 @@ export const NotificationsScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Language Switcher */}
+          {/* Language Selection */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Язык / Til</Text>
-            <View style={styles.inputContainer}>
-              <LanguageSwitcher showLabel={false} />
-            </View>
+            <LanguageRadioSelector />
           </View>
 
           {/* Info Section */}
@@ -208,7 +206,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: isSmallScreen() ? 16 : 20,
     paddingVertical: isSmallScreen() ? 16 : 20,
-    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+  },
 
   // Switch specific styles
   switchContainer: {
@@ -241,7 +240,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F8E9',
     borderRadius: 12,
     padding: isSmallScreen() ? 12 : 16,
-    borderWidth: 0, borderColor: 'transparent', },
+    borderWidth: 0, borderColor: 'transparent',
+  },
   infoIcon: {
     fontSize: 16,
     marginRight: 12,
@@ -267,16 +267,19 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
     // Убираем тени для чистого вида
-    elevation: 0, shadowOpacity: 0, },
+    elevation: 0, shadowOpacity: 0,
+  },
   saveButton: {
     backgroundColor: '#679B00',
     borderRadius: 12,
     paddingVertical: isSmallScreen() ? 12 : 16,
     alignItems: 'center',
-    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+  },
   saveButtonDisabled: {
     backgroundColor: '#C7C7CC',
-    shadowOpacity: 0, elevation: 0, },
+    shadowOpacity: 0, elevation: 0,
+  },
   saveButtonText: {
     fontSize: isSmallScreen() ? 14 : 16,
     fontWeight: '700',

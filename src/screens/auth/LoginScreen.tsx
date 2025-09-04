@@ -47,6 +47,7 @@ export function LoginScreen() {
   const tError = useErrorsTranslation();
   const [phoneNumber, setPhoneNumber] = useState('+998');
   const [isLoading, setIsLoading] = useState(false);
+  const [isPhoneFocused, setIsPhoneFocused] = useState(false);
 
   const handlePhoneChange = (text: string) => {
     // Если пользователь удаляет до '+998' или меньше, всегда оставлять только '+998'
@@ -133,7 +134,10 @@ export function LoginScreen() {
           <View style={styles.inputSection}>
             <Text style={styles.inputLabel}>Номер телефона</Text>
             <TextInput
-              style={styles.phoneInput}
+              style={[
+                styles.phoneInput,
+                isPhoneFocused && styles.phoneInputFocused
+              ]}
               value={phoneNumber}
               onChangeText={handlePhoneChange}
               placeholder="+998 (XX) XXX-XX-XX"
@@ -141,6 +145,8 @@ export function LoginScreen() {
               keyboardType="phone-pad"
               maxLength={20}
               autoFocus
+              onFocus={() => setIsPhoneFocused(true)}
+              onBlur={() => setIsPhoneFocused(false)}
             />
             <Text style={styles.inputHint}>
               Введите номер телефона, который вы использовали при регистрации
@@ -213,7 +219,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+  },
 
   titleSection: {
     marginBottom: isSmallScreen ? theme.spacing.xl : theme.spacing.xxxl,
@@ -240,12 +247,21 @@ const styles = StyleSheet.create({
   },
   phoneInput: {
     height: isSmallScreen ? 48 : 56,
-    borderWidth: 0, borderColor: theme.colors.border,
+    borderWidth: 2,
+    borderColor: '#F6F7F9',
     borderRadius: 12,
     paddingHorizontal: theme.spacing.md,
     fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,
     color: theme.colors.text.primary,
     backgroundColor: theme.colors.background,
+  },
+  phoneInputFocused: {
+    borderColor: '#679B00',
+    shadowColor: '#679B00',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   inputHint: {
     fontSize: theme.fonts.sizes.sm,
@@ -261,10 +277,12 @@ const styles = StyleSheet.create({
     minHeight: isSmallScreen ? 48 : 56,
     marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.xl,
     shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+  },
   continueButtonDisabled: {
     backgroundColor: theme.colors.surface,
-    shadowOpacity: 0, elevation: 0, },
+    shadowOpacity: 0, elevation: 0,
+  },
   continueButtonText: {
     fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,
     fontWeight: theme.fonts.weights.semiBold,

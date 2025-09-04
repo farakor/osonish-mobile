@@ -306,8 +306,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 4,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
+    borderWidth: 2,
+    borderColor: '#F6F7F9',
     // Отключаем системные эффекты нажатия на Android
     ...Platform.select({
       android: {

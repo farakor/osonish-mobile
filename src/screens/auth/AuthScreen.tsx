@@ -183,10 +183,17 @@ const styles = StyleSheet.create({
   primaryButton: {
     backgroundColor: theme.colors.primary,
     shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+  },
   secondaryButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 0, borderColor: theme.colors.border,
+    backgroundColor: '#F6F7F9',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
   primaryButtonText: {
     fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,

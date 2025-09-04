@@ -1,19 +1,5 @@
-import { Platform, StatusBar } from 'react-native';
-
-// Безопасный импорт библиотеки
-let NavigationBar: any = null;
-try {
-  // Пробуем разные способы импорта
-  const navigationBarModule = require('react-native-navigation-bar-color');
-  NavigationBar = navigationBarModule.default || navigationBarModule;
-
-  // Если это именованный экспорт
-  if (!NavigationBar && navigationBarModule.setNavigationBarColor) {
-    NavigationBar = navigationBarModule;
-  }
-} catch (error) {
-  console.warn('[NavigationBar] ⚠️ Библиотека react-native-navigation-bar-color не найдена или не совместима:', error);
-}
+import { Platform } from 'react-native';
+import * as NavigationBar from 'expo-navigation-bar';
 
 /**
  * Утилиты для управления Android Navigation Bar
@@ -27,22 +13,9 @@ export const setupTransparentNavigationBar = async (): Promise<void> => {
     return;
   }
 
-  if (!NavigationBar || typeof NavigationBar.setNavigationBarColor !== 'function') {
-    console.warn('[NavigationBar] ⚠️ setNavigationBarColor недоступен, используем fallback');
-    // Fallback: используем StatusBar API для базовой настройки
-    try {
-      StatusBar.setTranslucent(true);
-      StatusBar.setBackgroundColor('transparent', true);
-      console.log('[NavigationBar] ✅ Использован fallback через StatusBar API');
-    } catch (fallbackError) {
-      console.error('[NavigationBar] ❌ Fallback также не работает:', fallbackError);
-    }
-    return;
-  }
-
   try {
     // Делаем navigation bar прозрачным
-    await NavigationBar.setNavigationBarColor('transparent', true, true);
+    await NavigationBar.setBackgroundColorAsync('transparent');
     console.log('[NavigationBar] ✅ Navigation bar установлен как прозрачный');
   } catch (error) {
     console.error('[NavigationBar] ❌ Ошибка настройки navigation bar:', error);
@@ -57,25 +30,8 @@ export const setNavigationBarColor = async (color: string, light: boolean = true
     return;
   }
 
-  if (!NavigationBar || typeof NavigationBar.setNavigationBarColor !== 'function') {
-    console.warn('[NavigationBar] ⚠️ setNavigationBarColor недоступен, используем fallback');
-    // Fallback: используем StatusBar API
-    try {
-      if (color === 'transparent') {
-        StatusBar.setTranslucent(true);
-        StatusBar.setBackgroundColor('transparent', true);
-      } else {
-        StatusBar.setBackgroundColor(color, light);
-      }
-      console.log(`[NavigationBar] ✅ Использован fallback через StatusBar API: ${color}`);
-    } catch (fallbackError) {
-      console.error('[NavigationBar] ❌ Fallback также не работает:', fallbackError);
-    }
-    return;
-  }
-
   try {
-    await NavigationBar.setNavigationBarColor(color, light, true);
+    await NavigationBar.setBackgroundColorAsync(color);
     console.log(`[NavigationBar] ✅ Navigation bar цвет установлен: ${color}`);
   } catch (error) {
     console.error('[NavigationBar] ❌ Ошибка установки цвета navigation bar:', error);
@@ -90,13 +46,8 @@ export const hideNavigationBar = async (): Promise<void> => {
     return;
   }
 
-  if (!NavigationBar || typeof NavigationBar.hideNavigationBar !== 'function') {
-    console.warn('[NavigationBar] ⚠️ hideNavigationBar недоступен');
-    return;
-  }
-
   try {
-    await NavigationBar.hideNavigationBar();
+    await NavigationBar.setVisibilityAsync('hidden');
     console.log('[NavigationBar] ✅ Navigation bar скрыт');
   } catch (error) {
     console.error('[NavigationBar] ❌ Ошибка скрытия navigation bar:', error);
@@ -111,13 +62,8 @@ export const showNavigationBar = async (): Promise<void> => {
     return;
   }
 
-  if (!NavigationBar || typeof NavigationBar.showNavigationBar !== 'function') {
-    console.warn('[NavigationBar] ⚠️ showNavigationBar недоступен');
-    return;
-  }
-
   try {
-    await NavigationBar.showNavigationBar();
+    await NavigationBar.setVisibilityAsync('visible');
     console.log('[NavigationBar] ✅ Navigation bar показан');
   } catch (error) {
     console.error('[NavigationBar] ❌ Ошибка показа navigation bar:', error);

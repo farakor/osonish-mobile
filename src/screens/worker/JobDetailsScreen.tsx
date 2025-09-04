@@ -961,14 +961,14 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     flex: 1, // Используем flex для равномерного распределения
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#F6F7F9',
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.md,
     alignItems: 'center',
   },
   infoCardFullWidth: {
     flexBasis: '100%', // Карточка на всю ширину
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#F6F7F9',
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.md,
     alignItems: 'center',
@@ -1150,11 +1150,8 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 2,
+    borderColor: '#F6F7F9',
   },
   amenitiesContainer: {
     gap: theme.spacing.md,

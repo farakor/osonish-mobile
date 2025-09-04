@@ -1318,8 +1318,9 @@ const styles = StyleSheet.create({
     marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
   },
   stepInput: {
-    backgroundColor: theme.colors.surface,
-    borderWidth: 0, borderColor: theme.colors.border,
+    backgroundColor: '#F6F7F9',
+    borderWidth: 2,
+    borderColor: '#F6F7F9',
     borderRadius: theme.borderRadius.lg,
     paddingHorizontal: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
     paddingVertical: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
@@ -1331,9 +1332,13 @@ const styles = StyleSheet.create({
     }),
   },
   stepInputFocused: {
-    borderColor: theme.colors.primary,
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+    borderColor: '#679B00',
+    backgroundColor: '#F0F8FF',
+    shadowColor: '#679B00',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   textArea: {
     height: isSmallScreen ? 80 : 120,

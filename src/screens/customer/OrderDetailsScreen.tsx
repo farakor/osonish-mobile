@@ -937,7 +937,7 @@ export const OrderDetailsScreen: React.FC = () => {
             {/* Информация исполнителя */}
             <View style={styles.modernApplicantInfo}>
               <View style={styles.modernNameRow}>
-                <Text style={[styles.modernApplicantName, isRejected && styles.rejectedText]}>
+                <Text style={[styles.modernApplicantName, isRejected && styles.rejectedText]} numberOfLines={1} ellipsizeMode="tail">
                   {item.workerName}
                 </Text>
                 {isAccepted && (
@@ -946,6 +946,28 @@ export const OrderDetailsScreen: React.FC = () => {
                   </View>
                 )}
               </View>
+
+              {/* Цена отклика - размещена отдельно под ФИО */}
+              {item.proposedPrice && (
+                <View style={styles.modernPriceUnderName}>
+                  <Text style={[styles.modernPriceUnderNameValue, isAccepted && styles.modernPriceValueAccepted, isRejected && styles.rejectedText]}>
+                    {formatPrice(item.proposedPrice)} сум
+                  </Text>
+                  {order && item.proposedPrice !== order.budget && (
+                    <View style={[
+                      styles.modernPriceDiffBadgeInline,
+                      { backgroundColor: item.proposedPrice > order.budget ? '#FFE6E6' : '#E6F7F6' }
+                    ]}>
+                      <Text style={[
+                        styles.modernPriceDiffTextInline,
+                        { color: item.proposedPrice > order.budget ? '#FF4444' : '#4ECDC4' }
+                      ]}>
+                        {item.proposedPrice > order.budget ? '+' : ''}{formatPrice(item.proposedPrice - order.budget)}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
 
               <View style={styles.modernStatsRow}>
                 <View style={styles.modernStatItem}>
@@ -968,39 +990,6 @@ export const OrderDetailsScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Предложенная цена */}
-          {item.proposedPrice && (
-            <View style={[
-              styles.modernPriceContainer,
-              isAccepted && styles.modernPriceContainerAccepted
-            ]}>
-              <View style={styles.modernPriceHeader}>
-                <Text style={[styles.modernPriceLabel, isRejected && styles.rejectedText]}>
-                  {t('proposed_price')}
-                </Text>
-                {order && item.proposedPrice !== order.budget && (
-                  <View style={[
-                    styles.modernPriceDiffBadge,
-                    { backgroundColor: item.proposedPrice > order.budget ? '#FFE6E6' : '#E6F7F6' }
-                  ]}>
-                    <Text style={[
-                      styles.modernPriceDiffText,
-                      { color: item.proposedPrice > order.budget ? '#FF4444' : '#4ECDC4' }
-                    ]}>
-                      {item.proposedPrice > order.budget ? '+' : ''}{formatPrice(item.proposedPrice - order.budget)}
-                    </Text>
-                  </View>
-                )}
-              </View>
-              <Text style={[
-                styles.modernPriceValue,
-                isAccepted && styles.modernPriceValueAccepted,
-                isRejected && styles.rejectedText
-              ]}>
-                {formatPrice(item.proposedPrice)} сум
-              </Text>
-            </View>
-          )}
 
           {/* Комментарий исполнителя */}
           {item.message && item.message.trim() && (
@@ -1238,7 +1227,11 @@ export const OrderDetailsScreen: React.FC = () => {
 
           {/* Краткий обзор откликов */}
           {applicants.length > 0 && (
-            <View style={styles.applicantsSection}>
+            <TouchableOpacity
+              style={styles.applicantsSection}
+              onPress={() => navigation.navigate('ApplicantsList', { orderId: orderId, currentUser: currentUser || undefined })}
+              activeOpacity={0.8}
+            >
               <View style={styles.applicantsHeader}>
                 <Text style={styles.applicantsTitle}>{t('applicants_count', { count: applicants.length })}</Text>
                 {order?.workersNeeded && (
@@ -1321,24 +1314,23 @@ export const OrderDetailsScreen: React.FC = () => {
                           <View style={styles.modernPreviewNameRow}>
                             <Text style={styles.modernPreviewName}>{item.workerName}</Text>
                           </View>
+                          <View style={styles.modernPreviewPriceRow}>
+                            <Text style={styles.modernPreviewPrice}>
+                              {Math.round(item.proposedPrice || 0).toLocaleString()} сум
+                            </Text>
+                          </View>
                           {item.status === 'accepted' && (
                             <View style={styles.modernPreviewSelectedBadge}>
                               <Text style={styles.modernPreviewSelectedBadgeText}>{t('selected_badge')}</Text>
                             </View>
                           )}
                         </View>
-
-                        <View style={styles.modernPreviewPriceContainer}>
-                          <Text style={styles.modernPreviewPrice}>
-                            {Math.round(item.proposedPrice || 0).toLocaleString()} сум
-                          </Text>
-                        </View>
                       </View>
                     </View>
                   </Animated.View>
                 );
               })}
-            </View>
+            </TouchableOpacity>
           )}
 
           {/* Если откликов нет */}
@@ -1669,14 +1661,14 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     flex: 1, // Используем flex для равномерного распределения
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#F6F7F9',
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.md,
     alignItems: 'center',
   },
   infoCardFullWidth: {
     flexBasis: '100%', // Карточка на всю ширину
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#F6F7F9',
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.md,
     alignItems: 'center',
@@ -1721,8 +1713,13 @@ const styles = StyleSheet.create({
 
   // Applicants Section
   applicantsSection: {
-    paddingHorizontal: theme.spacing.lg,
+    backgroundColor: '#F6F7F9',
+    marginHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    borderWidth: 2,
+    borderColor: '#679B00',
   },
   applicantsHeader: {
     flexDirection: 'column',
@@ -1839,18 +1836,19 @@ const styles = StyleSheet.create({
 
   // Новые современные стили для откликов
   modernApplicantCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F6F7F9',
     borderRadius: 16,
     marginBottom: theme.spacing.lg,
     overflow: 'hidden',
-    elevation: 0, shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, borderWidth: 0, borderColor: 'transparent',
+    elevation: 0, shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, borderWidth: 2, borderColor: '#679B00',
   },
   modernAcceptedCard: {
-    borderColor: 'transparent', borderWidth: 0, backgroundColor: '#FAFFFE',
+    borderColor: '#679B00', borderWidth: 2, backgroundColor: '#F6F7F9',
   },
   modernRejectedCard: {
     opacity: 0.7,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F6F7F9',
+    borderColor: '#679B00', borderWidth: 2,
   },
   modernStatusBarAccepted: {
     height: 4,
@@ -1862,7 +1860,10 @@ const styles = StyleSheet.create({
   },
 
   modernCardContent: {
-    padding: 16,
+    paddingTop: 16,
+    paddingBottom: 16,
+    paddingLeft: 8,
+    paddingRight: 8,
     minHeight: 140,
   },
   modernApplicantHeader: {
@@ -1912,19 +1913,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 6,
+    flexWrap: 'wrap',
   },
   modernApplicantName: {
     fontSize: 20,
     fontWeight: '800',
     color: '#1A1A1A',
     lineHeight: 24,
+    flexShrink: 1,
+    marginRight: 8,
   },
   modernSelectedBadge: {
     backgroundColor: '#679B00',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 12,
-    marginLeft: 8,
+    flexShrink: 0,
   },
   modernSelectedBadgeText: {
     fontSize: 10,
@@ -2006,6 +2010,27 @@ const styles = StyleSheet.create({
   },
   modernPriceValueAccepted: {
     color: '#679B00',
+  },
+  modernPriceUnderName: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    marginBottom: 8,
+  },
+  modernPriceUnderNameValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginRight: 8,
+  },
+  modernPriceDiffBadgeInline: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  modernPriceDiffTextInline: {
+    fontSize: 10,
+    fontWeight: '600',
   },
   modernMessageContainer: {
     backgroundColor: '#F8FAFC',
@@ -2091,18 +2116,23 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
-    elevation: 0, shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, borderWidth: 0, borderColor: 'transparent',
+    elevation: 0, shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0,
+    borderWidth: 2,
+    borderColor: '#F6F7F9',
+    paddingLeft: 16,
   },
   modernPreviewAccepted: {
-    borderColor: 'transparent', backgroundColor: '#FAFFFE',
+    borderColor: '#F6F7F9',
+    backgroundColor: '#FAFFFE',
   },
   modernPreviewRejected: {
     opacity: 0.7,
     backgroundColor: '#F8F9FA',
+    borderColor: '#F6F7F9',
   },
 
   modernPreviewContent: {
-    padding: 16,
+    padding: 0,
     minHeight: 100,
     justifyContent: 'center',
   },
@@ -2156,6 +2186,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 3,
   },
+  modernPreviewPriceRow: {
+    marginBottom: 6,
+  },
   modernPreviewName: {
     fontSize: 18,
     fontWeight: '800',
@@ -2180,14 +2213,17 @@ const styles = StyleSheet.create({
   },
 
   modernPreviewPriceContainer: {
-    alignItems: 'center',
+    alignItems: 'flex-end',
     justifyContent: 'center',
+    marginLeft: 'auto',
+    paddingLeft: 0,
+    minWidth: 100,
   },
   modernPreviewPrice: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 14,
+    fontWeight: '600',
     color: '#679B00',
-    textAlign: 'center',
+    textAlign: 'left',
   },
 
   applicantHeader: {
@@ -2489,11 +2525,14 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.semiBold,
   },
   noApplicantsSection: {
+    backgroundColor: theme.colors.white,
     marginHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.lg,
     alignItems: 'center',
-    borderWidth: 0, borderColor: 'transparent', borderRadius: theme.borderRadius.lg,
+    borderWidth: 2,
+    borderColor: '#F6F7F9',
   },
   noApplicantsIcon: {
     width: 80,
@@ -2708,11 +2747,8 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 2,
+    borderColor: '#F6F7F9',
   },
   amenitiesContainer: {
     gap: theme.spacing.md,

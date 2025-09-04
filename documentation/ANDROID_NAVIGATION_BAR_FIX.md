@@ -59,6 +59,11 @@ return (
 
 ## Технические детали
 
+### Библиотеки для Navigation Bar
+- **Используется**: `expo-navigation-bar` - официальная библиотека Expo для управления Android navigation bar
+- **Заменена**: `react-native-navigation-bar-color` - была несовместима с Expo 53
+- **Функции**: `setBackgroundColorAsync()`, `setVisibilityAsync()` для управления цветом и видимостью
+
 ### Платформо-специфичные изменения
 - **Android**: Применяются дополнительные отступы для navigation bar (минимум 16px + дополнительный padding)
 - **iOS**: Фиксированный отступ 16px для всех элементов

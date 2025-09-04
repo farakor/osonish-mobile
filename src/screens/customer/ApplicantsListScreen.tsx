@@ -979,18 +979,19 @@ const styles = StyleSheet.create({
 
   // Современные стили для откликов
   modernApplicantCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F6F7F9',
     borderRadius: isSmallScreen ? 12 : 16,
     marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
     overflow: 'hidden',
-    elevation: 0, shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, borderWidth: 0, borderColor: 'transparent',
+    elevation: 0, shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, borderWidth: 2, borderColor: '#679B00',
   },
   modernAcceptedCard: {
-    borderColor: 'transparent', borderWidth: 0, backgroundColor: '#FAFFFE',
+    borderColor: '#679B00', borderWidth: 2, backgroundColor: '#F6F7F9',
   },
   modernRejectedCard: {
     opacity: 0.7,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F6F7F9',
+    borderColor: '#679B00', borderWidth: 2,
   },
 
   modernStatusBarRejected: {
@@ -1057,6 +1058,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flexShrink: 0,
   },
 
   reviewsButton: {
@@ -1081,7 +1083,7 @@ const styles = StyleSheet.create({
   nameWithBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    flexShrink: 1,
     marginRight: 8,
   },
   modernApplicantName: {
@@ -1089,6 +1091,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1A1A1A',
     lineHeight: isSmallScreen ? 20 : 22,
+    flexShrink: 1,
   },
   verifiedBadge: {
     width: isSmallScreen ? 16 : 18,

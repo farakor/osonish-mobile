@@ -39,6 +39,7 @@ export { OrderLocationMap } from './OrderLocationMap';
 export { OrderStatsWidget } from './OrderStatsWidget';
 export { StatusBadge } from './StatusBadge';
 export { LanguageSwitcher } from './LanguageSwitcher';
+export { LanguageRadioSelector } from './LanguageRadioSelector';
 export { default as OptimizedSmsInput } from './OptimizedSmsInput';
 export type { OptimizedSmsInputRef } from './OptimizedSmsInput';
 export { default as SimpleSmsInput } from './SimpleSmsInput';
