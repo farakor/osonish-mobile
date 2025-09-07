@@ -24,6 +24,8 @@ console.log('[App] 📦 eskizSMSService импортирован:', !!eskizSMSSe
 // Подключаем тестовые утилиты в dev режиме
 if (__DEV__) {
   import('./src/utils/testingHelpers');
+  import('./src/utils/notificationTest');
+  import('./src/utils/quickNotificationTest');
 }
 
 export default function App() {

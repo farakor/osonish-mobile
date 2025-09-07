@@ -55,7 +55,8 @@
         "WAKE_LOCK",
         "com.google.android.c2dm.permission.RECEIVE",
         "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.POST_NOTIFICATIONS"
       ],
       "useNextNotificationsApi": true,
       "googleServicesFile": "./google-services.json"

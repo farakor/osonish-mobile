@@ -115,6 +115,15 @@ class AuthService {
           };
           console.log(`[AuthService] ✅ Сессия восстановлена для пользователя: ${user.firstName} ${user.lastName}`);
 
+          // Повторно регистрируем push-токен при восстановлении сессии
+          try {
+            const { notificationService } = await import('./notificationService');
+            await notificationService.registerPushTokenAfterAuth();
+            console.log('[AuthService] ✅ Push-токен перерегистрирован при восстановлении сессии');
+          } catch (error) {
+            console.warn('[AuthService] ⚠️ Ошибка перерегистрации push-токена:', error);
+          }
+
           // Пересоздаем Supabase Auth сессию если её нет
           const currentSupabaseSession = await AsyncStorage.getItem(STORAGE_KEYS.SUPABASE_SESSION);
           if (!currentSupabaseSession) {
@@ -448,6 +457,15 @@ class AuthService {
       // Сохраняем сессию
       await this.saveSession(user);
 
+      // Повторно регистрируем push-токен теперь когда пользователь авторизован
+      try {
+        const { notificationService } = await import('./notificationService');
+        await notificationService.registerPushTokenAfterAuth();
+        console.log('[AuthService] ✅ Push-токен перерегистрирован после авторизации');
+      } catch (error) {
+        console.warn('[AuthService] ⚠️ Ошибка перерегистрации push-токена:', error);
+      }
+
       console.log(`[AuthService] Пользователь ${user.firstName} ${user.lastName} успешно авторизован`);
 
       return {
@@ -602,6 +620,15 @@ class AuthService {
 
       // Сохраняем сессию
       await this.saveSession(newUser);
+
+      // Повторно регистрируем push-токен теперь когда пользователь авторизован
+      try {
+        const { notificationService } = await import('./notificationService');
+        await notificationService.registerPushTokenAfterAuth();
+        console.log('[AuthService] ✅ Push-токен перерегистрирован после регистрации');
+      } catch (error) {
+        console.warn('[AuthService] ⚠️ Ошибка перерегистрации push-токена:', error);
+      }
 
       console.log(`[AuthService] Пользователь ${newUser.firstName} ${newUser.lastName} успешно зарегистрирован`);
 

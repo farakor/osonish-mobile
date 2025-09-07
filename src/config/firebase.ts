@@ -1,13 +1,13 @@
 import { Platform } from 'react-native';
 
-// Firebase конфигурация из переменных окружения
+// Firebase конфигурация - используем значения из google-services.json
 const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || 'AIzaSyAfT2LkFCGZFf-Rx_9Of49ejwlIPpnwsKM',
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || 'osonish-mobile.firebaseapp.com',
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || 'osonish-mobile',
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || 'osonish-mobile.firebasestorage.app',
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '416617595886',
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || '1:416617595886:android:69297fd1ce7a83f30404ff',
+  apiKey: 'AIzaSyAfT2LkFCGZFf-Rx_9Of49ejwlIPpnwsKM',
+  authDomain: 'osonish-mobile.firebaseapp.com',
+  projectId: 'osonish-mobile',
+  storageBucket: 'osonish-mobile.firebasestorage.app',
+  messagingSenderId: '416617595886',
+  appId: '1:416617595886:android:69297fd1ce7a83f30404ff',
 };
 
 console.log('🔥 Firebase конфигурация:', {
@@ -98,7 +98,7 @@ export const getFCMToken = async (): Promise<string | null> => {
     // Способ 5: хардкод как fallback (из app.json)
     else {
       easProjectId = 'd25e6650-1e06-4ebb-8988-0085861affbf';
-      console.log('🔥 Используем хардкод projectId:', easProjectId);
+      console.log('🔥 Используем хардкод EAS projectId:', easProjectId);
     }
 
     if (!easProjectId) {

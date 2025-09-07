@@ -20,14 +20,16 @@
         "buildType": "apk"
       },
       "ios": {
-        "simulator": false
+        "simulator": false,
+        "resourceClass": "m-medium"
       }
     },
     "production": {
       "autoIncrement": true,
       "ios": {
         "buildConfiguration": "Release",
-        "simulator": false
+        "simulator": false,
+        "resourceClass": "m-medium"
       },
       "android": {
         "buildType": "app-bundle"

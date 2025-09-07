@@ -9,12 +9,13 @@ try {
   // В development build должен работать нормально
   Notifications = require('expo-notifications');
   console.log('[NotificationService] ✅ expo-notifications загружен');
-} catch (error) {
+} catch (error: any) {
   console.warn('[NotificationService] ⚠️ expo-notifications недоступен:', error.message);
 }
 import { supabase } from './supabaseClient';
 import { authService } from './authService';
-import { getFCMToken, initializeFirebase } from '../config/firebase';
+// Убираем прямую работу с FCM/APNs. Используем только Expo Push Service
+import { productionNotificationService } from './productionNotificationService';
 
 // Типы для уведомлений
 export interface NotificationSettings {
@@ -94,6 +95,22 @@ class NotificationService {
         }),
       });
 
+      // Создаём канал уведомлений для Android
+      try {
+        if (Platform.OS === 'android') {
+          await Notifications.setNotificationChannelAsync('default', {
+            name: 'default',
+            importance: Notifications.AndroidImportance.MAX,
+            sound: 'default',
+            vibrationPattern: [0, 250, 250, 250],
+            lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+          });
+          console.log('[NotificationService] ✅ Android notification channel настроен');
+        }
+      } catch (channelError) {
+        console.warn('[NotificationService] ⚠️ Не удалось настроить Android канал уведомлений:', channelError);
+      }
+
       // Запрос разрешений на уведомления
       await this.requestPermissions();
 
@@ -167,31 +184,7 @@ class NotificationService {
         return;
       }
 
-      // Инициализируем Firebase
-      await initializeFirebase();
-
-      // Для Android - всегда пробуем получить FCM токен (в production это будет настоящий FCM)
-      if (Platform.OS === 'android') {
-        console.log('[NotificationService] 🔥 Попытка получить FCM токен для Android...');
-        const fcmToken = await getFCMToken();
-        if (fcmToken) {
-          console.log('[NotificationService] ✅ FCM токен получен для Android');
-
-          // Проверяем, не изменился ли токен
-          if (this.currentPushToken === fcmToken) {
-            console.log('[NotificationService] 📱 FCM token не изменился, пропускаем сохранение');
-            return;
-          }
-
-          this.currentPushToken = fcmToken;
-          await this.savePushTokenToDatabase(fcmToken);
-          return;
-        } else {
-          console.log('[NotificationService] ⚠️ FCM токен не получен, используем Expo fallback');
-        }
-      }
-
-      // Fallback на Expo токен для development и iOS
+      // Всегда получаем Expo Push Token через EAS projectId (и в dev, и в prod)
       if (!Notifications) {
         console.log('[NotificationService] ⚠️ Notifications недоступны - пропускаем регистрацию push токена');
         return;
@@ -200,7 +193,13 @@ class NotificationService {
       // Проверяем наличие projectId
       const projectId = Constants.expoConfig?.extra?.eas?.projectId ||
         Constants.easConfig?.projectId ||
-        Constants.manifest?.extra?.eas?.projectId;
+        (Constants.manifest as any)?.extra?.eas?.projectId;
+
+      console.log('[NotificationService] 🔍 Поиск EAS projectId...');
+      console.log('[NotificationService] 📋 Constants.expoConfig?.extra?.eas?.projectId:', Constants.expoConfig?.extra?.eas?.projectId);
+      console.log('[NotificationService] 📋 Constants.easConfig?.projectId:', Constants.easConfig?.projectId);
+      console.log('[NotificationService] 📋 Constants.manifest?.extra?.eas?.projectId:', (Constants.manifest as any)?.extra?.eas?.projectId);
+      console.log('[NotificationService] ✅ Итоговый projectId:', projectId);
 
       if (!projectId) {
         console.warn('[NotificationService] ⚠️ ProjectId не настроен - пропускаем регистрацию push токена');
@@ -208,9 +207,9 @@ class NotificationService {
         return;
       }
 
-      console.log('[NotificationService] 📱 Получение Expo push токена...');
+      console.log('[NotificationService] 📱 Получение Expo push токена с projectId:', projectId);
 
-      // Получаем Expo push token
+      // Получаем Expo push token (на проде это будет FCM/APNs под капотом)
       const tokenData = await Notifications.getExpoPushTokenAsync({
         projectId: projectId,
       });
@@ -222,7 +221,8 @@ class NotificationService {
       }
 
       this.currentPushToken = tokenData.data;
-      console.log('[NotificationService] ✅ Expo push token получен:', this.currentPushToken?.substring(0, 20) + '...');
+      console.log('[NotificationService] ✅ Expo push token получен:', this.currentPushToken);
+      console.log('[NotificationService] 🎫 ПОЛНЫЙ ТОКЕН ДЛЯ ТЕСТИРОВАНИЯ:', this.currentPushToken);
 
       // Сохраняем токен в базе данных
       await this.savePushTokenToDatabase(tokenData.data);
@@ -326,14 +326,14 @@ class NotificationService {
     }
 
     // Слушатель полученных уведомлений
-    Notifications.addNotificationReceivedListener(notification => {
+    Notifications.addNotificationReceivedListener((notification: any) => {
       console.log('[NotificationService] 📬 Уведомление получено:', notification);
       // Сохраняем уведомление локально при получении
       this.saveNotificationLocally(notification);
     });
 
     // Слушатель нажатий на уведомления
-    Notifications.addNotificationResponseReceivedListener(response => {
+    Notifications.addNotificationResponseReceivedListener((response: any) => {
       console.log('[NotificationService] 👆 Нажатие на уведомление:', response);
       this.handleNotificationTap(response);
     });
@@ -472,7 +472,7 @@ class NotificationService {
         return [];
       }
 
-      return data.map(item => ({
+      return data.map((item: any) => ({
         token: item.token,
         deviceType: item.device_type as 'ios' | 'android' | 'web',
         deviceId: item.device_id,
@@ -510,7 +510,7 @@ class NotificationService {
 
       // Оставляем только самый новый токен, остальные деактивируем
       const tokensToDeactivate = tokens.slice(0, -1); // Все кроме последнего
-      const tokenIds = tokensToDeactivate.map(t => t.id);
+      const tokenIds = tokensToDeactivate.map((t: any) => t.id);
 
       console.log(`[NotificationService] 🗑️ Деактивируем ${tokenIds.length} старых токенов`);
 
@@ -530,7 +530,7 @@ class NotificationService {
   }
 
   /**
-   * Отправка push уведомления через Expo
+   * Отправка push уведомления (автоматический выбор сервиса)
    */
   private async sendPushNotification(
     token: string,
@@ -544,49 +544,30 @@ class NotificationService {
       console.log('[NotificationService] 📰 Заголовок:', title);
       console.log('[NotificationService] 💬 Сообщение:', body);
 
-      const message = {
+      // Получаем информацию о среде
+      const envInfo = productionNotificationService.getEnvironmentInfo();
+      console.log('[NotificationService] 🏗️ Среда выполнения:', JSON.stringify(envInfo, null, 2));
+      console.log('[NotificationService] 🎫 Тип токена:', token.startsWith('ExponentPushToken[') ? 'Expo Push Token' : 'Нативный токен');
+      console.log('[NotificationService] 📱 Приложение:', (envInfo.appOwnership as string) === 'standalone' ? 'Production сборка' : 'Expo Go / Development');
+      console.log('[NotificationService] 🔧 Режим разработки:', envInfo.isDev ? 'Development (__DEV__ = true)' : 'Production (__DEV__ = false)');
+
+      // Используем production сервис для автоматического выбора
+      const success = await productionNotificationService.sendPushNotification({
         to: token,
-        sound: 'default',
         title,
         body,
         data,
+        sound: 'default',
         priority: 'high',
         channelId: 'default',
-      };
-
-      const response = await fetch('https://exp.host/--/api/v2/push/send', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Accept-encoding': 'gzip, deflate',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(message),
       });
 
-      const result = await response.json();
-
-      console.log('[NotificationService] 📡 Ответ сервера Expo:', JSON.stringify(result, null, 2));
-
-      if (!response.ok) {
-        console.error('[NotificationService] ❌ Ошибка HTTP:', response.status, response.statusText);
-        throw new Error(`Push notification failed: ${result.message || response.statusText}`);
+      if (success) {
+        console.log('[NotificationService] ✅ Push уведомление отправлено через', envInfo.expectedService);
+      } else {
+        throw new Error('Не удалось отправить уведомление');
       }
 
-      // Проверяем статус в ответе Expo
-      if (result.data && result.data.length > 0) {
-        const status = result.data[0].status;
-        const details = result.data[0].details;
-
-        if (status === 'ok') {
-          console.log('[NotificationService] ✅ Push уведомление успешно принято Expo сервером');
-        } else if (status === 'error') {
-          console.error('[NotificationService] ❌ Ошибка от Expo сервера:', details);
-          console.error('[NotificationService] 🔍 Возможные причины: недействительный токен, проблемы с конфигурацией');
-        }
-      }
-
-      console.log('[NotificationService] ✅ Push уведомление отправлено на Expo сервер');
     } catch (error) {
       console.error('[NotificationService] ❌ Ошибка отправки push уведомления:', error);
       console.error('[NotificationService] 🔍 Проверьте интернет соединение и валидность токена');
@@ -791,7 +772,7 @@ class NotificationService {
       } else {
         console.log('[NotificationService] 🎉 Бонус: Уведомление дополнительно сохранено в БД!');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.warn('[NotificationService] ⚠️ Опциональное сохранение в БД не удалось:', error.message);
     }
   }
@@ -863,6 +844,29 @@ class NotificationService {
   }
 
   /**
+   * Регистрация push-токена после авторизации пользователя
+   */
+  async registerPushTokenAfterAuth(): Promise<void> {
+    try {
+      console.log('[NotificationService] 🔄 Перерегистрация push-токена после авторизации...');
+
+      // Если токен уже есть, пытаемся его сохранить в БД
+      if (this.currentPushToken) {
+        console.log('[NotificationService] 📱 Используем существующий токен:', this.currentPushToken.substring(0, 20) + '...');
+        await this.savePushTokenToDatabase(this.currentPushToken);
+      } else {
+        // Если токена нет, регистрируемся заново
+        console.log('[NotificationService] 📱 Токен отсутствует, регистрируемся заново...');
+        await this.registerForPushNotifications();
+      }
+
+      console.log('[NotificationService] ✅ Перерегистрация push-токена завершена');
+    } catch (error) {
+      console.error('[NotificationService] ❌ Ошибка перерегистрации push-токена:', error);
+    }
+  }
+
+  /**
    * Принудительное обновление push токена
    */
   async refreshPushToken(): Promise<boolean> {
@@ -881,7 +885,8 @@ class NotificationService {
       await this.registerForPushNotifications();
 
       if (this.currentPushToken) {
-        console.log('✅ Новый push токен получен:', this.currentPushToken.substring(0, 20) + '...');
+        console.log('✅ Новый push токен получен:', this.currentPushToken);
+        console.log('🎫 ПОЛНЫЙ ТОКЕН ДЛЯ КОПИРОВАНИЯ:', this.currentPushToken);
         return true;
       } else {
         console.error('❌ Не удалось получить новый push токен');
@@ -1020,7 +1025,7 @@ class NotificationService {
       console.log('\n🚀 Проверка конфигурации Expo:');
       const projectId = Constants.expoConfig?.extra?.eas?.projectId ||
         Constants.easConfig?.projectId ||
-        Constants.manifest?.extra?.eas?.projectId;
+        (Constants.manifest as any)?.extra?.eas?.projectId;
 
       console.log('  - Project ID:', projectId ? 'есть' : 'отсутствует');
 
@@ -1051,7 +1056,7 @@ class NotificationService {
 
         tokens.forEach((token, index) => {
           console.log(`  - Токен ${index + 1}:`, token.token.substring(0, 20) + '...');
-          console.log(`    Устройство: ${token.device_type}, Активен: ${token.is_active}`);
+          console.log(`    Устройство: ${token.deviceType}, Активен: true`);
         });
       }
 
@@ -1060,10 +1065,6 @@ class NotificationService {
         console.log('\n⚙️ Проверка настроек уведомлений:');
         const settings = await this.getUserNotificationSettings(authState.user.id);
         console.log('  - Все уведомления:', settings.allNotificationsEnabled);
-        console.log('  - Новые заказы:', settings.newOrdersEnabled);
-        console.log('  - Новые отклики:', settings.newApplicationsEnabled);
-        console.log('  - Обновления заказов:', settings.orderUpdatesEnabled);
-        console.log('  - Завершенные заказы:', settings.orderCompletedEnabled);
       }
 
       console.log('\n✅ Диагностика завершена');
