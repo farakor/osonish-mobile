@@ -55,3 +55,4 @@ export { AppIconOsonish } from './AppIconOsonish';
 export { DeleteAccountModal } from './DeleteAccountModal';
 export { PlusIcon } from './PlusIcon';
 export { AnimatedIcon } from './AnimatedIcon';
+export { TestModal } from './TestModal';

@@ -18,6 +18,7 @@ import {
 } from '../screens/auth';
 import { CustomerStackNavigator } from './CustomerStackNavigator';
 import { WorkerStackNavigator } from './WorkerStackNavigator';
+import { DocumentWebViewScreen } from '../screens/shared';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -77,6 +78,10 @@ export function AppNavigator() {
         <Stack.Screen
           name="WorkerTabs"
           component={WorkerStackNavigator}
+        />
+        <Stack.Screen
+          name="DocumentWebView"
+          component={DocumentWebViewScreen}
         />
       </Stack.Navigator>
     </NavigationContainer>

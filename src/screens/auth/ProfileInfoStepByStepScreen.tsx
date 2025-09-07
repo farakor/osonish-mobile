@@ -101,6 +101,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
     title: '',
   });
 
+
   // Состояния фокуса для полей ввода
   const [lastNameFocused, setLastNameFocused] = useState(false);
   const [firstNameFocused, setFirstNameFocused] = useState(false);
@@ -128,6 +129,19 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
       url: '',
       title: '',
     });
+  };
+
+  const handleOpenPrivacyModal = () => {
+    if (Platform.OS === 'android') {
+      // Для Android открываем отдельный экран
+      navigation.navigate('DocumentWebView', {
+        url: 'https://oson-ish.uz/privacy-policy.html',
+        title: t('privacy_document_title'),
+      });
+    } else {
+      // Для iOS используем модальное окно
+      handleOpenWebView('https://oson-ish.uz/privacy-policy.html', t('privacy_document_title'));
+    }
   };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
@@ -502,7 +516,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                 <View style={styles.privacySection}>
                   <TouchableOpacity
                     style={styles.privacyDocumentButton}
-                    onPress={() => handleOpenWebView('https://oson-ish.uz/privacy-policy.html', t('privacy_document_title'))}
+                    onPress={handleOpenPrivacyModal}
                   >
                     <View style={styles.privacyDocumentIconContainer}>
                       <PaperIcon
@@ -653,15 +667,17 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
             </View>
           )}
 
-          {/* Privacy Policy Modal */}
-          <WebViewModal
-            visible={webViewModal.visible}
-            url={webViewModal.url}
-            title={webViewModal.title}
-            onClose={handleCloseWebView}
-          />
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      {/* WebView Modal */}
+      <WebViewModal
+        visible={webViewModal.visible}
+        url={webViewModal.url}
+        title={webViewModal.title}
+        onClose={handleCloseWebView}
+      />
+
     </View>
   );
 };
@@ -670,6 +686,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+    position: 'relative', // Убеждаемся, что позиционирование корректное
   },
   safeArea: {
     flex: 1,

@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { WorkerTabNavigator } from './WorkerTabNavigator';
 import { EditProfileScreen, JobDetailsScreen, NotificationsScreen, NotificationsListScreen, SupportScreen } from '../screens/worker';
 import { WorkerStackParamList } from '../types/navigation';
+import { DocumentWebViewScreen } from '../screens/shared';
 
 const Stack = createNativeStackNavigator<WorkerStackParamList>();
 
@@ -48,6 +49,13 @@ export function WorkerStackNavigator() {
       <Stack.Screen
         name="Support"
         component={SupportScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="DocumentWebView"
+        component={DocumentWebViewScreen}
         options={{
           presentation: 'card',
         }}

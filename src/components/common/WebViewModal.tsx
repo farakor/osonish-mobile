@@ -22,21 +22,11 @@ interface WebViewModalProps {
   onClose: () => void;
 }
 
-export const WebViewModal: React.FC<WebViewModalProps> = ({
-  visible,
-  url,
-  title,
-  onClose,
-}) => {
+export const WebViewModal: React.FC<WebViewModalProps> = ({ visible, url, title, onClose }) => {
   const [loading, setLoading] = React.useState(true);
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="fullScreen"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 

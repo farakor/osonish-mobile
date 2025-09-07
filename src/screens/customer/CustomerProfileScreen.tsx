@@ -473,7 +473,16 @@ export const CustomerProfileScreen: React.FC = () => {
 
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => handleOpenWebView('https://oson-ish.uz/privacy-policy.html', t('privacy_policy'))}
+              onPress={() => {
+                if (Platform.OS === 'android') {
+                  (navigation as any).navigate('DocumentWebView', {
+                    url: 'https://oson-ish.uz/privacy-policy.html',
+                    title: t('privacy_policy'),
+                  });
+                } else {
+                  handleOpenWebView('https://oson-ish.uz/privacy-policy.html', t('privacy_policy'));
+                }
+              }}
             >
               <View style={styles.menuLeft}>
                 <View style={styles.menuIconContainer}>

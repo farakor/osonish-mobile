@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { CustomerStackParamList } from '../types/navigation';
 import { CustomerTabNavigator } from './CustomerTabNavigator';
 import { OrderDetailsScreen, EditOrderScreen, EditProfileScreen, NotificationsScreen, NotificationsListScreen, SupportScreen, ApplicantsListScreen, RatingScreen, WorkerProfileScreen } from '../screens/customer';
+import { DocumentWebViewScreen } from '../screens/shared';
 
 const Stack = createNativeStackNavigator<CustomerStackParamList>();
 
@@ -76,6 +77,13 @@ export function CustomerStackNavigator() {
       <Stack.Screen
         name="Rating"
         component={RatingScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="DocumentWebView"
+        component={DocumentWebViewScreen}
         options={{
           presentation: 'card',
         }}

@@ -14,6 +14,7 @@ export type RootStackParamList = {
   CitySelection: { role: 'customer' | 'worker' };
   CustomerTabs: undefined;
   WorkerTabs: undefined;
+  DocumentWebView: { url: string; title: string };
 };
 
 export type AuthStackParamList = {
@@ -34,6 +35,7 @@ export type CustomerStackParamList = {
   Notifications: undefined;
   NotificationsList: undefined;
   Support: undefined;
+  DocumentWebView: { url: string; title: string };
 };
 
 export type CustomerTabParamList = {
@@ -50,6 +52,7 @@ export type WorkerStackParamList = {
   Notifications: undefined;
   NotificationsList: undefined;
   Support: undefined;
+  DocumentWebView: { url: string; title: string };
 };
 
 export type WorkerTabParamList = {
