@@ -25,7 +25,11 @@ export const lightElevationStyles = {
       shadowRadius: 4,
     },
     android: {
-      elevation: 3,
+      elevation: 2,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.08,
+      shadowRadius: 3,
     },
   }),
 };
@@ -62,6 +66,82 @@ export const strongElevationStyles = {
     },
     android: {
       elevation: 12,
+    },
+  }),
+};
+
+/**
+ * Стили для кнопок с мягкими тенями
+ * Специально оптимизированы для Android чтобы избежать острых углов
+ */
+export const softButtonElevationStyles = {
+  ...Platform.select({
+    ios: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 6,
+    },
+    android: {
+      elevation: 1,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.06,
+      shadowRadius: 4,
+    },
+  }),
+};
+
+/**
+ * Стили для кнопок с рамкой на Android и тенью на iOS
+ * Используется для элементов, где нужна четкая граница на Android
+ */
+export const borderButtonStyles = {
+  ...Platform.select({
+    ios: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 6,
+    },
+    android: {
+      borderWidth: 1,
+      borderColor: '#E5E5E7',
+    },
+  }),
+};
+
+/**
+ * Стили для кнопок ролей - чистый elevation на Android без дополнительных теней
+ * Специально для исправления проблемы с внутренними тенями на Android
+ */
+export const roleCardElevationStyles = {
+  ...Platform.select({
+    ios: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+    },
+    android: {
+      elevation: 2,
+    },
+  }),
+};
+
+/**
+ * Стили для выбранных кнопок ролей - чистый elevation на Android
+ */
+export const roleCardSelectedElevationStyles = {
+  ...Platform.select({
+    ios: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.15,
+      shadowRadius: 8,
+    },
+    android: {
+      elevation: 6,
     },
   }),
 };

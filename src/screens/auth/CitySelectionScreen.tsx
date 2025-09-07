@@ -14,7 +14,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import { theme } from '../../constants';
-import { noElevationStyles, lightElevationStyles, mediumElevationStyles } from '../../utils/noShadowStyles';
+import { noElevationStyles, borderButtonStyles } from '../../utils/noShadowStyles';
 import type { RootStackParamList, City } from '../../types';
 import { LogoOsonish, AnimatedIcon } from '../../components/common';
 import { useAuthTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
@@ -280,13 +280,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     position: 'relative',
-    ...lightElevationStyles,
+    ...borderButtonStyles,
   },
   cityCardSelected: {
     backgroundColor: `${theme.colors.primary}08`,
     borderWidth: 2,
     borderColor: theme.colors.primary,
-    ...mediumElevationStyles,
+    ...noElevationStyles,
   },
   cityCardDisabled: {
     backgroundColor: '#F5F5F5',
@@ -336,9 +336,10 @@ const styles = StyleSheet.create({
   continueButton: {
     backgroundColor: theme.colors.primary,
     borderRadius: theme.borderRadius.md,
-    paddingVertical: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
+    paddingVertical: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
     alignItems: 'center',
     marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
+    minHeight: isSmallScreen ? 52 : 56,
   },
   continueButtonDisabled: {
     backgroundColor: theme.colors.disabled,

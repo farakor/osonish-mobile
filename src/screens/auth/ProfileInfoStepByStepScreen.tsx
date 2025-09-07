@@ -24,7 +24,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { theme } from '../../constants';
-import { noElevationStyles, lightElevationStyles } from '../../utils/noShadowStyles';
+import { noElevationStyles, lightElevationStyles, softButtonElevationStyles, borderButtonStyles } from '../../utils/noShadowStyles';
 import * as ImagePicker from 'expo-image-picker';
 import Svg, { Path } from 'react-native-svg';
 import CalendarDateIcon from '../../../assets/calendar-date.svg';
@@ -854,7 +854,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: theme.spacing.lg,
-    ...lightElevationStyles,
+    ...borderButtonStyles,
   },
   privacyDocumentIconContainer: {
     width: isSmallScreen ? 44 : 48,

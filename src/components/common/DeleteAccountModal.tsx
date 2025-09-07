@@ -89,7 +89,8 @@ const styles = StyleSheet.create({
     padding: theme.spacing.xl,
     width: '100%',
     maxWidth: 400,
-    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+  },
   title: {
     fontSize: theme.fonts.sizes.xl,
     fontWeight: theme.fonts.weights.bold,
@@ -118,7 +119,8 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     backgroundColor: theme.colors.background,
-    borderWidth: 0, borderColor: theme.colors.border,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   confirmButton: {
     backgroundColor: '#FF3B30',
@@ -127,10 +129,12 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
+    textAlign: 'center',
   },
   confirmButtonText: {
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.semiBold,
     color: '#FFFFFF',
+    textAlign: 'center',
   },
 });
