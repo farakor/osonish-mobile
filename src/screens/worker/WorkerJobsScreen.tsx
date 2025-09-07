@@ -719,9 +719,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     marginRight: theme.spacing.sm,
-    borderWidth: 0, borderColor: 'transparent', },
+    borderWidth: 0, borderColor: 'transparent',
+  },
   categoryChipActive: {
     backgroundColor: 'transparent',
+    borderWidth: 1,
     borderColor: theme.colors.white,
   },
   categoryEmoji: {
@@ -757,7 +759,8 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     marginBottom: theme.spacing.md,
     shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+  },
   jobHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -875,7 +878,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
     shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+  },
   notificationIcon: {
     opacity: 0.7,
   },

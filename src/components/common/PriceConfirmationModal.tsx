@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
   },
   questionSection: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.md,
   },
   questionText: {
     fontSize: theme.fonts.sizes.lg,

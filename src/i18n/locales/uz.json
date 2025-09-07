@@ -561,6 +561,7 @@
     "orders_found": "{{count}} ta buyurtma topildi",
     "no_new_orders": "Yangi buyurtmalar hali yo'q",
     "loading_orders": "Buyurtmalar yuklanmoqda...",
+    "loading_profile": "Profil yuklanmoqda...",
     "search_orders": "Buyurtmalarni qidirish...",
     "all_categories": "Barchasi",
     "no_orders": "Buyurtmalar yo'q",

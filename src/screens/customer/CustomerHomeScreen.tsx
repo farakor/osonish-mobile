@@ -27,7 +27,6 @@ import { supabase } from '../../services/supabaseClient';
 import { Order } from '../../types';
 import { ModernOrderCard } from '../../components/cards';
 import { useCustomerTranslation } from '../../hooks/useTranslation';
-import { NotificationTestButton } from '../../components/debug/NotificationTestButton';
 
 // SVG иконка empty-state-no-active-orders
 const emptyStateNoActiveOrdersSvg = `<svg width="161" height="167" viewBox="0 0 161 167" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -230,9 +229,6 @@ export const CustomerHomeScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* Debug кнопка тестирования уведомлений - только в dev режиме */}
-      {__DEV__ && <NotificationTestButton />}
-
       <SafeAreaView style={styles.content}>
         {/* Header with notifications */}
         <View style={[styles.header, { paddingTop: theme.spacing.lg + getAndroidStatusBarHeight() }]}>

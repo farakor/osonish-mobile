@@ -535,6 +535,7 @@
     "orders_found": "Найдено {{count}} заказов",
     "no_new_orders": "Новых заказов пока нет",
     "loading_orders": "Загружаем заказы...",
+    "loading_profile": "Загружаем профиль...",
     "search_orders": "Поиск заказов...",
     "all_categories": "Все",
     "no_orders": "Нет заказов",

@@ -285,10 +285,10 @@ const styles = StyleSheet.create({
   continueButton: {
     backgroundColor: theme.colors.primary,
     borderRadius: theme.borderRadius.md,
-    paddingVertical: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
+    paddingVertical: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
     alignItems: 'center',
     marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
-    minHeight: isSmallScreen ? 52 : 56,
+    minHeight: isSmallScreen ? 44 : 48,
   },
   continueButtonDisabled: {
     backgroundColor: theme.colors.disabled,

@@ -4,8 +4,10 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { useWorkerTranslation } from '../../hooks/useTranslation';
+import { borderButtonStyles, lightElevationStyles } from '../../utils/noShadowStyles';
 
 interface OrderStatsWidgetProps {
   pendingCount: number;
@@ -73,7 +75,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     minHeight: 60,
     flex: 1,
-    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    ...Platform.select({
+      android: borderButtonStyles,
+      ios: lightElevationStyles,
+    }),
+  },
   cardContent: {
     flex: 1,
     alignItems: 'flex-start',

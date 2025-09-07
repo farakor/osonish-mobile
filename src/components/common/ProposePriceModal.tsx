@@ -10,6 +10,9 @@ import {
   Animated,
   Platform,
   Dimensions,
+  Keyboard,
+  ScrollView,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { theme } from '../../constants/theme';
 import { noElevationStyles } from '../../utils/noShadowStyles';
@@ -39,6 +42,7 @@ export const ProposePriceModal: React.FC<ProposePriceModalProps> = ({
   const [message, setMessage] = useState('');
   const [animationComplete, setAnimationComplete] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const tWorker = useWorkerTranslation();
 
   const overlayOpacity = useRef(new Animated.Value(0)).current;
@@ -48,6 +52,56 @@ export const ProposePriceModal: React.FC<ProposePriceModalProps> = ({
   useEffect(() => {
     setProposedPrice(originalPrice);
   }, [originalPrice]);
+
+  // Слушатели событий клавиатуры - только для iOS поднимаем модалку
+  useEffect(() => {
+    if (Platform.OS === 'ios') {
+      const keyboardDidShowListener = Keyboard.addListener(
+        'keyboardDidShow',
+        () => {
+          setKeyboardVisible(true);
+          Animated.timing(modalTranslateY, {
+            toValue: -100,
+            duration: 250,
+            useNativeDriver: true,
+          }).start();
+        }
+      );
+
+      const keyboardDidHideListener = Keyboard.addListener(
+        'keyboardDidHide',
+        () => {
+          setKeyboardVisible(false);
+          Animated.timing(modalTranslateY, {
+            toValue: 0,
+            duration: 250,
+            useNativeDriver: true,
+          }).start();
+        }
+      );
+
+      return () => {
+        keyboardDidShowListener?.remove();
+        keyboardDidHideListener?.remove();
+      };
+    } else {
+      // Для Android только отслеживаем состояние клавиатуры
+      const keyboardDidShowListener = Keyboard.addListener(
+        'keyboardDidShow',
+        () => setKeyboardVisible(true)
+      );
+
+      const keyboardDidHideListener = Keyboard.addListener(
+        'keyboardDidHide',
+        () => setKeyboardVisible(false)
+      );
+
+      return () => {
+        keyboardDidShowListener?.remove();
+        keyboardDidHideListener?.remove();
+      };
+    }
+  }, [modalTranslateY]);
 
   const handleAnimatedClose = (shouldResetMessage = true) => {
     setIsClosing(true);
@@ -121,11 +175,11 @@ export const ProposePriceModal: React.FC<ProposePriceModalProps> = ({
   };
 
   const increasePrice = () => {
-    setProposedPrice(prev => prev + 50000);
+    setProposedPrice(prev => prev + 10000);
   };
 
   const decreasePrice = () => {
-    setProposedPrice(prev => Math.max(50000, prev - 50000));
+    setProposedPrice(prev => Math.max(10000, prev - 10000));
   };
 
   const handleSubmit = () => {
@@ -140,135 +194,280 @@ export const ProposePriceModal: React.FC<ProposePriceModalProps> = ({
     handleAnimatedClose();
   };
 
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
+  };
+
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      onRequestClose={handleClose}
-    >
-      <Animated.View style={[
-        styles.overlay,
-        {
-          opacity: overlayOpacity,
-        }
-      ]}>
-        <SafeAreaView style={styles.container}>
-          <Animated.View style={[
-            styles.modalContent,
-            {
-              transform: [{ translateY: modalTranslateY }],
-            }
+    <>
+      <Modal
+        visible={visible}
+        transparent={true}
+        onRequestClose={handleClose}
+      >
+        <Animated.View style={[
+          styles.overlay,
+          {
+            opacity: overlayOpacity,
+          }
+        ]}>
+          <SafeAreaView style={[
+            styles.container,
+            keyboardVisible && Platform.OS === 'ios' && styles.containerKeyboardVisible
           ]}>
-            {/* Header */}
-            <View style={styles.header}>
-              <Text style={styles.title}>{tWorker('send_proposal')}</Text>
-              <TouchableOpacity onPress={handleAnimatedClose} style={styles.closeButton}>
-                <Text style={styles.closeButtonText}>✕</Text>
-              </TouchableOpacity>
-            </View>
+            {Platform.OS === 'android' ? (
+              // Android - с KeyboardAvoidingView и ScrollView
+              <KeyboardAvoidingView
+                behavior="padding"
+                style={styles.keyboardAvoidingView}
+                keyboardVerticalOffset={0}
+              >
+                <Animated.View style={[
+                  styles.modalContent,
+                  {
+                    transform: [{ translateY: modalTranslateY }],
+                    maxHeight: '80%',
+                  }
+                ]}>
+                  <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                  >
+                    {/* Header */}
+                    <View style={styles.header}>
+                      <Text style={styles.title}>{tWorker('send_proposal')}</Text>
+                      <TouchableOpacity onPress={handleAnimatedClose} style={styles.closeButton}>
+                        <Text style={styles.closeButtonText}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
 
-            {/* Order title */}
-            <Text style={styles.orderTitle} numberOfLines={2}>
-              {orderTitle}
-            </Text>
+                    {/* Order title */}
+                    <Text style={styles.orderTitle} numberOfLines={2}>
+                      {orderTitle}
+                    </Text>
 
-            {/* Price section */}
-            <View style={styles.priceSection}>
-              <Text style={styles.sectionTitle}>{tWorker('your_price')}</Text>
-              <View style={styles.priceContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.priceButton,
-                    !animationComplete && styles.buttonDisabled
-                  ]}
-                  onPress={animationComplete ? decreasePrice : undefined}
-                  disabled={!animationComplete || proposedPrice <= 50000}
-                >
-                  <Text style={[
-                    styles.priceButtonText,
-                    (proposedPrice <= 50000 || !animationComplete) && styles.disabledButton
-                  ]}>−</Text>
-                </TouchableOpacity>
+                    {/* Price section */}
+                    <View style={styles.priceSection}>
+                      <Text style={styles.sectionTitle}>{tWorker('your_price')}</Text>
+                      <View style={styles.priceContainer}>
+                        <TouchableOpacity
+                          style={[
+                            styles.priceButton,
+                            !animationComplete && styles.buttonDisabled
+                          ]}
+                          onPress={animationComplete ? decreasePrice : undefined}
+                          disabled={!animationComplete || proposedPrice <= 10000}
+                        >
+                          <Text style={[
+                            styles.priceButtonText,
+                            (proposedPrice <= 10000 || !animationComplete) && styles.disabledButton
+                          ]}>−</Text>
+                        </TouchableOpacity>
 
-                <View style={styles.priceDisplay}>
-                  <Text style={styles.priceText}>
-                    {formatPrice(proposedPrice)}
-                  </Text>
-                  <Text style={styles.currencyText}>{tWorker('currency_sum')}</Text>
+                        <View style={styles.priceDisplay}>
+                          <Text style={styles.priceText}>
+                            {formatPrice(proposedPrice)}
+                          </Text>
+                          <Text style={styles.currencyText}>{tWorker('currency_sum')}</Text>
+                        </View>
+
+                        <TouchableOpacity
+                          style={[
+                            styles.priceButton,
+                            !animationComplete && styles.buttonDisabled
+                          ]}
+                          onPress={animationComplete ? increasePrice : undefined}
+                          disabled={!animationComplete}
+                        >
+                          <Text style={[
+                            styles.priceButtonText,
+                            !animationComplete && styles.disabledButton
+                          ]}>+</Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      {proposedPrice !== originalPrice && (
+                        <Text style={styles.priceChangeNote}>
+                          {proposedPrice > originalPrice ? tWorker('higher_than_original') : tWorker('lower_than_original')} {tWorker('price_difference')}{' '}
+                          {formatPrice(Math.abs(proposedPrice - originalPrice))} {tWorker('currency_sum')}
+                        </Text>
+                      )}
+                    </View>
+
+                    {/* Comment section */}
+                    <View style={styles.commentSection}>
+                      <Text style={styles.sectionTitle}>{tWorker('comments')}</Text>
+                      <TextInput
+                        style={styles.commentInput}
+                        placeholder={tWorker('comment_placeholder')}
+                        placeholderTextColor="#999"
+                        value={message}
+                        onChangeText={setMessage}
+                        multiline={true}
+                        numberOfLines={4}
+                        textAlignVertical="top"
+                      />
+                    </View>
+
+                    {/* Action buttons */}
+                    <View style={styles.actionButtons}>
+                      <TouchableOpacity
+                        style={[
+                          styles.submitButton,
+                          !animationComplete && styles.buttonDisabled
+                        ]}
+                        onPress={animationComplete ? handleSubmit : undefined}
+                        disabled={!animationComplete}
+                      >
+                        <Text style={[
+                          styles.submitButtonText,
+                          !animationComplete && styles.disabledButtonText
+                        ]}>{tWorker('respond')}</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[
+                          styles.cancelButton,
+                          !animationComplete && styles.buttonDisabled
+                        ]}
+                        onPress={animationComplete ? handleClose : undefined}
+                        disabled={!animationComplete}
+                      >
+                        <Text style={[
+                          styles.cancelButtonText,
+                          !animationComplete && styles.disabledButtonText
+                        ]}>{tWorker('cancel')}</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </ScrollView>
+                </Animated.View>
+              </KeyboardAvoidingView>
+            ) : (
+              // iOS - простая структура с поднятием модалки
+              <Animated.View style={[
+                styles.modalContent,
+                keyboardVisible && styles.modalContentKeyboardVisible,
+                {
+                  transform: [{ translateY: modalTranslateY }],
+                }
+              ]}>
+                {/* Header */}
+                <View style={styles.header}>
+                  <Text style={styles.title}>{tWorker('send_proposal')}</Text>
+                  <TouchableOpacity onPress={handleAnimatedClose} style={styles.closeButton}>
+                    <Text style={styles.closeButtonText}>✕</Text>
+                  </TouchableOpacity>
                 </View>
 
-                <TouchableOpacity
-                  style={[
-                    styles.priceButton,
-                    !animationComplete && styles.buttonDisabled
-                  ]}
-                  onPress={animationComplete ? increasePrice : undefined}
-                  disabled={!animationComplete}
-                >
-                  <Text style={[
-                    styles.priceButtonText,
-                    !animationComplete && styles.disabledButton
-                  ]}>+</Text>
-                </TouchableOpacity>
-              </View>
-
-              {proposedPrice !== originalPrice && (
-                <Text style={styles.priceChangeNote}>
-                  {proposedPrice > originalPrice ? tWorker('higher_than_original') : tWorker('lower_than_original')} {tWorker('price_difference')}{' '}
-                  {formatPrice(Math.abs(proposedPrice - originalPrice))} {tWorker('currency_sum')}
+                {/* Order title */}
+                <Text style={styles.orderTitle} numberOfLines={2}>
+                  {orderTitle}
                 </Text>
-              )}
-            </View>
 
-            {/* Comment section */}
-            <View style={styles.commentSection}>
-              <Text style={styles.sectionTitle}>{tWorker('comments')}</Text>
-              <TextInput
-                style={styles.commentInput}
-                placeholder={tWorker('comment_placeholder')}
-                placeholderTextColor="#999"
-                value={message}
-                onChangeText={setMessage}
-                multiline={true}
-                numberOfLines={4}
-                textAlignVertical="top"
-              />
-            </View>
+                {/* Price section */}
+                <View style={styles.priceSection}>
+                  <Text style={styles.sectionTitle}>{tWorker('your_price')}</Text>
+                  <View style={styles.priceContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.priceButton,
+                        !animationComplete && styles.buttonDisabled
+                      ]}
+                      onPress={animationComplete ? decreasePrice : undefined}
+                      disabled={!animationComplete || proposedPrice <= 10000}
+                    >
+                      <Text style={[
+                        styles.priceButtonText,
+                        (proposedPrice <= 10000 || !animationComplete) && styles.disabledButton
+                      ]}>−</Text>
+                    </TouchableOpacity>
 
-            {/* Action buttons */}
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={[
-                  styles.submitButton,
-                  !animationComplete && styles.buttonDisabled
-                ]}
-                onPress={animationComplete ? handleSubmit : undefined}
-                disabled={!animationComplete}
-              >
-                <Text style={[
-                  styles.submitButtonText,
-                  !animationComplete && styles.disabledButtonText
-                ]}>{tWorker('respond')}</Text>
-              </TouchableOpacity>
+                    <View style={styles.priceDisplay}>
+                      <Text style={styles.priceText}>
+                        {formatPrice(proposedPrice)}
+                      </Text>
+                      <Text style={styles.currencyText}>{tWorker('currency_sum')}</Text>
+                    </View>
 
-              <TouchableOpacity
-                style={[
-                  styles.cancelButton,
-                  !animationComplete && styles.buttonDisabled
-                ]}
-                onPress={animationComplete ? handleClose : undefined}
-                disabled={!animationComplete}
-              >
-                <Text style={[
-                  styles.cancelButtonText,
-                  !animationComplete && styles.disabledButtonText
-                ]}>{tWorker('cancel')}</Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        </SafeAreaView>
-      </Animated.View>
-    </Modal>
+                    <TouchableOpacity
+                      style={[
+                        styles.priceButton,
+                        !animationComplete && styles.buttonDisabled
+                      ]}
+                      onPress={animationComplete ? increasePrice : undefined}
+                      disabled={!animationComplete}
+                    >
+                      <Text style={[
+                        styles.priceButtonText,
+                        !animationComplete && styles.disabledButton
+                      ]}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {proposedPrice !== originalPrice && (
+                    <Text style={styles.priceChangeNote}>
+                      {proposedPrice > originalPrice ? tWorker('higher_than_original') : tWorker('lower_than_original')} {tWorker('price_difference')}{' '}
+                      {formatPrice(Math.abs(proposedPrice - originalPrice))} {tWorker('currency_sum')}
+                    </Text>
+                  )}
+                </View>
+
+                {/* Comment section */}
+                <View style={styles.commentSection}>
+                  <Text style={styles.sectionTitle}>{tWorker('comments')}</Text>
+                  <TextInput
+                    style={styles.commentInput}
+                    placeholder={tWorker('comment_placeholder')}
+                    placeholderTextColor="#999"
+                    value={message}
+                    onChangeText={setMessage}
+                    multiline={true}
+                    numberOfLines={4}
+                    textAlignVertical="top"
+                    returnKeyType="done"
+                    onSubmitEditing={dismissKeyboard}
+                    blurOnSubmit={true}
+                  />
+                </View>
+
+                {/* Action buttons */}
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity
+                    style={[
+                      styles.submitButton,
+                      !animationComplete && styles.buttonDisabled
+                    ]}
+                    onPress={animationComplete ? handleSubmit : undefined}
+                    disabled={!animationComplete}
+                  >
+                    <Text style={[
+                      styles.submitButtonText,
+                      !animationComplete && styles.disabledButtonText
+                    ]}>{tWorker('respond')}</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.cancelButton,
+                      !animationComplete && styles.buttonDisabled
+                    ]}
+                    onPress={animationComplete ? handleClose : undefined}
+                    disabled={!animationComplete}
+                  >
+                    <Text style={[
+                      styles.cancelButtonText,
+                      !animationComplete && styles.disabledButtonText
+                    ]}>{tWorker('cancel')}</Text>
+                  </TouchableOpacity>
+                </View>
+              </Animated.View>
+            )}
+          </SafeAreaView>
+        </Animated.View>
+      </Modal>
+    </>
   );
 };
 
@@ -282,14 +481,38 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
   },
+  containerKeyboardVisible: {
+    justifyContent: 'center', // Только для iOS
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  scrollView: {
+    maxHeight: '100%',
+  },
+  scrollContent: {
+    paddingBottom: 0, // Убираем лишний отступ
+  },
   modalContent: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 24,
     paddingTop: 16,
-    paddingBottom: Platform.OS === 'android' ? (isSmallScreen ? 160 : 140) : 32,
+    paddingBottom: Platform.OS === 'android' ? 20 : 32, // Уменьшаем отступ снизу для Android
     maxHeight: '80%',
+  },
+  modalContentKeyboardVisible: {
+    // iOS - карточка по центру, Android - обычная модалка снизу
+    maxHeight: Platform.OS === 'ios' ? '70%' : '85%',
+    borderRadius: Platform.OS === 'ios' ? 16 : 0,
+    paddingTop: Platform.OS === 'ios' ? 20 : 20, // Уменьшаем отступ сверху для Android
+    marginHorizontal: Platform.OS === 'ios' ? 16 : 0,
+    borderTopLeftRadius: Platform.OS === 'ios' ? 16 : 24,
+    borderTopRightRadius: Platform.OS === 'ios' ? 16 : 24,
+    borderBottomLeftRadius: Platform.OS === 'ios' ? 16 : 0,
+    borderBottomRightRadius: Platform.OS === 'ios' ? 16 : 0,
   },
   header: {
     flexDirection: 'row',
@@ -346,7 +569,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+  },
   priceButtonText: {
     fontSize: 24,
     fontWeight: '600',
