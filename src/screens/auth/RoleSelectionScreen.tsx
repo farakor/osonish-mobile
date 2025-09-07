@@ -13,7 +13,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
-import { noElevationStyles } from '../../utils/noShadowStyles';
+import { noElevationStyles, lightElevationStyles, mediumElevationStyles } from '../../utils/noShadowStyles';
 import type { RootStackParamList } from '../../types';
 import { LogoOsonish, AnimatedIcon } from '../../components/common';
 
@@ -227,12 +227,14 @@ const styles = StyleSheet.create({
     padding: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
     alignItems: 'center',
     position: 'relative',
-    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    ...lightElevationStyles,
+  },
   roleCardSelected: {
     backgroundColor: `${theme.colors.primary}08`,
-    borderWidth: 0, borderColor: theme.colors.primary,
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    ...mediumElevationStyles,
+  },
   iconContainer: {
     width: isSmallScreen ? 80 : 100,
     height: isSmallScreen ? 80 : 100,

@@ -24,7 +24,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { theme } from '../../constants';
-import { noElevationStyles } from '../../utils/noShadowStyles';
+import { noElevationStyles, lightElevationStyles } from '../../utils/noShadowStyles';
 import * as ImagePicker from 'expo-image-picker';
 import Svg, { Path } from 'react-native-svg';
 import CalendarDateIcon from '../../../assets/calendar-date.svg';
@@ -837,7 +837,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: theme.spacing.lg,
-    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+    ...lightElevationStyles,
   },
   privacyDocumentIconContainer: {
     width: isSmallScreen ? 44 : 48,
@@ -877,7 +877,9 @@ const styles = StyleSheet.create({
   privacyCheckboxBox: {
     width: 24,
     height: 24,
-    borderWidth: 0, borderColor: theme.colors.border,
+    borderWidth: 2,
+    borderColor: '#E5E5E7',
+    backgroundColor: '#FFFFFF',
     borderRadius: 6,
     marginRight: theme.spacing.md,
     alignItems: 'center',
