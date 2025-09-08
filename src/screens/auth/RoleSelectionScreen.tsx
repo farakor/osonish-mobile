@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: isSmallScreen ? theme.spacing.xl : theme.spacing.xxl,
+    marginBottom: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
   },
   title: {
     fontSize: isSmallScreen ? theme.fonts.sizes.xl : theme.fonts.sizes.xxl,
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
     borderRadius: isSmallScreen ? 40 : 50,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
+    marginBottom: isSmallScreen ? theme.spacing.xs : theme.spacing.sm,
   },
   icon: {
     fontSize: 28,

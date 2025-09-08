@@ -309,7 +309,7 @@ export const EditProfileScreen: React.FC = () => {
                 style={[styles.input, lastNameFocused && { borderColor: '#679B00', backgroundColor: '#F0F8FF' }]}
                 value={lastName}
                 onChangeText={setLastName}
-                placeholder="Иванов"
+                placeholder="Султонов"
                 placeholderTextColor="#C7C7CC"
                 autoCapitalize="words"
                 returnKeyType="next"
@@ -328,7 +328,7 @@ export const EditProfileScreen: React.FC = () => {
                 style={[styles.input, firstNameFocused && { borderColor: '#679B00', backgroundColor: '#F0F8FF' }]}
                 value={firstName}
                 onChangeText={setFirstName}
-                placeholder="Иван"
+                placeholder="Амир"
                 placeholderTextColor="#C7C7CC"
                 autoCapitalize="words"
                 returnKeyType="next"
@@ -347,7 +347,7 @@ export const EditProfileScreen: React.FC = () => {
                 style={[styles.input, middleNameFocused && { borderColor: '#679B00', backgroundColor: '#F0F8FF' }]}
                 value={middleName}
                 onChangeText={setMiddleName}
-                placeholder="Иванович"
+                placeholder="Каримович"
                 placeholderTextColor="#C7C7CC"
                 autoCapitalize="words"
                 returnKeyType="done"
@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     flexGrow: 1,
-    paddingBottom: isSmallScreen() ? 100 : 120,
+    paddingBottom: isSmallScreen() ? 140 : 120,
   },
 
   // Photo Section

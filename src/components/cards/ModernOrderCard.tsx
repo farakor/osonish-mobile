@@ -6,10 +6,12 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
+import LottieView from 'lottie-react-native';
 import { theme } from '../../constants/theme';
 import { Order } from '../../types';
 import { locationService, LocationCoords } from '../../services/locationService';
 import { getCategoryEmoji, getCategoryLabel } from '../../utils/categoryUtils';
+import { getCategoryAnimation } from '../../utils/categoryIconUtils';
 import { useCustomerTranslation, useCategoriesTranslation } from '../../hooks/useTranslation';
 import { getStatusInfo } from '../../utils/statusUtils';
 
@@ -80,7 +82,6 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
 
 
 
-  const getCategoryIcon = getCategoryEmoji;
 
   // Функция для получения строки с адресом и дистанцией
   const getLocationText = () => {
@@ -119,9 +120,13 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
         <View style={styles.header}>
           <View style={styles.categoryIconContainer}>
             <View style={styles.categoryIcon}>
-              <Text style={styles.categoryIconText}>
-                {getCategoryIcon(order.category)}
-              </Text>
+              <LottieView
+                source={getCategoryAnimation(order.category)}
+                style={styles.categoryLottieIcon}
+                autoPlay={false}
+                loop={false}
+                progress={0.5}
+              />
             </View>
             <Text style={styles.categoryText}>{getCategoryLabel(order.category, tCategories)}</Text>
           </View>
@@ -342,16 +347,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   categoryIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#F8F9FA',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: theme.spacing.sm,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
-  categoryIconText: {
-    fontSize: 20,
+  categoryLottieIcon: {
+    width: 28,
+    height: 28,
   },
   categoryText: {
     fontSize: theme.fonts.sizes.md,

@@ -550,7 +550,7 @@ export const WorkerProfileScreen: React.FC = () => {
 
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => handleOpenWebView('https://oson-ish.uz/terms-of-service.html', tWorker('terms_of_service'))}
+              onPress={() => handleOpenWebView('https://oson-ish.uz/terms-of-service.html', 'Пользовательское соглашение')}
             >
               <View style={styles.menuLeft}>
                 <View style={styles.menuIconContainer}>
@@ -567,10 +567,10 @@ export const WorkerProfileScreen: React.FC = () => {
                 if (Platform.OS === 'android') {
                   (navigation as any).navigate('DocumentWebView', {
                     url: 'https://oson-ish.uz/privacy-policy.html',
-                    title: tWorker('privacy_policy'),
+                    title: 'Политика в отношении обработки персональных данных',
                   });
                 } else {
-                  handleOpenWebView('https://oson-ish.uz/privacy-policy.html', tWorker('privacy_policy'));
+                  handleOpenWebView('https://oson-ish.uz/privacy-policy.html', 'Политика в отношении обработки персональных данных');
                 }
               }}
             >

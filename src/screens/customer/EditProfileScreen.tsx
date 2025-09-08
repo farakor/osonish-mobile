@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     flexGrow: 1,
-    paddingBottom: isSmallScreen() ? 100 : 120,
+    paddingBottom: isSmallScreen() ? 140 : 120,
   },
 
   // Photo Section

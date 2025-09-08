@@ -44,7 +44,6 @@
     "react-native": "0.79.5",
     "react-native-image-crop-picker": "^0.50.1",
     "react-native-image-picker": "^8.2.1",
-    "react-native-image-viewing": "^0.2.2",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
@@ -55,12 +54,23 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.0.10",
-    "@types/react-native": "^0.72.8",
     "dotenv": "^17.2.1",
     "react-native-svg-transformer": "^1.5.1",
     "sharp": "^0.34.3",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.8.3"
   },
-  "private": true
+  "private": true,
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "base64-arraybuffer",
+          "firebase",
+          "i18next-react-native-async-storage"
+        ],
+        "listUnknownPackages": false
+      }
+    }
+  }
 }

@@ -33,8 +33,11 @@ import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
 import CarIcon from '../../../assets/car-01.svg';
 import BankNoteIcon from '../../../assets/bank-note-01.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
+import LottieView from 'lottie-react-native';
 import { HeaderWithBack, MediaViewer, OrderLocationMap, DropdownMenuItem, StatusBadge, DropdownMenu } from '../../components/common';
 import { orderService } from '../../services/orderService';
+import { getCategoryEmoji } from '../../utils/categoryUtils';
+import { getCategoryAnimation } from '../../utils/categoryIconUtils';
 import { authService } from '../../services/authService';
 import { supabase } from '../../services/supabaseClient';
 import { Order, Applicant, User } from '../../types';
@@ -1203,7 +1206,13 @@ export const OrderDetailsScreen: React.FC = () => {
               {/* Верхний ряд: Категория и Дата */}
               <View style={styles.infoCard}>
                 <View style={styles.infoIcon}>
-                  <CategoryIcon width={22} height={22} color="#679B00" />
+                  <LottieView
+                    source={getCategoryAnimation(order.category)}
+                    style={styles.categoryLottieIcon}
+                    autoPlay={false}
+                    loop={false}
+                    progress={0.5}
+                  />
                 </View>
                 <Text style={styles.infoValue}>{getCategoryLabel(order.category, tCategories)}</Text>
               </View>
@@ -1681,6 +1690,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: theme.spacing.xs,
+  },
+  categoryLottieIcon: {
+    width: 22,
+    height: 22,
   },
   iconText: {
     fontSize: 16,

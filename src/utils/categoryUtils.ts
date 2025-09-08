@@ -55,6 +55,13 @@ export const getCategoryEmoji = (categoryLabel: string): string => {
     'Доставка': '🚴',
     'Красота': '💄',
     'Обучение': '📚',
+    // Английские названия для совместимости
+    'Construction': '🏗️',
+    'Cleaning': '🧹',
+    'Garden': '🌳',
+    'Catering': '🍽️',
+    'Moving': '🚚',
+    'Other': '✨',
   };
 
   return emojiMap[categoryLabel] || '✨';

@@ -44,11 +44,6 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
-      "navigationBar": {
-        "visible": "immersive",
-        "backgroundColor": "transparent"
-      },
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
@@ -58,7 +53,6 @@
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.POST_NOTIFICATIONS"
       ],
-      "useNextNotificationsApi": true,
       "googleServicesFile": "./google-services.json"
     },
     "web": {

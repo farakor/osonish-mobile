@@ -9,9 +9,10 @@ import {
   Text,
   Pressable,
   Platform,
+  ScrollView,
+  Image,
 } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import ImageViewing from 'react-native-image-viewing';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -23,6 +24,69 @@ interface MediaViewerProps {
   imageIndex?: number;
   allImages?: string[];
 }
+
+// Простой компонент для просмотра изображений
+const SimpleImageViewer: React.FC<{
+  images: { uri: string }[];
+  imageIndex: number;
+  visible: boolean;
+  onRequestClose: () => void;
+}> = ({ images, imageIndex, visible, onRequestClose }) => {
+  const [currentIndex, setCurrentIndex] = useState(imageIndex);
+
+  React.useEffect(() => {
+    setCurrentIndex(imageIndex);
+  }, [imageIndex]);
+
+  if (!visible) return null;
+
+  return (
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={onRequestClose}
+    >
+      <View style={styles.imageViewerContainer}>
+        <TouchableOpacity
+          style={styles.imageViewerCloseButton}
+          onPress={onRequestClose}
+        >
+          <Text style={styles.imageViewerCloseText}>✕</Text>
+        </TouchableOpacity>
+
+        <ScrollView
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          contentOffset={{ x: currentIndex * screenWidth, y: 0 }}
+          onMomentumScrollEnd={(event) => {
+            const newIndex = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
+            setCurrentIndex(newIndex);
+          }}
+        >
+          {images.map((image, index) => (
+            <View key={index} style={styles.imageViewerPage}>
+              <Image
+                source={{ uri: image.uri }}
+                style={styles.imageViewerImage}
+                resizeMode="contain"
+              />
+            </View>
+          ))}
+        </ScrollView>
+
+        {images.length > 1 && (
+          <View style={styles.imageViewerIndicator}>
+            <Text style={styles.imageViewerIndicatorText}>
+              {currentIndex + 1} / {images.length}
+            </Text>
+          </View>
+        )}
+      </View>
+    </Modal>
+  );
+};
 
 // Отдельный компонент для видео, который полностью переинициализируется
 const VideoPlayerComponent: React.FC<{ uri: string; onClose: () => void }> = ({ uri, onClose }) => {
@@ -204,14 +268,11 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({
       </Pressable>
 
       {/* Просмотрщик изображений */}
-      <ImageViewing
+      <SimpleImageViewer
         images={imageViewingData}
         imageIndex={Math.max(0, currentImageIndex)}
         visible={showImageViewer}
         onRequestClose={() => setShowImageViewer(false)}
-        swipeToCloseEnabled={true}
-        doubleTapToZoomEnabled={true}
-        presentationStyle="overFullScreen"
       />
 
       {/* Полноэкранное видео */}
@@ -255,7 +316,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+  },
   playIcon: {
     color: '#000',
     fontSize: 24,
@@ -303,5 +365,53 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  // Стили для SimpleImageViewer
+  imageViewerContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageViewerCloseButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  imageViewerCloseText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  imageViewerPage: {
+    width: screenWidth,
+    height: screenHeight,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageViewerImage: {
+    width: screenWidth,
+    height: screenHeight * 0.8,
+  },
+  imageViewerIndicator: {
+    position: 'absolute',
+    bottom: 50,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 15,
+  },
+  imageViewerIndicatorText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

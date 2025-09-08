@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
 import { useAuthTranslation } from '../../hooks/useTranslation';
-import { LogoOsonish, TermsModal, PrivacyPolicyModal } from '../../components/common';
+import { LogoOsonish, WebViewModal } from '../../components/common';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -14,23 +14,45 @@ const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
 export function AuthScreen() {
   const navigation = useNavigation();
   const t = useAuthTranslation();
-  const [showTermsModal, setShowTermsModal] = useState(false);
-  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [webViewModal, setWebViewModal] = useState<{
+    visible: boolean;
+    url: string;
+    title: string;
+  }>({
+    visible: false,
+    url: '',
+    title: '',
+  });
+
+  const handleOpenWebView = (url: string, title: string) => {
+    setWebViewModal({
+      visible: true,
+      url,
+      title,
+    });
+  };
+
+  const handleCloseWebView = () => {
+    setWebViewModal({
+      visible: false,
+      url: '',
+      title: '',
+    });
+  };
 
   const handleTermsPress = () => {
-    setShowTermsModal(true);
+    handleOpenWebView('https://oson-ish.uz/terms-of-service.html', 'Пользовательское соглашение');
   };
 
   const handlePrivacyPress = () => {
-    setShowPrivacyModal(true);
-  };
-
-  const handleCloseTermsModal = () => {
-    setShowTermsModal(false);
-  };
-
-  const handleClosePrivacyModal = () => {
-    setShowPrivacyModal(false);
+    if (Platform.OS === 'android') {
+      (navigation as any).navigate('DocumentWebView', {
+        url: 'https://oson-ish.uz/privacy-policy.html',
+        title: 'Политика в отношении обработки персональных данных',
+      });
+    } else {
+      handleOpenWebView('https://oson-ish.uz/privacy-policy.html', 'Политика в отношении обработки персональных данных');
+    }
   };
 
   return (
@@ -94,18 +116,12 @@ export function AuthScreen() {
         </View>
       </View>
 
-      {/* Terms Modal */}
-      <TermsModal
-        visible={showTermsModal}
-        onClose={handleCloseTermsModal}
-      />
-
-      {/* Privacy Policy Modal */}
-      <PrivacyPolicyModal
-        visible={showPrivacyModal}
-        onClose={handleClosePrivacyModal}
-        onAccept={handleClosePrivacyModal}
-        privacyAccepted={false}
+      {/* WebView Modal */}
+      <WebViewModal
+        visible={webViewModal.visible}
+        url={webViewModal.url}
+        title={webViewModal.title}
+        onClose={handleCloseWebView}
       />
     </SafeAreaView>
   );

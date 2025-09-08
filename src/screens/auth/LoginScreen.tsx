@@ -70,7 +70,7 @@ export function LoginScreen() {
 
   const handleContinue = async () => {
     if (!validatePhoneNumber()) {
-      Alert.alert('Ошибка', 'Пожалуйста, введите корректный номер телефона');
+      Alert.alert(tError('error'), t('invalid_phone'));
       return;
     }
 
@@ -83,10 +83,10 @@ export function LoginScreen() {
         // Переходим к экрану верификации SMS для входа
         navigation.navigate('LoginSmsVerification', { phone: phoneNumber });
       } else {
-        Alert.alert('Ошибка', result.error || 'Не удалось отправить SMS');
+        Alert.alert(tError('error'), result.error || t('sms_send_error'));
       }
     } catch (error) {
-      Alert.alert('Ошибка', 'Произошла ошибка. Попробуйте еще раз.');
+      Alert.alert(tError('error'), t('general_error'));
     } finally {
       setIsLoading(false);
     }
@@ -124,15 +124,15 @@ export function LoginScreen() {
 
           {/* Title Section */}
           <View style={styles.titleSection}>
-            <Text style={styles.title}>Вход в аккаунт</Text>
+            <Text style={styles.title}>{t('login_title')}</Text>
             <Text style={styles.subtitle}>
-              Введите номер телефона для входа в ваш аккаунт
+              {t('login_subtitle')}
             </Text>
           </View>
 
           {/* Phone Input */}
           <View style={styles.inputSection}>
-            <Text style={styles.inputLabel}>Номер телефона</Text>
+            <Text style={styles.inputLabel}>{t('phone_number')}</Text>
             <TextInput
               style={[
                 styles.phoneInput,
@@ -140,7 +140,7 @@ export function LoginScreen() {
               ]}
               value={phoneNumber}
               onChangeText={handlePhoneChange}
-              placeholder="+998 (XX) XXX-XX-XX"
+              placeholder={t('phone_placeholder')}
               placeholderTextColor={theme.colors.text.secondary}
               keyboardType="phone-pad"
               maxLength={20}
@@ -149,7 +149,7 @@ export function LoginScreen() {
               onBlur={() => setIsPhoneFocused(false)}
             />
             <Text style={styles.inputHint}>
-              Введите номер телефона, который вы использовали при регистрации
+              {t('login_phone_hint')}
             </Text>
           </View>
 
@@ -166,16 +166,16 @@ export function LoginScreen() {
               styles.continueButtonText,
               (!validatePhoneNumber() || isLoading) && styles.continueButtonTextDisabled
             ]}>
-              {isLoading ? 'Отправляем SMS...' : 'Войти'}
+              {isLoading ? t('sending_sms') : t('login')}
             </Text>
           </TouchableOpacity>
 
           {/* Registration Link */}
           <View style={styles.registrationSection}>
             <Text style={styles.registrationText}>
-              Нет аккаунта?{' '}
+              {t('no_account')}{' '}
               <Text style={styles.registrationLink} onPress={handleGoToRegistration}>
-                Зарегистрироваться
+                {t('register_link')}
               </Text>
             </Text>
           </View>
