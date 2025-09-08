@@ -118,7 +118,10 @@
     "samarkand_city": "Samarqand va viloyat",
     "coming_soon": "Tez orada mavjud bo'ladi",
     "registration_failed": "Ro'yxatdan o'tishni yakunlab bo'lmadi",
-    "registration_error": "Ro'yxatdan o'tishda xatolik yuz berdi. Qaytadan urinib ko'ring."
+    "registration_error": "Ro'yxatdan o'tishda xatolik yuz berdi. Qaytadan urinib ko'ring.",
+    "creating_profile": "Profil yaratilmoqda...",
+    "creating_your_profile": "Profilingiz yaratilmoqda",
+    "please_wait": "Iltimos, kuting"
   },
   "customer": {
     "my_orders": "Mening buyurtmalarim",

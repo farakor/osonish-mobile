@@ -1,5 +1,5 @@
 // Navigation types
-import { Applicant, User } from './index';
+import { Applicant, User, City } from './index';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -12,6 +12,11 @@ export type RootStackParamList = {
   ProfileInfo: { phone: string };
   RoleSelection: undefined;
   CitySelection: { role: 'customer' | 'worker' };
+  Loading: {
+    profileData: any;
+    role: 'customer' | 'worker';
+    selectedCity: City;
+  };
   CustomerTabs: undefined;
   WorkerTabs: undefined;
   DocumentWebView: { url: string; title: string };

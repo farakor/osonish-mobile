@@ -26,12 +26,19 @@ export const AnimatedIcon: React.FC<AnimatedIconProps> = ({
   const animationRef = useRef<LottieView>(null);
 
   useEffect(() => {
-    if (isSelected) {
+    if (autoPlay || isSelected) {
       animationRef.current?.play();
-    } else {
+    } else if (!autoPlay && !isSelected) {
       animationRef.current?.reset();
     }
-  }, [isSelected]);
+  }, [isSelected, autoPlay]);
+
+  // Запускаем анимацию при первом рендере, если autoPlay = true
+  useEffect(() => {
+    if (autoPlay) {
+      animationRef.current?.play();
+    }
+  }, []);
 
   return (
     <View style={[styles.container, { width, height }, style]}>

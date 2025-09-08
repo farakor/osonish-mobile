@@ -14,6 +14,7 @@ import {
   ProfileInfoStepByStepScreen,
   RoleSelectionScreen,
   CitySelectionScreen,
+  LoadingScreen,
   LanguageSelectionScreen
 } from '../screens/auth';
 import { CustomerStackNavigator } from './CustomerStackNavigator';
@@ -70,6 +71,10 @@ export function AppNavigator() {
         <Stack.Screen
           name="CitySelection"
           component={CitySelectionScreen}
+        />
+        <Stack.Screen
+          name="Loading"
+          component={LoadingScreen}
         />
         <Stack.Screen
           name="CustomerTabs"

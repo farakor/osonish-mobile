@@ -117,7 +117,10 @@
     "samarkand_city": "Самарканд и область",
     "coming_soon": "Скоро будет доступен",
     "registration_failed": "Не удалось завершить регистрацию",
-    "registration_error": "Произошла ошибка при регистрации. Попробуйте еще раз."
+    "registration_error": "Произошла ошибка при регистрации. Попробуйте еще раз.",
+    "creating_profile": "Создаем профиль...",
+    "creating_your_profile": "Создаем ваш профиль",
+    "please_wait": "Пожалуйста, подождите"
   },
   "customer": {
     "my_orders": "Мои заказы",

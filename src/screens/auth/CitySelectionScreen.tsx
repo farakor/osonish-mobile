@@ -82,39 +82,15 @@ export const CitySelectionScreen: React.FC = () => {
 
       const profileData = JSON.parse(profileDataString);
 
-      // Завершаем регистрацию с выбранным городом
-      const { authService } = await import('../../services/authService');
-      const result = await authService.completeRegistration({
-        ...profileData,
-        role: role,
-        city: selectedCity.name,
+      // Переходим на экран загрузки с данными
+      navigation.navigate('Loading', {
+        profileData,
+        role,
+        selectedCity,
       });
-
-      if (result.success && result.user) {
-        // Сохраняем выбранный город
-        await AsyncStorage.default.setItem('@selected_city', JSON.stringify(selectedCity));
-
-        // Очищаем временные данные
-        await AsyncStorage.default.removeItem('@temp_profile_data');
-
-        // Переходим в приложение в зависимости от роли
-        if (role === 'customer') {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'CustomerTabs' }],
-          });
-        } else {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'WorkerTabs' }],
-          });
-        }
-      } else {
-        Alert.alert(tError('error'), result.error || t('registration_failed'));
-      }
     } catch (error) {
-      console.error('Ошибка завершения регистрации:', error);
-      Alert.alert(tError('error'), t('registration_error'));
+      console.error('Ошибка получения данных профиля:', error);
+      Alert.alert(tError('error'), t('general_error_try_again'));
     }
   };
 
