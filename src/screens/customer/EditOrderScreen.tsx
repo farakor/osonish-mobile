@@ -27,6 +27,8 @@ import { CustomerStackParamList } from '../../types/navigation';
 import { HeaderWithBack } from '../../components/common';
 import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 import { useTranslatedCategories, getCategoryKeyFromLabel } from '../../utils/categoryUtils';
+import { getCategoryAnimation } from '../../utils/categoryIconUtils';
+import LottieView from 'lottie-react-native';
 
 type EditOrderRouteProp = RouteProp<CustomerStackParamList, 'EditOrder'>;
 
@@ -92,7 +94,7 @@ export const EditOrderScreen: React.FC = () => {
         const orderData = await orderService.getOrderById(orderId);
 
         if (!orderData) {
-          Alert.alert('Ошибка', 'Заказ не найден');
+          Alert.alert(t('error'), t('order_not_found'));
           navigation.goBack();
           return;
         }
@@ -100,9 +102,9 @@ export const EditOrderScreen: React.FC = () => {
         // Проверяем, что заказ можно редактировать
         if (!['new', 'response_received'].includes(orderData.status)) {
           Alert.alert(
-            'Нельзя редактировать',
-            'Заказ можно редактировать только пока он не находится в работе или не завершен.',
-            [{ text: 'ОК', onPress: () => navigation.goBack() }]
+            t('cannot_edit_title'),
+            t('cannot_edit_message'),
+            [{ text: t('ok'), onPress: () => navigation.goBack() }]
           );
           return;
         }
@@ -137,7 +139,7 @@ export const EditOrderScreen: React.FC = () => {
         }
       } catch (error) {
         console.error('Ошибка загрузки заказа:', error);
-        Alert.alert('Ошибка', 'Не удалось загрузить данные заказа');
+        Alert.alert(t('error'), t('load_order_data_error'));
         navigation.goBack();
       } finally {
         setIsLoadingOrder(false);
@@ -195,16 +197,16 @@ export const EditOrderScreen: React.FC = () => {
   };
 
   const formatDate = (date: Date | null) => {
-    if (!date) return 'Выберите дату';
+    if (!date) return t('select_date');
 
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     if (date.toDateString() === today.toDateString()) {
-      return 'Сегодня';
+      return t('today');
     } else if (date.toDateString() === tomorrow.toDateString()) {
-      return 'Завтра';
+      return t('tomorrow');
     } else {
       return date.toLocaleDateString('ru-RU', {
         day: '2-digit',
@@ -244,11 +246,11 @@ export const EditOrderScreen: React.FC = () => {
         }
       } else {
         console.log('[EditOrder] ❌ Координаты не получены');
-        setMediaError('Не удалось определить местоположение. Проверьте настройки геолокации в устройстве.');
+        setMediaError(t('location_error'));
       }
     } catch (error) {
       console.error('[EditOrder] ❌ Критическая ошибка получения местоположения:', error);
-      setMediaError('Произошла ошибка при получении местоположения');
+      setMediaError(t('location_general_error'));
     } finally {
       console.log('[EditOrder] 🏁 Завершение получения местоположения');
       setIsGettingLocation(false);
@@ -261,13 +263,13 @@ export const EditOrderScreen: React.FC = () => {
 
       // Проверяем лимит файлов
       if (mediaFiles.length >= 5) {
-        setMediaError('Максимум 5 файлов');
+        setMediaError(t('max_files_limit'));
         return;
       }
 
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Ошибка', 'Нужно разрешение для доступа к галерее');
+        Alert.alert(t('error'), t('gallery_permission_error'));
         return;
       }
 
@@ -284,7 +286,7 @@ export const EditOrderScreen: React.FC = () => {
         // Проверяем размер файла (максимум 50MB)
         const maxSize = 50 * 1024 * 1024; // 50MB в байтах
         if (asset.fileSize && asset.fileSize > maxSize) {
-          setMediaError('Файл слишком большой (максимум 50MB)');
+          setMediaError(t('file_too_large'));
           return;
         }
 
@@ -300,7 +302,7 @@ export const EditOrderScreen: React.FC = () => {
       }
     } catch (error) {
       console.error('[EditOrder] ❌ Ошибка добавления медиа:', error);
-      setMediaError('Ошибка при добавлении файла');
+      setMediaError(t('media_add_error'));
     }
   };
 
@@ -311,40 +313,40 @@ export const EditOrderScreen: React.FC = () => {
 
   const validateForm = () => {
     if (!title.trim()) {
-      Alert.alert('Ошибка', 'Введите название заказа');
+      Alert.alert(t('error'), t('enter_title_error'));
       return false;
     }
     if (title.length > theme.orderValidation.title.maxLength) {
-      Alert.alert('Ошибка', t('title_too_long_error'));
+      Alert.alert(t('error'), t('title_too_long_error'));
       return false;
     }
     if (!description.trim()) {
-      Alert.alert('Ошибка', 'Введите описание заказа');
+      Alert.alert(t('error'), t('enter_description_error'));
       return false;
     }
     if (description.length > theme.orderValidation.description.maxLength) {
-      Alert.alert('Ошибка', t('description_too_long_error'));
+      Alert.alert(t('error'), t('description_too_long_error'));
       return false;
     }
     if (!category) {
-      Alert.alert('Ошибка', 'Выберите категорию');
+      Alert.alert(t('error'), t('select_category_error'));
       return false;
     }
     if (!location.trim()) {
-      Alert.alert('Ошибка', 'Введите адрес или получите текущее местоположение');
+      Alert.alert(t('error'), t('enter_location_error'));
       return false;
     }
     const numericBudget = parseFormattedNumber(budget);
     if (!budget.trim() || isNaN(Number(numericBudget)) || Number(numericBudget) <= 0) {
-      Alert.alert('Ошибка', 'Введите корректный бюджет');
+      Alert.alert(t('error'), t('enter_budget_error'));
       return false;
     }
     if (!workersCount.trim() || isNaN(Number(workersCount)) || Number(workersCount) <= 0) {
-      Alert.alert('Ошибка', 'Введите количество исполнителей');
+      Alert.alert(t('error'), t('enter_workers_count_error'));
       return false;
     }
     if (!selectedDate) {
-      Alert.alert('Ошибка', 'Выберите дату выполнения');
+      Alert.alert(t('error'), t('select_date_error'));
       return false;
     }
 
@@ -442,17 +444,17 @@ export const EditOrderScreen: React.FC = () => {
       if (result.success) {
         console.log('[EditOrder] ✅ Заказ успешно обновлен');
         Alert.alert(
-          'Успешно',
-          'Заказ обновлен',
-          [{ text: 'ОК', onPress: () => navigation.goBack() }]
+          tCommon('success'),
+          t('order_updated_success'),
+          [{ text: t('ok'), onPress: () => navigation.goBack() }]
         );
       } else {
         console.error('[EditOrder] ❌ Ошибка обновления заказа:', result.error);
-        Alert.alert('Ошибка', result.error || 'Не удалось обновить заказ');
+        Alert.alert(t('error'), result.error || t('order_update_error'));
       }
     } catch (error) {
       console.error('[EditOrder] ❌ Критическая ошибка обновления заказа:', error);
-      Alert.alert('Ошибка', 'Произошла ошибка при обновлении заказа');
+      Alert.alert(t('error'), t('order_update_error'));
     } finally {
       setIsLoading(false);
       setIsUploadingMedia(false);
@@ -490,18 +492,18 @@ export const EditOrderScreen: React.FC = () => {
         <View style={styles.content}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Редактировать заказ</Text>
-            <Text style={styles.subtitle}>Внесите необходимые изменения</Text>
+            <Text style={styles.title}>{t('edit_order_title')}</Text>
+            <Text style={styles.subtitle}>{t('edit_subtitle')}</Text>
           </View>
 
           {/* Название заказа */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Название заказа</Text>
+            <Text style={styles.sectionTitle}>{t('order_title_section')}</Text>
             <TextInput
               style={getInputStyle(titleFocused)}
               value={title}
               onChangeText={setTitle}
-              placeholder="Например: Покрасить забор"
+              placeholder={t('title_placeholder')}
               placeholderTextColor={theme.colors.text.secondary}
               maxLength={theme.orderValidation.title.maxLength}
               onFocus={() => setTitleFocused(true)}
@@ -514,12 +516,12 @@ export const EditOrderScreen: React.FC = () => {
 
           {/* Описание */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Описание работы</Text>
+            <Text style={styles.sectionTitle}>{t('work_description_section')}</Text>
             <TextInput
               style={getInputStyle(descriptionFocused, true)}
               value={description}
               onChangeText={setDescription}
-              placeholder="Опишите подробно, что нужно сделать..."
+              placeholder={t('description_placeholder')}
               placeholderTextColor={theme.colors.text.secondary}
               maxLength={theme.orderValidation.description.maxLength}
               multiline
@@ -535,7 +537,7 @@ export const EditOrderScreen: React.FC = () => {
 
           {/* Категория */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Категория</Text>
+            <Text style={styles.sectionTitle}>{t('category_section')}</Text>
             <View style={styles.categoriesGrid}>
               {categories.map((cat) => (
                 <TouchableOpacity
@@ -547,7 +549,15 @@ export const EditOrderScreen: React.FC = () => {
                   onPress={() => setCategory(cat.key)}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
+                  <View style={styles.categoryIconContainer}>
+                    <LottieView
+                      source={getCategoryAnimation(cat.key)}
+                      style={styles.categoryLottieIcon}
+                      autoPlay={category === cat.key}
+                      loop={true}
+                      speed={0.8}
+                    />
+                  </View>
                   <Text
                     style={[
                       styles.categoryLabel,
@@ -563,12 +573,12 @@ export const EditOrderScreen: React.FC = () => {
 
           {/* Адрес */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Адрес выполнения</Text>
+            <Text style={styles.sectionTitle}>{t('execution_address_section')}</Text>
             <TextInput
               style={getInputStyle(locationFocused)}
               value={location}
               onChangeText={setLocation}
-              placeholder="Введите адрес"
+              placeholder={t('location_placeholder')}
               placeholderTextColor={theme.colors.text.secondary}
               onFocus={() => setLocationFocused(true)}
               onBlur={() => setLocationFocused(false)}
@@ -588,7 +598,7 @@ export const EditOrderScreen: React.FC = () => {
           {/* Бюджет и количество исполнителей */}
           <View style={styles.row}>
             <View style={[styles.section, styles.halfWidth]}>
-              <Text style={styles.sectionTitle}>Бюджет (сум)</Text>
+              <Text style={styles.sectionTitle}>{t('budget_section')}</Text>
               <TextInput
                 style={getInputStyle(budgetFocused)}
                 value={budget}
@@ -601,7 +611,7 @@ export const EditOrderScreen: React.FC = () => {
               />
             </View>
             <View style={[styles.section, styles.halfWidth]}>
-              <Text style={styles.sectionTitle}>Исполнителей</Text>
+              <Text style={styles.sectionTitle}>{t('workers_section')}</Text>
               <View style={styles.counterContainer}>
                 <TouchableOpacity
                   style={styles.counterButton}
@@ -634,7 +644,7 @@ export const EditOrderScreen: React.FC = () => {
 
           {/* Дата выполнения - ТОЛЬКО ОТОБРАЖЕНИЕ, БЕЗ ВОЗМОЖНОСТИ ИЗМЕНЕНИЯ */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Дата выполнения</Text>
+            <Text style={styles.sectionTitle}>{t('execution_date_section')}</Text>
             <View style={[styles.dateButton, styles.dateButtonDisabled]}>
               <CalendarDateIcon width={20} height={20} color={theme.colors.text.secondary} />
               <Text style={[styles.dateButtonText, styles.dateButtonTextDisabled]}>
@@ -648,9 +658,9 @@ export const EditOrderScreen: React.FC = () => {
 
           {/* Медиа файлы */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Фото и видео (необязательно)</Text>
+            <Text style={styles.sectionTitle}>{t('media_section')}</Text>
             <Text style={styles.sectionSubtitle}>
-              Добавьте до 5 файлов, чтобы лучше показать задачу
+              {t('media_section_subtitle')}
             </Text>
 
             {/* Превью медиа файлов */}
@@ -706,7 +716,7 @@ export const EditOrderScreen: React.FC = () => {
           activeOpacity={0.8}
         >
           <Text style={styles.updateButtonText}>
-            {isUploadingMedia ? 'Загружаем файлы...' : isLoading ? 'Обновляем...' : 'Обновить заказ'}
+            {isUploadingMedia ? t('uploading_files') : isLoading ? t('updating') : t('update_order')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -716,10 +726,10 @@ export const EditOrderScreen: React.FC = () => {
         <View style={styles.datePickerContainer}>
           <View style={styles.datePickerHeader}>
             <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-              <Text style={styles.datePickerCancel}>Отмена</Text>
+              <Text style={styles.datePickerCancel}>{t('cancel')}</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-              <Text style={styles.datePickerDone}>Готово</Text>
+              <Text style={styles.datePickerDone}>{t('done')}</Text>
             </TouchableOpacity>
           </View>
           <DateTimePicker
@@ -806,11 +816,23 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
-    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, borderWidth: 0,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
   },
   inputFocused: {
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    borderColor: theme.colors.primary,
+    borderWidth: 2,
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
+  },
   textArea: {
     height: 100,
     textAlignVertical: 'top',
@@ -833,14 +855,22 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary + '20',
     borderColor: theme.colors.primary,
   },
-  categoryEmoji: {
-    fontSize: 24,
+  categoryIconContainer: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: theme.spacing.xs,
+  },
+  categoryLottieIcon: {
+    width: 32,
+    height: 32,
   },
   categoryLabel: {
     fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.primary,
     fontWeight: theme.fonts.weights.medium,
+    textAlign: 'center',
   },
   categoryLabelSelected: {
     color: theme.colors.primary,
@@ -956,7 +986,8 @@ const styles = StyleSheet.create({
     height: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+  },
   removeMediaButtonText: {
     color: theme.colors.white,
     fontSize: 16,
@@ -995,17 +1026,20 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
     shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+  },
   updateButton: {
     backgroundColor: theme.colors.primary,
     borderRadius: theme.borderRadius.lg,
     paddingVertical: theme.spacing.md,
     alignItems: 'center',
     shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+  },
   updateButtonDisabled: {
     backgroundColor: theme.colors.disabled,
-    shadowOpacity: 0, elevation: 0, },
+    shadowOpacity: 0, elevation: 0,
+  },
   updateButtonText: {
     color: theme.colors.white,
     fontSize: theme.fonts.sizes.md,
@@ -1020,7 +1054,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: theme.borderRadius.xl,
     borderTopRightRadius: theme.borderRadius.xl,
     shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+  },
   datePickerHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',

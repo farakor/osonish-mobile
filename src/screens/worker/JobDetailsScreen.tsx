@@ -677,7 +677,7 @@ export const JobDetailsScreen: React.FC = () => {
 
           {/* Amenities Section */}
           <View style={styles.amenitiesSection}>
-            <Text style={styles.sectionTitle}>Дополнительные удобства</Text>
+            <Text style={styles.sectionTitle}>{tWorker('amenities')}</Text>
             <View style={styles.amenitiesContainer}>
               <View style={styles.amenityItem}>
                 <View style={styles.amenityIconContainer}>

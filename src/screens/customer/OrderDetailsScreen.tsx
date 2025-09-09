@@ -1355,7 +1355,7 @@ export const OrderDetailsScreen: React.FC = () => {
 
           {/* Amenities Section */}
           <View style={styles.amenitiesSection}>
-            <Text style={styles.sectionTitle}>Дополнительные удобства</Text>
+            <Text style={styles.sectionTitle}>{t('amenities')}</Text>
             <View style={styles.amenitiesContainer}>
               <View style={styles.amenityItem}>
                 <View style={styles.amenityIconContainer}>

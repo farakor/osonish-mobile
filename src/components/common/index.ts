@@ -56,5 +56,3 @@ export { DeleteAccountModal } from './DeleteAccountModal';
 export { PlusIcon } from './PlusIcon';
 export { AnimatedIcon } from './AnimatedIcon';
 export { TestModal } from './TestModal';
-export { SplashAnimation } from './SplashAnimation';
-export { SimpleSplashAnimation } from './SimpleSplashAnimation';
