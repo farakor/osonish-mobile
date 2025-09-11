@@ -4,7 +4,7 @@
     "slug": "osonish-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/Appicon-appstore.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "owner": "farakor",
@@ -26,6 +26,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.farakor.osonishmobile",
       "buildNumber": "9",
+      "icon": "./assets/Appicon-appstore.png",
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification"
@@ -40,8 +41,9 @@
     "android": {
       "package": "com.farakor.osonishmobile",
       "versionCode": 1,
+      "icon": "./assets/Appicon-playstore.png",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/Appicon-playstore.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": [

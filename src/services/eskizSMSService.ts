@@ -276,6 +276,15 @@ export class EskizSMSService {
   }
 
   /**
+   * Проверка, является ли номер тестовым для App Store/Google Play
+   */
+  private isTestNumber(phone: string): boolean {
+    const formattedPhone = this.formatPhoneNumber(phone);
+    // Тестовый номер для App Store и Google Play
+    return formattedPhone === '998999999999';
+  }
+
+  /**
    * Отправка кода верификации
    */
   async sendVerificationCode(phone: string, from?: string): Promise<{ success: boolean; error?: string }> {
@@ -286,6 +295,22 @@ export class EskizSMSService {
       const existingCode = this.verificationCodes.get(formattedPhone);
       if (existingCode && (Date.now() - existingCode.timestamp) < 60000) { // 1 минута
         return { success: false, error: 'Код уже был отправлен. Подождите минуту.' };
+      }
+
+      // Специальная обработка для тестового номера App Store/Google Play
+      if (this.isTestNumber(formattedPhone)) {
+        const testCode = '123456'; // Фиксированный код для тестового номера
+        console.log(`[EskizSMS TEST] Тестовый номер ${formattedPhone}, используем код: ${testCode}`);
+
+        // Сохраняем тестовый код для верификации
+        this.verificationCodes.set(formattedPhone, {
+          phone: formattedPhone,
+          code: testCode,
+          timestamp: Date.now(),
+          attempts: 0
+        });
+
+        return { success: true };
       }
 
       const code = this.generateCode();
