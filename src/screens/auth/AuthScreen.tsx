@@ -41,17 +41,17 @@ export function AuthScreen() {
   };
 
   const handleTermsPress = () => {
-    handleOpenWebView('https://oson-ish.uz/terms-of-service.html', 'Пользовательское соглашение');
+    handleOpenWebView('https://oson-ish.uz/terms-of-service.html', t('terms_of_service_title'));
   };
 
   const handlePrivacyPress = () => {
     if (Platform.OS === 'android') {
       (navigation as any).navigate('DocumentWebView', {
         url: 'https://oson-ish.uz/privacy-policy.html',
-        title: 'Политика в отношении обработки персональных данных',
+        title: t('privacy_policy_title'),
       });
     } else {
-      handleOpenWebView('https://oson-ish.uz/privacy-policy.html', 'Политика в отношении обработки персональных данных');
+      handleOpenWebView('https://oson-ish.uz/privacy-policy.html', t('privacy_policy_title'));
     }
   };
 

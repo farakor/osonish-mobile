@@ -4,6 +4,7 @@
     "slug": "osonish-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
+    "sdkVersion": "54.0.0",
     "icon": "./assets/Appicon-appstore.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,

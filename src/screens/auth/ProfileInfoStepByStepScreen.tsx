@@ -13,6 +13,8 @@ import {
   KeyboardAvoidingView,
   ActivityIndicator,
   Modal,
+  Keyboard,
+  StatusBar,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -31,7 +33,7 @@ import CalendarDateIcon from '../../../assets/calendar-date.svg';
 import NoImagePlaceholder from '../../../assets/no-image-placeholder.svg';
 import PlusIcon from '../../../assets/plus.svg';
 import PaperIcon from '../../../assets/paper.svg';
-import { useAuthTranslation, useCommonTranslation } from '../../hooks/useTranslation';
+import { useAuthTranslation, useCommonTranslation, useErrorsTranslation } from '../../hooks/useTranslation';
 
 
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -45,6 +47,12 @@ import {
   AnimatedInteractiveContainer,
 } from '../../components/common/AnimatedComponents';
 import { WebViewModal, LogoOsonish } from '../../components/common';
+import {
+  shouldUseKeyboardAvoidingView,
+  createKeyboardListeners,
+  createNavigationHandler,
+  getKeyboardAwareStyles
+} from '../../utils/keyboardUtils';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -80,6 +88,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
   const { phone } = route.params as { phone: string };
   const t = useAuthTranslation();
   const tCommon = useCommonTranslation();
+  const tError = useErrorsTranslation();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -107,7 +116,21 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
   const [firstNameFocused, setFirstNameFocused] = useState(false);
   const [middleNameFocused, setMiddleNameFocused] = useState(false);
 
+  // Состояние клавиатуры для Android
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
   const totalSteps = 6;
+
+  // Обработка клавиатуры для Android с использованием утилит
+  useEffect(() => {
+    const { setup, cleanup } = createKeyboardListeners(
+      () => setKeyboardVisible(true),
+      () => setKeyboardVisible(false)
+    );
+
+    setup();
+    return cleanup;
+  }, []);
 
   // Функция для получения стиля поля ввода с учетом фокуса
   const getInputStyle = (isFocused: boolean) => [
@@ -237,13 +260,13 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
         return true;
       case 2: // Фамилия
         if (!lastName.trim()) {
-          Alert.alert('Заполните поле', 'Введите фамилию');
+          Alert.alert(t('fill_field'), t('enter_lastname'));
           return false;
         }
         return true;
       case 3: // Имя
         if (!firstName.trim()) {
-          Alert.alert('Заполните поле', 'Введите имя');
+          Alert.alert(t('fill_field'), t('enter_firstname'));
           return false;
         }
         return true;
@@ -251,13 +274,13 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
         return true;
       case 5: // Дата рождения
         if (!birthDate) {
-          Alert.alert('Выберите дату', 'Выберите дату рождения');
+          Alert.alert(t('select_date'), t('select_birth_date'));
           return false;
         }
         return true;
       case 6: // Согласие с ПД
         if (!privacyAccepted) {
-          Alert.alert('Согласие необходимо', 'Необходимо согласиться с обработкой персональных данных');
+          Alert.alert(t('agreement_required'), t('privacy_agreement_required'));
           return false;
         }
         return true;
@@ -266,23 +289,24 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
     }
   };
 
-  const nextStep = () => {
+  // Создаем обработчики навигации с автоматическим скрытием клавиатуры
+  const nextStep = createNavigationHandler(() => {
     if (validateCurrentStep()) {
       if (currentStep < totalSteps) {
         setCurrentStep(currentStep + 1);
       }
     }
-  };
+  });
 
-  const prevStep = () => {
+  const prevStep = createNavigationHandler(() => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
-  };
+  });
 
   const handleSubmit = async () => {
     if (!lastName.trim() || !firstName.trim() || !birthDate || !privacyAccepted) {
-      Alert.alert('Ошибка', 'Заполните все обязательные поля и согласитесь с условиями');
+      Alert.alert(tError('error'), t('fill_required_fields'));
       return;
     }
 
@@ -309,7 +333,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
         routes: [{ name: 'RoleSelection' }],
       });
     } catch (error) {
-      Alert.alert('Ошибка', 'Не удалось сохранить данные. Попробуйте еще раз.');
+      Alert.alert(tError('error'), t('save_data_error'));
     } finally {
       setIsLoading(false);
     }
@@ -317,12 +341,12 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
 
   const getStepTitle = () => {
     switch (currentStep) {
-      case 1: return 'Фото профиля';
-      case 2: return 'Фамилия';
-      case 3: return 'Имя';
-      case 4: return 'Отчество';
-      case 5: return 'Дата рождения';
-      case 6: return 'Согласие';
+      case 1: return t('profile_photo');
+      case 2: return t('lastname');
+      case 3: return t('firstname');
+      case 4: return t('middlename');
+      case 5: return t('birth_date');
+      case 6: return t('agreement');
       default: return '';
     }
   };
@@ -557,117 +581,238 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
     }
   };
 
+  // Получаем стили с учетом состояния клавиатуры
+  const keyboardAwareStyles = getKeyboardAwareStyles(keyboardVisible);
+  const useKeyboardAvoiding = shouldUseKeyboardAvoidingView();
+
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <KeyboardAvoidingView
-          style={styles.content}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-        >
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.logoContainer}>
-              <LogoOsonish
-                width={isSmallScreen ? 120 : 160}
-                height={isSmallScreen ? 22 : 29}
-              />
+        {useKeyboardAvoiding ? (
+          <KeyboardAvoidingView
+            style={styles.content}
+            behavior="padding"
+            keyboardVerticalOffset={0}
+          >
+            {/* Header */}
+            <View style={styles.header}>
+              <View style={styles.logoContainer}>
+                <LogoOsonish
+                  width={isSmallScreen ? 120 : 160}
+                  height={isSmallScreen ? 22 : 29}
+                />
+              </View>
             </View>
-          </View>
 
-          {/* Progress */}
-          <AnimatedProgressBar progress={currentStep} total={totalSteps} />
-          <StepCounter currentStep={currentStep} totalSteps={totalSteps} t={t} />
+            {/* Progress */}
+            <AnimatedProgressBar progress={currentStep} total={totalSteps} />
+            <StepCounter currentStep={currentStep} totalSteps={totalSteps} t={t} />
 
-          {/* Content */}
-          <View style={styles.mainContent}>
-            {renderStep()}
-          </View>
+            {/* Content */}
+            <View style={[
+              styles.mainContent,
+              keyboardAwareStyles.content
+            ]}>
+              {renderStep()}
+            </View>
 
-          {/* Navigation */}
-          <View style={styles.navigation}>
-            {currentStep > 1 && (
-              <AnimatedNavigationButton
-                variant="secondary"
-                onPress={prevStep}
-                isVisible={currentStep > 1}
-                delay={0}
-                resetKey={`${animationResetKey}-step-${currentStep}`}
-              >
-                <Text style={styles.secondaryButtonText}>{tCommon('back')}</Text>
-              </AnimatedNavigationButton>
-            )}
-
-            <View style={styles.navigationSpacer} />
-
-            {currentStep < totalSteps ? (
-              isCurrentStepValid() && (
+            {/* Navigation */}
+            <View style={[
+              styles.navigation,
+              keyboardAwareStyles.navigation
+            ]}>
+              {currentStep > 1 && (
                 <AnimatedNavigationButton
-                  variant="primary"
-                  onPress={nextStep}
-                  isVisible={currentStep < totalSteps && isCurrentStepValid()}
+                  variant="secondary"
+                  onPress={prevStep}
+                  isVisible={currentStep > 1}
                   delay={0}
                   resetKey={`${animationResetKey}-step-${currentStep}`}
                 >
-                  <Text style={styles.primaryButtonText}>{tCommon('next')}</Text>
+                  <Text style={styles.secondaryButtonText}>{tCommon('back')}</Text>
                 </AnimatedNavigationButton>
-              )
-            ) : (
-              <AnimatedNavigationButton
-                variant="primary"
-                onPress={handleSubmit}
-                disabled={isLoading || !privacyAccepted}
-                isVisible={currentStep === totalSteps}
-                delay={0}
-                resetKey={`${animationResetKey}-step-${currentStep}`}
-              >
-                <Text style={styles.primaryButtonText}>
-                  {isLoading ? 'Сохраняем...' : 'Готово'}
-                </Text>
-              </AnimatedNavigationButton>
-            )}
-          </View>
+              )}
 
-          {/* Simple Loading Indicator */}
-          <Modal
-            visible={isLoading}
-            transparent={true}
-            animationType="fade"
-          >
-            <View style={styles.loadingOverlay}>
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={theme.colors.primary} />
-                <Text style={styles.loadingText}>{t('saving_data')}</Text>
+              <View style={styles.navigationSpacer} />
+
+              {currentStep < totalSteps ? (
+                isCurrentStepValid() && (
+                  <AnimatedNavigationButton
+                    variant="primary"
+                    onPress={nextStep}
+                    isVisible={currentStep < totalSteps && isCurrentStepValid()}
+                    delay={0}
+                    resetKey={`${animationResetKey}-step-${currentStep}`}
+                  >
+                    <Text style={styles.primaryButtonText}>{tCommon('next')}</Text>
+                  </AnimatedNavigationButton>
+                )
+              ) : (
+                <AnimatedNavigationButton
+                  variant="primary"
+                  onPress={handleSubmit}
+                  disabled={isLoading || !privacyAccepted}
+                  isVisible={currentStep === totalSteps}
+                  delay={0}
+                  resetKey={`${animationResetKey}-step-${currentStep}`}
+                >
+                  <Text style={styles.primaryButtonText}>
+                    {isLoading ? t('saving') : t('done')}
+                  </Text>
+                </AnimatedNavigationButton>
+              )}
+            </View>
+
+            {/* Simple Loading Indicator */}
+            <Modal
+              visible={isLoading}
+              transparent={true}
+              animationType="fade"
+            >
+              <View style={styles.loadingOverlay}>
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color={theme.colors.primary} />
+                  <Text style={styles.loadingText}>{t('saving_data')}</Text>
+                </View>
+              </View>
+            </Modal>
+
+            {/* Date Picker */}
+            {showDatePicker && (
+              <View style={styles.datePickerContainer}>
+                {Platform.OS === 'ios' && (
+                  <View style={styles.datePickerHeader}>
+                    <TouchableOpacity
+                      style={styles.doneButton}
+                      onPress={() => setShowDatePicker(false)}
+                    >
+                      <Text style={styles.doneButtonText}>{t('done')}</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+                <DateTimePicker
+                  value={birthDate || new Date(1978, 4, 1)}
+                  mode="date"
+                  display={Platform.OS === 'android' ? 'calendar' : 'spinner'}
+                  onChange={handleDateChange}
+                  maximumDate={new Date()}
+                  minimumDate={new Date(1950, 0, 1)}
+                  locale="ru-RU"
+                />
+              </View>
+            )}
+          </KeyboardAvoidingView>
+        ) : (
+          <View style={styles.content}>
+            {/* Header */}
+            <View style={styles.header}>
+              <View style={styles.logoContainer}>
+                <LogoOsonish
+                  width={isSmallScreen ? 120 : 160}
+                  height={isSmallScreen ? 22 : 29}
+                />
               </View>
             </View>
-          </Modal>
 
-          {/* Date Picker */}
-          {showDatePicker && (
-            <View style={styles.datePickerContainer}>
-              {Platform.OS === 'ios' && (
-                <View style={styles.datePickerHeader}>
-                  <TouchableOpacity
-                    style={styles.doneButton}
-                    onPress={() => setShowDatePicker(false)}
-                  >
-                    <Text style={styles.doneButtonText}>{t('done')}</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-              <DateTimePicker
-                value={birthDate || new Date(1978, 4, 1)}
-                mode="date"
-                display={Platform.OS === 'android' ? 'calendar' : 'spinner'}
-                onChange={handleDateChange}
-                maximumDate={new Date()}
-                minimumDate={new Date(1950, 0, 1)}
-                locale="ru-RU"
-              />
+            {/* Progress */}
+            <AnimatedProgressBar progress={currentStep} total={totalSteps} />
+            <StepCounter currentStep={currentStep} totalSteps={totalSteps} t={t} />
+
+            {/* Content */}
+            <View style={[
+              styles.mainContent,
+              keyboardAwareStyles.content
+            ]}>
+              {renderStep()}
             </View>
-          )}
 
-        </KeyboardAvoidingView>
+            {/* Navigation */}
+            <View style={[
+              styles.navigation,
+              keyboardAwareStyles.navigation
+            ]}>
+              {currentStep > 1 && (
+                <AnimatedNavigationButton
+                  variant="secondary"
+                  onPress={prevStep}
+                  isVisible={currentStep > 1}
+                  delay={0}
+                  resetKey={`${animationResetKey}-step-${currentStep}`}
+                >
+                  <Text style={styles.secondaryButtonText}>{tCommon('back')}</Text>
+                </AnimatedNavigationButton>
+              )}
+
+              <View style={styles.navigationSpacer} />
+
+              {currentStep < totalSteps ? (
+                isCurrentStepValid() && (
+                  <AnimatedNavigationButton
+                    variant="primary"
+                    onPress={nextStep}
+                    isVisible={currentStep < totalSteps && isCurrentStepValid()}
+                    delay={0}
+                    resetKey={`${animationResetKey}-step-${currentStep}`}
+                  >
+                    <Text style={styles.primaryButtonText}>{tCommon('next')}</Text>
+                  </AnimatedNavigationButton>
+                )
+              ) : (
+                <AnimatedNavigationButton
+                  variant="primary"
+                  onPress={handleSubmit}
+                  disabled={isLoading || !privacyAccepted}
+                  isVisible={currentStep === totalSteps}
+                  delay={0}
+                  resetKey={`${animationResetKey}-step-${currentStep}`}
+                >
+                  <Text style={styles.primaryButtonText}>
+                    {isLoading ? t('saving') : t('done')}
+                  </Text>
+                </AnimatedNavigationButton>
+              )}
+            </View>
+
+            {/* Simple Loading Indicator */}
+            <Modal
+              visible={isLoading}
+              transparent={true}
+              animationType="fade"
+            >
+              <View style={styles.loadingOverlay}>
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color={theme.colors.primary} />
+                  <Text style={styles.loadingText}>{t('saving_data')}</Text>
+                </View>
+              </View>
+            </Modal>
+
+            {/* Date Picker */}
+            {showDatePicker && (
+              <View style={styles.datePickerContainer}>
+                {Platform.OS === 'ios' && (
+                  <View style={styles.datePickerHeader}>
+                    <TouchableOpacity
+                      style={styles.doneButton}
+                      onPress={() => setShowDatePicker(false)}
+                    >
+                      <Text style={styles.doneButtonText}>{t('done')}</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+                <DateTimePicker
+                  value={birthDate || new Date(1978, 4, 1)}
+                  mode="date"
+                  display={Platform.OS === 'android' ? 'calendar' : 'spinner'}
+                  onChange={handleDateChange}
+                  maximumDate={new Date()}
+                  minimumDate={new Date(1950, 0, 1)}
+                  locale="ru-RU"
+                />
+              </View>
+            )}
+          </View>
+        )}
       </SafeAreaView>
 
       {/* WebView Modal */}

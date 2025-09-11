@@ -13,6 +13,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { theme } from '../../constants';
 import { AnimatedIcon } from '../../components/common';
 import type { RootStackParamList } from '../../types';
+import { useAuthTranslation, useErrorsTranslation } from '../../hooks/useTranslation';
 
 // Импортируем анимацию Welcome
 const WelcomeAnimation = require('../../../assets/Welcome.json');
@@ -26,6 +27,8 @@ export const LoadingScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<LoadingRouteProp>();
   const { profileData, role, selectedCity } = route.params;
+  const t = useAuthTranslation();
+  const tError = useErrorsTranslation();
 
   useEffect(() => {
     const completeRegistration = async () => {
@@ -67,13 +70,13 @@ export const LoadingScreen: React.FC = () => {
         } else {
           // В случае ошибки возвращаемся на экран выбора города
           navigation.goBack();
-          Alert.alert('Ошибка', result.error || 'Не удалось завершить регистрацию');
+          Alert.alert(tError('error'), result.error || t('registration_failed'));
         }
       } catch (error) {
         console.error('Ошибка завершения регистрации:', error);
         // В случае ошибки возвращаемся на экран выбора города
         navigation.goBack();
-        Alert.alert('Ошибка', 'Произошла ошибка при регистрации. Попробуйте еще раз.');
+        Alert.alert(tError('error'), t('registration_error'));
       }
     };
 

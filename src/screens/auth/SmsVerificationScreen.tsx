@@ -17,6 +17,8 @@ import { noElevationStyles } from '../../utils/noShadowStyles';
 import type { RootStackParamList } from '../../types';
 import { useAuthTranslation, useErrorsTranslation } from '../../hooks/useTranslation';
 import { StableSmsInput, StableSmsInputRef, LogoOsonish } from '../../components/common';
+import EnhancedSmsInput, { EnhancedSmsInputRef } from '../../components/common/EnhancedSmsInput';
+import NativeSmsInput, { NativeSmsInputRef } from '../../components/common/NativeSmsInput';
 import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -50,7 +52,7 @@ export function SmsVerificationScreen() {
   const [isResendAvailable, setIsResendAvailable] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const smsInputRef = useRef<StableSmsInputRef>(null);
+  const smsInputRef = useRef<NativeSmsInputRef>(null);
 
   useEffect(() => {
     // Автоматически фокусируем SMS input при открытии экрана
@@ -185,7 +187,7 @@ export function SmsVerificationScreen() {
 
         {/* SMS Code Input */}
         <View style={styles.codeSection}>
-          <StableSmsInput
+          <NativeSmsInput
             ref={smsInputRef}
             length={6}
             value={code}
@@ -193,6 +195,8 @@ export function SmsVerificationScreen() {
             onComplete={handleCodeComplete}
             disabled={isLoading}
             autoFocus={false} // Управляем фокусом вручную
+            enableSmsRetriever={true}
+            showAutoFillIndicator={true}
           />
 
           <Text style={styles.codeHint}>
