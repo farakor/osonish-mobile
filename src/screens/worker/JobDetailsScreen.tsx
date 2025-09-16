@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
-import { usePlatformSafeAreaInsets, getFixedBottomStyle, getEdgeToEdgeBottomStyle } from '../../utils/safeAreaUtils';
+import { usePlatformSafeAreaInsets, getFixedBottomStyle, getEdgeToEdgeBottomStyle, getImprovedFixedBottomStyle } from '../../utils/safeAreaUtils';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { WorkerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -719,7 +719,7 @@ export const JobDetailsScreen: React.FC = () => {
         </Animated.ScrollView>
 
         {/* Fixed Bottom Section */}
-        <View style={[styles.fixedBottomSection, getEdgeToEdgeBottomStyle(insets)]}>
+        <View style={[styles.fixedBottomSection, getImprovedFixedBottomStyle(insets)]}>
           {order.status === 'in_progress' && customer?.phone ? (
             <TouchableOpacity
               style={styles.callButtonAccepted}
@@ -1040,8 +1040,7 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: theme.colors.background,
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    paddingBottom: 0, // Динамически устанавливается через getFixedBottomStyle
+    // paddingTop и paddingBottom устанавливаются через getImprovedFixedBottomStyle
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
     // Убираем только тени, границу оставляем

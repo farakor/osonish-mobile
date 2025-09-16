@@ -44,8 +44,10 @@
       "versionCode": 1,
       "icon": "./assets/Appicon-playstore.png",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/Appicon-playstore.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/adaptive-icon-foreground.png",
+        "backgroundImage": "./assets/adaptive-icon-background.png",
+        "backgroundColor": "#679b00",
+        "monochromeImage": "./assets/adaptive-icon-monochrome.png"
       },
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",

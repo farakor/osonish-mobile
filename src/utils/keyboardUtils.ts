@@ -1,4 +1,4 @@
-import { Platform, Keyboard } from 'react-native';
+import { Platform, Keyboard, Dimensions } from 'react-native';
 
 /**
  * Утилиты для стабильной работы с клавиатурой на Android
@@ -79,10 +79,18 @@ export const getKeyboardVerticalOffset = (): number => {
 };
 
 /**
- * Хук для обработки состояния клавиатуры
+ * Интерфейс для данных о клавиатуре
+ */
+export interface KeyboardInfo {
+  visible: boolean;
+  height: number;
+}
+
+/**
+ * Хук для обработки состояния клавиатуры с информацией о высоте
  */
 export const createKeyboardListeners = (
-  onShow: () => void,
+  onShow: (keyboardInfo: KeyboardInfo) => void,
   onHide: () => void
 ) => {
   let keyboardDidShowListener: any;
@@ -90,7 +98,12 @@ export const createKeyboardListeners = (
 
   const setup = () => {
     if (Platform.OS === 'android') {
-      keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', onShow);
+      keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', (event) => {
+        onShow({
+          visible: true,
+          height: event.endCoordinates.height
+        });
+      });
       keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', onHide);
     }
   };
@@ -129,18 +142,45 @@ export const createNavigationHandler = (
 /**
  * Стили для контейнеров с учетом состояния клавиатуры
  */
-export const getKeyboardAwareStyles = (keyboardVisible: boolean) => ({
+export const getKeyboardAwareStyles = (keyboardInfo: KeyboardInfo) => ({
   navigation: {
-    ...(Platform.OS === 'android' && keyboardVisible && {
+    ...(Platform.OS === 'android' && keyboardInfo.visible && {
       position: 'absolute' as const,
-      bottom: 0,
+      bottom: keyboardInfo.height + 45, // Увеличиваем отступ до 45px над клавиатурой
       left: 0,
       right: 0,
+      backgroundColor: '#FFFFFF',
+      borderTopWidth: 1,
+      borderTopColor: '#E5E5E7',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 8,
     }),
   },
   content: {
-    ...(Platform.OS === 'android' && keyboardVisible && {
-      paddingBottom: 80,
+    ...(Platform.OS === 'android' && keyboardInfo.visible && {
+      paddingBottom: 120, // Увеличиваем отступ для навигационной панели
     }),
   },
 });
+
+/**
+ * Получает высоту экрана без клавиатуры
+ */
+export const getAvailableScreenHeight = (keyboardInfo: KeyboardInfo): number => {
+  const { height: screenHeight } = Dimensions.get('window');
+  return keyboardInfo.visible ? screenHeight - keyboardInfo.height : screenHeight;
+};
+
+/**
+ * Проверяет, достаточно ли места для отображения контента над клавиатурой
+ */
+export const hasEnoughSpaceAboveKeyboard = (
+  keyboardInfo: KeyboardInfo,
+  requiredHeight: number = 200
+): boolean => {
+  const availableHeight = getAvailableScreenHeight(keyboardInfo);
+  return availableHeight >= requiredHeight;
+};

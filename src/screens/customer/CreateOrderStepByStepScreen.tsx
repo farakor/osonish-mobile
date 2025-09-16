@@ -27,6 +27,7 @@ import Animated, {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
+import { usePlatformSafeAreaInsets, getImprovedFixedBottomStyle } from '../../utils/safeAreaUtils';
 import CalendarDateIcon from '../../../assets/calendar-date.svg';
 import * as ImagePicker from 'expo-image-picker';
 import { VideoView, useVideoPlayer } from 'expo-video';
@@ -117,6 +118,7 @@ const StepCounter: React.FC<{ currentStep: number; totalSteps: number; t: any }>
 
 
 export const CreateOrderStepByStepScreen: React.FC = () => {
+  const insets = usePlatformSafeAreaInsets();
   const [currentStep, setCurrentStep] = useState(1);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -1138,7 +1140,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           </View>
 
           {/* Navigation */}
-          <View style={styles.navigation}>
+          <View style={[styles.navigation, getImprovedFixedBottomStyle(insets)]}>
             {currentStep > 1 && (
               <AnimatedNavigationButton
                 variant="secondary"
@@ -1498,8 +1500,7 @@ const styles = StyleSheet.create({
   navigation: {
     flexDirection: 'row',
     paddingHorizontal: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
-    paddingBottom: isSmallScreen ? theme.spacing.xs : theme.spacing.lg,
-    paddingTop: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
+    // paddingTop и paddingBottom устанавливаются через getImprovedFixedBottomStyle
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
     backgroundColor: theme.colors.background,

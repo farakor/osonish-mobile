@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
-import { usePlatformSafeAreaInsets, getFixedBottomStyle } from '../../utils/safeAreaUtils';
+import { usePlatformSafeAreaInsets, getFixedBottomStyle, getImprovedFixedBottomStyle } from '../../utils/safeAreaUtils';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -343,7 +343,7 @@ export const RatingScreen: React.FC = () => {
       </ScrollView>
 
       {/* Фиксированная кнопка внизу */}
-      <View style={[styles.fixedButtonContainer, getFixedBottomStyle(insets, theme.spacing.lg)]}>
+      <View style={[styles.fixedButtonContainer, getImprovedFixedBottomStyle(insets)]}>
         <TouchableOpacity
           style={[
             styles.fixedButton,
@@ -493,7 +493,7 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: theme.colors.background,
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.lg,
+    // paddingTop и paddingBottom устанавливаются через getImprovedFixedBottomStyle
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
   },

@@ -211,7 +211,7 @@ export const AnimatedStepContainer: React.FC<{
   );
 };
 
-// Анимированная карточка категории
+// Статичная карточка категории без анимации
 export const AnimatedCategoryCard: React.FC<{
   emoji: string;
   label: string;
@@ -220,62 +220,19 @@ export const AnimatedCategoryCard: React.FC<{
   onPress: () => void;
   isSmallScreen?: boolean;
 }> = ({ emoji, label, categoryKey, isSelected, onPress, isSmallScreen = false }) => {
-  const scale = useSharedValue(1);
-  const elevation = useSharedValue(2);
-  const rotateY = useSharedValue(0);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: scale.value },
-      { rotateY: `${rotateY.value}deg` },
-    ],
-    shadowOpacity: interpolate(
-      elevation.value,
-      [2, 8],
-      [0.1, 0.25],
-      Extrapolation.CLAMP
-    ),
-    elevation: elevation.value,
-  }));
-
-  useEffect(() => {
-    if (isSelected) {
-      scale.value = withSpring(1.05, { damping: 15, stiffness: 300 });
-      elevation.value = withSpring(8);
-      // Возвращаем sequence анимацию - вторая фича
-      rotateY.value = withSequence(
-        withTiming(5, { duration: 100 }),
-        withTiming(0, { duration: 200 })
-      );
-    } else {
-      scale.value = withSpring(1, { damping: 15, stiffness: 300 });
-      elevation.value = withSpring(2);
-      rotateY.value = withTiming(0, { duration: 150 });
-    }
-  }, [isSelected]);
-
-  const handlePressIn = () => {
-    scale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
-    // Haptic feedback для категорий тоже 🎉
-    runOnJS(triggerHapticFeedback)();
-  };
-
-  const handlePressOut = () => {
-    scale.value = withSpring(isSelected ? 1.05 : 1, { damping: 15, stiffness: 300 });
+  // Убираем анимации, оставляем только haptic feedback при нажатии
+  const handlePress = () => {
+    triggerHapticFeedback();
+    onPress();
   };
 
   return (
-    <Pressable
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      onPress={onPress}
-    >
-      <Animated.View
+    <TouchableOpacity onPress={handlePress}>
+      <View
         style={[
           styles.categoryCard,
           isSelected && styles.categoryCardSelected,
           isSmallScreen && styles.categoryCardSmall,
-          animatedStyle,
         ]}
       >
         <View style={[styles.categoryIconContainer, isSmallScreen && styles.categoryIconContainerSmall]}>
@@ -296,8 +253,8 @@ export const AnimatedCategoryCard: React.FC<{
         ]}>
           {label}
         </Text>
-      </Animated.View>
-    </Pressable>
+      </View>
+    </TouchableOpacity>
   );
 };
 
@@ -357,66 +314,24 @@ export const AnimatedLoadingIndicator: React.FC<{
   );
 };
 
-// Улучшенный компонент анимированного поля с принудительным сбросом
+// Статичный компонент поля без анимации
 export const AnimatedField: React.FC<{
   children: React.ReactNode;
   delay?: number;
   isActive: boolean;
   resetKey?: string | number; // Ключ для принудительного сброса анимации
 }> = ({ children, delay = 0, isActive, resetKey = '' }) => {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(30);
-  const scale = useSharedValue(0.9);
-  const prevResetKey = useRef(resetKey);
-  const hasAnimated = useRef(false);
-
-  useEffect(() => {
-    // Принудительный сброс при изменении resetKey
-    if (prevResetKey.current !== resetKey) {
-      opacity.value = 0;
-      translateY.value = 30;
-      scale.value = 0.9;
-      prevResetKey.current = resetKey;
-      hasAnimated.current = false;
-    }
-
-    if (isActive && !hasAnimated.current) {
-      // Анимация появления с задержкой
-      opacity.value = withDelay(delay, withTiming(1, { duration: 600 }));
-      translateY.value = withDelay(delay, withSpring(0, {
-        damping: 20,
-        stiffness: 100
-      }));
-      scale.value = withDelay(delay, withSpring(1, {
-        damping: 15,
-        stiffness: 200
-      }));
-      hasAnimated.current = true;
-    } else if (!isActive && hasAnimated.current) {
-      // Быстрый сброс при переходе к неактивному состоянию
-      opacity.value = 0;
-      translateY.value = 30;
-      scale.value = 0.9;
-      hasAnimated.current = false;
-    }
-  }, [isActive, delay, resetKey]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [
-      { translateY: translateY.value },
-      { scale: scale.value }
-    ],
-  }));
+  // Убираем все анимации, просто отображаем статичный контент
+  if (!isActive) return null;
 
   return (
-    <Animated.View style={animatedStyle}>
+    <View>
       {children}
-    </Animated.View>
+    </View>
   );
 };
 
-// Анимированный элемент категории
+// Статичный элемент категории без анимации
 const AnimatedCategoryItem: React.FC<{
   category: { key: string; label: string; emoji: string };
   selectedCategory: string;
@@ -426,51 +341,11 @@ const AnimatedCategoryItem: React.FC<{
   resetKey?: string | number;
   isSmallScreen?: boolean;
 }> = ({ category, selectedCategory, onSelectCategory, isActive, delay, resetKey = '', isSmallScreen = false }) => {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(30);
-  const scale = useSharedValue(0.9);
-  const prevResetKey = useRef(resetKey);
-  const hasAnimated = useRef(false);
-
-  useEffect(() => {
-    // Принудительный сброс при изменении resetKey
-    if (prevResetKey.current !== resetKey) {
-      opacity.value = 0;
-      translateY.value = 30;
-      scale.value = 0.9;
-      prevResetKey.current = resetKey;
-      hasAnimated.current = false;
-    }
-
-    if (isActive && !hasAnimated.current) {
-      opacity.value = withDelay(delay, withTiming(1, { duration: 600 }));
-      translateY.value = withDelay(delay, withSpring(0, {
-        damping: 20,
-        stiffness: 100
-      }));
-      scale.value = withDelay(delay, withSpring(1, {
-        damping: 15,
-        stiffness: 200
-      }));
-      hasAnimated.current = true;
-    } else if (!isActive && hasAnimated.current) {
-      opacity.value = 0;
-      translateY.value = 30;
-      scale.value = 0.9;
-      hasAnimated.current = false;
-    }
-  }, [isActive, delay, resetKey]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [
-      { translateY: translateY.value },
-      { scale: scale.value }
-    ],
-  }));
+  // Убираем все анимации, просто отображаем статичный контент
+  if (!isActive) return null;
 
   return (
-    <Animated.View style={animatedStyle}>
+    <View>
       <AnimatedCategoryCard
         emoji={category.emoji}
         label={category.label}
@@ -479,11 +354,11 @@ const AnimatedCategoryItem: React.FC<{
         onPress={() => onSelectCategory(category.key)}
         isSmallScreen={isSmallScreen}
       />
-    </Animated.View>
+    </View>
   );
 };
 
-// Анимированная сетка категорий с индивидуальными задержками
+// Статичная сетка категорий без анимации
 export const AnimatedCategoryGrid: React.FC<{
   categories: Array<{ key: string; label: string; emoji: string }>;
   selectedCategory: string;
@@ -509,7 +384,7 @@ export const AnimatedCategoryGrid: React.FC<{
               selectedCategory={selectedCategory}
               onSelectCategory={onSelectCategory}
               isActive={isActive}
-              delay={(rowIndex * 3 + index) * 50 + 150}
+              delay={0} // Убираем задержки
               resetKey={resetKey}
               isSmallScreen={isSmallScreen}
             />
@@ -520,7 +395,7 @@ export const AnimatedCategoryGrid: React.FC<{
   );
 };
 
-// Анимированная кнопка для навигации с появлением
+// Статичная кнопка навигации без анимации появления
 export const AnimatedNavigationButton: React.FC<{
   children: React.ReactNode;
   onPress: () => void;
@@ -530,45 +405,11 @@ export const AnimatedNavigationButton: React.FC<{
   delay?: number;
   resetKey?: string | number;
 }> = ({ children, onPress, disabled = false, variant = 'primary', isVisible, delay = 0, resetKey = '' }) => {
-  const opacity = useSharedValue(0);
-  const scale = useSharedValue(0.8);
-  const translateX = useSharedValue(variant === 'primary' ? 50 : -50);
-  const prevResetKey = useRef(resetKey);
-  const hasAnimated = useRef(false);
-
-  useEffect(() => {
-    // Принудительный сброс при изменении resetKey
-    if (prevResetKey.current !== resetKey) {
-      opacity.value = 0;
-      scale.value = 0.8;
-      translateX.value = variant === 'primary' ? 50 : -50;
-      prevResetKey.current = resetKey;
-      hasAnimated.current = false;
-    }
-
-    if (isVisible && !hasAnimated.current) {
-      opacity.value = withDelay(delay, withTiming(1, { duration: 400 }));
-      scale.value = withDelay(delay, withSpring(1, { damping: 15, stiffness: 200 }));
-      translateX.value = withDelay(delay, withSpring(0, { damping: 20, stiffness: 100 }));
-      hasAnimated.current = true;
-    } else if (!isVisible && hasAnimated.current) {
-      opacity.value = 0;
-      scale.value = 0.8;
-      translateX.value = variant === 'primary' ? 50 : -50;
-      hasAnimated.current = false;
-    }
-  }, [isVisible, delay, resetKey]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [
-      { scale: scale.value },
-      { translateX: translateX.value }
-    ],
-  }));
+  // Убираем анимации появления, оставляем только видимость
+  if (!isVisible) return null;
 
   return (
-    <Animated.View style={animatedStyle}>
+    <View>
       <AnimatedButton
         variant={variant}
         onPress={onPress}
@@ -576,62 +417,28 @@ export const AnimatedNavigationButton: React.FC<{
       >
         {children}
       </AnimatedButton>
-    </Animated.View>
+    </View>
   );
 };
 
-// Анимированный контейнер для интерактивных элементов
+// Статичный контейнер для интерактивных элементов без анимации
 export const AnimatedInteractiveContainer: React.FC<{
   children: React.ReactNode;
   isActive: boolean;
   delay?: number;
   resetKey?: string | number;
 }> = ({ children, isActive, delay = 0, resetKey = '' }) => {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(20);
-  const scale = useSharedValue(0.95);
-  const prevResetKey = useRef(resetKey);
-  const hasAnimated = useRef(false);
-
-  useEffect(() => {
-    // Принудительный сброс при изменении resetKey
-    if (prevResetKey.current !== resetKey) {
-      opacity.value = 0;
-      translateY.value = 20;
-      scale.value = 0.95;
-      prevResetKey.current = resetKey;
-      hasAnimated.current = false;
-    }
-
-    if (isActive && !hasAnimated.current) {
-      opacity.value = withDelay(delay, withTiming(1, { duration: 500 }));
-      translateY.value = withDelay(delay, withSpring(0, { damping: 20, stiffness: 100 }));
-      scale.value = withDelay(delay, withSpring(1, { damping: 15, stiffness: 150 }));
-      hasAnimated.current = true;
-    } else if (!isActive && hasAnimated.current) {
-      opacity.value = 0;
-      translateY.value = 20;
-      scale.value = 0.95;
-      hasAnimated.current = false;
-    }
-  }, [isActive, delay, resetKey]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [
-      { translateY: translateY.value },
-      { scale: scale.value }
-    ],
-  }));
+  // Убираем все анимации, просто отображаем статичный контент
+  if (!isActive) return null;
 
   return (
-    <Animated.View style={animatedStyle}>
+    <View>
       {children}
-    </Animated.View>
+    </View>
   );
 };
 
-// Анимированный элемент сводки с индивидуальной задержкой
+// Статичный элемент сводки без анимации
 export const AnimatedSummaryItem: React.FC<{
   label: string;
   value: string;
@@ -640,13 +447,6 @@ export const AnimatedSummaryItem: React.FC<{
   resetKey?: string | number;
   isFullWidth?: boolean;
 }> = ({ label, value, index, isActive, resetKey = '', isFullWidth = false }) => {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(30);
-  const scale = useSharedValue(0.9);
-  const prevResetKey = useRef(resetKey);
-  const hasAnimated = useRef(false);
-  const delay = index * 50 + 200;
-
   // Получаем иконку и цвет в зависимости от типа поля
   const getIconAndColor = (label: string) => {
     switch (label.toLowerCase()) {
@@ -673,47 +473,12 @@ export const AnimatedSummaryItem: React.FC<{
 
   const { icon, color, iconBg } = getIconAndColor(label);
 
-  useEffect(() => {
-    // Принудительный сброс при изменении resetKey
-    if (prevResetKey.current !== resetKey) {
-      opacity.value = 0;
-      translateY.value = 30;
-      scale.value = 0.9;
-      prevResetKey.current = resetKey;
-      hasAnimated.current = false;
-    }
-
-    if (isActive && !hasAnimated.current) {
-      opacity.value = withDelay(delay, withTiming(1, { duration: 600 }));
-      translateY.value = withDelay(delay, withSpring(0, {
-        damping: 20,
-        stiffness: 100
-      }));
-      scale.value = withDelay(delay, withSpring(1, {
-        damping: 15,
-        stiffness: 200
-      }));
-      hasAnimated.current = true;
-    } else if (!isActive && hasAnimated.current) {
-      opacity.value = 0;
-      translateY.value = 30;
-      scale.value = 0.9;
-      hasAnimated.current = false;
-    }
-  }, [isActive, delay, resetKey]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [
-      { translateY: translateY.value },
-      { scale: scale.value }
-    ],
-  }));
+  // Убираем все анимации, просто отображаем статичный контент
+  if (!isActive) return null;
 
   return (
-    <Animated.View style={[
-      isFullWidth ? styles.summaryItemCardFullWidth : styles.summaryItemCard,
-      animatedStyle
+    <View style={[
+      isFullWidth ? styles.summaryItemCardFullWidth : styles.summaryItemCard
     ]}>
       <View style={styles.summaryContent}>
         <Text style={styles.summaryLabel}>{label}</Text>
@@ -728,11 +493,11 @@ export const AnimatedSummaryItem: React.FC<{
           {value}
         </Text>
       </View>
-    </Animated.View>
+    </View>
   );
 };
 
-// Профессиональная сетка summary элементов с адаптивным layout
+// Статичная сетка summary элементов без анимации
 export const AnimatedSummaryGrid: React.FC<{
   items: Array<{ label: string; value: string }>;
   isActive: boolean;
@@ -786,7 +551,7 @@ export const AnimatedSummaryGrid: React.FC<{
               key={`${item.label}-${resetKey}`}
               label={item.label}
               value={item.value}
-              index={(descriptionItem ? 1 : 0) + rowIndex * 2 + index}
+              index={0} // Убираем индексы для задержек
               isActive={isActive}
               resetKey={resetKey}
               isFullWidth={false}
@@ -803,7 +568,7 @@ export const AnimatedSummaryGrid: React.FC<{
             key={`${dateItem.label}-${resetKey}`}
             label={dateItem.label}
             value={dateItem.value}
-            index={(descriptionItem ? 1 : 0) + rows.length * 2}
+            index={0} // Убираем индексы для задержек
             isActive={isActive}
             resetKey={resetKey}
             isFullWidth={true}

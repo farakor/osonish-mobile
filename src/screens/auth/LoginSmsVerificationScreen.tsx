@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import * as React from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,12 +14,10 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
-import { noElevationStyles } from '../../utils/noShadowStyles';
 import { authService } from '../../services/authService';
 import type { RootStackParamList } from '../../types';
 import { useAuthTranslation, useErrorsTranslation } from '../../hooks/useTranslation';
-import { StableSmsInput, StableSmsInputRef, LogoOsonish } from '../../components/common';
-import EnhancedSmsInput, { EnhancedSmsInputRef } from '../../components/common/EnhancedSmsInput';
+import { LogoOsonish } from '../../components/common';
 import NativeSmsInput, { NativeSmsInputRef } from '../../components/common/NativeSmsInput';
 import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
 

@@ -16,6 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
+import { usePlatformSafeAreaInsets, getImprovedFixedBottomStyle } from '../../utils/safeAreaUtils';
 import type { RootStackParamList } from '../../types';
 import { useAuthTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 import { LogoOsonish } from '../../components/common';
@@ -42,6 +43,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export function RegistrationScreen() {
   const navigation = useNavigation<NavigationProp>();
+  const insets = usePlatformSafeAreaInsets();
   const t = useAuthTranslation();
   const tError = useErrorsTranslation();
   const tCommon = useCommonTranslation();

@@ -47,7 +47,7 @@ export const usePlatformSafeAreaInsets = () => {
   if (Platform.OS === 'android') {
     // С прозрачным navigation bar используем реальные insets от системы
     // но добавляем минимальный отступ для комфорта использования
-    const minBottomInset = hasTransparentNavigationBar() ? 8 : 16;
+    const minBottomInset = hasTransparentNavigationBar() ? 16 : 24;
 
     return {
       ...insets,
@@ -77,14 +77,19 @@ export const getSafeAreaContainerStyle = (insets: ReturnType<typeof usePlatformS
  */
 export const getBottomTabBarStyle = (insets: ReturnType<typeof usePlatformSafeAreaInsets>) => {
   if (Platform.OS === 'android') {
-    const bottomPadding = Math.max(insets.bottom, 16);
+    const bottomPadding = Math.max(insets.bottom, 20);
     return {
       paddingBottom: bottomPadding,
       height: 70 + bottomPadding,
       // Обеспечиваем белый фон под навигацией на Android
       backgroundColor: '#ffffff',
       borderBottomWidth: 0,
-      shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, };
+      shadowColor: 'transparent',
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0,
+      shadowRadius: 0,
+      elevation: 0,
+    };
   }
 
   // На iOS используем только системные safe area insets
@@ -99,19 +104,19 @@ export const getBottomTabBarStyle = (insets: ReturnType<typeof usePlatformSafeAr
  * Android: учитывает прозрачный navigation bar + дополнительный отступ для маленьких экранов
  * iOS: минимальный отступ для комфорта использования
  */
-export const getFixedBottomStyle = (insets: ReturnType<typeof usePlatformSafeAreaInsets>, additionalPadding: number = 8) => {
+export const getFixedBottomStyle = (insets: ReturnType<typeof usePlatformSafeAreaInsets>, additionalPadding: number = 12) => {
   if (Platform.OS === 'android') {
     // С прозрачным navigation bar используем системные insets
-    const baseBottomPadding = hasTransparentNavigationBar() ? insets.bottom : Math.max(insets.bottom, 16);
-    const smallScreenExtraPadding = isSmallScreen() ? 16 : 0; // дополнительные 16px для маленьких экранов
+    const baseBottomPadding = hasTransparentNavigationBar() ? Math.max(insets.bottom, 20) : Math.max(insets.bottom, 24);
+    const smallScreenExtraPadding = isSmallScreen() ? 20 : 8; // дополнительные отступы для маленьких экранов
     return {
       paddingBottom: baseBottomPadding + additionalPadding + smallScreenExtraPadding,
     };
   }
 
-  // На iOS используем фиксированный отступ 16px
+  // На iOS используем safe area + минимальный отступ
   return {
-    paddingBottom: 16, // фиксированный отступ 16px на iOS
+    paddingBottom: Math.max(insets.bottom, 16) + additionalPadding,
   };
 };
 
@@ -120,19 +125,19 @@ export const getFixedBottomStyle = (insets: ReturnType<typeof usePlatformSafeAre
  * Android: дополнительные отступы для navigation bar + tab bar
  * iOS: минимальный отступ для комфорта прокрутки
  */
-export const getScrollViewContentStyle = (insets: ReturnType<typeof usePlatformSafeAreaInsets>, additionalPadding: number = 24) => {
+export const getScrollViewContentStyle = (insets: ReturnType<typeof usePlatformSafeAreaInsets>, additionalPadding: number = 32) => {
   if (Platform.OS === 'android') {
     // На Android добавляем больше отступа для tab bar (70px) + navigation bar + дополнительный отступ
     const tabBarHeight = 70; // высота tab bar
-    const navigationBarPadding = Math.max(insets.bottom, 16);
+    const navigationBarPadding = Math.max(insets.bottom, 20);
     return {
       paddingBottom: tabBarHeight + navigationBarPadding + additionalPadding,
     };
   }
 
-  // На iOS используем фиксированный отступ 16px для ScrollView контента
+  // На iOS используем safe area + tab bar + дополнительный отступ
   return {
-    paddingBottom: 16, // фиксированный отступ 16px на iOS
+    paddingBottom: Math.max(insets.bottom, 16) + 70 + additionalPadding,
   };
 };
 
@@ -143,16 +148,16 @@ export const getScrollViewContentStyle = (insets: ReturnType<typeof usePlatformS
 export const getEdgeToEdgeBottomStyle = (insets: ReturnType<typeof usePlatformSafeAreaInsets>) => {
   if (Platform.OS === 'android') {
     // С прозрачным navigation bar используем системные insets для правильного позиционирования
-    const baseBottomPadding = hasTransparentNavigationBar() ? insets.bottom : Math.max(insets.bottom, 16);
-    const smallScreenExtraPadding = isSmallScreen() ? 16 : 0; // дополнительные 16px для маленьких экранов
+    const baseBottomPadding = hasTransparentNavigationBar() ? Math.max(insets.bottom, 16) : Math.max(insets.bottom, 20);
+    const smallScreenExtraPadding = isSmallScreen() ? 20 : 8; // дополнительные отступы для маленьких экранов
     return {
       paddingBottom: baseBottomPadding + smallScreenExtraPadding, // системные insets + дополнительный отступ
     };
   }
 
-  // На iOS прижимаем к самому краю
+  // На iOS используем safe area insets
   return {
-    paddingBottom: 0, // контейнер до самого края на iOS
+    paddingBottom: Math.max(insets.bottom, 8), // минимальный отступ на iOS
   };
 };
 
@@ -222,7 +227,7 @@ export const getSafeAreaViewWithWhiteBackground = (insets: ReturnType<typeof use
  */
 export const getAndroidNavigationBarBackground = (insets: ReturnType<typeof usePlatformSafeAreaInsets>) => {
   if (Platform.OS === 'android') {
-    const navigationBarHeight = Math.max(insets.bottom, 16);
+    const navigationBarHeight = Math.max(insets.bottom, 20);
     return {
       position: 'absolute' as const,
       bottom: 0,
@@ -237,5 +242,27 @@ export const getAndroidNavigationBarBackground = (insets: ReturnType<typeof useP
   // На iOS не нужно
   return {
     display: 'none' as const,
+  };
+};
+
+/**
+ * Получает улучшенные стили для фиксированных элементов с учетом navigation bar
+ * Специально для экранов с кнопками внизу
+ */
+export const getImprovedFixedBottomStyle = (insets: ReturnType<typeof usePlatformSafeAreaInsets>) => {
+  if (Platform.OS === 'android') {
+    // Увеличенные отступы для Android с navigation bar
+    const baseBottomPadding = Math.max(insets.bottom, 24);
+    const extraPadding = isSmallScreen() ? 24 : 16;
+    return {
+      paddingBottom: baseBottomPadding + extraPadding,
+      paddingTop: 16,
+    };
+  }
+
+  // На iOS используем safe area + дополнительный отступ
+  return {
+    paddingBottom: Math.max(insets.bottom, 20),
+    paddingTop: 16,
   };
 };

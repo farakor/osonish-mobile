@@ -27,6 +27,7 @@ import Animated, {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { theme } from '../../constants';
 import { noElevationStyles, lightElevationStyles, softButtonElevationStyles, borderButtonStyles } from '../../utils/noShadowStyles';
+import { usePlatformSafeAreaInsets, getImprovedFixedBottomStyle } from '../../utils/safeAreaUtils';
 import * as ImagePicker from 'expo-image-picker';
 import Svg, { Path } from 'react-native-svg';
 import CalendarDateIcon from '../../../assets/calendar-date.svg';
@@ -51,7 +52,8 @@ import {
   shouldUseKeyboardAvoidingView,
   createKeyboardListeners,
   createNavigationHandler,
-  getKeyboardAwareStyles
+  getKeyboardAwareStyles,
+  KeyboardInfo
 } from '../../utils/keyboardUtils';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -86,6 +88,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute();
   const { phone } = route.params as { phone: string };
+  const insets = usePlatformSafeAreaInsets();
   const t = useAuthTranslation();
   const tCommon = useCommonTranslation();
   const tError = useErrorsTranslation();
@@ -117,20 +120,53 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
   const [middleNameFocused, setMiddleNameFocused] = useState(false);
 
   // Состояние клавиатуры для Android
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [keyboardInfo, setKeyboardInfo] = useState<KeyboardInfo>({
+    visible: false,
+    height: 0
+  });
+
+  // Анимированное значение для позиции навигации
+  const navigationBottom = useSharedValue(0);
+
+  // Отслеживаем предыдущее состояние клавиатуры для корректного сброса
+  const [prevKeyboardVisible, setPrevKeyboardVisible] = useState(false);
 
   const totalSteps = 6;
 
   // Обработка клавиатуры для Android с использованием утилит
   useEffect(() => {
     const { setup, cleanup } = createKeyboardListeners(
-      () => setKeyboardVisible(true),
-      () => setKeyboardVisible(false)
+      (info: KeyboardInfo) => {
+        setKeyboardInfo(info);
+        setPrevKeyboardVisible(true);
+        // Анимируем позицию навигации над клавиатурой с дополнительным отступом
+        if (Platform.OS === 'android') {
+          navigationBottom.value = withTiming(info.height + 45, { duration: 250 });
+        }
+      },
+      () => {
+        setKeyboardInfo({ visible: false, height: 0 });
+        setPrevKeyboardVisible(false);
+        // Возвращаем навигацию в исходное положение
+        if (Platform.OS === 'android') {
+          navigationBottom.value = withTiming(0, { duration: 250 });
+        }
+      }
     );
 
     setup();
     return cleanup;
   }, []);
+
+  // Дополнительный эффект для принудительного сброса позиции
+  useEffect(() => {
+    if (Platform.OS === 'android' && prevKeyboardVisible && !keyboardInfo.visible) {
+      // Принудительно сбрасываем позицию через небольшую задержку
+      setTimeout(() => {
+        navigationBottom.value = 0;
+      }, 300);
+    }
+  }, [keyboardInfo.visible, prevKeyboardVisible]);
 
   // Функция для получения стиля поля ввода с учетом фокуса
   const getInputStyle = (isFocused: boolean) => [
@@ -421,7 +457,17 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                     placeholder={t('lastname_placeholder')}
                     placeholderTextColor={theme.colors.text.secondary}
                     autoFocus
-                    onFocus={() => setLastNameFocused(true)}
+                    onFocus={() => {
+                      setLastNameFocused(true);
+                      // Небольшая задержка для корректного позиционирования
+                      if (Platform.OS === 'android') {
+                        setTimeout(() => {
+                          if (keyboardInfo.visible && keyboardInfo.height > 0) {
+                            navigationBottom.value = withTiming(keyboardInfo.height + 45, { duration: 250 });
+                          }
+                        }, 100);
+                      }
+                    }}
                     onBlur={() => setLastNameFocused(false)}
                   />
                 </View>
@@ -451,7 +497,17 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                     placeholder={t('firstname_placeholder')}
                     placeholderTextColor={theme.colors.text.secondary}
                     autoFocus
-                    onFocus={() => setFirstNameFocused(true)}
+                    onFocus={() => {
+                      setFirstNameFocused(true);
+                      // Небольшая задержка для корректного позиционирования
+                      if (Platform.OS === 'android') {
+                        setTimeout(() => {
+                          if (keyboardInfo.visible && keyboardInfo.height > 0) {
+                            navigationBottom.value = withTiming(keyboardInfo.height + 45, { duration: 250 });
+                          }
+                        }, 100);
+                      }
+                    }}
                     onBlur={() => setFirstNameFocused(false)}
                   />
                 </View>
@@ -481,7 +537,17 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                     placeholder={t('middlename_placeholder')}
                     placeholderTextColor={theme.colors.text.secondary}
                     autoFocus
-                    onFocus={() => setMiddleNameFocused(true)}
+                    onFocus={() => {
+                      setMiddleNameFocused(true);
+                      // Небольшая задержка для корректного позиционирования
+                      if (Platform.OS === 'android') {
+                        setTimeout(() => {
+                          if (keyboardInfo.visible && keyboardInfo.height > 0) {
+                            navigationBottom.value = withTiming(keyboardInfo.height + 45, { duration: 250 });
+                          }
+                        }, 100);
+                      }
+                    }}
                     onBlur={() => setMiddleNameFocused(false)}
                   />
                 </View>
@@ -582,8 +648,37 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
   };
 
   // Получаем стили с учетом состояния клавиатуры
-  const keyboardAwareStyles = getKeyboardAwareStyles(keyboardVisible);
+  const keyboardAwareStyles = getKeyboardAwareStyles(keyboardInfo);
   const useKeyboardAvoiding = shouldUseKeyboardAvoidingView();
+
+  // Анимированный стиль для навигации
+  const animatedNavigationStyle = useAnimatedStyle(() => {
+    if (Platform.OS === 'android') {
+      // Всегда применяем анимированную позицию на Android
+      return {
+        ...(keyboardInfo.visible && {
+          position: 'absolute',
+          bottom: navigationBottom.value,
+          left: 0,
+          right: 0,
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 1,
+          borderTopColor: '#E5E5E7',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 8,
+        }),
+        // Когда клавиатура скрыта, возвращаем к обычному позиционированию
+        ...(!keyboardInfo.visible && {
+          position: 'relative',
+          bottom: 'auto',
+        }),
+      };
+    }
+    return {};
+  });
 
   return (
     <View style={styles.container}>
@@ -617,9 +712,10 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
             </View>
 
             {/* Navigation */}
-            <View style={[
+            <Animated.View style={[
               styles.navigation,
-              keyboardAwareStyles.navigation
+              animatedNavigationStyle,
+              !keyboardInfo.visible && getImprovedFixedBottomStyle(insets)
             ]}>
               {currentStep > 1 && (
                 <AnimatedNavigationButton
@@ -661,7 +757,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                   </Text>
                 </AnimatedNavigationButton>
               )}
-            </View>
+            </Animated.View>
 
             {/* Simple Loading Indicator */}
             <Modal
@@ -727,9 +823,10 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
             </View>
 
             {/* Navigation */}
-            <View style={[
+            <Animated.View style={[
               styles.navigation,
-              keyboardAwareStyles.navigation
+              animatedNavigationStyle,
+              !keyboardInfo.visible && getImprovedFixedBottomStyle(insets)
             ]}>
               {currentStep > 1 && (
                 <AnimatedNavigationButton
@@ -771,7 +868,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                   </Text>
                 </AnimatedNavigationButton>
               )}
-            </View>
+            </Animated.View>
 
             {/* Simple Loading Indicator */}
             <Modal
@@ -1067,10 +1164,12 @@ const styles = StyleSheet.create({
   navigation: {
     flexDirection: 'row',
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
     backgroundColor: theme.colors.background,
+    // Минимальная высота для стабильности
+    minHeight: 80,
   },
   navigationSpacer: {
     flex: 1,

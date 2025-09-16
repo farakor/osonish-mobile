@@ -20,7 +20,7 @@ import {
 import { SvgXml } from 'react-native-svg';
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
-import { usePlatformSafeAreaInsets, getFixedBottomStyle, getEdgeToEdgeBottomStyle } from '../../utils/safeAreaUtils';
+import { usePlatformSafeAreaInsets, getFixedBottomStyle, getEdgeToEdgeBottomStyle, getImprovedFixedBottomStyle } from '../../utils/safeAreaUtils';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -1398,7 +1398,7 @@ export const OrderDetailsScreen: React.FC = () => {
 
         {/* Закрепленная кнопка внизу - показываем только если есть отклики */}
         {applicants.length > 0 && (
-          <View style={[styles.fixedBottomSection, getEdgeToEdgeBottomStyle(insets)]}>
+          <View style={[styles.fixedBottomSection, getImprovedFixedBottomStyle(insets)]}>
             <TouchableOpacity
               style={styles.fixedViewAllApplicantsButton}
               onPress={() => navigation.navigate('ApplicantsList', { orderId: orderId, currentUser: currentUser || undefined })}
@@ -2598,8 +2598,7 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: theme.colors.background,
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    paddingBottom: 0, // Динамически устанавливается через getFixedBottomStyle
+    // paddingTop и paddingBottom устанавливаются через getImprovedFixedBottomStyle
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
     // Убираем только тени, границу оставляем
