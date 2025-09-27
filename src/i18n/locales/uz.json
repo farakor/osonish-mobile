@@ -262,6 +262,8 @@
     "order_created_simple": "Buyurtma yaratildi! Ijrochilar tez orada ko'rishadi.",
     "my_location": "Mening joylashuvim",
     "determining_location": "Aniqlanmoqda...",
+    "or_select_on_map": "Yoki xaritadan tanlang:",
+    "move_map_to_select": "Nuqtani tanlash uchun xaritani suring",
     "header_step1": "Buyurtma nomi",
     "header_step2": "Ish toifasi",
     "header_step3": "Ish tavsifi",

@@ -258,6 +258,8 @@
     "order_created_simple": "Заказ создан! Исполнители скоро увидят его.",
     "my_location": "Мое местоположение",
     "determining_location": "Определение...",
+    "or_select_on_map": "Или выберите на карте:",
+    "move_map_to_select": "Двигайте карту для выбора точки",
     "header_step1": "Название заказа",
     "header_step2": "Категория работы",
     "header_step3": "Описание работы",

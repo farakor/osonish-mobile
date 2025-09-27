@@ -47,6 +47,7 @@ import {
   AnimatedInteractiveContainer,
   AnimatedSummaryGrid,
   HeaderWithBack,
+  EmbeddedMapSelector,
 } from '../../components/common';
 import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation, useCategoriesTranslation } from '../../hooks/useTranslation';
 import { useTranslatedCategories, getCategoryLabel } from '../../utils/categoryUtils';
@@ -124,6 +125,21 @@ const getNavigationPadding = (insets: ReturnType<typeof usePlatformSafeAreaInset
 
 
 
+
+// Функция для очистки адреса от названия страны
+const cleanAddressFromCountry = (address: string): string => {
+  if (!address) return address;
+
+  let cleanAddress = address;
+  // Убираем "Узбекистан" в начале или конце адреса
+  cleanAddress = cleanAddress.replace(/^Узбекистан,?\s*/i, '').replace(/,?\s*Узбекистан$/i, '');
+  // Убираем "Uzbekistan" в начале или конце адреса
+  cleanAddress = cleanAddress.replace(/^Uzbekistan,?\s*/i, '').replace(/,?\s*Uzbekistan$/i, '');
+  // Убираем лишние запятые в начале
+  cleanAddress = cleanAddress.replace(/^,\s*/, '');
+
+  return cleanAddress;
+};
 
 export const CreateOrderStepByStepScreen: React.FC = () => {
   const insets = usePlatformSafeAreaInsets();
@@ -371,6 +387,19 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
     setMediaFiles(files => files.filter((_, i) => i !== index));
   };
 
+  // Функция для обработки выбора местоположения на карте
+  const handleMapLocationSelect = (coords: LocationCoords, address?: string) => {
+    console.log('[MapLocationSelect] 📍 Выбрано местоположение на карте:', coords, address);
+    setCoordinates(coords);
+    if (address) {
+      // Очищаем адрес от названия страны
+      const cleanAddress = cleanAddressFromCountry(address);
+      console.log('[MapLocationSelect] 📝 Очищенный адрес:', cleanAddress);
+      setLocation(cleanAddress);
+      setLocationUpdateKey(prev => prev + 1);
+    }
+  };
+
   // Функция получения текущего местоположения
   const getCurrentLocation = async () => {
     try {
@@ -390,8 +419,13 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
         console.log('[getCurrentLocation] 🏠 Результат геокодирования:', geocodeResult);
 
         if (geocodeResult) {
-          console.log('[getCurrentLocation] 📝 Устанавливаем адрес:', geocodeResult.address);
-          setLocation(geocodeResult.address);
+          console.log('[getCurrentLocation] 📝 Получен адрес:', geocodeResult.address);
+
+          // Убираем название страны из адреса
+          const cleanAddress = cleanAddressFromCountry(geocodeResult.address);
+
+          console.log('[getCurrentLocation] 📝 Устанавливаем очищенный адрес:', cleanAddress);
+          setLocation(cleanAddress);
           console.log('[getCurrentLocation] ✅ setLocation() вызван с адресом');
 
           // Принудительно обновляем компонент TextInput
@@ -881,6 +915,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                     onFocus={() => setLocationFocused(true)}
                     onBlur={() => setLocationFocused(false)}
                   />
+
                   <TouchableOpacity
                     style={styles.locationButton}
                     onPress={() => {
@@ -893,8 +928,17 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                       {isGettingLocation ? `📍 ${t('determining_location')}` : `📍 ${t('my_location')}`}
                     </Text>
                   </TouchableOpacity>
-
                 </View>
+              </AnimatedField>
+
+              <AnimatedField isActive={currentStep === 4} delay={300} resetKey={`${animationResetKey}-step-4`}>
+                <Text style={styles.mapSectionTitle}>{t('or_select_on_map')}</Text>
+                <EmbeddedMapSelector
+                  onLocationSelect={handleMapLocationSelect}
+                  initialCoords={coordinates || undefined}
+                  initialAddress={location}
+                  location={location}
+                />
               </AnimatedField>
             </View>
           </AnimatedStepContainer>
@@ -915,17 +959,20 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
               <AnimatedField isActive={currentStep === 5} delay={200} resetKey={`${animationResetKey}-step-5`}>
                 <View style={styles.inputContainer}>
                   <Text style={styles.fieldLabel}>{t('amount_per_worker')}</Text>
-                  <TextInput
-                    style={getInputStyle(budgetFocused)}
-                    value={formatBudgetInput(budget)}
-                    onChangeText={text => setBudget(formatBudgetInput(text))}
-                    placeholder={t('budget_placeholder')}
-                    placeholderTextColor={theme.colors.text.secondary}
-                    keyboardType="numeric"
-                    autoFocus
-                    onFocus={() => setBudgetFocused(true)}
-                    onBlur={() => setBudgetFocused(false)}
-                  />
+                  <View style={styles.budgetInputContainer}>
+                    <TextInput
+                      style={[getInputStyle(budgetFocused), styles.budgetInput]}
+                      value={formatBudgetInput(budget)}
+                      onChangeText={text => setBudget(formatBudgetInput(text))}
+                      placeholder={t('budget_placeholder')}
+                      placeholderTextColor={theme.colors.text.secondary}
+                      keyboardType="numeric"
+                      autoFocus
+                      onFocus={() => setBudgetFocused(true)}
+                      onBlur={() => setBudgetFocused(false)}
+                    />
+                    <Text style={styles.currencyLabel}>UZS</Text>
+                  </View>
                 </View>
               </AnimatedField>
             </View>
@@ -1707,17 +1754,24 @@ const styles = StyleSheet.create({
   locationButton: {
     backgroundColor: theme.colors.primary,
     borderRadius: theme.borderRadius.md,
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: theme.spacing.md,
+    marginTop: theme.spacing.sm,
     shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
   locationButtonText: {
     color: theme.colors.white,
     fontSize: theme.fonts.sizes.sm,
     fontWeight: theme.fonts.weights.medium,
+  },
+  mapSectionTitle: {
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.md,
+    marginTop: theme.spacing.sm,
   },
   characterCount: {
     fontSize: theme.fonts.sizes.xs,
@@ -1792,5 +1846,23 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.medium,
     color: theme.colors.text.secondary,
     textAlign: 'center',
+  },
+  // Стили для поля ввода бюджета с валютой
+  budgetInputContainer: {
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  budgetInput: {
+    flex: 1,
+    paddingRight: 60, // Место для метки UZS
+  },
+  currencyLabel: {
+    position: 'absolute',
+    right: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
+    fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.text.secondary,
+    backgroundColor: 'transparent',
   },
 });
