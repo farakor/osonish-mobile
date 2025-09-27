@@ -425,10 +425,10 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
     switch (currentStep) {
       case 1: // Название
         return title.trim().length > 0 && title.length <= theme.orderValidation.title.maxLength;
-      case 2: // Категория
-        return category.length > 0;
-      case 3: // Описание
-        return description.trim().length > 0 && description.length <= theme.orderValidation.description.maxLength;
+      case 2: // Категория (теперь необязательна)
+        return true;
+      case 3: // Описание (теперь необязательно)
+        return true;
       case 4: // Местоположение
         return location.trim().length > 0;
       case 5: // Бюджет
@@ -460,21 +460,9 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           return false;
         }
         return true;
-      case 2: // Категория
-        if (!category) {
-          Alert.alert(tError('error'), t('select_category_error'));
-          return false;
-        }
+      case 2: // Категория (теперь необязательна, можно пропустить)
         return true;
-      case 3: // Описание
-        if (!description.trim()) {
-          Alert.alert(tError('error'), t('fill_description_error'));
-          return false;
-        }
-        if (description.length > theme.orderValidation.description.maxLength) {
-          Alert.alert(tError('error'), t('description_too_long_error'));
-          return false;
-        }
+      case 3: // Описание (теперь необязательно, можно пропустить)
         return true;
       case 4: // Местоположение
         if (!location.trim()) {
@@ -516,6 +504,16 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
   };
 
   const nextStep = () => {
+    // Специальная обработка для шага выбора категории
+    if (currentStep === 2 && !category) {
+      setCategory('other'); // Автоматически выбираем "Другое" если категория не выбрана
+    }
+
+    // Специальная обработка для шага описания работы
+    if (currentStep === 3 && !description.trim()) {
+      setDescription(tCommon('default_description')); // Автоматически устанавливаем стандартное описание
+    }
+
     if (validateCurrentStep()) {
       if (currentStep < totalSteps) {
         setCurrentStep(currentStep + 1);
@@ -529,12 +527,31 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
     }
   };
 
+  // Функция для пропуска шага выбора категории
+  const skipCategoryStep = () => {
+    setCategory('other'); // Автоматически выбираем категорию "Другое"
+    setCurrentStep(currentStep + 1); // Переходим к следующему шагу
+  };
+
+  // Функция для пропуска шага описания работы
+  const skipDescriptionStep = () => {
+    setDescription(tCommon('default_description')); // Устанавливаем стандартное описание
+    setCurrentStep(currentStep + 1); // Переходим к следующему шагу
+  };
+
   const handleSubmit = async () => {
     console.log('[CreateOrder] 🚀 НАЧАЛО handleSubmit');
 
     try {
       console.log('[CreateOrder] 📋 Проверяем поля...');
-      if (!title.trim() || !description.trim() || !category || !budget.trim() || !selectedDate || !selectedTime || !location.trim()) {
+
+      // Если категория не выбрана, автоматически устанавливаем "other"
+      const finalCategory = category || 'other';
+
+      // Если описание не заполнено, автоматически устанавливаем стандартное описание
+      const finalDescription = description.trim() || tCommon('default_description');
+
+      if (!title.trim() || !budget.trim() || !selectedDate || !selectedTime || !location.trim()) {
         console.log('[CreateOrder] ❌ Не все поля заполнены');
         Alert.alert(tError('error'), t('fill_required_fields'));
         return;
@@ -605,8 +622,8 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
       console.log('[CreateOrder] 📊 Подготавливаем данные заказа...');
       const orderData: CreateOrderRequest = {
         title: title.trim(),
-        description: description.trim(),
-        category,
+        description: finalDescription,
+        category: finalCategory,
         location: location.trim(),
         latitude: coordinates?.latitude,
         longitude: coordinates?.longitude,
@@ -773,6 +790,19 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 resetKey={`${animationResetKey}-step-2`}
                 isSmallScreen={isSmallScreen}
               />
+
+              {/* Кнопка "Пропустить" на странице выбора категории (показывается только если категория не выбрана) */}
+              {!category && (
+                <AnimatedField isActive={currentStep === 2} delay={300} resetKey={`${animationResetKey}-step-2`}>
+                  <TouchableOpacity
+                    style={styles.skipButton}
+                    onPress={skipCategoryStep}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.skipButtonText}>{tCommon('skip')}</Text>
+                  </TouchableOpacity>
+                </AnimatedField>
+              )}
             </View>
           </AnimatedStepContainer>
         );
@@ -801,7 +831,6 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                     multiline
                     numberOfLines={6}
                     textAlignVertical="top"
-                    autoFocus
                     onFocus={() => setDescriptionFocused(true)}
                     onBlur={() => setDescriptionFocused(false)}
                   />
@@ -810,6 +839,19 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                   </Text>
                 </View>
               </AnimatedField>
+
+              {/* Кнопка "Пропустить" на странице описания работы (показывается только если описание не заполнено) */}
+              {!description.trim() && (
+                <AnimatedField isActive={currentStep === 3} delay={300} resetKey={`${animationResetKey}-step-3`}>
+                  <TouchableOpacity
+                    style={styles.skipButton}
+                    onPress={skipDescriptionStep}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.skipButtonText}>{tCommon('skip')}</Text>
+                  </TouchableOpacity>
+                </AnimatedField>
+              )}
             </View>
           </AnimatedStepContainer>
         );
@@ -1202,14 +1244,15 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
               </AnimatedNavigationButton>
             )}
 
+
             <View style={styles.navigationSpacer} />
 
             {currentStep < totalSteps ? (
-              isCurrentStepValid() && (
+              (isCurrentStepValid() || currentStep === 2 || currentStep === 3) && (
                 <AnimatedNavigationButton
                   variant="primary"
                   onPress={nextStep}
-                  isVisible={currentStep < totalSteps && isCurrentStepValid()}
+                  isVisible={currentStep < totalSteps && (isCurrentStepValid() || currentStep === 2 || currentStep === 3)}
                   delay={0}
                   resetKey={`${animationResetKey}-step-${currentStep}`}
                 >
@@ -1730,5 +1773,24 @@ const styles = StyleSheet.create({
   },
   mealOptionsContainer: {
     gap: theme.spacing.sm,
+  },
+  // Стили для кнопки "Пропустить" на странице категорий
+  skipButton: {
+    width: '100%',
+    paddingVertical: theme.spacing.md,
+    backgroundColor: 'transparent',
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    marginTop: theme.spacing.lg - 30,
+    marginBottom: theme.spacing.lg,
+  },
+  skipButtonText: {
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.medium,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
   },
 });

@@ -24,7 +24,9 @@
     "done": "Tayyor",
     "next": "Keyingi",
     "previous": "Oldingi",
-    "skip": "O'tkazib yuborish"
+    "skip": "O'tkazib yuborish",
+    "skip_category_hint": "\"Boshqa\"ni avtomatik tanlaymiz",
+    "default_description": "Tafsilotlarni telefon orqali muhokama qilamiz"
   },
   "language": "Til",
   "title": "Nomlanish",
