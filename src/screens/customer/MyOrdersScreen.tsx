@@ -2,15 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
+  StyleSheet, ScrollView,
   TouchableOpacity,
   FlatList,
   RefreshControl,
   StatusBar,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { SvgXml } from 'react-native-svg';
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
@@ -270,7 +269,7 @@ export const MyOrdersScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.content}>
+      <SafeAreaView style={styles.content} edges={['top', 'left', 'right']}>
         {/* Content Header */}
         <View style={[styles.contentHeader, { paddingTop: theme.spacing.xl + getAndroidStatusBarHeight() }]}>
           <Text style={styles.title}>{t('my_orders_title')}</Text>
@@ -381,7 +380,8 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
     borderWidth: 0, borderColor: theme.colors.border,
     shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, },
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+  },
   orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',

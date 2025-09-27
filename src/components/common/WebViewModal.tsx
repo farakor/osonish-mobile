@@ -1,15 +1,12 @@
 import React from 'react';
-import {
-  Modal,
+import { Modal,
   View,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  StatusBar,
+  StyleSheet, StatusBar,
   Platform,
-  ActivityIndicator,
-} from 'react-native';
+  ActivityIndicator, } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../constants';

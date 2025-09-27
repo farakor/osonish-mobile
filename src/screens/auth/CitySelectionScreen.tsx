@@ -3,20 +3,19 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
-  SafeAreaView,
-  Dimensions,
+  TouchableOpacity, Dimensions,
   Alert,
   Platform,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import { theme } from '../../constants';
 import { noElevationStyles, borderButtonStyles } from '../../utils/noShadowStyles';
 import type { RootStackParamList, City } from '../../types';
-import { LogoOsonish, AnimatedIcon } from '../../components/common';
+import { LogoOsonish, AnimatedIcon, HeaderWithBack } from '../../components/common';
 import { useAuthTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 
 // Импортируем анимированную иконку пина
@@ -94,6 +93,11 @@ export const CitySelectionScreen: React.FC = () => {
     }
   };
 
+  const handleBackPress = () => {
+    // Возвращаемся к экрану выбора роли
+    navigation.navigate('RoleSelection');
+  };
+
   const CityCard = ({
     city,
     isSelected,
@@ -138,9 +142,11 @@ export const CitySelectionScreen: React.FC = () => {
           </Text>
         )}
       </View>
-      {isSelected && city.isAvailable && (
-        <View style={styles.checkmark}>
-          <Text style={styles.checkmarkText}>✓</Text>
+      {city.isAvailable && (
+        <View style={[styles.radioButton, isSelected && styles.radioButtonSelected]}>
+          {isSelected && (
+            <View style={styles.radioButtonInner} />
+          )}
         </View>
       )}
     </TouchableOpacity>
@@ -148,16 +154,9 @@ export const CitySelectionScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <HeaderWithBack title={t('city_selection_title')} backAction={handleBackPress} />
       <View style={styles.content}>
-        <View style={styles.logoSection}>
-          <LogoOsonish
-            width={isSmallScreen ? 120 : 160}
-            height={isSmallScreen ? 22 : 29}
-          />
-        </View>
-
         <View style={styles.header}>
-          <Text style={styles.title}>{t('city_selection_title')}</Text>
           <Text style={styles.subtitle}>
             {t('city_selection_subtitle')}
           </Text>
@@ -209,7 +208,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl + getAndroidStatusBarHeight(),
+    paddingTop: theme.spacing.md,
   },
   logoSection: {
     alignItems: 'center',
@@ -296,18 +295,24 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     marginTop: theme.spacing.xs,
   },
-  checkmark: {
+  radioButton: {
     width: 24,
     height: 24,
-    backgroundColor: theme.colors.primary,
     borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#E5E5E7',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  checkmarkText: {
-    color: theme.colors.white,
-    fontSize: 14,
-    fontWeight: theme.fonts.weights.bold,
+  radioButtonSelected: {
+    borderColor: theme.colors.primary,
+  },
+  radioButtonInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: theme.colors.primary,
   },
   continueButton: {
     backgroundColor: theme.colors.primary,

@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar, SafeAreaView, Dimensions, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
 import { useAuthTranslation } from '../../hooks/useTranslation';
 import { LogoOsonish, WebViewModal } from '../../components/common';
+import { EdgeToEdgeStatusBar } from '../../components/common/EdgeToEdgeStatusBar';
+import { usePlatformSafeAreaInsets } from '../../utils/safeAreaUtils';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -14,6 +17,7 @@ const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
 export function AuthScreen() {
   const navigation = useNavigation();
   const t = useAuthTranslation();
+  const insets = usePlatformSafeAreaInsets();
   const [webViewModal, setWebViewModal] = useState<{
     visible: boolean;
     url: string;
@@ -57,7 +61,7 @@ export function AuthScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+      <EdgeToEdgeStatusBar style="dark" />
 
       <View style={styles.content}>
         {/* Logo Section */}

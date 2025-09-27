@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
-import {
-  View,
+import { View,
   Text,
   StyleSheet,
   TouchableOpacity,
   Alert,
-  ScrollView,
-  SafeAreaView,
-  StatusBar
-} from 'react-native';
+  ScrollView, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { theme } from '../../constants';
 import { clearAllUserData, getDataStats } from '../../utils/clearAllData';
 import { authService } from '../../services/authService';

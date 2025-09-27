@@ -146,22 +146,17 @@ export const getKeyboardAwareStyles = (keyboardInfo: KeyboardInfo) => ({
   navigation: {
     ...(Platform.OS === 'android' && keyboardInfo.visible && {
       position: 'absolute' as const,
-      bottom: keyboardInfo.height + 45, // Увеличиваем отступ до 45px над клавиатурой
+      bottom: keyboardInfo.height, // Контейнер прямо над клавиатурой без отступа
       left: 0,
       right: 0,
       backgroundColor: '#FFFFFF',
       borderTopWidth: 1,
       borderTopColor: '#E5E5E7',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: -2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 8,
     }),
   },
   content: {
     ...(Platform.OS === 'android' && keyboardInfo.visible && {
-      paddingBottom: 120, // Увеличиваем отступ для навигационной панели
+      paddingBottom: 100, // Отступ для навигационной панели с учетом SafeAreaView
     }),
   },
 });

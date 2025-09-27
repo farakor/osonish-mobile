@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import {
-  View,
+import { View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  Modal,
-  SafeAreaView,
-} from 'react-native';
+  Modal } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
 import { useLanguage, Language } from '../../contexts/LanguageContext';

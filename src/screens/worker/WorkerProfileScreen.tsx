@@ -2,9 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
+  StyleSheet, ScrollView,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
@@ -12,6 +10,7 @@ import {
   StatusBar,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../constants';
@@ -289,6 +288,7 @@ export const WorkerProfileScreen: React.FC = () => {
     navigation.navigate('Support' as never);
   };
 
+
   const handleLogout = async () => {
     Alert.alert(
       tWorker('logout_title'),
@@ -389,7 +389,7 @@ export const WorkerProfileScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
-      <SafeAreaView style={styles.content}>
+      <SafeAreaView style={styles.content} edges={['top', 'left', 'right']}>
         {/* Custom Header */}
         <View style={[styles.contentHeader, { paddingTop: theme.spacing.lg + getAndroidStatusBarHeight() }]}>
           <Text style={styles.title}>{tWorker('profile')}</Text>

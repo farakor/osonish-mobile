@@ -5,9 +5,7 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
-  RefreshControl,
-  SafeAreaView,
-  StatusBar,
+  RefreshControl, StatusBar,
   Modal,
   Linking,
   Image,
@@ -16,6 +14,7 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';

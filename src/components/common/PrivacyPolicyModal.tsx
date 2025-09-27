@@ -1,16 +1,13 @@
 import React from 'react';
-import {
-  View,
+import { View,
   Text,
   StyleSheet,
   Modal,
   TouchableOpacity,
-  ScrollView,
-  SafeAreaView,
-  StatusBar,
+  ScrollView, StatusBar,
   Platform,
-  Dimensions,
-} from 'react-native';
+  Dimensions, } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { theme } from '../../constants';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');

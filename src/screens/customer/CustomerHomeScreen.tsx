@@ -2,14 +2,13 @@ import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
-  SafeAreaView,
-  TouchableOpacity,
+  StyleSheet, TouchableOpacity,
   FlatList,
   RefreshControl,
   StatusBar,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { SvgXml } from 'react-native-svg';
 import { theme } from '../../constants';
 import { lightElevationStyles } from '../../utils/noShadowStyles';
@@ -229,7 +228,7 @@ export const CustomerHomeScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.content}>
+      <SafeAreaView style={styles.content} edges={['top', 'left', 'right']}>
         {/* Header with notifications */}
         <View style={[styles.header, { paddingTop: theme.spacing.lg + getAndroidStatusBarHeight() }]}>
           <View style={styles.headerLeft}>

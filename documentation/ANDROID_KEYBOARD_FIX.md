@@ -33,6 +33,7 @@
 - **Адаптивные стили**: Контейнеры адаптируются к состоянию клавиатуры
 - **Анимированное позиционирование**: Навигационная панель плавно перемещается над клавиатурой
 - **Динамическое позиционирование**: Кнопки всегда видны над клавиатурой
+- **Оптимизированный дизайн**: Убраны тени, уменьшена высота контейнера (minHeight: 60px), paddingBottom: 0
 
 ### 3. Ключевые изменения
 
@@ -60,7 +61,7 @@ useEffect(() => {
       setKeyboardInfo(info);
       // Анимируем позицию навигации над клавиатурой
       if (Platform.OS === 'android') {
-        navigationBottom.value = withTiming(info.height + 45, { duration: 250 });
+        navigationBottom.value = withTiming(info.height, { duration: 250 });
       }
     },
     () => {
@@ -87,11 +88,6 @@ const animatedNavigationStyle = useAnimatedStyle(() => {
       backgroundColor: '#FFFFFF',
       borderTopWidth: 1,
       borderTopColor: '#E5E5E7',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: -2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 8,
     };
   }
   return {};

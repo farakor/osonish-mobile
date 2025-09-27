@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Platform } from 'react-native';
 import { AppNavigator } from './src/navigation';
 import { OrdersProvider } from './src/hooks';
 import { LanguageProvider } from './src/contexts/LanguageContext';
@@ -47,8 +48,10 @@ export default function App() {
         await notificationService.init();
         console.log('[App] ✅ Сервис уведомлений инициализирован');
 
-        // Настраиваем прозрачный navigation bar для Android
-        await setupTransparentNavigationBar();
+        // Настраиваем прозрачный navigation bar для Android с поддержкой Edge-to-Edge
+        if (Platform.OS === 'android') {
+          await setupTransparentNavigationBar();
+        }
 
         // ВАЖНО: authService.init() НЕ вызываем здесь, 
         // он инициализируется в SplashScreen для правильной последовательности
@@ -66,7 +69,11 @@ export default function App() {
     <SafeAreaProvider>
       <LanguageProvider>
         <OrdersProvider>
-          <StatusBar style="dark" />
+          <StatusBar
+            style="dark"
+            translucent={Platform.OS === 'android'}
+            backgroundColor="transparent"
+          />
           <AppNavigator />
         </OrdersProvider>
       </LanguageProvider>

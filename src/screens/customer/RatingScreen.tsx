@@ -1,15 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  View,
+import { View,
   Text,
-  StyleSheet,
-  SafeAreaView,
-  TouchableOpacity,
+  StyleSheet, TouchableOpacity,
   Alert,
   ScrollView,
   Image,
-  TextInput,
-} from 'react-native';
+  TextInput, } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
 import { usePlatformSafeAreaInsets, getFixedBottomStyle, getImprovedFixedBottomStyle } from '../../utils/safeAreaUtils';

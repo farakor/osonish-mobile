@@ -3,10 +3,19 @@ import * as NavigationBar from 'expo-navigation-bar';
 
 /**
  * Утилиты для управления Android Navigation Bar
+ * Обновлено для совместимости с Edge-to-Edge режимом Android 15+
  */
 
 /**
- * Настраивает прозрачный navigation bar для Android
+ * Проверяет, поддерживается ли Edge-to-Edge режим
+ */
+const isEdgeToEdgeSupported = (): boolean => {
+  return Platform.OS === 'android' && Platform.Version >= 28; // Android 9.0+
+};
+
+/**
+ * Настраивает navigation bar для Edge-to-Edge режима
+ * В Edge-to-Edge режиме setBackgroundColorAsync не поддерживается
  */
 export const setupTransparentNavigationBar = async (): Promise<void> => {
   if (Platform.OS !== 'android') {
@@ -14,16 +23,23 @@ export const setupTransparentNavigationBar = async (): Promise<void> => {
   }
 
   try {
-    // Делаем navigation bar прозрачным
-    await NavigationBar.setBackgroundColorAsync('transparent');
-    console.log('[NavigationBar] ✅ Navigation bar установлен как прозрачный');
+    if (isEdgeToEdgeSupported()) {
+      // В Edge-to-Edge режиме navigation bar автоматически прозрачный
+      // Используем только настройку стиля
+      await NavigationBar.setVisibilityAsync('visible');
+      console.log('[NavigationBar] ✅ Edge-to-Edge режим: navigation bar настроен автоматически');
+    } else {
+      // Для старых версий Android используем прозрачный фон
+      await NavigationBar.setBackgroundColorAsync('transparent');
+      console.log('[NavigationBar] ✅ Navigation bar установлен как прозрачный (legacy режим)');
+    }
   } catch (error) {
-    console.error('[NavigationBar] ❌ Ошибка настройки navigation bar:', error);
+    console.warn('[NavigationBar] ⚠️ Настройка navigation bar пропущена (Edge-to-Edge режим):', error.message);
   }
 };
 
 /**
- * Устанавливает цвет navigation bar
+ * Устанавливает цвет navigation bar с поддержкой Edge-to-Edge
  */
 export const setNavigationBarColor = async (color: string, light: boolean = true): Promise<void> => {
   if (Platform.OS !== 'android') {
@@ -31,10 +47,17 @@ export const setNavigationBarColor = async (color: string, light: boolean = true
   }
 
   try {
+    if (isEdgeToEdgeSupported()) {
+      // В Edge-to-Edge режиме цвет navigation bar управляется системой
+      console.log(`[NavigationBar] ℹ️ Edge-to-Edge режим: цвет navigation bar управляется системой`);
+      return;
+    }
+
+    // Для старых версий Android устанавливаем цвет
     await NavigationBar.setBackgroundColorAsync(color);
-    console.log(`[NavigationBar] ✅ Navigation bar цвет установлен: ${color}`);
+    console.log(`[NavigationBar] ✅ Navigation bar цвет установлен: ${color} (legacy режим)`);
   } catch (error) {
-    console.error('[NavigationBar] ❌ Ошибка установки цвета navigation bar:', error);
+    console.warn(`[NavigationBar] ⚠️ Установка цвета navigation bar пропущена (Edge-to-Edge режим):`, error.message);
   }
 };
 

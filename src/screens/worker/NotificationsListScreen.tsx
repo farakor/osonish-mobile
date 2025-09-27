@@ -1,15 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  View,
+import { View,
   Text,
-  StyleSheet,
-  SafeAreaView,
-  FlatList,
+  StyleSheet, FlatList,
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  Alert,
-} from 'react-native';
+  Alert, } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { SvgXml } from 'react-native-svg';
 import { theme } from '../../constants';

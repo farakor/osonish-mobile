@@ -1,18 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
+import { View,
   Text,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
+  StyleSheet, ScrollView,
   TouchableOpacity,
   Switch,
   Alert,
   ActivityIndicator,
   StatusBar,
   Platform,
-  Dimensions,
-} from 'react-native';
+  Dimensions, } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';

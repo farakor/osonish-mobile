@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import {
-  View,
+import { View,
   Text,
   StyleSheet,
   TouchableOpacity,
@@ -9,9 +8,8 @@ import {
   Dimensions,
   Platform,
   StatusBar,
-  BackHandler,
-  SafeAreaView,
-} from 'react-native';
+  BackHandler } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
 

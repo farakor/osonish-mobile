@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
+import { View,
   Text,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
+  StyleSheet, ScrollView,
   TouchableOpacity,
   TextInput,
   Alert,
   Platform,
-  Image,
-} from 'react-native';
+  Image, } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';

@@ -2,9 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
-  SafeAreaView,
-  TouchableOpacity,
+  StyleSheet, TouchableOpacity,
   TextInput,
   Alert,
   Platform,
@@ -15,7 +13,9 @@ import {
   Modal,
   ScrollView,
   FlatList,
+  Linking,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -113,6 +113,14 @@ const StepCounter: React.FC<{ currentStep: number; totalSteps: number; t: any }>
   );
 };
 
+// Функция для получения оптимизированных отступов навигации
+const getNavigationPadding = (insets: ReturnType<typeof usePlatformSafeAreaInsets>) => ({
+  paddingTop: theme.spacing.md,
+  paddingBottom: Platform.OS === 'android'
+    ? 14
+    : Math.max(insets.bottom, theme.spacing.sm),
+});
+
 
 
 
@@ -129,6 +137,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [timePickerValue, setTimePickerValue] = useState<Date>(() => {
     const date = new Date();
+    // Устанавливаем время в локальном часовом поясе
     date.setHours(9, 0, 0, 0);
     return date;
   });
@@ -253,16 +262,48 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
         {
           text: t('take_photo_video'),
           onPress: async () => {
-            const { status } = await ImagePicker.requestCameraPermissionsAsync();
-            if (status !== 'granted') {
-              Alert.alert(t('no_camera_access'));
-              return;
+            try {
+              // Проверяем текущие разрешения
+              const { status: currentStatus } = await ImagePicker.getCameraPermissionsAsync();
+
+              let finalStatus = currentStatus;
+
+              // Если разрешения нет, запрашиваем
+              if (currentStatus !== 'granted') {
+                const { status: newStatus } = await ImagePicker.requestCameraPermissionsAsync();
+                finalStatus = newStatus;
+              }
+
+              if (finalStatus !== 'granted') {
+                Alert.alert(
+                  t('no_camera_access'),
+                  'Пожалуйста, разрешите доступ к камере в настройках приложения',
+                  [
+                    { text: 'Отмена', style: 'cancel' },
+                    {
+                      text: 'Настройки', onPress: () => {
+                        if (Platform.OS === 'ios') {
+                          Linking.openURL('app-settings:');
+                        } else {
+                          Linking.openSettings();
+                        }
+                      }
+                    }
+                  ]
+                );
+                return;
+              }
+
+              let result = await ImagePicker.launchCameraAsync({
+                mediaTypes: ['images', 'videos'],
+                quality: 1.0, // Максимальное качество, оптимизация будет в MediaService
+                allowsEditing: false,
+              });
+              handleMediaResult(result);
+            } catch (error) {
+              console.error('Ошибка при работе с камерой:', error);
+              Alert.alert('Ошибка', 'Не удалось открыть камеру');
             }
-            let result = await ImagePicker.launchCameraAsync({
-              mediaTypes: ['images', 'videos'],
-              quality: 1.0, // Максимальное качество, оптимизация будет в MediaService
-            });
-            handleMediaResult(result);
           },
         },
         {
@@ -995,7 +1036,15 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 <View style={styles.inputContainer}>
                   <TouchableOpacity
                     style={styles.timeSelector}
-                    onPress={() => setShowTimePicker(true)}
+                    onPress={() => {
+                      // Сбрасываем время при открытии пикера для iOS
+                      if (Platform.OS === 'ios' && !selectedTime) {
+                        const resetDate = new Date();
+                        resetDate.setHours(9, 0, 0, 0);
+                        setTimePickerValue(resetDate);
+                      }
+                      setShowTimePicker(true);
+                    }}
                   >
                     <CalendarDateIcon width={24} height={24} stroke={theme.colors.primary} />
                     <Text style={[
@@ -1122,11 +1171,11 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <KeyboardAvoidingView
           style={styles.content}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
           <HeaderWithBack title={getStepTitle()} showBackButton={currentStep === 1} />
 
@@ -1140,7 +1189,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           </View>
 
           {/* Navigation */}
-          <View style={[styles.navigation, getImprovedFixedBottomStyle(insets)]}>
+          <View style={[styles.navigation, getNavigationPadding(insets)]}>
             {currentStep > 1 && (
               <AnimatedNavigationButton
                 variant="secondary"
@@ -1259,7 +1308,10 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                   } else {
                     // На iOS только обновляем значение, не закрываем
                     if (date) {
-                      setTimePickerValue(date);
+                      // Создаем новую дату для избежания проблем с часовыми поясами
+                      const newDate = new Date();
+                      newDate.setHours(date.getHours(), date.getMinutes(), 0, 0);
+                      setTimePickerValue(newDate);
                     }
                   }
                 }}
@@ -1302,7 +1354,7 @@ const styles = StyleSheet.create({
   stepContent: {
     flex: 1,
     paddingTop: isSmallScreen ? theme.spacing.md : theme.spacing.xl,
-    paddingBottom: isSmallScreen ? 100 : 0, // Дополнительное место для кнопки на маленьких экранах
+    paddingBottom: isSmallScreen ? theme.spacing.lg : 0, // Уменьшенный отступ для маленьких экранов
   },
   stepTitle: {
     fontSize: isSmallScreen ? theme.fonts.sizes.xl : theme.fonts.sizes.xxl,
@@ -1500,7 +1552,6 @@ const styles = StyleSheet.create({
   navigation: {
     flexDirection: 'row',
     paddingHorizontal: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
-    // paddingTop и paddingBottom устанавливаются через getImprovedFixedBottomStyle
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
     backgroundColor: theme.colors.background,

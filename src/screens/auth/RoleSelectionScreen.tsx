@@ -3,19 +3,18 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
-  SafeAreaView,
-  Dimensions,
+  TouchableOpacity, Dimensions,
   Alert,
   Platform,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';
 import { noElevationStyles, borderButtonStyles } from '../../utils/noShadowStyles';
 import type { RootStackParamList } from '../../types';
-import { LogoOsonish, AnimatedIcon } from '../../components/common';
+import { LogoOsonish, AnimatedIcon, HeaderWithBack } from '../../components/common';
 
 // Импортируем анимированные иконки
 const DeliveryManAnimation = require('../../../assets/delivery-man.json');
@@ -74,6 +73,27 @@ export const RoleSelectionScreen: React.FC = () => {
     }
   };
 
+  const handleBackPress = async () => {
+    try {
+      // Получаем данные профиля для извлечения номера телефона
+      const AsyncStorage = await import('@react-native-async-storage/async-storage');
+      const profileDataString = await AsyncStorage.default.getItem('@temp_profile_data');
+
+      let phone = '';
+      if (profileDataString) {
+        const profileData = JSON.parse(profileDataString);
+        phone = profileData.phone || '';
+      }
+
+      // Возвращаемся к экрану заполнения профиля
+      navigation.navigate('ProfileInfo', { phone });
+    } catch (error) {
+      console.error('Ошибка при возврате к профилю:', error);
+      // В случае ошибки просто переходим без номера телефона
+      navigation.navigate('ProfileInfo', { phone: '' });
+    }
+  };
+
   const RoleCard = ({
     role,
     title,
@@ -128,16 +148,10 @@ export const RoleSelectionScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <HeaderWithBack title={t('role_selection_title')} backAction={handleBackPress} />
       <View style={styles.content}>
-        <View style={styles.logoSection}>
-          <LogoOsonish
-            width={isSmallScreen ? 120 : 160}
-            height={isSmallScreen ? 22 : 29}
-          />
-        </View>
 
         <View style={styles.header}>
-          <Text style={styles.title}>{t('role_selection_title')}</Text>
           <Text style={styles.subtitle}>
             {t('role_selection_subtitle')}
           </Text>
@@ -194,7 +208,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl + getAndroidStatusBarHeight(),
+    paddingTop: theme.spacing.md,
   },
   logoSection: {
     alignItems: 'center',

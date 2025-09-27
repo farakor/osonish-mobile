@@ -27,7 +27,8 @@ const Tab = createBottomTabNavigator<CustomerTabParamList>();
 
 // Создаем анимированные версии экранов
 const AnimatedCustomerHomeScreen = withAnimatedTabScreen(CustomerHomeScreen);
-const AnimatedCreateOrderScreen = withAnimatedTabScreen(CreateOrderStepByStepScreen);
+// Убираем анимированную обертку для экрана создания заказа, так как у него есть собственные анимации
+const AnimatedCreateOrderScreen = CreateOrderStepByStepScreen;
 const AnimatedMyOrdersScreen = withAnimatedTabScreen(MyOrdersScreen);
 const AnimatedCustomerProfileScreen = withAnimatedTabScreen(CustomerProfileScreen);
 

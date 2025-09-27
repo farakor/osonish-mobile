@@ -24,6 +24,7 @@ import Animated, {
   interpolate,
   Extrapolation,
 } from 'react-native-reanimated';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { theme } from '../../constants';
 import { noElevationStyles, lightElevationStyles, softButtonElevationStyles, borderButtonStyles } from '../../utils/noShadowStyles';
 import { usePlatformSafeAreaInsets, getImprovedFixedBottomStyle } from '../../utils/safeAreaUtils';
@@ -33,7 +34,6 @@ import CalendarDateIcon from '../../../assets/calendar-date.svg';
 import NoImagePlaceholder from '../../../assets/no-image-placeholder.svg';
 import PlusIcon from '../../../assets/plus.svg';
 import PaperIcon from '../../../assets/paper.svg';
-import ArrowIcon from '../../../assets/arrow.svg';
 import { useAuthTranslation, useCommonTranslation, useErrorsTranslation } from '../../hooks/useTranslation';
 
 
@@ -75,19 +75,6 @@ const getAndroidStatusBarHeight = () => {
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-// Простой статический прогресс-бар без анимации
-const StaticProgressBar: React.FC<{ progress: number; total: number }> = ({ progress, total }) => {
-  const progressPercentage = ((progress - 1) / (total - 1)) * 100;
-
-  return (
-    <View style={styles.staticProgressContainer}>
-      <View style={styles.staticProgressTrack}>
-        <View style={[styles.staticProgressFill, { width: `${progressPercentage}%` }]} />
-      </View>
-    </View>
-  );
-};
-
 // Компонент для отображения номера шага с анимацией
 const StepCounter: React.FC<{ currentStep: number; totalSteps: number; t: any }> = ({ currentStep, totalSteps, t }) => {
   return (
@@ -108,14 +95,14 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [birthDate, setBirthDate] = useState('');
-  const [birthDateFocused, setBirthDateFocused] = useState(false);
+  const [firstName, setFirstName] = useState('');
+  const [middleName, setMiddleName] = useState('');
+  const [birthDate, setBirthDate] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [animationResetKey, setAnimationResetKey] = useState(0);
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [webViewModal, setWebViewModal] = useState<{
     visible: boolean;
     url: string;
@@ -128,11 +115,9 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
 
 
   // Состояния фокуса для полей ввода
-  const [firstNameFocused, setFirstNameFocused] = useState(false);
   const [lastNameFocused, setLastNameFocused] = useState(false);
-
-  // Рефы для полей ввода
-  const lastNameInputRef = React.useRef<TextInput>(null);
+  const [firstNameFocused, setFirstNameFocused] = useState(false);
+  const [middleNameFocused, setMiddleNameFocused] = useState(false);
 
   // Состояние клавиатуры для Android
   const [keyboardInfo, setKeyboardInfo] = useState<KeyboardInfo>({
@@ -146,46 +131,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
   // Отслеживаем предыдущее состояние клавиатуры для корректного сброса
   const [prevKeyboardVisible, setPrevKeyboardVisible] = useState(false);
 
-  const totalSteps = 4;
-
-  // Загружаем сохраненные данные при монтировании компонента
-  useEffect(() => {
-    const loadSavedData = async () => {
-      try {
-        const AsyncStorage = await import('@react-native-async-storage/async-storage');
-        const profileDataString = await AsyncStorage.default.getItem('@temp_profile_data');
-
-        if (profileDataString) {
-          const profileData = JSON.parse(profileDataString);
-
-          // Восстанавливаем данные
-          if (profileData.firstName) setFirstName(profileData.firstName);
-          if (profileData.lastName) setLastName(profileData.lastName);
-          if (profileData.profileImage) setProfileImage(profileData.profileImage);
-          if (profileData.birthDate) {
-            // Конвертируем ISO дату обратно в формат dd.mm.yyyy
-            const date = new Date(profileData.birthDate);
-            const formattedDate = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}`;
-            setBirthDate(formattedDate);
-          }
-
-          // Определяем текущий шаг на основе заполненных данных
-          let step = 1;
-          if (profileData.firstName && profileData.lastName) step = 3; // Переходим к дате рождения
-          else if (profileData.profileImage) step = 2; // Переходим к имени
-
-          setCurrentStep(step);
-        }
-      } catch (error) {
-        console.error('Ошибка загрузки сохраненных данных:', error);
-      } finally {
-        // Отмечаем, что данные загружены (даже если их не было)
-        setIsDataLoaded(true);
-      }
-    };
-
-    loadSavedData();
-  }, []);
+  const totalSteps = 6;
 
   // Обработка клавиатуры для Android с использованием утилит
   useEffect(() => {
@@ -257,62 +203,22 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
     }
   };
 
-  // Функция для форматирования даты при вводе
-  const formatDateInput = (text: string) => {
-    // Удаляем все нецифровые символы
-    const numbers = text.replace(/\D/g, '');
-
-    // Форматируем как dd.mm.yyyy
-    if (numbers.length <= 2) {
-      return numbers;
-    } else if (numbers.length <= 4) {
-      return `${numbers.slice(0, 2)}.${numbers.slice(2)}`;
-    } else {
-      return `${numbers.slice(0, 2)}.${numbers.slice(2, 4)}.${numbers.slice(4, 8)}`;
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    if (selectedDate) {
+      setBirthDate(selectedDate);
     }
   };
 
-  // Функция для валидации даты
-  const validateDate = (dateString: string): { isValid: boolean; date?: Date; error?: string } => {
-    if (!dateString || dateString.length !== 10) {
-      return { isValid: false, error: 'Введите дату в формате дд.мм.гггг' };
-    }
-
-    const [day, month, year] = dateString.split('.').map(Number);
-
-    if (!day || !month || !year) {
-      return { isValid: false, error: 'Неверный формат даты' };
-    }
-
-    if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900 || year > new Date().getFullYear()) {
-      return { isValid: false, error: 'Неверная дата' };
-    }
-
-    const date = new Date(year, month - 1, day);
-
-    // Проверяем, что дата действительно существует
-    if (date.getDate() !== day || date.getMonth() !== month - 1 || date.getFullYear() !== year) {
-      return { isValid: false, error: 'Такой даты не существует' };
-    }
-
-    // Проверяем возраст (должно быть 18 лет или больше)
-    const today = new Date();
-    const age = today.getFullYear() - year;
-    const monthDiff = today.getMonth() - (month - 1);
-    const dayDiff = today.getDate() - day;
-
-    const actualAge = monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age;
-
-    if (actualAge < 18) {
-      return { isValid: false, error: 'Вам должно быть не менее 18 лет' };
-    }
-
-    return { isValid: true, date };
-  };
-
-  const handleBirthDateChange = (text: string) => {
-    const formatted = formatDateInput(text);
-    setBirthDate(formatted);
+  const formatDate = (date: Date | null) => {
+    if (!date) return t('select_birth_date');
+    return date.toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
   };
 
   const pickImage = async () => {
@@ -342,8 +248,6 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
             });
             if (!result.canceled) {
               setProfileImage(result.assets[0].uri);
-              // Автоматически сохраняем данные при выборе фото
-              setTimeout(saveCurrentData, 100);
             }
           },
         },
@@ -358,8 +262,6 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
             });
             if (!result.canceled) {
               setProfileImage(result.assets[0].uri);
-              // Автоматически сохраняем данные при выборе фото
-              setTimeout(saveCurrentData, 100);
             }
           },
         },
@@ -373,11 +275,15 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
     switch (currentStep) {
       case 1: // Фото профиля (необязательно)
         return true;
-      case 2: // Имя и фамилия
-        return firstName.trim().length > 0 && lastName.trim().length > 0;
-      case 3: // Дата рождения
-        return birthDate.length === 10 && validateDate(birthDate).isValid;
-      case 4: // Согласие с ПД
+      case 2: // Фамилия
+        return lastName.trim().length > 0;
+      case 3: // Имя
+        return firstName.trim().length > 0;
+      case 4: // Отчество (необязательно)
+        return true;
+      case 5: // Дата рождения
+        return birthDate !== null;
+      case 6: // Согласие с ПД
         return privacyAccepted;
       default:
         return true;
@@ -388,28 +294,27 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
     switch (currentStep) {
       case 1: // Фото профиля (необязательно)
         return true;
-      case 2: // Имя и фамилия
-        if (!firstName.trim()) {
-          Alert.alert(t('fill_field'), 'Введите ваше имя');
-          return false;
-        }
+      case 2: // Фамилия
         if (!lastName.trim()) {
-          Alert.alert(t('fill_field'), 'Введите вашу фамилию');
+          Alert.alert(t('fill_field'), t('enter_lastname'));
           return false;
         }
         return true;
-      case 3: // Дата рождения
+      case 3: // Имя
+        if (!firstName.trim()) {
+          Alert.alert(t('fill_field'), t('enter_firstname'));
+          return false;
+        }
+        return true;
+      case 4: // Отчество (необязательно)
+        return true;
+      case 5: // Дата рождения
         if (!birthDate) {
-          Alert.alert(t('select_date'), 'Введите дату рождения');
-          return false;
-        }
-        const validation = validateDate(birthDate);
-        if (!validation.isValid) {
-          Alert.alert('Ошибка', validation.error || 'Неверная дата');
+          Alert.alert(t('select_date'), t('select_birth_date'));
           return false;
         }
         return true;
-      case 4: // Согласие с ПД
+      case 6: // Согласие с ПД
         if (!privacyAccepted) {
           Alert.alert(t('agreement_required'), t('privacy_agreement_required'));
           return false;
@@ -420,40 +325,9 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
     }
   };
 
-  // Функция для сохранения текущих данных
-  const saveCurrentData = async () => {
-    try {
-      const AsyncStorage = await import('@react-native-async-storage/async-storage');
-
-      // Создаем объект с текущими данными
-      const currentData: any = {
-        phone,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        middleName: '', // Убираем отчество
-        profileImage,
-      };
-
-      // Если дата рождения заполнена и валидна, добавляем ее
-      if (birthDate && birthDate.length === 10) {
-        const validation = validateDate(birthDate);
-        if (validation.isValid && validation.date) {
-          currentData.birthDate = validation.date.toISOString();
-        }
-      }
-
-      await AsyncStorage.default.setItem('@temp_profile_data', JSON.stringify(currentData));
-    } catch (error) {
-      console.error('Ошибка сохранения данных:', error);
-    }
-  };
-
   // Создаем обработчики навигации с автоматическим скрытием клавиатуры
-  const nextStep = createNavigationHandler(async () => {
+  const nextStep = createNavigationHandler(() => {
     if (validateCurrentStep()) {
-      // Сохраняем данные перед переходом к следующему шагу
-      await saveCurrentData();
-
       if (currentStep < totalSteps) {
         setCurrentStep(currentStep + 1);
       }
@@ -467,15 +341,8 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
   });
 
   const handleSubmit = async () => {
-    if (!firstName.trim() || !lastName.trim() || !birthDate || !privacyAccepted) {
+    if (!lastName.trim() || !firstName.trim() || !birthDate || !privacyAccepted) {
       Alert.alert(tError('error'), t('fill_required_fields'));
-      return;
-    }
-
-    // Валидируем дату рождения
-    const dateValidation = validateDate(birthDate);
-    if (!dateValidation.isValid) {
-      Alert.alert('Ошибка', dateValidation.error || 'Неверная дата рождения');
       return;
     }
 
@@ -487,8 +354,8 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
         phone,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        middleName: '', // Убираем отчество
-        birthDate: dateValidation.date!.toISOString(),
+        middleName: middleName?.trim(),
+        birthDate: birthDate.toISOString(),
         profileImage
       };
 
@@ -511,9 +378,11 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
   const getStepTitle = () => {
     switch (currentStep) {
       case 1: return t('profile_photo');
-      case 2: return 'Имя и фамилия';
-      case 3: return t('birth_date');
-      case 4: return t('agreement');
+      case 2: return t('lastname');
+      case 3: return t('firstname');
+      case 4: return t('middlename');
+      case 5: return t('birth_date');
+      case 6: return t('agreement');
       default: return '';
     }
   };
@@ -572,53 +441,22 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 2} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 2} delay={0} resetKey={`${animationResetKey}-step-2`}>
-                <Text style={styles.stepTitle}>Имя и фамилия</Text>
+                <Text style={styles.stepTitle}>{t('profile_step_lastname_title')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 2} delay={150} resetKey={`${animationResetKey}-step-2`}>
-                <Text style={styles.stepSubtitle}>Введите ваше имя и фамилию</Text>
+                <Text style={styles.stepSubtitle}></Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 2} delay={200} resetKey={`${animationResetKey}-step-2`}>
                 <View style={styles.inputContainer}>
                   <TextInput
-                    style={getInputStyle(firstNameFocused)}
-                    value={firstName}
-                    onChangeText={setFirstName}
-                    placeholder="Имя"
-                    placeholderTextColor={theme.colors.text.secondary}
-                    autoFocus
-                    returnKeyType="next"
-                    onSubmitEditing={() => {
-                      // Фокусируемся на поле фамилии при нажатии "Далее"
-                      lastNameInputRef.current?.focus();
-                    }}
-                    onFocus={() => {
-                      setFirstNameFocused(true);
-                      // Небольшая задержка для корректного позиционирования
-                      if (Platform.OS === 'android') {
-                        setTimeout(() => {
-                          if (keyboardInfo.visible && keyboardInfo.height > 0) {
-                            navigationBottom.value = withTiming(keyboardInfo.height + 45, { duration: 250 });
-                          }
-                        }, 100);
-                      }
-                    }}
-                    onBlur={() => setFirstNameFocused(false)}
-                  />
-                </View>
-              </AnimatedField>
-
-              <AnimatedField isActive={currentStep === 2} delay={250} resetKey={`${animationResetKey}-step-2`}>
-                <View style={styles.inputContainer}>
-                  <TextInput
-                    ref={lastNameInputRef}
                     style={getInputStyle(lastNameFocused)}
                     value={lastName}
                     onChangeText={setLastName}
-                    placeholder="Фамилия"
+                    placeholder={t('lastname_placeholder')}
                     placeholderTextColor={theme.colors.text.secondary}
-                    returnKeyType="done"
+                    autoFocus
                     onFocus={() => {
                       setLastNameFocused(true);
                       // Небольшая задержка для корректного позиционирования
@@ -643,26 +481,24 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 3} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 3} delay={0} resetKey={`${animationResetKey}-step-3`}>
-                <Text style={styles.stepTitle}>Дата рождения</Text>
+                <Text style={styles.stepTitle}>{t('profile_step_firstname_title')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 3} delay={150} resetKey={`${animationResetKey}-step-3`}>
-                <Text style={styles.stepSubtitle}>{t('age_requirement_text')}</Text>
+                <Text style={styles.stepSubtitle}></Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 3} delay={200} resetKey={`${animationResetKey}-step-3`}>
                 <View style={styles.inputContainer}>
                   <TextInput
-                    style={getInputStyle(birthDateFocused)}
-                    value={birthDate}
-                    onChangeText={handleBirthDateChange}
-                    placeholder="дд.мм.гггг"
+                    style={getInputStyle(firstNameFocused)}
+                    value={firstName}
+                    onChangeText={setFirstName}
+                    placeholder={t('firstname_placeholder')}
                     placeholderTextColor={theme.colors.text.secondary}
-                    keyboardType="numeric"
-                    maxLength={10}
                     autoFocus
                     onFocus={() => {
-                      setBirthDateFocused(true);
+                      setFirstNameFocused(true);
                       // Небольшая задержка для корректного позиционирования
                       if (Platform.OS === 'android') {
                         setTimeout(() => {
@@ -672,7 +508,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                         }, 100);
                       }
                     }}
-                    onBlur={() => setBirthDateFocused(false)}
+                    onBlur={() => setFirstNameFocused(false)}
                   />
                 </View>
               </AnimatedField>
@@ -685,14 +521,88 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 4} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 4} delay={0} resetKey={`${animationResetKey}-step-4`}>
-                <Text style={styles.stepTitle}>{t('profile_step_privacy_title')}</Text>
+                <Text style={styles.stepTitle}>{t('profile_step_middlename_title')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 4} delay={150} resetKey={`${animationResetKey}-step-4`}>
+                <Text style={styles.stepSubtitle}>{t('profile_step_middlename_optional')}</Text>
+              </AnimatedField>
+
+              <AnimatedField isActive={currentStep === 4} delay={200} resetKey={`${animationResetKey}-step-4`}>
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={getInputStyle(middleNameFocused)}
+                    value={middleName}
+                    onChangeText={setMiddleName}
+                    placeholder={t('middlename_placeholder')}
+                    placeholderTextColor={theme.colors.text.secondary}
+                    autoFocus
+                    onFocus={() => {
+                      setMiddleNameFocused(true);
+                      // Небольшая задержка для корректного позиционирования
+                      if (Platform.OS === 'android') {
+                        setTimeout(() => {
+                          if (keyboardInfo.visible && keyboardInfo.height > 0) {
+                            navigationBottom.value = withTiming(keyboardInfo.height + 45, { duration: 250 });
+                          }
+                        }, 100);
+                      }
+                    }}
+                    onBlur={() => setMiddleNameFocused(false)}
+                  />
+                </View>
+              </AnimatedField>
+            </View>
+          </AnimatedStepContainer>
+        );
+
+      case 5:
+        return (
+          <AnimatedStepContainer isActive={currentStep === 5} direction="right">
+            <View style={styles.stepContent}>
+              <AnimatedField isActive={currentStep === 5} delay={0} resetKey={`${animationResetKey}-step-5`}>
+                <Text style={styles.stepTitle}>{t('profile_step_birthdate_title')}</Text>
+              </AnimatedField>
+
+              <AnimatedField isActive={currentStep === 5} delay={150} resetKey={`${animationResetKey}-step-5`}>
+                <Text style={styles.stepSubtitle}></Text>
+              </AnimatedField>
+
+              <AnimatedInteractiveContainer isActive={currentStep === 5} delay={200} resetKey={`${animationResetKey}-step-5`}>
+                <View style={styles.inputContainer}>
+                  <TouchableOpacity
+                    style={styles.dateSelector}
+                    onPress={() => setShowDatePicker(true)}
+                  >
+                    <View style={{ marginRight: theme.spacing.md }}>
+                      <CalendarDateIcon width={20} height={20} stroke={theme.colors.text.secondary} />
+                    </View>
+                    <Text style={[
+                      styles.dateText,
+                      !birthDate && styles.dateTextPlaceholder
+                    ]}>
+                      {formatDate(birthDate)}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </AnimatedInteractiveContainer>
+            </View>
+          </AnimatedStepContainer>
+        );
+
+      case 6:
+        return (
+          <AnimatedStepContainer isActive={currentStep === 6} direction="right">
+            <View style={styles.stepContent}>
+              <AnimatedField isActive={currentStep === 6} delay={0} resetKey={`${animationResetKey}-step-6`}>
+                <Text style={styles.stepTitle}>{t('profile_step_privacy_title')}</Text>
+              </AnimatedField>
+
+              <AnimatedField isActive={currentStep === 6} delay={150} resetKey={`${animationResetKey}-step-6`}>
                 <Text style={styles.stepSubtitle}>{t('profile_step_privacy_subtitle')}</Text>
               </AnimatedField>
 
-              <AnimatedInteractiveContainer isActive={currentStep === 4} delay={200} resetKey={`${animationResetKey}-step-4`}>
+              <AnimatedInteractiveContainer isActive={currentStep === 6} delay={200} resetKey={`${animationResetKey}-step-6`}>
                 <View style={styles.privacySection}>
                   <TouchableOpacity
                     style={styles.privacyDocumentButton}
@@ -712,15 +622,6 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                   </TouchableOpacity>
 
                   <View style={styles.privacyCheckboxContainer}>
-                    {/* Стрелка указывающая на чекбокс */}
-                    <View style={styles.arrowContainer}>
-                      <ArrowIcon
-                        width={isSmallScreen ? 20 : 24}
-                        height={isSmallScreen ? 40 : 48}
-                        style={styles.arrowIcon}
-                      />
-                    </View>
-
                     <TouchableOpacity
                       style={styles.privacyCheckbox}
                       onPress={() => setPrivacyAccepted(!privacyAccepted)}
@@ -799,15 +700,15 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
             </View>
 
             {/* Progress */}
-            {isDataLoaded && <StaticProgressBar progress={currentStep} total={totalSteps} />}
-            {isDataLoaded && <StepCounter currentStep={currentStep} totalSteps={totalSteps} t={t} />}
+            <AnimatedProgressBar progress={currentStep} total={totalSteps} />
+            <StepCounter currentStep={currentStep} totalSteps={totalSteps} t={t} />
 
             {/* Content */}
             <View style={[
               styles.mainContent,
               keyboardAwareStyles.content
             ]}>
-              {isDataLoaded && renderStep()}
+              {renderStep()}
             </View>
 
             {/* Navigation */}
@@ -872,6 +773,30 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
               </View>
             </Modal>
 
+            {/* Date Picker */}
+            {showDatePicker && (
+              <View style={styles.datePickerContainer}>
+                {Platform.OS === 'ios' && (
+                  <View style={styles.datePickerHeader}>
+                    <TouchableOpacity
+                      style={styles.doneButton}
+                      onPress={() => setShowDatePicker(false)}
+                    >
+                      <Text style={styles.doneButtonText}>{t('done')}</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+                <DateTimePicker
+                  value={birthDate || new Date(1978, 4, 1)}
+                  mode="date"
+                  display={Platform.OS === 'android' ? 'calendar' : 'spinner'}
+                  onChange={handleDateChange}
+                  maximumDate={new Date()}
+                  minimumDate={new Date(1950, 0, 1)}
+                  locale="ru-RU"
+                />
+              </View>
+            )}
           </KeyboardAvoidingView>
         ) : (
           <View style={styles.content}>
@@ -886,15 +811,15 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
             </View>
 
             {/* Progress */}
-            {isDataLoaded && <StaticProgressBar progress={currentStep} total={totalSteps} />}
-            {isDataLoaded && <StepCounter currentStep={currentStep} totalSteps={totalSteps} t={t} />}
+            <AnimatedProgressBar progress={currentStep} total={totalSteps} />
+            <StepCounter currentStep={currentStep} totalSteps={totalSteps} t={t} />
 
             {/* Content */}
             <View style={[
               styles.mainContent,
               keyboardAwareStyles.content
             ]}>
-              {isDataLoaded && renderStep()}
+              {renderStep()}
             </View>
 
             {/* Navigation */}
@@ -959,6 +884,30 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
               </View>
             </Modal>
 
+            {/* Date Picker */}
+            {showDatePicker && (
+              <View style={styles.datePickerContainer}>
+                {Platform.OS === 'ios' && (
+                  <View style={styles.datePickerHeader}>
+                    <TouchableOpacity
+                      style={styles.doneButton}
+                      onPress={() => setShowDatePicker(false)}
+                    >
+                      <Text style={styles.doneButtonText}>{t('done')}</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+                <DateTimePicker
+                  value={birthDate || new Date(1978, 4, 1)}
+                  mode="date"
+                  display={Platform.OS === 'android' ? 'calendar' : 'spinner'}
+                  onChange={handleDateChange}
+                  maximumDate={new Date()}
+                  minimumDate={new Date(1950, 0, 1)}
+                  locale="ru-RU"
+                />
+              </View>
+            )}
           </View>
         )}
       </SafeAreaView>
@@ -1007,21 +956,6 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
     textAlign: 'center',
-  },
-  staticProgressContainer: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.sm,
-  },
-  staticProgressTrack: {
-    height: 4,
-    backgroundColor: '#E5E5E7',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  staticProgressFill: {
-    height: '100%',
-    backgroundColor: theme.colors.primary,
-    borderRadius: 2,
   },
   mainContent: {
     flex: 1,
@@ -1193,18 +1127,7 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.sm,
   },
   privacyCheckboxContainer: {
-    marginTop: theme.spacing.lg + 20, // Опускаем раздел чекбокса на 20px вниз
-    position: 'relative',
-  },
-  arrowContainer: {
-    position: 'absolute',
-
-    top: -45, // Позиционируем стрелку над чекбоксом
-    left: 0, // Центрируем стрелку по чекбоксу (24px ширина чекбокса / 2 = 12px)
-    zIndex: 1,
-  },
-  arrowIcon: {
-    // Стрелка по умолчанию уже указывает вниз
+    marginTop: theme.spacing.lg,
   },
   privacyCheckbox: {
     flexDirection: 'row',
@@ -1214,7 +1137,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderWidth: 2,
-    borderColor: '#E10000',
+    borderColor: '#E5E5E7',
     backgroundColor: '#FFFFFF',
     borderRadius: 6,
     marginRight: theme.spacing.md,
@@ -1261,6 +1184,35 @@ const styles = StyleSheet.create({
     fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.bold,
   },
+  datePickerContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: theme.colors.white,
+    borderTopLeftRadius: theme.borderRadius.lg,
+    borderTopRightRadius: theme.borderRadius.lg,
+    paddingTop: theme.spacing.md,
+    paddingBottom: Platform.OS === 'ios' ? theme.spacing.xl : 0,
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+  },
+  datePickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.sm,
+  },
+  doneButton: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.sm,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+  },
+  doneButtonText: {
+    color: theme.colors.white,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.semiBold,
+  },
   loadingOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -1281,4 +1233,3 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.medium,
   },
 });
-

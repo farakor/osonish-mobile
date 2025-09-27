@@ -1,15 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Modal,
+import { Modal,
   View,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  Animated,
+  StyleSheet, Animated,
   Platform,
-  Dimensions,
-} from 'react-native';
+  Dimensions, } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../constants/theme';
 import { noElevationStyles } from '../../utils/noShadowStyles';

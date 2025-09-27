@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
+import { View,
   Text,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
+  StyleSheet, ScrollView,
   Image,
   TouchableOpacity,
   RefreshControl,
   Alert,
-  ActivityIndicator,
-} from 'react-native';
+  ActivityIndicator, } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { SvgXml } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';

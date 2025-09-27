@@ -1,8 +1,9 @@
-import { Platform, StatusBar, Dimensions } from 'react-native';
+import { Platform, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 /**
  * Утилиты для работы с безопасными зонами на Android и iOS
+ * Обновлено для поддержки Edge-to-Edge в Android 15+
  */
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -24,15 +25,23 @@ export const hasTransparentNavigationBar = (): boolean => {
 };
 
 /**
- * Получает высоту статус-бара на Android
+ * Получает высоту статус-бара на Android с поддержкой Edge-to-Edge
+ * Заменяет устаревший StatusBar.currentHeight для Android 15+
  */
 export const getAndroidStatusBarHeight = (): number => {
   if (Platform.OS === 'android') {
-    try {
-      return StatusBar.currentHeight || 24; // fallback 24px для Android
-    } catch (error) {
-      return 24; // стандартная высота статус-бара на Android
+    // Для Edge-to-Edge используем размеры экрана вместо StatusBar.currentHeight
+    const { height } = Dimensions.get('window');
+    const screenHeight = Dimensions.get('screen').height;
+
+    // Приблизительная высота статус-бара
+    const systemUIHeight = screenHeight - height;
+    if (systemUIHeight > 0) {
+      // Статус-бар обычно составляет около 24-48px
+      return Math.min(systemUIHeight, 48);
     }
+
+    return 24; // fallback для старых устройств
   }
   return 0;
 };

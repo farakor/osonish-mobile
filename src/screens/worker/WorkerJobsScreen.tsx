@@ -2,9 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
+  StyleSheet, ScrollView,
   TouchableOpacity,
   TextInput,
   FlatList,
@@ -13,6 +11,7 @@ import {
   StatusBar,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { SvgXml } from 'react-native-svg';
 import { useFocusEffect } from '@react-navigation/native';
 import { theme } from '../../constants/theme';
@@ -479,7 +478,7 @@ const WorkerJobsScreen: React.FC = () => {
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <SafeAreaView style={styles.content}>
+        <SafeAreaView style={styles.content} edges={['top', 'left', 'right']}>
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingText}>{t('loading_orders')}</Text>
           </View>
@@ -491,7 +490,7 @@ const WorkerJobsScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.primary} />
-      <SafeAreaView style={styles.content}>
+      <SafeAreaView style={styles.content} edges={['top', 'left', 'right']}>
         {/* Header with notifications */}
         <View style={[styles.header, { paddingTop: theme.spacing.lg + getAndroidStatusBarHeight() }]}>
           <View style={styles.headerLeft}>

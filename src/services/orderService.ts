@@ -2395,7 +2395,7 @@ export class OrderService {
         await supabase
           .from('scheduled_reminders')
           .update({ is_sent: true, sent_at: new Date().toISOString() })
-          .eq('worker_id', workerId)
+          .eq('user_id', workerId)
           .eq('order_id', orderId)
           .eq('reminder_type', 'work_reminder');
       }
@@ -2967,16 +2967,28 @@ export class OrderService {
           const recipientType = reminder.reminder_type === 'work_reminder' ? 'исполнителю' : 'заказчику';
           console.log(`[OrderService] 📤 Отправляем напоминание ${reminder.id} ${recipientType} ${reminder.user_id}`);
 
-          // Получаем данные заказа
-          const { data: orderData, error: orderError } = await supabase
-            .from('orders')
-            .select('id, title, location')
-            .eq('id', reminder.order_id)
-            .single();
+          // Получаем данные заказа (для тестовых заказов создаем фиктивные данные)
+          let orderData;
+          if (reminder.order_id.startsWith('test-order-')) {
+            // Для тестовых заказов создаем фиктивные данные
+            orderData = {
+              id: reminder.order_id,
+              title: 'Тестовый заказ для проверки уведомлений',
+              location: 'Тестовый адрес, г. Ташкент'
+            };
+          } else {
+            // Для реальных заказов получаем данные из базы
+            const { data, error: orderError } = await supabase
+              .from('orders')
+              .select('id, title, location')
+              .eq('id', reminder.order_id)
+              .single();
 
-          if (orderError || !orderData) {
-            console.error(`[OrderService] ❌ Ошибка получения данных заказа ${reminder.order_id}:`, orderError);
-            continue;
+            if (orderError || !data) {
+              console.error(`[OrderService] ❌ Ошибка получения данных заказа ${reminder.order_id}:`, orderError);
+              continue;
+            }
+            orderData = data;
           }
 
           // Выбираем правильный метод отправки в зависимости от типа напоминания
@@ -3019,11 +3031,13 @@ export class OrderService {
    */
   private startReminderChecker(): void {
     // Проверяем напоминания каждые 15 минут
+    const checkInterval = 15 * 60 * 1000; // 15 минут
+
     setInterval(() => {
       this.checkAndSendScheduledReminders().catch(error => {
         console.error('[OrderService] ❌ Ошибка в периодической проверке напоминаний:', error);
       });
-    }, 15 * 60 * 1000); // 15 минут в миллисекундах
+    }, checkInterval);
 
     // Также запускаем первую проверку через 1 минуту после старта
     setTimeout(() => {
@@ -3032,13 +3046,14 @@ export class OrderService {
       });
     }, 60 * 1000); // 1 минута
 
-    console.log('[OrderService] ⏰ Периодическая проверка напоминаний запущена (каждые 15 минут)');
+    console.log(`[OrderService] ⏰ Периодическая проверка напоминаний запущена (каждые ${checkInterval / 60000} минут)`);
   }
 
+
   /**
- * Тестовая функция для отправки напоминания о работе
- * Используется для проверки работы системы напоминаний
- */
+   * Тестовая функция для отправки напоминания о работе
+   * Используется для проверки работы системы напоминаний
+   */
   async testWorkReminder(workerId: string, orderTitle: string = 'Тестовый заказ', location: string = 'Тестовый адрес'): Promise<boolean> {
     try {
       console.log('[OrderService] 🧪 Тестируем отправку напоминания о работе...');

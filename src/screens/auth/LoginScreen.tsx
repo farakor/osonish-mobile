@@ -1,17 +1,14 @@
 import React, { useState } from 'react';
-import {
-  View,
+import { View,
   Text,
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  StatusBar,
-  SafeAreaView,
-  KeyboardAvoidingView,
+  StatusBar, KeyboardAvoidingView,
   Platform,
   Alert,
-  Dimensions,
-} from 'react-native';
+  Dimensions, } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../../constants';

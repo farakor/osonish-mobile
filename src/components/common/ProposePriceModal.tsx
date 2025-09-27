@@ -1,19 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
+import { View,
   Text,
   StyleSheet,
   Modal,
   TouchableOpacity,
-  TextInput,
-  SafeAreaView,
-  Animated,
+  TextInput, Animated,
   Platform,
   Dimensions,
   Keyboard,
   ScrollView,
-  KeyboardAvoidingView,
-} from 'react-native';
+  KeyboardAvoidingView, } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { theme } from '../../constants/theme';
 import { noElevationStyles } from '../../utils/noShadowStyles';
 import { useWorkerTranslation } from '../../hooks/useTranslation';

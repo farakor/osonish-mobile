@@ -5,15 +5,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  StatusBar,
-  SafeAreaView,
-  Alert,
+  StatusBar, Alert,
   ScrollView,
   Platform,
   Image,
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
@@ -42,7 +41,6 @@ export const EditProfileScreen: React.FC = () => {
   // Состояние формы
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [middleName, setMiddleName] = useState('');
   const [birthDate, setBirthDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -51,7 +49,6 @@ export const EditProfileScreen: React.FC = () => {
   // Состояния фокуса для полей ввода
   const [firstNameFocused, setFirstNameFocused] = useState(false);
   const [lastNameFocused, setLastNameFocused] = useState(false);
-  const [middleNameFocused, setMiddleNameFocused] = useState(false);
 
   useEffect(() => {
     loadUserProfile();
@@ -69,7 +66,6 @@ export const EditProfileScreen: React.FC = () => {
         // Заполняем форму данными пользователя
         setFirstName(userData.firstName || '');
         setLastName(userData.lastName || '');
-        setMiddleName(userData.middleName || '');
         setBirthDate(userData.birthDate ? new Date(userData.birthDate) : null);
         setProfileImage(userData.profileImage || null);
       } else {
@@ -169,7 +165,6 @@ export const EditProfileScreen: React.FC = () => {
       const updatedData: Partial<User> = {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        middleName: middleName.trim() || undefined,
         birthDate: birthDate!.toISOString(),
         profileImage: profileImage || undefined,
       };
@@ -225,7 +220,6 @@ export const EditProfileScreen: React.FC = () => {
     return (
       firstName.trim() !== (user.firstName || '') ||
       lastName.trim() !== (user.lastName || '') ||
-      middleName.trim() !== (user.middleName || '') ||
       birthDate?.toISOString() !== user.birthDate ||
       profileImage !== user.profileImage
     );
@@ -338,25 +332,6 @@ export const EditProfileScreen: React.FC = () => {
                 editable={true}
                 onFocus={() => setFirstNameFocused(true)}
                 onBlur={() => setFirstNameFocused(false)}
-              />
-            </View>
-          </View>
-
-          {/* Middle Name */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>{t('middle_name')}</Text>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={[styles.input, middleNameFocused && { borderColor: '#679B00', backgroundColor: '#F0F8FF' }]}
-                value={middleName}
-                onChangeText={setMiddleName}
-                placeholder={t('middle_name_placeholder')}
-                placeholderTextColor="#C7C7CC"
-                autoCapitalize="words"
-                returnKeyType="done"
-                editable={true}
-                onFocus={() => setMiddleNameFocused(true)}
-                onBlur={() => setMiddleNameFocused(false)}
               />
             </View>
           </View>

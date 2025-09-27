@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
+import { View,
   Text,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
+  StyleSheet, ScrollView,
   TouchableOpacity,
   Image,
   Alert,
@@ -13,8 +10,8 @@ import {
   Animated,
   StatusBar,
   Platform,
-  Linking,
-} from 'react-native';
+  Linking, } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';;
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
 import { usePlatformSafeAreaInsets, getFixedBottomStyle, getEdgeToEdgeBottomStyle, getImprovedFixedBottomStyle } from '../../utils/safeAreaUtils';
