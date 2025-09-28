@@ -689,14 +689,14 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
   },
   categoriesGrid: {
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm, // Уменьшили с lg до sm для поднятия сетки выше
     paddingHorizontal: theme.spacing.md,
   },
   categoryRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm, // Уменьшили отступ между строками
   },
   loadingContainer: {
     position: 'absolute',
@@ -822,11 +822,11 @@ const styles = StyleSheet.create({
   },
   // Стили для маленьких экранов
   categoriesGridSmall: {
-    paddingVertical: theme.spacing.md,
+    paddingVertical: theme.spacing.xs, // Уменьшили с md до xs для маленьких экранов
     paddingHorizontal: theme.spacing.sm,
   },
   categoryRowSmall: {
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.xs, // Уменьшили отступ между строками для маленьких экранов
   },
   categoryCardSmall: {
     width: 100,

@@ -465,12 +465,12 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
         return true;
       case 4: // Местоположение
         return location.trim().length > 0;
-      case 5: // Бюджет
-        return budget.trim().length > 0;
-      case 6: // Дополнительные удобства (необязательно)
-        return true;
-      case 7: // Количество работников
+      case 5: // Количество работников
         return !!workersCount && !isNaN(parseInt(workersCount)) && parseInt(workersCount) >= 1;
+      case 6: // Бюджет
+        return budget.trim().length > 0;
+      case 7: // Дополнительные удобства (необязательно)
+        return true;
       case 8: // Дата и время
         return selectedDate !== null && selectedTime !== null;
       case 9: // Медиа (необязательно)
@@ -504,19 +504,19 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           return false;
         }
         return true;
-      case 5: // Бюджет
+      case 5: // Количество работников
+        if (!workersCount || parseInt(workersCount) < 1) {
+          Alert.alert(tError('error'), t('select_workers_error'));
+          return false;
+        }
+        return true;
+      case 6: // Бюджет
         if (!budget.trim()) {
           Alert.alert(tError('error'), t('fill_budget_error'));
           return false;
         }
         return true;
-      case 6: // Дополнительные удобства (необязательно)
-        return true;
-      case 7: // Количество работников
-        if (!workersCount || parseInt(workersCount) < 1) {
-          Alert.alert(tError('error'), t('select_workers_error'));
-          return false;
-        }
+      case 7: // Дополнительные удобства (необязательно)
         return true;
       case 8: // Дата и время
         if (!selectedDate) {
@@ -754,16 +754,16 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
 
   const getStepTitle = () => {
     switch (currentStep) {
-      case 1: return t('header_step1');
-      case 2: return t('header_step2');
-      case 3: return t('header_step3');
-      case 4: return t('header_step4');
-      case 5: return t('header_step5');
-      case 6: return t('header_step6');
-      case 7: return t('header_step7');
-      case 8: return t('header_step8');
-      case 9: return t('header_step9');
-      case 10: return t('header_step10');
+      case 1: return t('header_step1'); // Название
+      case 2: return t('header_step2'); // Категория
+      case 3: return t('header_step3'); // Описание
+      case 4: return t('header_step4'); // Местоположение
+      case 5: return t('header_step7'); // Количество работников
+      case 6: return t('header_step5'); // Бюджет
+      case 7: return t('header_step6'); // Дополнительные удобства
+      case 8: return t('header_step8'); // Дата и время
+      case 9: return t('header_step9'); // Медиа
+      case 10: return t('header_step10'); // Подтверждение
       default: return '';
     }
   };
@@ -949,14 +949,61 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 5} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 5} delay={0} resetKey={`${animationResetKey}-step-5`}>
-                <Text style={styles.stepTitle}>{t('step5_title')}</Text>
+                <Text style={styles.stepTitle}>{t('step7_title')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 5} delay={150} resetKey={`${animationResetKey}-step-5`}>
-                <Text style={styles.stepSubtitle}>{t('step5_subtitle')}</Text>
+                <Text style={styles.stepSubtitle}>{t('step7_subtitle')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 5} delay={200} resetKey={`${animationResetKey}-step-5`}>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.fieldLabel}>{t('workers_count')}</Text>
+                </View>
+              </AnimatedField>
+
+              <AnimatedInteractiveContainer isActive={currentStep === 5} delay={250} resetKey={`${animationResetKey}-step-5`}>
+                <View style={styles.workersContainer}>
+                  <TouchableOpacity
+                    style={styles.workersButton}
+                    onPress={() => {
+                      const count = Math.max(1, parseInt(workersCount) - 1);
+                      setWorkersCount(count.toString());
+                    }}
+                  >
+                    <Text style={styles.workersButtonText}>−</Text>
+                  </TouchableOpacity>
+                  <View style={styles.workersDisplay}>
+                    <Text style={styles.workersText}>{workersCount}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.workersButton}
+                    onPress={() => {
+                      const count = Math.min(20, parseInt(workersCount) + 1);
+                      setWorkersCount(count.toString());
+                    }}
+                  >
+                    <Text style={styles.workersButtonText}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              </AnimatedInteractiveContainer>
+            </View>
+          </AnimatedStepContainer>
+        );
+
+      case 6:
+        return (
+          <AnimatedStepContainer isActive={currentStep === 6} direction="right">
+            <View style={styles.stepContent}>
+              <AnimatedField isActive={currentStep === 6} delay={0} resetKey={`${animationResetKey}-step-6`}>
+                <Text style={styles.stepTitle}>{t('step5_title')}</Text>
+              </AnimatedField>
+
+              <AnimatedField isActive={currentStep === 6} delay={150} resetKey={`${animationResetKey}-step-6`}>
+                <Text style={styles.stepSubtitle}>{t('step5_subtitle')}</Text>
+              </AnimatedField>
+
+              <AnimatedField isActive={currentStep === 6} delay={200} resetKey={`${animationResetKey}-step-6`}>
                 <View style={styles.inputContainer}>
                   <Text style={styles.fieldLabel}>{t('amount_per_worker')}</Text>
                   <View style={styles.budgetInputContainer}>
@@ -979,19 +1026,19 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           </AnimatedStepContainer>
         );
 
-      case 6:
+      case 7:
         return (
-          <AnimatedStepContainer isActive={currentStep === 6} direction="right">
+          <AnimatedStepContainer isActive={currentStep === 7} direction="right">
             <View style={styles.stepContent}>
-              <AnimatedField isActive={currentStep === 6} delay={0} resetKey={`${animationResetKey}-step-6`}>
+              <AnimatedField isActive={currentStep === 7} delay={0} resetKey={`${animationResetKey}-step-7`}>
                 <Text style={styles.stepTitle}>{t('step6_title')}</Text>
               </AnimatedField>
 
-              <AnimatedField isActive={currentStep === 6} delay={150} resetKey={`${animationResetKey}-step-6`}>
+              <AnimatedField isActive={currentStep === 7} delay={150} resetKey={`${animationResetKey}-step-7`}>
                 <Text style={styles.stepSubtitle}>{t('step6_subtitle')}</Text>
               </AnimatedField>
 
-              <AnimatedField isActive={currentStep === 6} delay={200} resetKey={`${animationResetKey}-step-6`}>
+              <AnimatedField isActive={currentStep === 7} delay={200} resetKey={`${animationResetKey}-step-7`}>
                 <View style={styles.inputContainer}>
                   <TouchableOpacity
                     style={[styles.checkboxContainer, transportPaid && styles.checkboxContainerActive]}
@@ -1005,7 +1052,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 </View>
               </AnimatedField>
 
-              <AnimatedField isActive={currentStep === 6} delay={250} resetKey={`${animationResetKey}-step-6`}>
+              <AnimatedField isActive={currentStep === 7} delay={250} resetKey={`${animationResetKey}-step-7`}>
                 <View style={styles.inputContainer}>
                   <Text style={styles.sectionTitle}>{t('meal_section')}</Text>
                   <View style={styles.mealOptionsContainer}>
@@ -1041,53 +1088,6 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                   </View>
                 </View>
               </AnimatedField>
-            </View>
-          </AnimatedStepContainer>
-        );
-
-      case 7:
-        return (
-          <AnimatedStepContainer isActive={currentStep === 7} direction="right">
-            <View style={styles.stepContent}>
-              <AnimatedField isActive={currentStep === 7} delay={0} resetKey={`${animationResetKey}-step-7`}>
-                <Text style={styles.stepTitle}>{t('step7_title')}</Text>
-              </AnimatedField>
-
-              <AnimatedField isActive={currentStep === 7} delay={150} resetKey={`${animationResetKey}-step-7`}>
-                <Text style={styles.stepSubtitle}>{t('step7_subtitle')}</Text>
-              </AnimatedField>
-
-              <AnimatedField isActive={currentStep === 7} delay={200} resetKey={`${animationResetKey}-step-7`}>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.fieldLabel}>{t('workers_count')}</Text>
-                </View>
-              </AnimatedField>
-
-              <AnimatedInteractiveContainer isActive={currentStep === 7} delay={250} resetKey={`${animationResetKey}-step-7`}>
-                <View style={styles.workersContainer}>
-                  <TouchableOpacity
-                    style={styles.workersButton}
-                    onPress={() => {
-                      const count = Math.max(1, parseInt(workersCount) - 1);
-                      setWorkersCount(count.toString());
-                    }}
-                  >
-                    <Text style={styles.workersButtonText}>−</Text>
-                  </TouchableOpacity>
-                  <View style={styles.workersDisplay}>
-                    <Text style={styles.workersText}>{workersCount}</Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.workersButton}
-                    onPress={() => {
-                      const count = Math.min(20, parseInt(workersCount) + 1);
-                      setWorkersCount(count.toString());
-                    }}
-                  >
-                    <Text style={styles.workersButtonText}>+</Text>
-                  </TouchableOpacity>
-                </View>
-              </AnimatedInteractiveContainer>
             </View>
           </AnimatedStepContainer>
         );
@@ -1295,11 +1295,11 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
             <View style={styles.navigationSpacer} />
 
             {currentStep < totalSteps ? (
-              (isCurrentStepValid() || currentStep === 2 || currentStep === 3) && (
+              (isCurrentStepValid() || currentStep === 2 || currentStep === 3 || currentStep === 7) && (
                 <AnimatedNavigationButton
                   variant="primary"
                   onPress={nextStep}
-                  isVisible={currentStep < totalSteps && (isCurrentStepValid() || currentStep === 2 || currentStep === 3)}
+                  isVisible={currentStep < totalSteps && (isCurrentStepValid() || currentStep === 2 || currentStep === 3 || currentStep === 7)}
                   delay={0}
                   resetKey={`${animationResetKey}-step-${currentStep}`}
                 >
@@ -1838,7 +1838,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     borderStyle: 'dashed',
     alignItems: 'center',
-    marginTop: theme.spacing.lg - 30,
+    marginTop: theme.spacing.md, // Уменьшили отступ сверху для кнопки "Пропустить"
     marginBottom: theme.spacing.lg,
   },
   skipButtonText: {
