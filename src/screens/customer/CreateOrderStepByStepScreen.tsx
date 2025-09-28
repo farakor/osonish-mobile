@@ -220,6 +220,19 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
     setShowDatePicker(true);
   };
 
+  // Функция для выбора сегодняшней даты
+  const selectTodayDate = () => {
+    const today = new Date();
+    setSelectedDate(today);
+  };
+
+  // Функция для выбора завтрашней даты
+  const selectTomorrowDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    setSelectedDate(tomorrow);
+  };
+
   const formatDate = (date: Date | null) => {
     if (!date) return t('select_date');
     return date.toLocaleDateString('ru-RU', {
@@ -1118,6 +1131,25 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                       {formatDate(selectedDate)}
                     </Text>
                   </TouchableOpacity>
+
+                  {/* Кнопки быстрого выбора даты */}
+                  <View style={styles.quickDateContainer}>
+                    <TouchableOpacity
+                      style={styles.quickDateButton}
+                      onPress={selectTodayDate}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.quickDateButtonText}>{t('today')}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.quickDateButton}
+                      onPress={selectTomorrowDate}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.quickDateButtonText}>{t('tomorrow')}</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </AnimatedInteractiveContainer>
 
@@ -1577,6 +1609,28 @@ const styles = StyleSheet.create({
   },
   timeTextPlaceholder: {
     color: theme.colors.text.secondary,
+  },
+  quickDateContainer: {
+    flexDirection: 'row',
+    marginTop: theme.spacing.sm,
+    gap: theme.spacing.sm,
+  },
+  quickDateButton: {
+    flex: 1,
+    backgroundColor: theme.colors.primary + '20',
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    minHeight: 48,
+  },
+  quickDateButtonText: {
+    color: theme.colors.primary,
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.semiBold,
   },
 
   mediaContainer: {
