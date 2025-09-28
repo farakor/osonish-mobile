@@ -83,8 +83,8 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
 
 
 
-  // Функция для получения строки с адресом и дистанцией
-  const getLocationText = () => {
+  // Функция для получения данных о локации и дистанции
+  const getLocationData = () => {
     // Если у пользователя и заказа есть координаты, показываем дистанцию
     if (userLocation && order.latitude && order.longitude) {
       const distance = locationService.calculateDistance(
@@ -94,11 +94,34 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
         order.longitude
       );
       const formattedDistance = locationService.formatDistance(distance);
-      return `${order.location} (${formattedDistance})`;
+      return {
+        address: order.location,
+        distance: formattedDistance,
+        hasDistance: true
+      };
     }
 
     // Иначе показываем только адрес
-    return order.location;
+    return {
+      address: order.location,
+      distance: null,
+      hasDistance: false
+    };
+  };
+
+  // Компонент для отображения адреса с цветной дистанцией
+  const LocationText = () => {
+    const locationData = getLocationData();
+
+    if (locationData.hasDistance) {
+      return (
+        <Text style={styles.detailText}>
+          {locationData.address} <Text style={styles.distanceText}>({locationData.distance})</Text>
+        </Text>
+      );
+    }
+
+    return <Text style={styles.detailText}>{locationData.address}</Text>;
   };
 
   return (
@@ -192,7 +215,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
                       style={styles.detailIcon}
                     />
                   </View>
-                  <Text style={styles.detailText}>{getLocationText()}</Text>
+                  <LocationText />
                 </View>
               </View>
 
@@ -255,7 +278,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
                       style={styles.detailIcon}
                     />
                   </View>
-                  <Text style={styles.detailText}>{getLocationText()}</Text>
+                  <LocationText />
                 </View>
               </View>
             </>
@@ -440,6 +463,11 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.medium,
     flex: 1,
     flexShrink: 1,
+  },
+  distanceText: {
+    fontSize: theme.fonts.sizes.sm,
+    color: '#E10000',
+    fontWeight: theme.fonts.weights.medium,
   },
   footer: {
     flexDirection: 'row',

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View,
+import {
+  View,
   Text,
   StyleSheet, ScrollView,
   TouchableOpacity,
@@ -10,7 +11,8 @@ import { View,
   Animated,
   StatusBar,
   Platform,
-  Linking, } from 'react-native';
+  Linking,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';;
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
@@ -656,17 +658,20 @@ export const JobDetailsScreen: React.FC = () => {
                   <LocationIcon width={22} height={22} color="#679B00" />
                 </View>
                 <Text style={styles.infoValue}>
-                  {userLocation && order.latitude && order.longitude ?
-                    `${order.location} (${locationService.formatDistance(
-                      locationService.calculateDistance(
-                        userLocation.latitude,
-                        userLocation.longitude,
-                        order.latitude,
-                        order.longitude
-                      )
-                    )})` :
+                  {userLocation && order.latitude && order.longitude ? (
+                    <>
+                      {order.location} <Text style={styles.distanceText}>({locationService.formatDistance(
+                        locationService.calculateDistance(
+                          userLocation.latitude,
+                          userLocation.longitude,
+                          order.latitude,
+                          order.longitude
+                        )
+                      )})</Text>
+                    </>
+                  ) : (
                     order.location
-                  }
+                  )}
                 </Text>
               </View>
             </View>
@@ -1196,5 +1201,8 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.md,
+  },
+  distanceText: {
+    color: '#E10000',
   },
 }); 
