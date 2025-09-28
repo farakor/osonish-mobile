@@ -30,7 +30,10 @@ export type AuthStackParamList = {
 };
 
 export type CustomerStackParamList = {
-  MainTabs: undefined;
+  MainTabs: {
+    screen?: keyof CustomerTabParamList;
+    params?: CustomerTabParamList[keyof CustomerTabParamList];
+  } | undefined;
   OrderDetails: { orderId: string };
   EditOrder: { orderId: string };
   ApplicantsList: { orderId: string; currentUser?: User };
@@ -45,7 +48,23 @@ export type CustomerStackParamList = {
 
 export type CustomerTabParamList = {
   Home: undefined;
-  CreateOrder: undefined;
+  CreateOrder: {
+    repeatOrderData?: {
+      title: string;
+      description: string;
+      category: string;
+      location: string;
+      latitude?: number;
+      longitude?: number;
+      budget: number;
+      workersNeeded: number;
+      photos?: string[];
+      transportPaid?: boolean;
+      mealIncluded?: boolean;
+      mealPaid?: boolean;
+    };
+    startFromDateStep?: boolean;
+  } | undefined;
   MyOrders: undefined;
   Profile: undefined;
 };

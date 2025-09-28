@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View,
+import {
+  View,
   Text,
   StyleSheet, ScrollView,
   TouchableOpacity,
@@ -12,7 +13,8 @@ import { View,
   Animated,
   StatusBar,
   Linking,
-  Platform, } from 'react-native';
+  Platform,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';;
 import { SvgXml } from 'react-native-svg';
 import { theme } from '../../constants';
@@ -31,7 +33,7 @@ import CarIcon from '../../../assets/car-01.svg';
 import BankNoteIcon from '../../../assets/bank-note-01.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import LottieView from 'lottie-react-native';
-import { HeaderWithBack, MediaViewer, OrderLocationMap, DropdownMenuItem, StatusBadge, DropdownMenu } from '../../components/common';
+import { HeaderWithBack, MediaViewer, OrderLocationMap, DropdownMenuItem, StatusBadge, DropdownMenu, StarIcon } from '../../components/common';
 import { orderService } from '../../services/orderService';
 import { getCategoryEmoji } from '../../utils/categoryUtils';
 import { getCategoryAnimation } from '../../utils/categoryIconUtils';
@@ -612,6 +614,47 @@ export const OrderDetailsScreen: React.FC = () => {
     );
   };
 
+  const handleRepeatOrder = () => {
+    if (!order) return;
+
+    Alert.alert(
+      t('repeat_order'),
+      t('repeat_order_description'),
+      [
+        { text: tCommon('cancel'), style: 'cancel' },
+        {
+          text: t('repeat_order'),
+          onPress: () => {
+            // Создаем объект с данными заказа для повторения
+            const orderData = {
+              title: order.title,
+              description: order.description,
+              category: order.category,
+              location: order.location,
+              latitude: order.latitude,
+              longitude: order.longitude,
+              budget: order.budget,
+              workersNeeded: order.workersNeeded,
+              photos: order.photos || [],
+              transportPaid: order.transportPaid,
+              mealIncluded: order.mealIncluded,
+              mealPaid: order.mealPaid,
+            };
+
+            // Переходим на экран создания заказа с предзаполненными данными
+            navigation.navigate('MainTabs', {
+              screen: 'CreateOrder',
+              params: {
+                repeatOrderData: orderData,
+                startFromDateStep: true
+              }
+            });
+          }
+        }
+      ]
+    );
+  };
+
   // Показать модалку подтверждения выбора исполнителя
   const handleSelectApplicant = (applicant: Applicant) => {
     setSelectedApplicant(applicant);
@@ -909,8 +952,7 @@ export const OrderDetailsScreen: React.FC = () => {
         isRejected && styles.modernRejectedCard,
         animatedStyle
       ]}>
-        {/* Градиентная полоса статуса - только для принятых и отклоненных */}
-        {isAccepted && <View style={styles.modernStatusBarAccepted} />}
+        {/* Градиентная полоса статуса - только для отклоненных */}
         {isRejected && <View style={styles.modernStatusBarRejected} />}
 
         {/* Основное содержимое */}
@@ -937,57 +979,67 @@ export const OrderDetailsScreen: React.FC = () => {
             {/* Информация исполнителя */}
             <View style={styles.modernApplicantInfo}>
               <View style={styles.modernNameRow}>
-                <Text style={[styles.modernApplicantName, isRejected && styles.rejectedText]} numberOfLines={1} ellipsizeMode="tail">
-                  {item.workerName}
-                </Text>
-                {isAccepted && (
-                  <View style={styles.modernSelectedBadge}>
-                    <Text style={styles.modernSelectedBadgeText}>✓ ВЫБРАН</Text>
-                  </View>
-                )}
-              </View>
-
-              {/* Цена отклика - размещена отдельно под ФИО */}
-              {item.proposedPrice && (
-                <View style={styles.modernPriceUnderName}>
-                  <Text style={[styles.modernPriceUnderNameValue, isAccepted && styles.modernPriceValueAccepted, isRejected && styles.rejectedText]}>
-                    {formatPrice(item.proposedPrice)} сум
+                <View style={styles.nameWithBadge}>
+                  <Text style={[styles.modernApplicantName, isRejected && styles.rejectedText]} numberOfLines={1} ellipsizeMode="tail">
+                    {item.workerName}
                   </Text>
-                  {order && item.proposedPrice !== order.budget && (
-                    <View style={[
-                      styles.modernPriceDiffBadgeInline,
-                      { backgroundColor: item.proposedPrice > order.budget ? '#FFE6E6' : '#E6F7F6' }
-                    ]}>
-                      <Text style={[
-                        styles.modernPriceDiffTextInline,
-                        { color: item.proposedPrice > order.budget ? '#FF4444' : '#4ECDC4' }
-                      ]}>
-                        {item.proposedPrice > order.budget ? '+' : ''}{formatPrice(item.proposedPrice - order.budget)}
-                      </Text>
+                  {isAccepted && (
+                    <View style={styles.verifiedBadge}>
+                      <Text style={styles.verifiedIcon}>✓</Text>
                     </View>
                   )}
                 </View>
-              )}
 
-              <View style={styles.modernStatsRow}>
-                <View style={styles.modernStatItem}>
-                  <Text style={styles.modernStatIcon}>💼</Text>
+                <View style={styles.modernNameActions}>
+                  <TouchableOpacity
+                    style={styles.reviewsButton}
+                    onPress={() => navigation.navigate('WorkerProfile', {
+                      workerId: item.workerId,
+                      workerName: item.workerName
+                    })}
+                  >
+                    <View style={styles.reviewsButtonContent}>
+                      <StarIcon filled={true} size={14} color="#FDB022" />
+                      <Text style={styles.reviewsButtonText}>{t('reviews')}</Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Цена отклика и время в одном ряду */}
+              <View style={styles.modernPriceAndTimeRow}>
+                {/* Цена отклика */}
+                {item.proposedPrice && (
+                  <View style={styles.modernPriceUnderName}>
+                    <Text style={[styles.modernPriceUnderNameValue, isAccepted && styles.modernPriceValueAccepted, isRejected && styles.rejectedText]}>
+                      {formatPrice(item.proposedPrice)} сум
+                    </Text>
+                    {order && item.proposedPrice !== order.budget && (
+                      <View style={[
+                        styles.modernPriceDiffBadgeInline,
+                        { backgroundColor: item.proposedPrice > order.budget ? '#FFE6E6' : '#E6F7F6' }
+                      ]}>
+                        <Text style={[
+                          styles.modernPriceDiffTextInline,
+                          { color: item.proposedPrice > order.budget ? '#FF4444' : '#4ECDC4' }
+                        ]}>
+                          {item.proposedPrice > order.budget ? '+' : ''}{formatPrice(item.proposedPrice - order.budget)}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+
+                {/* Время отклика */}
+                <View style={styles.modernTimeRow}>
+                  <Text style={styles.modernStatIcon}>🕒</Text>
                   <Text style={[styles.modernStatText, isRejected && styles.rejectedText]}>
-                    {t('jobs_count', { count: item.completedJobs || 0 })}
+                    {formatAppliedAt(item.appliedAt)}
                   </Text>
                 </View>
               </View>
             </View>
 
-            {/* Время и статус */}
-            <View style={styles.modernTimeContainer}>
-              <Text style={[styles.modernTimeText, isRejected && styles.rejectedText]}>
-                {formatAppliedAt(item.appliedAt)}
-              </Text>
-              {!isAccepted && !isRejected && (
-                <View style={styles.modernPendingDot} />
-              )}
-            </View>
           </View>
 
 
@@ -1097,23 +1149,34 @@ export const OrderDetailsScreen: React.FC = () => {
               {order ? formatBudget(order.budget) + ' ' + t('sum_currency') : ''}
             </Text>
           </View>
-          {canShowCompleteButton(order) ? (
+          <View style={styles.stickyRightContainer}>
+            {/* Кнопка "Повторить заказ" в sticky header */}
             <TouchableOpacity
-              style={styles.stickyCompleteButton}
-              onPress={handleCompleteOrder}
+              style={styles.stickyRepeatButton}
+              onPress={handleRepeatOrder}
               activeOpacity={0.8}
             >
-              <Text style={styles.stickyCompleteButtonText}>
-                {isCompletingOrder ? t('completing') : t('complete')}
+              <Text style={styles.stickyRepeatButtonText}>
+                {t('repeat_order')}
               </Text>
             </TouchableOpacity>
-          ) : getDropdownMenuItems().length > 0 ? (
-            <DropdownMenu
-              items={getDropdownMenuItems()}
-            />
-          ) : (
-            <View style={{ width: 40 }} />
-          )}
+
+            {canShowCompleteButton(order) ? (
+              <TouchableOpacity
+                style={styles.stickyCompleteButton}
+                onPress={handleCompleteOrder}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.stickyCompleteButtonText}>
+                  {isCompletingOrder ? t('completing') : t('complete')}
+                </Text>
+              </TouchableOpacity>
+            ) : getDropdownMenuItems().length > 0 ? (
+              <DropdownMenu
+                items={getDropdownMenuItems()}
+              />
+            ) : null}
+          </View>
         </View>
       </Animated.View>
 
@@ -1133,7 +1196,17 @@ export const OrderDetailsScreen: React.FC = () => {
           <HeaderWithBack
             rightComponent={
               <View style={styles.headerRightContainer}>
-                <StatusBadge status={order.status} workerView={false} />
+                {/* Кнопка "Повторить заказ" всегда видна */}
+                <TouchableOpacity
+                  style={styles.repeatButton}
+                  onPress={handleRepeatOrder}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.repeatButtonText}>
+                    {t('repeat_order')}
+                  </Text>
+                </TouchableOpacity>
+
                 {canShowCompleteButton(order) && (
                   <TouchableOpacity
                     style={[
@@ -1179,6 +1252,9 @@ export const OrderDetailsScreen: React.FC = () => {
               </View>
               <View style={styles.priceContainer}>
                 <Text style={styles.orderPrice}>{formatBudget(order.budget)} {t('sum_currency')}</Text>
+                <View style={styles.statusContainer}>
+                  <StatusBadge status={order.status} workerView={false} />
+                </View>
               </View>
             </View>
           </View>
@@ -1186,9 +1262,49 @@ export const OrderDetailsScreen: React.FC = () => {
           {/* Order Title */}
           <View style={styles.titleSection}>
             <Text style={styles.orderTitle}>{order.title}</Text>
-
-
           </View>
+
+          {/* Отклики - перемещен после названия заказа */}
+          {applicants.length > 0 ? (
+            <View style={styles.applicantsSection}>
+              <View style={styles.applicantsHeader}>
+                <Text style={styles.applicantsTitle}>{t('applicants_count', { count: applicants.length })}</Text>
+                {order?.workersNeeded && (
+                  <View style={styles.progressInfo}>
+                    <Text style={styles.applicantsSubtitle}>
+                      {t('selected_workers', { selected: acceptedApplicants.size, needed: order.workersNeeded, ending: order.workersNeeded === 1 ? t('worker_ending_single') : t('worker_ending_multiple') })}
+                    </Text>
+                    <View style={styles.progressBarSmall}>
+                      <View
+                        style={[
+                          styles.progressFillSmall,
+                          { width: `${Math.min((acceptedApplicants.size / order.workersNeeded) * 100, 100)}%` }
+                        ]}
+                      />
+                    </View>
+                  </View>
+                )}
+              </View>
+
+              {/* Полный список откликов с возможностью принятия */}
+              <FlatList
+                data={applicants}
+                renderItem={renderApplicant}
+                keyExtractor={(item) => item.id}
+                scrollEnabled={false}
+                showsVerticalScrollIndicator={false}
+              />
+            </View>
+          ) : (
+            /* Если откликов нет */
+            <View style={styles.noApplicantsSection}>
+              <SvgXml xml={emptyStateNoApplicationsSvg} style={styles.noApplicantsIcon} />
+              <Text style={styles.noApplicantsTitle}>{t('no_applicants_title')}</Text>
+              <Text style={styles.noApplicantsText}>
+                {t('no_applicants_text')}
+              </Text>
+            </View>
+          )}
 
           {/* Image Gallery */}
           {order.photos && order.photos.length > 0 && (
@@ -1231,124 +1347,6 @@ export const OrderDetailsScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Краткий обзор откликов */}
-          {applicants.length > 0 && (
-            <TouchableOpacity
-              style={styles.applicantsSection}
-              onPress={() => navigation.navigate('ApplicantsList', { orderId: orderId, currentUser: currentUser || undefined })}
-              activeOpacity={0.8}
-            >
-              <View style={styles.applicantsHeader}>
-                <Text style={styles.applicantsTitle}>{t('applicants_count', { count: applicants.length })}</Text>
-                {order?.workersNeeded && (
-                  <View style={styles.progressInfo}>
-                    <Text style={styles.applicantsSubtitle}>
-                      {t('selected_workers', { selected: acceptedApplicants.size, needed: order.workersNeeded, ending: order.workersNeeded === 1 ? t('worker_ending_single') : t('worker_ending_multiple') })}
-                    </Text>
-                    <View style={styles.progressBarSmall}>
-                      <View
-                        style={[
-                          styles.progressFillSmall,
-                          { width: `${Math.min((acceptedApplicants.size / order.workersNeeded) * 100, 100)}%` }
-                        ]}
-                      />
-                    </View>
-                  </View>
-                )}
-              </View>
-
-
-
-              {/* Последние отклики (первые 3) */}
-              {applicants.slice(0, 3).map((item, index) => {
-                // Инициализируем анимацию для превью если её еще нет
-                const previewKey = `preview_${item.id}`;
-                if (!animatedCards[previewKey]) {
-                  animatedCards[previewKey] = new Animated.Value(0);
-                  // Запускаем анимацию с задержкой для каждого элемента
-                  Animated.timing(animatedCards[previewKey], {
-                    toValue: 1,
-                    duration: 300,
-                    delay: index * 100, // Эффект каскада
-                    useNativeDriver: true,
-                  }).start();
-                }
-
-                const previewAnimatedStyle = {
-                  opacity: animatedCards[previewKey],
-                  transform: [
-                    {
-                      translateX: animatedCards[previewKey].interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [30, 0],
-                      }),
-                    },
-                  ],
-                };
-
-                return (
-                  <Animated.View key={item.id} style={[
-                    styles.modernApplicantPreview,
-                    item.status === 'accepted' && styles.modernPreviewAccepted,
-                    item.status === 'rejected' && styles.modernPreviewRejected,
-                    previewAnimatedStyle
-                  ]}>
-
-
-                    <View style={styles.modernPreviewContent}>
-                      <View style={styles.modernPreviewHeader}>
-                        {/* Мини аватар */}
-                        <View style={styles.modernPreviewAvatarContainer}>
-                          {item.avatar ? (
-                            <Image source={{ uri: item.avatar }} style={styles.modernPreviewAvatar} />
-                          ) : (
-                            <View style={styles.modernPreviewAvatarPlaceholder}>
-                              <NoImagePlaceholder width={52} height={52} />
-                            </View>
-                          )}
-                          {/* Мини рейтинг */}
-                          {item.rating && (
-                            <View style={styles.modernPreviewRatingMini}>
-                              <Text style={styles.modernPreviewRatingMiniText}>
-                                {item.rating.toFixed(1)}
-                              </Text>
-                            </View>
-                          )}
-                        </View>
-
-                        <View style={styles.modernPreviewInfo}>
-                          <View style={styles.modernPreviewNameRow}>
-                            <Text style={styles.modernPreviewName}>{item.workerName}</Text>
-                          </View>
-                          <View style={styles.modernPreviewPriceRow}>
-                            <Text style={styles.modernPreviewPrice}>
-                              {Math.round(item.proposedPrice || 0).toLocaleString()} сум
-                            </Text>
-                          </View>
-                          {item.status === 'accepted' && (
-                            <View style={styles.modernPreviewSelectedBadge}>
-                              <Text style={styles.modernPreviewSelectedBadgeText}>{t('selected_badge')}</Text>
-                            </View>
-                          )}
-                        </View>
-                      </View>
-                    </View>
-                  </Animated.View>
-                );
-              })}
-            </TouchableOpacity>
-          )}
-
-          {/* Если откликов нет */}
-          {applicants.length === 0 && !applicantsLoading && (
-            <View style={styles.noApplicantsSection}>
-              <SvgXml xml={emptyStateNoApplicationsSvg} style={styles.noApplicantsIcon} />
-              <Text style={styles.noApplicantsTitle}>{t('no_applicants_title')}</Text>
-              <Text style={styles.noApplicantsText}>
-                {t('no_applicants_text')}
-              </Text>
-            </View>
-          )}
 
           {/* Amenities Section */}
           <View style={styles.amenitiesSection}>
@@ -1393,19 +1391,6 @@ export const OrderDetailsScreen: React.FC = () => {
           )}
         </Animated.ScrollView>
 
-        {/* Закрепленная кнопка внизу - показываем только если есть отклики */}
-        {applicants.length > 0 && (
-          <View style={[styles.fixedBottomSection, getImprovedFixedBottomStyle(insets)]}>
-            <TouchableOpacity
-              style={styles.fixedViewAllApplicantsButton}
-              onPress={() => navigation.navigate('ApplicantsList', { orderId: orderId, currentUser: currentUser || undefined })}
-            >
-              <Text style={styles.fixedViewAllApplicantsButtonText}>
-                {t('view_all_applicants', { count: applicants.length })}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
       </View>
 
 
@@ -1557,6 +1542,10 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.lg,
     fontWeight: theme.fonts.weights.bold,
     color: theme.colors.primary,
+  },
+  statusContainer: {
+    marginTop: theme.spacing.xs,
+    alignItems: 'flex-end',
   },
 
   // Title Section
@@ -1727,9 +1716,7 @@ const styles = StyleSheet.create({
     marginHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
     borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    borderWidth: 2,
-    borderColor: '#679B00',
+    padding: theme.spacing.md,
   },
   applicantsHeader: {
     flexDirection: 'column',
@@ -2024,8 +2011,7 @@ const styles = StyleSheet.create({
   modernPriceUnderName: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 6,
-    marginBottom: 8,
+    flex: 1,
   },
   modernPriceUnderNameValue: {
     fontSize: 16,
@@ -2092,7 +2078,7 @@ const styles = StyleSheet.create({
     color: '#1F2937',
   },
   modernCallButton: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#679B00',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
@@ -2424,6 +2410,67 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.bold,
   },
 
+  // Дополнительные стили для кнопок и бейджей
+  nameWithBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 1,
+    marginRight: 8,
+  },
+  verifiedBadge: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#679B00',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 6,
+  },
+  verifiedIcon: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  modernNameActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexShrink: 0,
+  },
+  reviewsButton: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 0,
+    borderColor: 'transparent',
+    minHeight: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  reviewsButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  reviewsButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#679B00',
+  },
+  modernTimeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  modernPriceAndTimeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginTop: 6,
+    marginBottom: 8,
+  },
+
 
   // Стили для модалки подтверждения
   confirmModalOverlay: {
@@ -2541,8 +2588,6 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.lg,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#F6F7F9',
   },
   noApplicantsIcon: {
     width: 80,
@@ -2586,7 +2631,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 120, // Достаточный отступ снизу для избежания перекрытия с кнопкой (высота кнопки + отступы)
+    paddingBottom: theme.spacing.lg, // Обычный отступ снизу
   },
   fixedBottomSection: {
     position: 'absolute',
@@ -2676,6 +2721,26 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.medium,
     color: '#FFFFFF',
   },
+  stickyRepeatButton: {
+    minWidth: 40,
+    height: 40,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: 12,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+    marginRight: theme.spacing.sm,
+  },
+  stickyRepeatButtonText: {
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.medium,
+    color: '#FFFFFF',
+  },
+  stickyRightContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   stickyTitleContainer: {
     flex: 1,
     marginHorizontal: theme.spacing.md,
@@ -2740,13 +2805,27 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.medium,
     color: '#FFFFFF',
   },
+  repeatButton: {
+    minWidth: 40,
+    height: 40,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.primary,
+    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+  },
+  repeatButtonText: {
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.medium,
+    color: '#FFFFFF',
+  },
   // Стили для header
   headerRightContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     overflow: 'visible',
-    minWidth: 120,
   },
 
   // Amenities Section Styles

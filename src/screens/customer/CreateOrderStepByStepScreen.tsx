@@ -37,7 +37,8 @@ import { orderService } from '../../services/orderService';
 import { mediaService } from '../../services/mediaService';
 import { locationService, LocationCoords } from '../../services/locationService';
 import { CreateOrderRequest } from '../../types';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { CustomerTabParamList } from '../../types/navigation';
 import {
   AnimatedProgressBar,
   AnimatedStepContainer,
@@ -56,6 +57,8 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 // Определяем маленький экран для Android (высота меньше 1080px)
 const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
+
+type CreateOrderRouteProp = RouteProp<CustomerTabParamList, 'CreateOrder'>;
 
 // Логирование для отладки
 console.log('[CreateOrderStepByStep] Screen dimensions:', {
@@ -143,12 +146,18 @@ const cleanAddressFromCountry = (address: string): string => {
 
 export const CreateOrderStepByStepScreen: React.FC = () => {
   const insets = usePlatformSafeAreaInsets();
-  const [currentStep, setCurrentStep] = useState(1);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('');
-  const [budget, setBudget] = useState('');
-  const [workersCount, setWorkersCount] = useState('1');
+  const navigation = useNavigation();
+  const route = useRoute<CreateOrderRouteProp>();
+
+  // Получаем параметры для повторения заказа
+  const { repeatOrderData, startFromDateStep } = route.params || {};
+
+  const [currentStep, setCurrentStep] = useState(startFromDateStep ? 8 : 1);
+  const [title, setTitle] = useState(repeatOrderData?.title || '');
+  const [description, setDescription] = useState(repeatOrderData?.description || '');
+  const [category, setCategory] = useState(repeatOrderData?.category || '');
+  const [budget, setBudget] = useState(repeatOrderData?.budget ? repeatOrderData.budget.toString() : '');
+  const [workersCount, setWorkersCount] = useState(repeatOrderData?.workersNeeded ? repeatOrderData.workersNeeded.toString() : '1');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [timePickerValue, setTimePickerValue] = useState<Date>(() => {
@@ -164,8 +173,12 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [mediaFiles, setMediaFiles] = useState<Array<{ uri: string; type: 'image' | 'video'; name: string; size: number }>>([]);
   const [mediaError, setMediaError] = useState<string | null>(null);
-  const [location, setLocation] = useState('');
-  const [coordinates, setCoordinates] = useState<LocationCoords | null>(null);
+  const [location, setLocation] = useState(repeatOrderData?.location || '');
+  const [coordinates, setCoordinates] = useState<LocationCoords | null>(
+    repeatOrderData?.latitude && repeatOrderData?.longitude
+      ? { latitude: repeatOrderData.latitude, longitude: repeatOrderData.longitude }
+      : null
+  );
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [animationResetKey, setAnimationResetKey] = useState(0);
   const [locationUpdateKey, setLocationUpdateKey] = useState(0);
@@ -185,11 +198,9 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
   const [budgetFocused, setBudgetFocused] = useState(false);
 
   // Состояния для дополнительных удобств
-  const [transportPaid, setTransportPaid] = useState(false);
-  const [mealIncluded, setMealIncluded] = useState(false);
-  const [mealPaid, setMealPaid] = useState(false);
-
-  const navigation = useNavigation();
+  const [transportPaid, setTransportPaid] = useState(repeatOrderData?.transportPaid || false);
+  const [mealIncluded, setMealIncluded] = useState(repeatOrderData?.mealIncluded || false);
+  const [mealPaid, setMealPaid] = useState(repeatOrderData?.mealPaid || false);
 
   const totalSteps = 10;
 

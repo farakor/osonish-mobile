@@ -36,7 +36,7 @@ export const getStatusInfo = (
         return {
           text: t('status_response_received'),
           color: '#FFFFFF',
-          backgroundColor: theme.colors.primary,
+          backgroundColor: '#E10000',
         };
       }
     case 'in_progress':

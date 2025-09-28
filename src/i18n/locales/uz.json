@@ -249,6 +249,9 @@
     "meal_included_no": "Ovqat kiritilMAGAN",
     "meal_paid_yes": "Ovqat to'lanadi",
     "meal_paid_no": "Ovqat to'lanMAYDI",
+    "repeat_order": "Buyurtmani takrorlash",
+    "repeat_order_success": "Buyurtma nusxalandi",
+    "repeat_order_description": "E'lon qilishdan oldin buyurtma tafsilotlarini o'zgartirishingiz mumkin",
     "sum_per_person": "so'm/kishi",
     "person_count": "kishi",
     "files_count": "fayl",
@@ -541,7 +544,8 @@
     "execution_date_section": "Bajarilish sanasi",
     "media_section": "Rasm va video (majburiy emas)",
     "media_section_subtitle": "Vazifani yaxshiroq ko'rsatish uchun 5 tagacha fayl qo'shing",
-    "edit_subtitle": "Kerakli o'zgarishlarni kiriting"
+    "edit_subtitle": "Kerakli o'zgarishlarni kiriting",
+    "reviews": "Sharhlar"
   },
   "profile": {
     "title": "Profil",
