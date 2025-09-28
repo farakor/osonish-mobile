@@ -561,8 +561,56 @@ export class OrderService {
   }
 
   /**
+   * Получение занятых дат исполнителя (даты с принятыми заказами)
+   */
+  async getWorkerBusyDates(workerId?: string): Promise<Set<string>> {
+    try {
+      const authState = authService.getAuthState();
+      const targetWorkerId = workerId || authState.user?.id;
+
+      if (!targetWorkerId) {
+        console.warn('[OrderService] ID исполнителя не указан');
+        return new Set();
+      }
+
+      // Получаем все принятые отклики исполнителя
+      const { data, error } = await supabase
+        .from('applicants')
+        .select(`
+          id,
+          orders!inner(service_date)
+        `)
+        .eq('worker_id', targetWorkerId)
+        .eq('status', 'accepted');
+
+      if (error) {
+        console.error('[OrderService] Ошибка получения занятых дат исполнителя:', error);
+        return new Set();
+      }
+
+      // Извлекаем даты и преобразуем в Set для быстрого поиска
+      const busyDates = new Set<string>();
+      data?.forEach((item: any) => {
+        const serviceDate = item.orders.service_date;
+        if (serviceDate) {
+          // Извлекаем только дату без времени (YYYY-MM-DD)
+          const dateOnly = serviceDate.split('T')[0];
+          busyDates.add(dateOnly);
+        }
+      });
+
+      console.log(`[OrderService] Найдено ${busyDates.size} занятых дат для исполнителя ${targetWorkerId}`);
+      return busyDates;
+    } catch (error) {
+      console.error('[OrderService] Ошибка получения занятых дат исполнителя:', error);
+      return new Set();
+    }
+  }
+
+  /**
    * Получение доступных заказов для исполнителя
    * Показывает все заказы, которые еще не набрали нужное количество исполнителей
+   * и исключает заказы на даты, когда исполнитель уже занят
    */
   async getAvailableOrdersForWorker(): Promise<Order[]> {
     try {
@@ -575,8 +623,26 @@ export class OrderService {
       // Получаем все заказы, которые еще принимают отклики
       const allAvailableOrders = await this.getNewOrdersForWorkers();
 
+      // Получаем занятые даты исполнителя
+      const busyDates = await this.getWorkerBusyDates(authState.user.id);
+
+      // Фильтруем заказы, исключая те, которые приходятся на занятые даты
+      const filteredOrders = allAvailableOrders.filter(order => {
+        const orderDate = order.serviceDate.split('T')[0]; // Извлекаем только дату
+        const isDateBusy = busyDates.has(orderDate);
+
+        if (isDateBusy) {
+          console.log(`[OrderService] 📅 Заказ ${order.id} исключен - дата ${orderDate} уже занята`);
+        }
+
+        return !isDateBusy;
+      });
+
       console.log(`[OrderService] Загружено ${allAvailableOrders.length} доступных заказов`);
-      return allAvailableOrders;
+      console.log(`[OrderService] Исключено ${allAvailableOrders.length - filteredOrders.length} заказов на занятые даты`);
+      console.log(`[OrderService] Показываем ${filteredOrders.length} заказов`);
+
+      return filteredOrders;
     } catch (error) {
       console.error('[OrderService] Ошибка получения доступных заказов:', error);
       return [];

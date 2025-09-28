@@ -228,6 +228,7 @@ export const JobDetailsScreen: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [userLocation, setUserLocation] = useState<LocationCoords | null>(null);
   const [mapCoords, setMapCoords] = useState<LocationCoords | null>(null);
+  const [isDateBusy, setIsDateBusy] = useState(false);
 
   // Анимация для sticky header
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -261,6 +262,16 @@ export const JobDetailsScreen: React.FC = () => {
         const applicationData = await orderService.getUserApplicationStatus(orderId);
         setHasApplied(applicationData.hasApplied);
         setApplicationStatus(applicationData.status || null);
+
+        // Проверяем, занята ли дата заказа у исполнителя
+        if (orderData) {
+          const authState = authService.getAuthState();
+          if (authState.isAuthenticated && authState.user) {
+            const busyDates = await orderService.getWorkerBusyDates(authState.user.id);
+            const orderDate = orderData.serviceDate.split('T')[0];
+            setIsDateBusy(busyDates.has(orderDate));
+          }
+        }
 
         // Загружаем информацию о заказчике
         if (orderData) {
@@ -737,16 +748,21 @@ export const JobDetailsScreen: React.FC = () => {
             <TouchableOpacity
               style={[
                 styles.applyButton,
-                hasApplied && styles.appliedButton
+                (hasApplied || isDateBusy) && styles.appliedButton
               ]}
-              onPress={hasApplied ? undefined : handleApplyToJob}
-              disabled={hasApplied}
+              onPress={(hasApplied || isDateBusy) ? undefined : handleApplyToJob}
+              disabled={hasApplied || isDateBusy}
             >
               <Text style={[
                 styles.applyButtonText,
-                hasApplied && styles.appliedButtonText
+                (hasApplied || isDateBusy) && styles.appliedButtonText
               ]}>
-                {hasApplied ? getApplicationStatusText(applicationStatus) : tWorker('apply_for_job')}
+                {hasApplied
+                  ? getApplicationStatusText(applicationStatus)
+                  : isDateBusy
+                    ? tWorker('date_busy')
+                    : tWorker('apply_for_job')
+                }
               </Text>
             </TouchableOpacity>
           )}
