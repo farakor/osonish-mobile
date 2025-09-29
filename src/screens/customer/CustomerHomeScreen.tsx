@@ -112,11 +112,48 @@ export const CustomerHomeScreen: React.FC = () => {
     setRefreshing(false);
   }, [loadNewOrders]);
 
+  // Проверяем заказы, требующие оценки
+  const checkPendingRatings = useCallback(async () => {
+    try {
+      const authState = authService.getAuthState();
+      if (!authState.isAuthenticated || !authState.user) {
+        return;
+      }
+
+      const pendingRatings = await orderService.getPendingRatingsForCustomer(authState.user.id);
+
+      if (pendingRatings.length > 0) {
+        console.log(`[CustomerHomeScreen] Найдено ${pendingRatings.length} заказов для оценки`);
+
+        // Показываем модалку оценки для первого заказа
+        const firstPendingRating = pendingRatings[0];
+        const orderId = firstPendingRating.order_id;
+
+        // Получаем принятых исполнителей для этого заказа
+        const acceptedWorkers = await orderService.getAcceptedApplicants(orderId);
+
+        if (acceptedWorkers && acceptedWorkers.length > 0) {
+          // Переходим на экран оценки
+          navigation.navigate('Rating', {
+            orderId: orderId,
+            acceptedWorkers: acceptedWorkers
+          });
+        } else {
+          // Если нет принятых исполнителей, удаляем запись о необходимости оценки
+          await orderService.removePendingRating(authState.user.id, orderId);
+        }
+      }
+    } catch (error) {
+      console.error('[CustomerHomeScreen] Ошибка проверки заказов для оценки:', error);
+    }
+  }, [navigation]);
+
   // Загружаем заказы при первом открытии и при фокусе на экране
   useFocusEffect(
     useCallback(() => {
       loadNewOrders();
-    }, [loadNewOrders])
+      checkPendingRatings();
+    }, [loadNewOrders, checkPendingRatings])
   );
 
   // Real-time обновления для заказов пользователя
@@ -232,7 +269,7 @@ export const CustomerHomeScreen: React.FC = () => {
         {/* Header with notifications */}
         <View style={[styles.header, { paddingTop: theme.spacing.lg + getAndroidStatusBarHeight() }]}>
           <View style={styles.headerLeft}>
-            <Text style={styles.greeting}>{t('my_orders')}</Text>
+            <Text style={styles.greeting}>{t('home_screen')}</Text>
             <Text style={styles.subtitle}>
               {newOrders.length > 0
                 ? t('active_orders_count', { count: newOrders.length })

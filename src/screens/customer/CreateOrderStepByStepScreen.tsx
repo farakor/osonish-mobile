@@ -585,17 +585,6 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
     }
   };
 
-  // Функция для пропуска шага выбора категории
-  const skipCategoryStep = () => {
-    setCategory('other'); // Автоматически выбираем категорию "Другое"
-    setCurrentStep(currentStep + 1); // Переходим к следующему шагу
-  };
-
-  // Функция для пропуска шага описания работы
-  const skipDescriptionStep = () => {
-    setDescription(tCommon('default_description')); // Устанавливаем стандартное описание
-    setCurrentStep(currentStep + 1); // Переходим к следующему шагу
-  };
 
   const handleSubmit = async () => {
     console.log('[CreateOrder] 🚀 НАЧАЛО handleSubmit');
@@ -849,18 +838,6 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 isSmallScreen={isSmallScreen}
               />
 
-              {/* Кнопка "Пропустить" на странице выбора категории (показывается только если категория не выбрана) */}
-              {!category && (
-                <AnimatedField isActive={currentStep === 2} delay={300} resetKey={`${animationResetKey}-step-2`}>
-                  <TouchableOpacity
-                    style={styles.skipButton}
-                    onPress={skipCategoryStep}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.skipButtonText}>{tCommon('skip')}</Text>
-                  </TouchableOpacity>
-                </AnimatedField>
-              )}
             </View>
           </AnimatedStepContainer>
         );
@@ -898,18 +875,6 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 </View>
               </AnimatedField>
 
-              {/* Кнопка "Пропустить" на странице описания работы (показывается только если описание не заполнено) */}
-              {!description.trim() && (
-                <AnimatedField isActive={currentStep === 3} delay={300} resetKey={`${animationResetKey}-step-3`}>
-                  <TouchableOpacity
-                    style={styles.skipButton}
-                    onPress={skipDescriptionStep}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.skipButtonText}>{tCommon('skip')}</Text>
-                  </TouchableOpacity>
-                </AnimatedField>
-              )}
             </View>
           </AnimatedStepContainer>
         );
@@ -1346,7 +1311,11 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                   delay={0}
                   resetKey={`${animationResetKey}-step-${currentStep}`}
                 >
-                  <Text style={styles.primaryButtonText}>{tCommon('next')}</Text>
+                  <Text style={styles.primaryButtonText}>
+                    {currentStep === 2 && !category ? tCommon('skip') :
+                      currentStep === 3 && !description.trim() ? tCommon('skip') :
+                        tCommon('next')}
+                  </Text>
                 </AnimatedNavigationButton>
               )
             ) : (

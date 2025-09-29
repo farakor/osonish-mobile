@@ -16,7 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';;
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
-import { usePlatformSafeAreaInsets, getFixedBottomStyle, getEdgeToEdgeBottomStyle, getImprovedFixedBottomStyle } from '../../utils/safeAreaUtils';
+import { usePlatformSafeAreaInsets, getFixedBottomStyle, getEdgeToEdgeBottomStyle, getImprovedFixedBottomStyle, getEdgeToEdgeFixedBottomStyle } from '../../utils/safeAreaUtils';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { WorkerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -732,7 +732,10 @@ export const JobDetailsScreen: React.FC = () => {
         </Animated.ScrollView>
 
         {/* Fixed Bottom Section */}
-        <View style={[styles.fixedBottomSection, getImprovedFixedBottomStyle(insets)]}>
+        <View style={[styles.fixedBottomSection, {
+          paddingTop: 16,
+          paddingBottom: Platform.OS === 'android' ? 16 : Math.max(insets.bottom, 16)
+        }]}>
           {order.status === 'in_progress' && customer?.phone ? (
             <TouchableOpacity
               style={styles.callButtonAccepted}
@@ -1070,7 +1073,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
     alignItems: 'center',
     shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, marginBottom: Platform.OS === 'ios' ? 16 : 0, // Отступ только на iOS
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, marginBottom: Platform.OS === 'android' ? -8 : 0, // Отрицательный margin для Android
   },
   appliedButton: {
     backgroundColor: theme.colors.surface,
@@ -1097,7 +1100,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: theme.spacing.sm,
     shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, marginBottom: Platform.OS === 'ios' ? 16 : 0,
+    shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, marginBottom: Platform.OS === 'android' ? -8 : 0, // Отрицательный margin для Android
   },
 
   callButtonTextContainer: {

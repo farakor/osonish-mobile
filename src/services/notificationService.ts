@@ -27,7 +27,7 @@ export interface PushNotificationData {
   body: string;
   data?: any;
   userId: string;
-  notificationType: 'new_order' | 'new_application' | 'order_update' | 'order_completed' | 'work_reminder' | 'complete_work_reminder';
+  notificationType: 'new_order' | 'new_application' | 'order_update' | 'order_completed' | 'order_cancelled' | 'work_reminder' | 'complete_work_reminder';
 }
 
 export interface NotificationItem {
@@ -364,46 +364,105 @@ class NotificationService {
     notificationType: PushNotificationData['notificationType']
   ): Promise<boolean> {
     try {
+      console.log(`\n🔔 [NotificationService] ОТПРАВКА УВЕДОМЛЕНИЯ ПОЛЬЗОВАТЕЛЮ ${userId}`);
+      console.log(`[NotificationService] 📝 Заголовок: "${title}"`);
+      console.log(`[NotificationService] 📄 Текст: "${body}"`);
+      console.log(`[NotificationService] 🏷️ Тип: ${notificationType}`);
+      console.log(`[NotificationService] 📦 Данные:`, data);
+
       // Проверяем настройки уведомлений пользователя
+      console.log(`[NotificationService] 🔍 Проверяем настройки уведомлений пользователя...`);
+      const settingsStartTime = Date.now();
       const settings = await this.getUserNotificationSettings(userId);
+      const settingsTime = Date.now() - settingsStartTime;
+
+      console.log(`[NotificationService] ⏱️ Настройки получены за ${settingsTime}мс:`, settings);
+
       if (!settings.allNotificationsEnabled) {
-        console.log('[NotificationService] 🔇 Уведомления отключены для пользователя:', userId);
+        console.log('[NotificationService] 🔇 БЛОКИРОВКА: Все уведомления отключены для пользователя:', userId);
         return false;
       }
 
       // Проверяем конкретную настройку типа уведомления
-      if (!this.shouldSendNotification(notificationType, settings)) {
-        console.log('[NotificationService] 🔇 Тип уведомления отключен:', notificationType);
+      console.log(`[NotificationService] 🔍 Проверяем настройку для типа "${notificationType}"...`);
+      const shouldSend = this.shouldSendNotification(notificationType, settings);
+      console.log(`[NotificationService] 📊 Результат проверки shouldSend: ${shouldSend}`);
+
+      if (!shouldSend) {
+        console.log('[NotificationService] 🔇 БЛОКИРОВКА: Тип уведомления отключен:', notificationType);
         return false;
       }
 
       // Получаем активные токены пользователя
+      console.log(`[NotificationService] 🔍 Получаем push токены пользователя...`);
+      const tokensStartTime = Date.now();
       const tokens = await this.getUserPushTokens(userId);
+      const tokensTime = Date.now() - tokensStartTime;
+
+      console.log(`[NotificationService] ⏱️ Токены получены за ${tokensTime}мс`);
+      console.log(`[NotificationService] 📊 Найдено токенов: ${tokens.length}`);
+
       if (tokens.length === 0) {
-        console.log('[NotificationService] ⚠️ У пользователя нет активных push токенов:', userId);
+        console.log('[NotificationService] ⚠️ ПРОБЛЕМА: У пользователя нет активных push токенов:', userId);
+        console.log('[NotificationService] 💡 Возможные причины:');
+        console.log('[NotificationService] 💡 - Пользователь не дал разрешения на уведомления');
+        console.log('[NotificationService] 💡 - Приложение не зарегистрировало токен');
+        console.log('[NotificationService] 💡 - Токены были удалены из БД');
         return true; // Возвращаем true, чтобы не блокировать работу приложения
       }
+
+      // Показываем информацию о токенах
+      console.log(`[NotificationService] 📋 Информация о токенах:`);
+      tokens.forEach((tokenData, index) => {
+        const tokenPreview = tokenData.token.substring(0, 20) + '...';
+        console.log(`[NotificationService]   ${index + 1}. ${tokenPreview} (создан: ${tokenData.created_at})`);
+      });
 
       // 🔧 ИСПРАВЛЕНИЕ: Используем только САМЫЙ НОВЫЙ токен для предотвращения дублирования
       // Если у пользователя несколько токенов, отправляем только на последний (самый актуальный)
       const latestToken = tokens[tokens.length - 1];
-      console.log(`[NotificationService] 🎯 Найдено ${tokens.length} токенов, используем самый новый: ${latestToken.token.substring(0, 20)}...`);
+      const tokenPreview = latestToken.token.substring(0, 20) + '...';
+      console.log(`[NotificationService] 🎯 Используем самый новый токен: ${tokenPreview}`);
 
       if (tokens.length > 1) {
         console.log(`[NotificationService] ⚠️ Обнаружено ${tokens.length} токенов у пользователя. Возможно нужна очистка старых токенов.`);
       }
 
       // Отправляем уведомление только на один (самый новый) токен
-      await this.sendPushNotification(latestToken.token, title, body, data);
+      console.log(`[NotificationService] 📤 Отправляем push уведомление...`);
+      const pushStartTime = Date.now();
+
+      try {
+        await this.sendPushNotification(latestToken.token, title, body, data);
+        const pushTime = Date.now() - pushStartTime;
+        console.log(`[NotificationService] ✅ Push уведомление отправлено за ${pushTime}мс`);
+      } catch (pushError) {
+        const pushTime = Date.now() - pushStartTime;
+        console.error(`[NotificationService] ❌ Ошибка отправки push уведомления за ${pushTime}мс:`, pushError);
+        return false;
+      }
+
       const successCount = 1;
 
       // Сохраняем лог уведомления
-      await this.logNotification(userId, title, body, data, notificationType);
+      console.log(`[NotificationService] 💾 Сохраняем лог уведомления...`);
+      const logStartTime = Date.now();
 
-      console.log(`[NotificationService] 📤 Отправлено ${successCount}/${tokens.length} уведомлений пользователю: ${userId}`);
+      try {
+        await this.logNotification(userId, title, body, data, notificationType);
+        const logTime = Date.now() - logStartTime;
+        console.log(`[NotificationService] ✅ Лог сохранен за ${logTime}мс`);
+      } catch (logError) {
+        const logTime = Date.now() - logStartTime;
+        console.error(`[NotificationService] ⚠️ Ошибка сохранения лога за ${logTime}мс:`, logError);
+        // Не возвращаем false, так как уведомление уже отправлено
+      }
+
+      console.log(`[NotificationService] 📤 ИТОГ: Отправлено ${successCount}/${tokens.length} уведомлений пользователю: ${userId}`);
 
       // Автоматически очищаем старые токены если их много
       if (tokens.length > 1) {
+        console.log(`[NotificationService] 🧹 Запускаем очистку старых токенов...`);
         this.cleanupOldTokensForUser(userId).catch(error => {
           console.error('[NotificationService] ⚠️ Ошибка очистки старых токенов:', error);
         });
@@ -411,13 +470,17 @@ class NotificationService {
 
       return successCount > 0;
     } catch (error) {
-      console.error('[NotificationService] ❌ Ошибка отправки уведомления:', error);
+      console.error('\n🚨 [NotificationService] КРИТИЧЕСКАЯ ОШИБКА ОТПРАВКИ УВЕДОМЛЕНИЯ 🚨');
+      console.error('[NotificationService] 👤 Пользователь:', userId);
+      console.error('[NotificationService] 📝 Заголовок:', title);
+      console.error('[NotificationService] ❌ Ошибка:', error);
+      console.error('[NotificationService] 📊 Stack trace:', error instanceof Error ? error.stack : 'Нет stack trace');
       return false;
     }
   }
 
   /**
-   * Отправка push уведомления множественным пользователям
+   * Отправка push уведомления множественным пользователям (ОПТИМИЗИРОВАННАЯ)
    */
   async sendNotificationToUsers(
     userIds: string[],
@@ -427,20 +490,231 @@ class NotificationService {
     notificationType: PushNotificationData['notificationType']
   ): Promise<number> {
     try {
-      const promises = userIds.map(userId =>
-        this.sendNotificationToUser(userId, title, body, data, notificationType)
-      );
+      console.log(`\n🚀 [NotificationService] ПАКЕТНАЯ ОТПРАВКА ${userIds.length} ПОЛЬЗОВАТЕЛЯМ`);
+      console.log(`[NotificationService] 📝 Заголовок: "${title}"`);
+      console.log(`[NotificationService] 📄 Текст: "${body}"`);
 
-      const results = await Promise.allSettled(promises);
-      const successCount = results.filter(result =>
-        result.status === 'fulfilled' && result.value === true
-      ).length;
+      // Получаем все токены пользователей одним запросом
+      console.log(`[NotificationService] 🔍 Получаем токены для ${userIds.length} пользователей...`);
+      const tokensStartTime = Date.now();
 
-      console.log(`[NotificationService] 📤 Отправлено уведомлений ${successCount}/${userIds.length} пользователям`);
+      const { data: tokenData, error: tokensError } = await supabase
+        .from('push_tokens')
+        .select('user_id, token, device_type, created_at')
+        .in('user_id', userIds)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false }); // Самые новые токены первыми
+
+      const tokensTime = Date.now() - tokensStartTime;
+      console.log(`[NotificationService] ⏱️ Токены получены за ${tokensTime}мс`);
+
+      if (tokensError) {
+        console.error('[NotificationService] ❌ Ошибка получения токенов:', tokensError);
+        return 0;
+      }
+
+      if (!tokenData || tokenData.length === 0) {
+        console.log('[NotificationService] ⚠️ Не найдено активных токенов для пользователей');
+        return 0;
+      }
+
+      // Группируем токены по пользователям (берем только самый новый токен для каждого)
+      const userTokens = new Map<string, string>();
+      const processedUsers = new Set<string>();
+
+      tokenData.forEach((token: any) => {
+        if (!processedUsers.has(token.user_id)) {
+          userTokens.set(token.user_id, token.token);
+          processedUsers.add(token.user_id);
+        }
+      });
+
+      console.log(`[NotificationService] 📊 Найдено токенов: ${userTokens.size} из ${userIds.length} пользователей`);
+
+      // Получаем настройки уведомлений для всех пользователей одним запросом
+      console.log(`[NotificationService] 🔍 Проверяем настройки уведомлений...`);
+      const settingsStartTime = Date.now();
+
+      const { data: settingsData, error: settingsError } = await supabase
+        .from('user_notification_settings')
+        .select('user_id, all_notifications_enabled')
+        .in('user_id', Array.from(userTokens.keys()));
+
+      const settingsTime = Date.now() - settingsStartTime;
+      console.log(`[NotificationService] ⏱️ Настройки получены за ${settingsTime}мс`);
+
+      // Создаем карту настроек (по умолчанию уведомления включены)
+      const userSettings = new Map<string, boolean>();
+      settingsData?.forEach((setting: any) => {
+        userSettings.set(setting.user_id, setting.all_notifications_enabled);
+      });
+
+      // Фильтруем пользователей с включенными уведомлениями
+      const allowedTokens: string[] = [];
+      const blockedCount = { settings: 0, noToken: 0 };
+
+      userIds.forEach(userId => {
+        const token = userTokens.get(userId);
+        if (!token) {
+          blockedCount.noToken++;
+          return;
+        }
+
+        const settingsEnabled = userSettings.get(userId) ?? true; // По умолчанию включены
+        if (!settingsEnabled) {
+          blockedCount.settings++;
+          return;
+        }
+
+        allowedTokens.push(token);
+      });
+
+      console.log(`[NotificationService] 📊 Статистика фильтрации:`);
+      console.log(`[NotificationService] ✅ Разрешено: ${allowedTokens.length}`);
+      console.log(`[NotificationService] 🔇 Заблокировано настройками: ${blockedCount.settings}`);
+      console.log(`[NotificationService] ⚠️ Нет токенов: ${blockedCount.noToken}`);
+
+      if (allowedTokens.length === 0) {
+        console.log('[NotificationService] ⚠️ Нет пользователей для отправки уведомлений');
+        return 0;
+      }
+
+      // Разбиваем на батчи по 100 токенов (лимит FCM)
+      const batchSize = 100;
+      const batches: string[][] = [];
+      for (let i = 0; i < allowedTokens.length; i += batchSize) {
+        batches.push(allowedTokens.slice(i, i + batchSize));
+      }
+
+      console.log(`[NotificationService] 📦 Разбито на ${batches.length} батчей по ${batchSize} токенов`);
+
+      // Отправляем все батчи параллельно
+      const batchStartTime = Date.now();
+      const batchPromises = batches.map(async (batch, index) => {
+        console.log(`[NotificationService] 🚀 Отправляем батч ${index + 1}/${batches.length} (${batch.length} токенов)`);
+
+        try {
+          // Отправляем через Expo API (который поддерживает массивы)
+          const batchMessages = batch.map(token => ({
+            to: token,
+            title,
+            body,
+            data,
+            sound: 'default',
+            priority: 'high' as const,
+            channelId: 'default',
+          }));
+
+          const success = await this.sendBatchPushNotifications(batchMessages);
+          console.log(`[NotificationService] ✅ Батч ${index + 1} отправлен: ${success ? batch.length : 0}/${batch.length}`);
+          return success ? batch.length : 0;
+        } catch (error) {
+          console.error(`[NotificationService] ❌ Ошибка батча ${index + 1}:`, error);
+          return 0;
+        }
+      });
+
+      const batchResults = await Promise.allSettled(batchPromises);
+      const batchTime = Date.now() - batchStartTime;
+
+      const successCount = batchResults.reduce((sum, result) => {
+        return sum + (result.status === 'fulfilled' ? result.value : 0);
+      }, 0);
+
+      console.log(`[NotificationService] ⚡ Пакетная отправка завершена за ${batchTime}мс`);
+      console.log(`[NotificationService] 📤 ИТОГ: Отправлено ${successCount}/${allowedTokens.length} уведомлений`);
+
+      // Логируем уведомления (асинхронно, чтобы не замедлять)
+      this.logBatchNotifications(userIds, title, body, data, notificationType, successCount)
+        .catch(error => console.error('[NotificationService] ⚠️ Ошибка логирования:', error));
+
       return successCount;
     } catch (error) {
-      console.error('[NotificationService] ❌ Ошибка массовой отправки уведомлений:', error);
+      console.error('\n🚨 [NotificationService] КРИТИЧЕСКАЯ ОШИБКА ПАКЕТНОЙ ОТПРАВКИ 🚨');
+      console.error('[NotificationService] ❌ Ошибка:', error);
+      console.error('[NotificationService] 📊 Stack trace:', error instanceof Error ? error.stack : 'Нет stack trace');
       return 0;
+    }
+  }
+
+  /**
+   * Пакетная отправка push уведомлений через Expo API
+   */
+  private async sendBatchPushNotifications(messages: any[]): Promise<boolean> {
+    try {
+      console.log(`[NotificationService] 📦 Отправляем пакет из ${messages.length} уведомлений через Expo API`);
+
+      const response = await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Accept-encoding': 'gzip, deflate',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(messages),
+      });
+
+      if (!response.ok) {
+        console.error(`[NotificationService] ❌ HTTP ошибка: ${response.status} ${response.statusText}`);
+        return false;
+      }
+
+      const result = await response.json();
+      console.log(`[NotificationService] 📡 Ответ Expo API для пакета:`, result);
+
+      // Проверяем успешность отправки всех сообщений в пакете
+      if (Array.isArray(result.data)) {
+        const successCount = result.data.filter((item: any) => item.status === 'ok').length;
+        const errorCount = result.data.filter((item: any) => item.status === 'error').length;
+
+        console.log(`[NotificationService] 📊 Результаты пакета: ${successCount} успешно, ${errorCount} ошибок`);
+
+        if (errorCount > 0) {
+          console.log(`[NotificationService] ⚠️ Ошибки в пакете:`,
+            result.data.filter((item: any) => item.status === 'error')
+          );
+        }
+
+        return successCount > 0;
+      } else {
+        // Одиночное сообщение
+        return result.data && result.data.status === 'ok';
+      }
+    } catch (error) {
+      console.error('[NotificationService] ❌ Ошибка пакетной отправки через Expo API:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Логирование пакетных уведомлений
+   */
+  private async logBatchNotifications(
+    userIds: string[],
+    title: string,
+    body: string,
+    data: any,
+    notificationType: PushNotificationData['notificationType'],
+    successCount: number
+  ): Promise<void> {
+    try {
+      console.log(`[NotificationService] 📝 Логируем пакетные уведомления: ${successCount}/${userIds.length}`);
+
+      // Простое логирование в консоль (можно расширить для сохранения в БД)
+      const logEntry = {
+        timestamp: new Date().toISOString(),
+        type: 'batch_notification',
+        notificationType,
+        title,
+        body,
+        userCount: userIds.length,
+        successCount,
+        data
+      };
+
+      console.log('[NotificationService] 📋 Лог пакетного уведомления:', logEntry);
+    } catch (error) {
+      console.error('[NotificationService] ⚠️ Ошибка логирования пакетных уведомлений:', error);
     }
   }
 

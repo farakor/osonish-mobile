@@ -1,11 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View,
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  View,
   Text,
   StyleSheet, TouchableOpacity,
   Alert,
-  ScrollView,
   Image,
-  TextInput, } from 'react-native';
+  TextInput,
+  Keyboard,
+  Platform,
+} from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';;
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
@@ -14,8 +18,9 @@ import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navig
 import { CustomerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { orderService } from '../../services/orderService';
+import { authService } from '../../services/authService';
 import { StarIcon } from '../../components/common';
-import { Applicant } from '../../types';
+import { Applicant, Order } from '../../types';
 
 type RatingRouteProp = RouteProp<CustomerStackParamList, 'Rating'>;
 type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
@@ -67,9 +72,11 @@ interface WorkerRatingCardProps {
   comment: string;
   onRatingChange: (rating: number) => void;
   onCommentChange: (comment: string) => void;
+  onCommentFocus?: () => void;
 }
 
-const WorkerRatingCard: React.FC<WorkerRatingCardProps> = ({ worker, rating, comment, onRatingChange, onCommentChange }) => {
+const WorkerRatingCard: React.FC<WorkerRatingCardProps> = ({ worker, rating, comment, onRatingChange, onCommentChange, onCommentFocus }) => {
+
   const getRatingText = (rating: number): string => {
     switch (rating) {
       case 1:
@@ -137,9 +144,15 @@ const WorkerRatingCard: React.FC<WorkerRatingCardProps> = ({ worker, rating, com
           placeholderTextColor="#9CA3AF"
           value={comment}
           onChangeText={onCommentChange}
+          onFocus={onCommentFocus}
           multiline
           numberOfLines={3}
           maxLength={500}
+          returnKeyType="done"
+          blurOnSubmit={true}
+          onSubmitEditing={() => {
+            Keyboard.dismiss();
+          }}
         />
         <Text style={styles.commentCounter}>
           {comment.length}/500
@@ -154,11 +167,14 @@ export const RatingScreen: React.FC = () => {
   const route = useRoute<RatingRouteProp>();
   const { orderId, acceptedWorkers } = route.params;
   const insets = usePlatformSafeAreaInsets();
+  const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
 
   const [ratings, setRatings] = useState<WorkerRatingState>({});
   const [comments, setComments] = useState<WorkerCommentsState>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [orderDetails, setOrderDetails] = useState<Order | null>(null);
+  const [isLoadingOrder, setIsLoadingOrder] = useState(true);
 
   const handleRatingChange = (workerId: string, rating: number) => {
     setRatings(prev => ({
@@ -173,6 +189,45 @@ export const RatingScreen: React.FC = () => {
       [workerId]: comment
     }));
   };
+
+  const handleCommentFocus = (workerId: string) => {
+    // Небольшая задержка для корректной работы автоскролла
+    setTimeout(() => {
+      if (scrollViewRef.current) {
+        // Находим индекс работника в массиве
+        const workerIndex = acceptedWorkers.findIndex(worker => worker.workerId === workerId);
+        if (workerIndex !== -1) {
+          // Рассчитываем примерную позицию комментария для скролла
+          // Учитываем высоту заголовка, деталей заказа и карточек работников
+          const headerHeight = 150; // Примерная высота заголовочной секции
+          const orderDetailsHeight = orderDetails ? 200 : 0; // Высота деталей заказа
+          const workerCardHeight = 350; // Примерная высота одной карточки работника
+          const commentSectionOffset = 250; // Смещение до секции комментария внутри карточки
+
+          const scrollToY = headerHeight + orderDetailsHeight + (workerIndex * workerCardHeight) + commentSectionOffset;
+
+          scrollViewRef.current.scrollToPosition(0, scrollToY, true);
+        }
+      }
+    }, 100);
+  };
+
+  // Загружаем детали заказа
+  useEffect(() => {
+    const loadOrderDetails = async () => {
+      try {
+        setIsLoadingOrder(true);
+        const order = await orderService.getOrderById(orderId);
+        setOrderDetails(order);
+      } catch (error) {
+        console.error('[RatingScreen] Ошибка загрузки деталей заказа:', error);
+      } finally {
+        setIsLoadingOrder(false);
+      }
+    };
+
+    loadOrderDetails();
+  }, [orderId]);
 
   // Проверяем, есть ли хотя бы одна оценка
   const hasAnyRating = Object.values(ratings).some(rating => rating > 0);
@@ -260,6 +315,17 @@ export const RatingScreen: React.FC = () => {
         // Отмечаем оценку как завершенную перед показом Alert'а
         setIsCompleted(true);
 
+        // Удаляем запись о необходимости оценки
+        try {
+          const authState = authService.getAuthState();
+          if (authState.isAuthenticated && authState.user) {
+            await orderService.removePendingRating(authState.user.id, orderId);
+            console.log('[RatingScreen] ✅ Запись о необходимости оценки удалена');
+          }
+        } catch (error) {
+          console.error('[RatingScreen] ❌ Ошибка удаления записи о необходимости оценки:', error);
+        }
+
         Alert.alert(
           'Спасибо!',
           `Отзывы успешно отправлены (${successCount})`,
@@ -314,7 +380,17 @@ export const RatingScreen: React.FC = () => {
         <Text style={styles.headerTitle}>Оценить работу</Text>
       </View>
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <KeyboardAwareScrollView
+        ref={scrollViewRef}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid={true}
+        enableAutomaticScroll={true}
+        extraScrollHeight={50}
+        extraHeight={Platform.OS === 'ios' ? 50 : 100}
+      >
         <View style={styles.content}>
           {/* Заголовок */}
           <View style={styles.headerSection}>
@@ -323,6 +399,40 @@ export const RatingScreen: React.FC = () => {
               Оцените работу каждого исполнителя
             </Text>
           </View>
+
+          {/* Детали заказа */}
+          {!isLoadingOrder && orderDetails && (
+            <View style={styles.orderDetailsCard}>
+              <Text style={styles.orderDetailsTitle}>Детали заказа</Text>
+
+              <View style={styles.orderDetailRow}>
+                <Text style={styles.orderDetailLabel}>Название:</Text>
+                <Text style={styles.orderDetailValue}>{orderDetails.title}</Text>
+              </View>
+
+              <View style={styles.orderDetailRow}>
+                <Text style={styles.orderDetailLabel}>Описание:</Text>
+                <Text style={styles.orderDetailValue}>{orderDetails.description}</Text>
+              </View>
+
+              <View style={styles.orderDetailRow}>
+                <Text style={styles.orderDetailLabel}>Дата:</Text>
+                <Text style={styles.orderDetailValue}>
+                  {new Date(orderDetails.serviceDate).toLocaleDateString('ru-RU')}
+                </Text>
+              </View>
+
+              <View style={styles.orderDetailRow}>
+                <Text style={styles.orderDetailLabel}>Адрес:</Text>
+                <Text style={styles.orderDetailValue}>{orderDetails.location}</Text>
+              </View>
+
+              <View style={styles.orderDetailRow}>
+                <Text style={styles.orderDetailLabel}>Бюджет:</Text>
+                <Text style={styles.orderDetailValue}>{orderDetails.budget} сум</Text>
+              </View>
+            </View>
+          )}
 
           {/* Карточки исполнителей */}
           {acceptedWorkers.map((worker) => (
@@ -333,11 +443,12 @@ export const RatingScreen: React.FC = () => {
               comment={comments[worker.workerId] || ''}
               onRatingChange={(rating) => handleRatingChange(worker.workerId, rating)}
               onCommentChange={(comment) => handleCommentChange(worker.workerId, comment)}
+              onCommentFocus={() => handleCommentFocus(worker.workerId)}
             />
           ))}
 
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       {/* Фиксированная кнопка внизу */}
       <View style={[styles.fixedButtonContainer, getImprovedFixedBottomStyle(insets)]}>
@@ -382,9 +493,12 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   content: {
     padding: theme.spacing.lg,
-    paddingBottom: theme.spacing.lg + 100, // Увеличенный отступ для фиксированной кнопки
+    paddingBottom: theme.spacing.lg + 120, // Умеренный отступ для фиксированной кнопки
   },
   headerSection: {
     marginBottom: theme.spacing.xl,
@@ -539,5 +653,36 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     textAlign: 'right',
     marginTop: theme.spacing.xs,
+  },
+  orderDetailsCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
+    ...noElevationStyles.elevation1,
+  },
+  orderDetailsTitle: {
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.md,
+  },
+  orderDetailRow: {
+    flexDirection: 'row',
+    marginBottom: theme.spacing.sm,
+    alignItems: 'flex-start',
+  },
+  orderDetailLabel: {
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.medium,
+    color: theme.colors.text.secondary,
+    minWidth: 90,
+    flexShrink: 0,
+  },
+  orderDetailValue: {
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.text.primary,
+    flex: 1,
+    marginLeft: theme.spacing.sm,
   },
 });

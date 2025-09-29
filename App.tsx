@@ -22,11 +22,27 @@ console.log('[App] 🔄 App.tsx загружается...');
 console.log('[App] 📦 eskizSMSService импортирован:', !!eskizSMSService);
 
 
+// Импортируем orderService для отладки
+import { orderService } from './src/services/orderService';
+
 // Подключаем тестовые утилиты в dev режиме
 if (__DEV__) {
   import('./src/utils/testingHelpers');
   import('./src/utils/notificationTest');
   import('./src/utils/quickNotificationTest');
+
+  // Добавляем функции для отладки уведомлений в глобальный объект
+  (global as any).debugNotifications = {
+    testNewOrderNotifications: (orderId?: string) => orderService.testNewOrderNotifications(orderId),
+    clearNotificationCache: () => orderService.clearNotificationCache(),
+    getNotifiedOrders: () => orderService.getNotifiedOrders(),
+  };
+
+  console.log('[App] 🧪 Функции отладки уведомлений доступны в global.debugNotifications');
+  console.log('[App] 💡 Используйте:');
+  console.log('[App] 💡 - global.debugNotifications.testNewOrderNotifications() - тест уведомлений');
+  console.log('[App] 💡 - global.debugNotifications.clearNotificationCache() - очистка кэша');
+  console.log('[App] 💡 - global.debugNotifications.getNotifiedOrders() - список уведомленных заказов');
 }
 
 export default function App() {
@@ -47,6 +63,10 @@ export default function App() {
         // Инициализируем сервис уведомлений
         await notificationService.init();
         console.log('[App] ✅ Сервис уведомлений инициализирован');
+
+        // Фоновые задачи отключены из-за ограничений App Store
+        // (background-processing и background-fetch недопустимы без специального разрешения)
+        console.log('[App] ℹ️ Фоновые задачи отключены для соответствия требованиям App Store');
 
         // Настраиваем прозрачный navigation bar для Android с поддержкой Edge-to-Edge
         if (Platform.OS === 'android') {

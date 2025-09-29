@@ -28,6 +28,7 @@ import FileShieldIcon from '../../../assets/file-shield-02.svg';
 import { Ionicons } from '@expo/vector-icons';
 import { useWorkerTranslation, useErrorsTranslation } from '../../hooks/useTranslation';
 import { WebViewModal, DeleteAccountModal } from '../../components/common';
+import Constants from 'expo-constants';
 
 // Функция для получения высоты статусбара только на Android
 const getAndroidStatusBarHeight = () => {
@@ -598,6 +599,13 @@ export const WorkerProfileScreen: React.FC = () => {
             >
               <Text style={[styles.menuText, styles.deleteAccountText]}>{tWorker('delete_account')}</Text>
             </TouchableOpacity>
+
+            {/* Версия приложения */}
+            <View style={styles.versionContainer}>
+              <Text style={styles.versionText}>
+                {tWorker('version')} {Constants.expoConfig?.version || '1.0.0'}
+              </Text>
+            </View>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -1026,5 +1034,16 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     textAlign: 'center',
     fontWeight: '500',
+  },
+  versionContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    marginTop: 10,
+  },
+  versionText: {
+    fontSize: 12,
+    color: '#8E8E93',
+    fontWeight: '400',
   },
 }); 

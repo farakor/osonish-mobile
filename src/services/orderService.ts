@@ -117,6 +117,7 @@ export class OrderService {
           transport_paid: request.transportPaid || false,
           meal_included: request.mealIncluded || false,
           meal_paid: request.mealPaid || false,
+          auto_completed: false,
           created_at: currentTime,
           updated_at: currentTime
         })
@@ -1125,7 +1126,7 @@ export class OrderService {
         console.error('[OrderService] ❌ Ошибка подсчета активных откликов:', countError);
       } else {
         const activeCount = remainingApplicants?.length || 0;
-        const applicantIds = remainingApplicants?.map(a => `${a.id} (${a.status})`) || [];
+        const applicantIds = remainingApplicants?.map((a: any) => `${a.id} (${a.status})`) || [];
         console.log(`[OrderService] 📊 Найдено активных откликов в базе: ${activeCount}`);
         console.log(`[OrderService] 📋 ID активных откликов:`, applicantIds);
 
@@ -1378,7 +1379,7 @@ export class OrderService {
         return [];
       }
 
-      const conflictingApplicationIds = data?.map(item => item.id) || [];
+      const conflictingApplicationIds = data?.map((item: any) => item.id) || [];
       console.log(`[OrderService] 📅 Найдено ${conflictingApplicationIds.length} конфликтующих откликов`);
 
       return conflictingApplicationIds;
@@ -1486,10 +1487,10 @@ export class OrderService {
       }
 
       // Собираем уникальные order_id, которые будут затронуты
-      const affectedOrderIds = [...new Set(pendingApplications.map(app => app.order_id))];
+      const affectedOrderIds = [...new Set(pendingApplications.map((app: any) => app.order_id))];
 
       // Отклоняем все найденные отклики
-      const applicationIds = pendingApplications.map(app => app.id);
+      const applicationIds = pendingApplications.map((app: any) => app.id);
       const { error: updateError } = await supabase
         .from('applicants')
         .update({
@@ -1507,8 +1508,8 @@ export class OrderService {
 
       // Проверяем статус каждого затронутого заказа и обновляем счетчики
       for (const orderId of affectedOrderIds) {
-        await this.checkAndRevertOrderStatus(orderId);
-        await this.updateActiveApplicantsCount(orderId);
+        await this.checkAndRevertOrderStatus(orderId as string);
+        await this.updateActiveApplicantsCount(orderId as string);
       }
     } catch (error) {
       console.error('[OrderService] Ошибка отклонения других откликов:', error);
@@ -2165,36 +2166,65 @@ export class OrderService {
    */
   private async sendNewOrderNotifications(order: Order): Promise<void> {
     try {
-      console.log('[OrderService] 📤 Отправляем уведомления о новом заказе:', order.id);
+      console.log('\n🔥🔥🔥 [OrderService] НАЧАЛО ОТПРАВКИ УВЕДОМЛЕНИЙ О НОВОМ ЗАКАЗЕ 🔥🔥🔥');
+      console.log('[OrderService] 📤 Заказ ID:', order.id);
+      console.log('[OrderService] 📝 Заголовок заказа:', order.title);
+      console.log('[OrderService] 💰 Бюджет:', order.budget);
+      console.log('[OrderService] 📍 Локация:', order.location);
       console.log('[OrderService] 🕒 Время вызова:', new Date().toISOString());
+      console.log('[OrderService] 📊 Статус заказа:', order.status);
 
       // 🔧 ДЕДУПЛИКАЦИЯ: Проверяем, не отправляли ли уже уведомления для этого заказа
+      console.log('[OrderService] 🔍 Проверяем дедупликацию...');
+      console.log('[OrderService] 📋 Текущий кэш уведомленных заказов:', Array.from(this.notifiedOrders));
+
       if (this.notifiedOrders.has(order.id)) {
-        console.log('[OrderService] ⚠️ Уведомления для заказа', order.id, 'уже отправлены, пропускаем');
+        console.log('[OrderService] ⚠️ ДЕДУПЛИКАЦИЯ: Уведомления для заказа', order.id, 'уже отправлены, пропускаем');
         return;
       }
 
       // Помечаем заказ как уведомленный
       this.notifiedOrders.add(order.id);
       console.log('[OrderService] ✅ Заказ', order.id, 'добавлен в список уведомленных');
+      console.log('[OrderService] 📋 Обновленный кэш:', Array.from(this.notifiedOrders));
 
       // Получаем всех исполнителей из базы данных
+      console.log('[OrderService] 🔍 Получаем список исполнителей из Supabase...');
+      const startTime = Date.now();
+
       const { data: workers, error } = await supabase
         .from('users')
-        .select('id')
+        .select('id, role, preferred_language, created_at')
         .eq('role', 'worker');
 
+      const queryTime = Date.now() - startTime;
+      console.log(`[OrderService] ⏱️ Запрос к БД выполнен за ${queryTime}мс`);
+
       if (error) {
-        console.error('[OrderService] ❌ Ошибка получения списка исполнителей:', error);
+        console.error('[OrderService] ❌ КРИТИЧЕСКАЯ ОШИБКА получения списка исполнителей:', error);
+        console.error('[OrderService] 🔍 Детали ошибки:', JSON.stringify(error, null, 2));
         return;
+      }
+
+      console.log('[OrderService] 📊 Результат запроса к БД:');
+      console.log('[OrderService] 📊 Количество найденных записей:', workers?.length || 0);
+
+      if (workers && workers.length > 0) {
+        console.log('[OrderService] 👥 Первые 3 исполнителя:');
+        workers.slice(0, 3).forEach((worker: any, index: number) => {
+          console.log(`[OrderService]   ${index + 1}. ID: ${worker.id}, Язык: ${worker.preferred_language || 'не указан'}`);
+        });
       }
 
       if (!workers || workers.length === 0) {
-        console.log('[OrderService] ⚠️ Нет исполнителей для уведомления');
+        console.log('[OrderService] ⚠️ ПРОБЛЕМА: Нет исполнителей для уведомления');
+        console.log('[OrderService] 🔍 Проверьте, есть ли пользователи с role="worker" в таблице users');
         return;
       }
 
-      const workerIds = workers.map(worker => worker.id);
+      const workerIds = workers.map((worker: any) => worker.id);
+      console.log(`[OrderService] 👥 Найдено ${workerIds.length} исполнителей`);
+      console.log('[OrderService] 📋 ID исполнителей:', workerIds);
 
       // Получаем переведенные уведомления для всех исполнителей
       const notificationParams = {
@@ -2203,19 +2233,34 @@ export class OrderService {
         location: order.location
       };
 
-      console.log(`[OrderService] 👥 Найдено ${workerIds.length} исполнителей:`, workerIds);
+      console.log('[OrderService] 🌐 Параметры для перевода:', notificationParams);
+      console.log('[OrderService] 🔄 Получаем переводы уведомлений...');
 
+      const translationStartTime = Date.now();
       const translatedNotifications = await getTranslatedNotificationsForUsers(
         workerIds,
         'new_order',
         notificationParams
       );
+      const translationTime = Date.now() - translationStartTime;
 
-      console.log(`[OrderService] 📝 Получено переводов: ${translatedNotifications.size}`);
-      console.log('[OrderService] 🗂️ Переводы по пользователям:');
-      translatedNotifications.forEach((notification, userId) => {
-        console.log(`  - ${userId}: "${notification.title}" (${notification.body.substring(0, 50)}...)`);
-      });
+      console.log(`[OrderService] ⏱️ Переводы получены за ${translationTime}мс`);
+      console.log(`[OrderService] 📝 Получено переводов: ${translatedNotifications.size} из ${workerIds.length} запрошенных`);
+
+      if (translatedNotifications.size === 0) {
+        console.log('[OrderService] ❌ ПРОБЛЕМА: Не получено ни одного перевода!');
+        return;
+      }
+
+      // Показываем примеры переводов
+      console.log('[OrderService] 📝 Примеры переводов:');
+      let exampleCount = 0;
+      for (const [userId, notification] of translatedNotifications) {
+        if (exampleCount < 3) {
+          console.log(`[OrderService]   ${userId}: "${notification.title}" - "${notification.body}"`);
+          exampleCount++;
+        }
+      }
 
       const data = {
         orderId: order.id,
@@ -2225,38 +2270,96 @@ export class OrderService {
         type: 'new_order'
       };
 
-      // Отправляем уведомления каждому пользователю на его языке
-      let sentCount = 0;
-      console.log('[OrderService] 📤 Начинаем отправку уведомлений...');
+      console.log('[OrderService] 📦 Данные для уведомления:', data);
+
+      // 🚀 ОПТИМИЗИРОВАННАЯ ОТПРАВКА: Группируем по языкам и отправляем параллельно
+      console.log('[OrderService] 📤 НАЧИНАЕМ ОПТИМИЗИРОВАННУЮ ОТПРАВКУ УВЕДОМЛЕНИЙ...');
+
+      // Группируем пользователей по языкам для пакетной отправки
+      const usersByLanguage = new Map<string, {
+        userIds: string[],
+        title: string,
+        body: string
+      }>();
 
       for (const workerId of workerIds) {
-        console.log(`[OrderService] 🎯 Обрабатываем пользователя: ${workerId}`);
         const notification = translatedNotifications.get(workerId);
         if (notification) {
-          console.log(`[OrderService] 📨 Отправляем уведомление пользователю ${workerId}: "${notification.title}"`);
-          const sent = await notificationService.sendNotificationToUser(
-            workerId,
-            notification.title,
-            notification.body,
-            data,
-            'new_order'
-          );
-          if (sent) {
-            sentCount++;
-            console.log(`[OrderService] ✅ Уведомление отправлено пользователю ${workerId}`);
-          } else {
-            console.log(`[OrderService] ❌ Не удалось отправить уведомление пользователю ${workerId}`);
+          const key = `${notification.title}|${notification.body}`;
+          if (!usersByLanguage.has(key)) {
+            usersByLanguage.set(key, {
+              userIds: [],
+              title: notification.title,
+              body: notification.body
+            });
           }
-        } else {
-          console.log(`[OrderService] ⚠️ Нет перевода для пользователя ${workerId}`);
+          usersByLanguage.get(key)!.userIds.push(workerId);
         }
       }
 
-      console.log(`[OrderService] ✅ Отправлено ${sentCount} уведомлений о новом заказе`);
+      console.log(`[OrderService] 🌐 Сгруппировано по языкам: ${usersByLanguage.size} групп`);
+      usersByLanguage.forEach((group, key) => {
+        console.log(`[OrderService] 📋 Группа "${group.title}": ${group.userIds.length} пользователей`);
+      });
+
+      // Отправляем параллельно каждой языковой группе
+      const batchStartTime = Date.now();
+      const batchPromises = Array.from(usersByLanguage.values()).map(async (group) => {
+        console.log(`[OrderService] 🚀 Отправляем пакет для ${group.userIds.length} пользователей: "${group.title}"`);
+
+        try {
+          const batchSentCount = await notificationService.sendNotificationToUsers(
+            group.userIds,
+            group.title,
+            group.body,
+            data,
+            'new_order'
+          );
+
+          console.log(`[OrderService] ✅ Пакет отправлен: ${batchSentCount}/${group.userIds.length} успешно`);
+          return { sent: batchSentCount, failed: group.userIds.length - batchSentCount };
+        } catch (error) {
+          console.error(`[OrderService] ❌ Ошибка отправки пакета:`, error);
+          return { sent: 0, failed: group.userIds.length };
+        }
+      });
+
+      // Ждем завершения всех пакетов
+      const batchResults = await Promise.allSettled(batchPromises);
+      const batchTime = Date.now() - batchStartTime;
+
+      // Подсчитываем итоги
+      let sentCount = 0;
+      let failedCount = 0;
+
+      batchResults.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          sentCount += result.value.sent;
+          failedCount += result.value.failed;
+        } else {
+          console.error(`[OrderService] ❌ Пакет ${index + 1} завершился с ошибкой:`, result.reason);
+          // Считаем всех пользователей в этом пакете как неудачные
+          const groupSize = Array.from(usersByLanguage.values())[index]?.userIds.length || 0;
+          failedCount += groupSize;
+        }
+      });
+
+      console.log(`[OrderService] ⚡ Пакетная отправка завершена за ${batchTime}мс`);
+
+      console.log('\n🔥🔥🔥 [OrderService] ИТОГИ ОТПРАВКИ УВЕДОМЛЕНИЙ 🔥🔥🔥');
+      console.log(`[OrderService] ✅ Успешно отправлено: ${sentCount}`);
+      console.log(`[OrderService] ❌ Не удалось отправить: ${failedCount}`);
+      console.log(`[OrderService] 📊 Общий процент успеха: ${Math.round((sentCount / workerIds.length) * 100)}%`);
+      console.log(`[OrderService] 🕒 Время завершения: ${new Date().toISOString()}`);
+
     } catch (error) {
-      console.error('[OrderService] ❌ Ошибка отправки уведомлений о новом заказе:', error);
+      console.error('\n🚨🚨🚨 [OrderService] КРИТИЧЕСКАЯ ОШИБКА ОТПРАВКИ УВЕДОМЛЕНИЙ 🚨🚨🚨');
+      console.error('[OrderService] ❌ Ошибка:', error);
+      console.error('[OrderService] 📊 Stack trace:', error instanceof Error ? error.stack : 'Нет stack trace');
+
       // В случае ошибки убираем заказ из кэша чтобы можно было повторить попытку
       this.notifiedOrders.delete(order.id);
+      console.log('[OrderService] 🔄 Заказ удален из кэша для повторной попытки');
     }
   }
 
@@ -2265,7 +2368,91 @@ export class OrderService {
    */
   public clearNotificationCache(): void {
     console.log('[OrderService] 🧹 Очищаем кэш уведомленных заказов');
+    console.log('[OrderService] 📋 Кэш до очистки:', Array.from(this.notifiedOrders));
     this.notifiedOrders.clear();
+    console.log('[OrderService] ✅ Кэш очищен');
+  }
+
+  /**
+   * Тестовая функция для проверки уведомлений о новых заказах
+   */
+  public async testNewOrderNotifications(orderId?: string): Promise<void> {
+    try {
+      console.log('\n🧪 [OrderService] ТЕСТИРОВАНИЕ УВЕДОМЛЕНИЙ О НОВЫХ ЗАКАЗАХ');
+
+      // Если передан ID заказа, используем его, иначе создаем тестовый заказ
+      let testOrder: Order;
+
+      if (orderId) {
+        console.log('[OrderService] 🔍 Получаем заказ по ID:', orderId);
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('id', orderId)
+          .single();
+
+        if (error || !data) {
+          console.error('[OrderService] ❌ Заказ не найден:', error);
+          return;
+        }
+
+        testOrder = {
+          id: data.id,
+          title: data.title,
+          description: data.description,
+          category: data.category,
+          location: data.location,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          budget: data.budget,
+          workersNeeded: data.workers_needed,
+          serviceDate: data.service_date,
+          photos: data.photos || [],
+          status: data.status,
+          customerId: data.customer_id,
+          applicantsCount: data.applicants_count,
+          transportPaid: data.transport_paid || false,
+          mealIncluded: data.meal_included || false,
+          mealPaid: data.meal_paid || false,
+          createdAt: data.created_at,
+          updatedAt: data.updated_at
+        };
+      } else {
+        // Создаем тестовый заказ
+        testOrder = {
+          id: 'test-order-' + Date.now(),
+          title: 'Тестовый заказ для проверки уведомлений',
+          description: 'Это тестовый заказ для отладки системы уведомлений',
+          category: 'cleaning',
+          location: 'Ташкент, Узбекистан',
+          budget: 50000,
+          workersNeeded: 1,
+          serviceDate: new Date().toISOString(),
+          photos: [],
+          status: 'new',
+          customerId: 'test-customer',
+          applicantsCount: 0,
+          transportPaid: false,
+          mealIncluded: false,
+          mealPaid: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+      }
+
+      console.log('[OrderService] 📋 Тестовый заказ:', testOrder);
+
+      // Очищаем кэш для повторного тестирования
+      this.clearNotificationCache();
+
+      // Запускаем отправку уведомлений
+      await this.sendNewOrderNotifications(testOrder);
+
+      console.log('\n✅ [OrderService] ТЕСТИРОВАНИЕ ЗАВЕРШЕНО');
+
+    } catch (error) {
+      console.error('\n🚨 [OrderService] ОШИБКА ТЕСТИРОВАНИЯ:', error);
+    }
   }
 
   /**
@@ -2668,7 +2855,7 @@ export class OrderService {
         return;
       }
 
-      const workerIds = acceptedApplicants.map(applicant => applicant.worker_id);
+      const workerIds = acceptedApplicants.map((applicant: any) => applicant.worker_id);
 
       // Получаем переведенные уведомления для всех исполнителей
       const notificationParams = {
@@ -2746,7 +2933,7 @@ export class OrderService {
         return;
       }
 
-      const workerIds = applicants.map(applicant => applicant.worker_id);
+      const workerIds = applicants.map((applicant: any) => applicant.worker_id);
 
       // Получаем переведенные уведомления для всех исполнителей
       const notificationParams = {
@@ -2796,7 +2983,7 @@ export class OrderService {
     try {
       console.log('[OrderService] 📤 Отправляем уведомления об отмене заказа...');
 
-      const workerIds = applicants.map(applicant => applicant.worker_id);
+      const workerIds = applicants.map((applicant: any) => applicant.worker_id);
 
       // Получаем переведенные уведомления для всех исполнителей
       const notificationParams = {
@@ -2876,8 +3063,8 @@ export class OrderService {
         console.log(`[OrderService] 📋 Загружено ${reviewsData.length} отзывов из Supabase`);
 
         // Получаем уникальные ID заказчиков и заказов для дополнительной информации
-        const customerIds = [...new Set(reviewsData.map(review => review.customer_id))];
-        const orderIds = [...new Set(reviewsData.map(review => review.order_id))];
+        const customerIds = [...new Set(reviewsData.map((review: any) => review.customer_id))];
+        const orderIds = [...new Set(reviewsData.map((review: any) => review.order_id))];
 
         // Загружаем информацию о заказчиках
         let customersMap = new Map();
@@ -2888,7 +3075,7 @@ export class OrderService {
             .in('id', customerIds);
 
           if (customers) {
-            customers.forEach(customer => {
+            customers.forEach((customer: any) => {
               customersMap.set(customer.id, `${customer.first_name} ${customer.last_name}`);
             });
           }
@@ -2903,7 +3090,7 @@ export class OrderService {
             .in('id', orderIds);
 
           if (orders) {
-            orders.forEach(order => {
+            orders.forEach((order: any) => {
               ordersMap.set(order.id, order.title);
             });
           }
@@ -2922,7 +3109,7 @@ export class OrderService {
         }));
 
         console.log(`[OrderService] 📋 Обработанные отзывы:`,
-          reviews.map(review => ({
+          reviews.map((review: any) => ({
             id: review.id,
             rating: review.rating,
             comment: review.comment ? `"${review.comment}"` : 'NULL (без комментария)',
@@ -3265,11 +3452,11 @@ export class OrderService {
       }
 
       const totalCalls = callLogs.length;
-      const customerCalls = callLogs.filter(log => log.caller_type === 'customer').length;
-      const workerCalls = callLogs.filter(log => log.caller_type === 'worker').length;
+      const customerCalls = callLogs.filter((log: any) => log.caller_type === 'customer').length;
+      const workerCalls = callLogs.filter((log: any) => log.caller_type === 'worker').length;
 
       // Группируем звонки по дням
-      const callsByDay = callLogs.reduce((acc: { [key: string]: number }, log) => {
+      const callsByDay = callLogs.reduce((acc: { [key: string]: number }, log: any) => {
         const date = new Date(log.call_initiated_at).toISOString().split('T')[0];
         acc[date] = (acc[date] || 0) + 1;
         return acc;
@@ -3277,7 +3464,7 @@ export class OrderService {
 
       const callsByDayArray = Object.entries(callsByDay).map(([date, count]) => ({
         date,
-        count
+        count: count as number
       }));
 
       return {
@@ -3329,36 +3516,36 @@ export class OrderService {
 
       // Статистика по типу звонящего
       const callsByType = {
-        customer: callLogs.filter(log => log.caller_type === 'customer').length,
-        worker: callLogs.filter(log => log.caller_type === 'worker').length
+        customer: callLogs.filter((log: any) => log.caller_type === 'customer').length,
+        worker: callLogs.filter((log: any) => log.caller_type === 'worker').length
       };
 
       // Статистика по источнику звонка
-      const callsBySource = callLogs.reduce((acc: { [key: string]: number }, log) => {
+      const callsBySource = callLogs.reduce((acc: { [key: string]: number }, log: any) => {
         acc[log.call_source] = (acc[log.call_source] || 0) + 1;
         return acc;
       }, {});
 
       // Статистика по статусу заказа
-      const callsByOrderStatus = callLogs.reduce((acc: { [key: string]: number }, log) => {
+      const callsByOrderStatus = callLogs.reduce((acc: { [key: string]: number }, log: any) => {
         acc[log.order_status] = (acc[log.order_status] || 0) + 1;
         return acc;
       }, {});
 
       // Среднее количество звонков на заказ
-      const uniqueOrders = new Set(callLogs.map(log => log.order_id));
+      const uniqueOrders = new Set(callLogs.map((log: any) => log.order_id));
       const avgCallsPerOrder = uniqueOrders.size > 0 ? totalCalls / uniqueOrders.size : 0;
 
       // Пиковые часы звонков
-      const callsByHour = callLogs.reduce((acc: { [key: number]: number }, log) => {
+      const callsByHour = callLogs.reduce((acc: { [key: number]: number }, log: any) => {
         const hour = new Date(log.call_initiated_at).getHours();
         acc[hour] = (acc[hour] || 0) + 1;
         return acc;
       }, {});
 
       const peakHours = Object.entries(callsByHour)
-        .map(([hour, count]) => ({ hour: parseInt(hour), count }))
-        .sort((a, b) => b.count - a.count);
+        .map(([hour, count]) => ({ hour: parseInt(hour), count: count as number }))
+        .sort((a, b) => (b.count as number) - (a.count as number));
 
       return {
         totalCalls,
@@ -3372,6 +3559,185 @@ export class OrderService {
     } catch (error) {
       console.error('[OrderService] ❌ Ошибка получения аналитики звонков:', error);
       return null;
+    }
+  }
+
+  /**
+   * Автоматически завершает заказы в 20:00 GMT+5 в день выполнения
+   */
+  async autoCompleteOrders(): Promise<void> {
+    try {
+      console.log('[OrderService] 🔄 Проверка заказов для автозавершения...');
+
+      // Получаем текущее время
+      const now = new Date();
+
+      // Конвертируем в GMT+5 (Узбекистан)
+      const gmtPlus5Offset = 5 * 60; // 5 часов в минутах
+      const localOffset = now.getTimezoneOffset(); // смещение локального времени в минутах
+      const gmtPlus5Time = new Date(now.getTime() + (gmtPlus5Offset + localOffset) * 60 * 1000);
+
+      console.log(`[OrderService] 🕐 Текущее время GMT+5: ${gmtPlus5Time.toLocaleString()}`);
+
+      // Проверяем, что время >= 20:00
+      const currentHour = gmtPlus5Time.getHours();
+      if (currentHour < 20) {
+        console.log(`[OrderService] ⏰ Еще не время для автозавершения (текущий час: ${currentHour})`);
+        return;
+      }
+
+      // Получаем сегодняшнюю дату в формате YYYY-MM-DD для GMT+5
+      const todayGMTPlus5 = gmtPlus5Time.toISOString().split('T')[0];
+      console.log(`[OrderService] 📅 Ищем заказы на дату: ${todayGMTPlus5}`);
+
+      // Ищем заказы со статусом 'in_progress' на сегодняшнюю дату
+      const { data: ordersToComplete, error } = await supabase
+        .from('orders')
+        .select('id, customer_id, title')
+        .eq('status', 'in_progress')
+        .eq('service_date', todayGMTPlus5);
+
+      if (error) {
+        console.error('[OrderService] ❌ Ошибка получения заказов для автозавершения:', error);
+        return;
+      }
+
+      if (!ordersToComplete || ordersToComplete.length === 0) {
+        console.log('[OrderService] ✅ Нет заказов для автозавершения');
+        return;
+      }
+
+      console.log(`[OrderService] 📋 Найдено ${ordersToComplete.length} заказов для автозавершения`);
+
+      // Завершаем каждый заказ
+      for (const order of ordersToComplete) {
+        try {
+          console.log(`[OrderService] 🔄 Автозавершение заказа: ${order.id}`);
+
+          // Обновляем статус заказа на 'completed' и помечаем как автозавершенный
+          const { error: updateError } = await supabase
+            .from('orders')
+            .update({
+              status: 'completed',
+              auto_completed: true,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', order.id);
+
+          if (updateError) {
+            console.error(`[OrderService] ❌ Ошибка обновления заказа ${order.id}:`, updateError);
+            continue;
+          }
+
+          // Обновляем статус принятых откликов на 'completed'
+          const { error: applicantsError } = await supabase
+            .from('applicants')
+            .update({
+              status: 'completed',
+              updated_at: new Date().toISOString()
+            })
+            .eq('order_id', order.id)
+            .eq('status', 'accepted');
+
+          if (applicantsError) {
+            console.error(`[OrderService] ❌ Ошибка обновления откликов для заказа ${order.id}:`, applicantsError);
+          }
+
+          // Отправляем уведомление о завершении заказа
+          await this.sendOrderCompletedNotifications(order.id);
+
+          // Добавляем запись о необходимости оценки
+          await this.addPendingRating(order.customer_id, order.id);
+
+          console.log(`[OrderService] ✅ Заказ ${order.id} автоматически завершен`);
+
+        } catch (orderError) {
+          console.error(`[OrderService] ❌ Ошибка при автозавершении заказа ${order.id}:`, orderError);
+        }
+      }
+
+      console.log('[OrderService] ✅ Автозавершение заказов завершено');
+
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка автозавершения заказов:', error);
+    }
+  }
+
+  /**
+   * Добавляет запись о необходимости оценки заказа заказчиком
+   */
+  private async addPendingRating(customerId: string, orderId: string): Promise<void> {
+    try {
+      const { data, error } = await supabase
+        .rpc('add_pending_rating', {
+          p_customer_id: customerId,
+          p_order_id: orderId
+        });
+
+      if (error) {
+        console.error('[OrderService] ❌ Ошибка добавления записи о необходимости оценки:', error);
+      } else if (data) {
+        console.log(`[OrderService] ✅ Добавлена запись о необходимости оценки для заказа ${orderId}`);
+      }
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка добавления записи о необходимости оценки:', error);
+    }
+  }
+
+  /**
+   * Получает заказы, требующие оценки от заказчика
+   */
+  async getPendingRatingsForCustomer(customerId: string): Promise<any[]> {
+    try {
+      const { data, error } = await supabase
+        .rpc('get_pending_ratings_for_customer', {
+          p_customer_id: customerId
+        });
+
+      if (error) {
+        console.error('[OrderService] ❌ Ошибка получения заказов для оценки:', error);
+        return [];
+      }
+
+      // data теперь содержит JSON массив
+      const jsonData = Array.isArray(data) ? data : (data || []);
+
+      // Преобразуем данные в нужный формат
+      return jsonData.map((item: any) => ({
+        order_id: item.order_id,
+        orders: {
+          id: item.order_id,
+          title: item.order_title,
+          description: item.order_description,
+          service_date: item.service_date,
+          location: item.location,
+          budget: item.budget
+        }
+      }));
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка получения заказов для оценки:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Удаляет запись о необходимости оценки после того, как заказчик оценил заказ
+   */
+  async removePendingRating(customerId: string, orderId: string): Promise<void> {
+    try {
+      const { data, error } = await supabase
+        .rpc('remove_pending_rating', {
+          p_customer_id: customerId,
+          p_order_id: orderId
+        });
+
+      if (error) {
+        console.error('[OrderService] ❌ Ошибка удаления записи о необходимости оценки:', error);
+      } else if (data) {
+        console.log(`[OrderService] ✅ Удалена запись о необходимости оценки для заказа ${orderId}`);
+      }
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка удаления записи о необходимости оценки:', error);
     }
   }
 }

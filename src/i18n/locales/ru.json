@@ -154,10 +154,25 @@
     "birth_date": "Дата рождения",
     "agreement": "Согласие",
     "saving": "Сохраняем...",
-    "done": "Готово"
+    "done": "Готово",
+    "profile_step_name_title": "Имя и фамилия",
+    "profile_step_name_subtitle": "Введите ваше имя и фамилию",
+    "name_placeholder": "Имя",
+    "lastname_placeholder_simple": "Фамилия",
+    "profile_step_birthdate_title": "Дата рождения",
+    "birthdate_placeholder": "дд.мм.гггг",
+    "enter_name": "Введите ваше имя",
+    "enter_lastname": "Введите вашу фамилию",
+    "enter_birth_date": "Введите дату рождения",
+    "invalid_date_format": "Введите дату в формате дд.мм.гггг",
+    "invalid_date_error": "Неверный формат даты",
+    "date_not_exist": "Такой даты не существует",
+    "age_minimum_error": "Вам должно быть не менее 18 лет",
+    "validation_error": "Ошибка"
   },
   "customer": {
     "my_orders": "Мои заказы",
+    "home_screen": "Главный экран",
     "ok": "ОК",
     "active_orders_count": "У вас {{count}} активных заказов",
     "create_first_order": "Создайте свой первый заказ",
@@ -302,6 +317,7 @@
     "logout": "Выйти",
     "logout_error": "Не удалось выйти из аккаунта",
     "delete_account": "Удалить аккаунт",
+    "version": "Версия",
     "delete_account_title": "Удаление аккаунта",
     "delete_account_message": "Вы действительно хотите удалить свой аккаунт? Это действие нельзя отменить. Все ваши данные, заказы и история будут безвозвратно удалены.",
     "delete_account_confirm": "Удалить аккаунт",
@@ -721,6 +737,7 @@
     "logout_message": "Вы действительно хотите выйти из аккаунта?",
     "logout_error": "Не удалось выйти из аккаунта",
     "delete_account": "Удалить аккаунт",
+    "version": "Версия",
     "delete_account_title": "Удаление аккаунта",
     "delete_account_message": "Вы действительно хотите удалить свой аккаунт? Это действие нельзя отменить. Все ваши данные, заказы и история будут безвозвратно удалены.",
     "delete_account_confirm": "Удалить аккаунт",
@@ -783,7 +800,8 @@
     "working_time": "09:00 - 20:00 (GMT+5)",
     "other_contacts": "Другие способы связи",
     "email_label": "Email:",
-    "address_label": "Адрес: Samarqand viloyati, Samarqand tumani, Konigil MFY, Samarqand davozasi ko'chasi, 49-uy"
+    "address_label": "Адрес: Samarqand viloyati, Samarqand tumani, Konigil MFY, Samarqand davozasi ko'chasi, 49-uy",
+    "amenities": "Дополнительные удобства"
   },
   "push_notifications": {
     "new_order_title": "Новый заказ!",

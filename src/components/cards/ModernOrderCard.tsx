@@ -151,7 +151,9 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
                 progress={0.5}
               />
             </View>
-            <Text style={styles.categoryText}>{getCategoryLabel(order.category, tCategories)}</Text>
+            <Text style={styles.categoryText} numberOfLines={1} ellipsizeMode="tail">
+              {getCategoryLabel(order.category, tCategories)}
+            </Text>
           </View>
           <View style={[
             styles.statusPill,
@@ -389,6 +391,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.medium,
     color: theme.colors.text.primary,
     flex: 1,
+    flexShrink: 1,
   },
   timeInfo: {
     marginBottom: theme.spacing.sm,
@@ -400,13 +403,14 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   statusPill: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: 16,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: 12,
     alignSelf: 'flex-end',
+    flexShrink: 0,
   },
   statusPillText: {
-    fontSize: theme.fonts.sizes.sm,
+    fontSize: theme.fonts.sizes.xs,
     fontWeight: theme.fonts.weights.semiBold,
   },
   title: {

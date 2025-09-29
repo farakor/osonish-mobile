@@ -325,26 +325,8 @@ export const OrderDetailsScreen: React.FC = () => {
 
   // Функция для проверки, можно ли показывать кнопку "Завершить"
   const canShowCompleteButton = (order: Order | null): boolean => {
-    if (!order || order.status !== 'in_progress') {
-      return false;
-    }
-
-    // Получаем дату заказа
-    const serviceDate = new Date(order.serviceDate);
-
-    // Получаем текущую дату
-    const currentDate = new Date();
-
-    // Устанавливаем время в 00:00 для корректного сравнения дат
-    serviceDate.setHours(0, 0, 0, 0);
-    currentDate.setHours(0, 0, 0, 0);
-
-    // Вычисляем дату следующего дня после serviceDate
-    const nextDay = new Date(serviceDate);
-    nextDay.setDate(nextDay.getDate() + 1);
-
-    // Кнопка доступна только если текущая дата >= следующего дня после serviceDate
-    return currentDate >= nextDay;
+    // Кнопка "Завершить" всегда видна для заказов со статусом "in_progress"
+    return order?.status === 'in_progress';
   };
 
   // Загружаем заказ по ID
@@ -1150,17 +1132,6 @@ export const OrderDetailsScreen: React.FC = () => {
             </Text>
           </View>
           <View style={styles.stickyRightContainer}>
-            {/* Кнопка "Повторить заказ" в sticky header */}
-            <TouchableOpacity
-              style={styles.stickyRepeatButton}
-              onPress={handleRepeatOrder}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.stickyRepeatButtonText}>
-                {t('repeat_order')}
-              </Text>
-            </TouchableOpacity>
-
             {canShowCompleteButton(order) ? (
               <TouchableOpacity
                 style={styles.stickyCompleteButton}

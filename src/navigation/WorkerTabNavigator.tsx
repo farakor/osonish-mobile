@@ -42,7 +42,13 @@ export function WorkerTabNavigator() {
         tabBarStyle: {
           backgroundColor: '#fff',
           borderTopWidth: 0,
-          shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0, paddingTop: theme.spacing.sm,
+          // Легкая тень для меню бара
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 8,
+          paddingTop: theme.spacing.sm,
           justifyContent: 'center',
           ...tabBarStyle, // Применяем стили с учетом платформы в конце
         },

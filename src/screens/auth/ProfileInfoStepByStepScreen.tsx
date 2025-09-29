@@ -275,24 +275,24 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
   // Функция для валидации даты
   const validateDate = (dateString: string): { isValid: boolean; date?: Date; error?: string } => {
     if (!dateString || dateString.length !== 10) {
-      return { isValid: false, error: 'Введите дату в формате дд.мм.гггг' };
+      return { isValid: false, error: t('invalid_date_format') };
     }
 
     const [day, month, year] = dateString.split('.').map(Number);
 
     if (!day || !month || !year) {
-      return { isValid: false, error: 'Неверный формат даты' };
+      return { isValid: false, error: t('invalid_date_error') };
     }
 
     if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900 || year > new Date().getFullYear()) {
-      return { isValid: false, error: 'Неверная дата' };
+      return { isValid: false, error: t('invalid_date_error') };
     }
 
     const date = new Date(year, month - 1, day);
 
     // Проверяем, что дата действительно существует
     if (date.getDate() !== day || date.getMonth() !== month - 1 || date.getFullYear() !== year) {
-      return { isValid: false, error: 'Такой даты не существует' };
+      return { isValid: false, error: t('date_not_exist') };
     }
 
     // Проверяем возраст (должно быть 18 лет или больше)
@@ -304,7 +304,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
     const actualAge = monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age;
 
     if (actualAge < 18) {
-      return { isValid: false, error: 'Вам должно быть не менее 18 лет' };
+      return { isValid: false, error: t('age_minimum_error') };
     }
 
     return { isValid: true, date };
@@ -390,22 +390,22 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
         return true;
       case 2: // Имя и фамилия
         if (!firstName.trim()) {
-          Alert.alert(t('fill_field'), 'Введите ваше имя');
+          Alert.alert(t('fill_field'), t('enter_name'));
           return false;
         }
         if (!lastName.trim()) {
-          Alert.alert(t('fill_field'), 'Введите вашу фамилию');
+          Alert.alert(t('fill_field'), t('enter_lastname'));
           return false;
         }
         return true;
       case 3: // Дата рождения
         if (!birthDate) {
-          Alert.alert(t('select_date'), 'Введите дату рождения');
+          Alert.alert(t('select_date'), t('enter_birth_date'));
           return false;
         }
         const validation = validateDate(birthDate);
         if (!validation.isValid) {
-          Alert.alert('Ошибка', validation.error || 'Неверная дата');
+          Alert.alert(t('validation_error'), validation.error || t('invalid_date_error'));
           return false;
         }
         return true;
@@ -475,7 +475,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
     // Валидируем дату рождения
     const dateValidation = validateDate(birthDate);
     if (!dateValidation.isValid) {
-      Alert.alert('Ошибка', dateValidation.error || 'Неверная дата рождения');
+      Alert.alert(t('validation_error'), dateValidation.error || t('invalid_date_error'));
       return;
     }
 
@@ -511,7 +511,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
   const getStepTitle = () => {
     switch (currentStep) {
       case 1: return t('profile_photo');
-      case 2: return 'Имя и фамилия';
+      case 2: return t('profile_step_name_title');
       case 3: return t('birth_date');
       case 4: return t('agreement');
       default: return '';
@@ -572,11 +572,11 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 2} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 2} delay={0} resetKey={`${animationResetKey}-step-2`}>
-                <Text style={styles.stepTitle}>Имя и фамилия</Text>
+                <Text style={styles.stepTitle}>{t('profile_step_name_title')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 2} delay={150} resetKey={`${animationResetKey}-step-2`}>
-                <Text style={styles.stepSubtitle}>Введите ваше имя и фамилию</Text>
+                <Text style={styles.stepSubtitle}>{t('profile_step_name_subtitle')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 2} delay={200} resetKey={`${animationResetKey}-step-2`}>
@@ -585,7 +585,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                     style={getInputStyle(firstNameFocused)}
                     value={firstName}
                     onChangeText={setFirstName}
-                    placeholder="Имя"
+                    placeholder={t('name_placeholder')}
                     placeholderTextColor={theme.colors.text.secondary}
                     autoFocus
                     returnKeyType="next"
@@ -616,7 +616,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                     style={getInputStyle(lastNameFocused)}
                     value={lastName}
                     onChangeText={setLastName}
-                    placeholder="Фамилия"
+                    placeholder={t('lastname_placeholder_simple')}
                     placeholderTextColor={theme.colors.text.secondary}
                     returnKeyType="done"
                     onFocus={() => {
@@ -643,7 +643,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 3} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 3} delay={0} resetKey={`${animationResetKey}-step-3`}>
-                <Text style={styles.stepTitle}>Дата рождения</Text>
+                <Text style={styles.stepTitle}>{t('profile_step_birthdate_title')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 3} delay={150} resetKey={`${animationResetKey}-step-3`}>
@@ -656,7 +656,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                     style={getInputStyle(birthDateFocused)}
                     value={birthDate}
                     onChangeText={handleBirthDateChange}
-                    placeholder="дд.мм.гггг"
+                    placeholder={t('birthdate_placeholder')}
                     placeholderTextColor={theme.colors.text.secondary}
                     keyboardType="numeric"
                     maxLength={10}

@@ -275,3 +275,23 @@ export const getImprovedFixedBottomStyle = (insets: ReturnType<typeof usePlatfor
     paddingTop: 16,
   };
 };
+
+/**
+ * Получает стили для фиксированных элементов впритык к navigation bar
+ * Специально для кнопок, которые должны быть максимально близко к navigation bar
+ */
+export const getEdgeToEdgeFixedBottomStyle = (insets: ReturnType<typeof usePlatformSafeAreaInsets>) => {
+  if (Platform.OS === 'android') {
+    // Минимальные отступы для Android - только safe area insets
+    return {
+      paddingBottom: insets.bottom,
+      paddingTop: 16,
+    };
+  }
+
+  // На iOS используем safe area + минимальный отступ
+  return {
+    paddingBottom: Math.max(insets.bottom, 16),
+    paddingTop: 16,
+  };
+};

@@ -56,8 +56,10 @@ class ProductionNotificationService {
    */
   private async sendViaExpoAPI(message: ProductionPushMessage): Promise<boolean> {
     try {
-      console.log('[ProductionNotificationService] 🚀 Отправка через Expo Push Service');
+      console.log('\n🚀 [ProductionNotificationService] ОТПРАВКА ЧЕРЕЗ EXPO PUSH SERVICE');
       console.log('[ProductionNotificationService] 🎯 Токен получателя:', message.to.substring(0, 30) + '...');
+      console.log('[ProductionNotificationService] 📝 Заголовок:', message.title);
+      console.log('[ProductionNotificationService] 📄 Текст:', message.body);
       console.log('[ProductionNotificationService] 📱 Платформа:', Platform.OS);
       console.log('[ProductionNotificationService] 🏗️ Среда:', this.isProductionBuild() ? 'Production' : 'Development/Expo Go');
 
@@ -71,6 +73,12 @@ class ProductionNotificationService {
         channelId: message.channelId || 'default',
       };
 
+      console.log('[ProductionNotificationService] 📦 Полное сообщение для Expo API:');
+      console.log(JSON.stringify(expoMessage, null, 2));
+
+      console.log('[ProductionNotificationService] 🌐 Отправляем HTTP запрос к Expo API...');
+      const requestStartTime = Date.now();
+
       const response = await fetch('https://exp.host/--/api/v2/push/send', {
         method: 'POST',
         headers: {
@@ -81,12 +89,51 @@ class ProductionNotificationService {
         body: JSON.stringify(expoMessage),
       });
 
-      const result = await response.json();
-      console.log('[ProductionNotificationService] 📡 Ответ Expo API:', result);
+      const requestTime = Date.now() - requestStartTime;
+      console.log(`[ProductionNotificationService] ⏱️ HTTP запрос выполнен за ${requestTime}мс`);
+      console.log(`[ProductionNotificationService] 📊 HTTP статус: ${response.status} ${response.statusText}`);
 
-      return result.data && result.data.status === 'ok';
+      if (!response.ok) {
+        console.error(`[ProductionNotificationService] ❌ HTTP ошибка: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('[ProductionNotificationService] 📄 Тело ошибки:', errorText);
+        return false;
+      }
+
+      const result = await response.json();
+      console.log('[ProductionNotificationService] 📡 Полный ответ Expo API:');
+      console.log(JSON.stringify(result, null, 2));
+
+      // Проверяем успешность отправки
+      const isSuccess = result.data && result.data.status === 'ok';
+
+      if (isSuccess) {
+        console.log('[ProductionNotificationService] ✅ УСПЕШНО: Уведомление принято Expo API');
+        if (result.data.id) {
+          console.log('[ProductionNotificationService] 🆔 ID уведомления:', result.data.id);
+        }
+      } else {
+        console.error('[ProductionNotificationService] ❌ ОШИБКА: Expo API отклонил уведомление');
+        if (result.data && result.data.status) {
+          console.error('[ProductionNotificationService] 📊 Статус от Expo:', result.data.status);
+        }
+        if (result.data && result.data.message) {
+          console.error('[ProductionNotificationService] 💬 Сообщение от Expo:', result.data.message);
+        }
+        if (result.errors) {
+          console.error('[ProductionNotificationService] 🚨 Ошибки от Expo:', result.errors);
+        }
+      }
+
+      return isSuccess;
     } catch (error) {
-      console.error('[ProductionNotificationService] ❌ Ошибка Expo API:', error);
+      console.error('\n🚨 [ProductionNotificationService] КРИТИЧЕСКАЯ ОШИБКА EXPO API 🚨');
+      console.error('[ProductionNotificationService] ❌ Ошибка:', error);
+      console.error('[ProductionNotificationService] 📊 Stack trace:', error instanceof Error ? error.stack : 'Нет stack trace');
+      console.error('[ProductionNotificationService] 💡 Возможные причины:');
+      console.error('[ProductionNotificationService] 💡 - Нет интернет соединения');
+      console.error('[ProductionNotificationService] 💡 - Недействительный токен');
+      console.error('[ProductionNotificationService] 💡 - Проблемы с Expo Push Service');
       return false;
     }
   }

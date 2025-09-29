@@ -173,6 +173,12 @@ export async function getTranslatedNotificationsForUsers(
 ): Promise<Map<string, { title: string; body: string }>> {
   const result = new Map<string, { title: string; body: string }>();
 
+  // Проверяем, что есть пользователи для уведомлений
+  if (!userIds || userIds.length === 0) {
+    console.log('[NotificationTranslations] Нет пользователей для отправки уведомлений');
+    return result;
+  }
+
   try {
     // Получаем языки всех пользователей из БД одним запросом
     const { data: users, error } = await supabase
@@ -181,7 +187,7 @@ export async function getTranslatedNotificationsForUsers(
       .in('id', userIds);
 
     if (error) {
-      console.error('[NotificationTranslations] Ошибка получения языков пользователей:', error);
+      console.warn('[NotificationTranslations] ⚠️ Не удалось получить языки пользователей, используем русский по умолчанию');
       // Fallback: все пользователи получают уведомления на русском
       userIds.forEach(userId => {
         const title = getNotificationTitle(type, 'ru');
@@ -213,7 +219,7 @@ export async function getTranslatedNotificationsForUsers(
     console.log(`[NotificationTranslations] Сгенерированы уведомления для ${userIds.length} пользователей`);
 
   } catch (error) {
-    console.error('[NotificationTranslations] Ошибка генерации уведомлений:', error);
+    console.warn('[NotificationTranslations] ⚠️ Ошибка генерации уведомлений, используем русский по умолчанию');
 
     // Fallback: все пользователи получают уведомления на русском
     userIds.forEach(userId => {
@@ -222,6 +228,5 @@ export async function getTranslatedNotificationsForUsers(
       result.set(userId, { title, body });
     });
   }
-
   return result;
 }

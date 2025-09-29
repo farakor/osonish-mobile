@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Dimensions } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { theme } from '../../constants';
@@ -22,16 +22,19 @@ export const EmbeddedMapSelector: React.FC<EmbeddedMapSelectorProps> = ({
 }) => {
   const t = useCustomerTranslation();
   const webViewRef = useRef<WebView>(null);
+  const fullScreenWebViewRef = useRef<WebView>(null);
   const [selectedCoords, setSelectedCoords] = useState<LocationCoords | null>(initialCoords || null);
   const [selectedAddress, setSelectedAddress] = useState<string>(initialAddress || location || '');
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [currentZoom, setCurrentZoom] = useState<number>(14);
+  const [fullScreenZoom, setFullScreenZoom] = useState<number>(15);
 
   // Определяем центр карты (Самарканд по умолчанию)
   const defaultCenter = { latitude: 39.6270, longitude: 66.9750 };
   const mapCenter = initialCoords || defaultCenter;
 
   // HTML шаблон для интерактивной Яндекс карты
-  const createMapHTML = (isExpanded: boolean = false) => `
+  const createMapHTML = useCallback((isExpanded: boolean = false, zoom: number = isExpanded ? fullScreenZoom : currentZoom) => `
     <!DOCTYPE html>
     <html>
       <head>
@@ -144,7 +147,7 @@ export const EmbeddedMapSelector: React.FC<EmbeddedMapSelectorProps> = ({
           ymaps.ready(function () {
             map = new ymaps.Map('map', {
               center: [${mapCenter.latitude}, ${mapCenter.longitude}],
-              zoom: ${isExpanded ? '15' : '14'},
+              zoom: ${zoom},
               controls: ['zoomControl', ${isExpanded ? "'geolocationControl'" : ''}]
             });
 
@@ -201,6 +204,16 @@ export const EmbeddedMapSelector: React.FC<EmbeddedMapSelectorProps> = ({
               // Обновляем только если пользователь взаимодействовал с картой
               if (userInteracted) {
                 updateCenterCoords();
+                
+                // Отправляем текущий зум в React Native с небольшой задержкой для стабильности
+                setTimeout(function() {
+                  const currentZoom = map.getZoom();
+                  window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: 'zoomChanged',
+                    zoom: currentZoom,
+                    isExpanded: ${isExpanded}
+                  }));
+                }, 100);
               }
             });
 
@@ -215,9 +228,9 @@ export const EmbeddedMapSelector: React.FC<EmbeddedMapSelectorProps> = ({
         </script>
       </body>
     </html>
-  `;
+  `, [mapCenter.latitude, mapCenter.longitude, selectedCoords, selectedAddress, location, t, currentZoom, fullScreenZoom]);
 
-  const handleWebViewMessage = (event: any) => {
+  const handleWebViewMessage = useCallback((event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
 
@@ -227,15 +240,38 @@ export const EmbeddedMapSelector: React.FC<EmbeddedMapSelectorProps> = ({
         onLocationSelect(data.coords, data.address);
       } else if (data.type === 'expandMap') {
         setIsFullScreen(true);
+      } else if (data.type === 'zoomChanged') {
+        // Сохраняем текущий зум
+        if (data.isExpanded) {
+          setFullScreenZoom(data.zoom);
+        } else {
+          setCurrentZoom(data.zoom);
+        }
       }
     } catch (error) {
       console.error('Ошибка при обработке сообщения от WebView:', error);
     }
-  };
+  }, [onLocationSelect]);
 
-  const handleFullScreenClose = () => {
+  const handleFullScreenClose = useCallback(() => {
     setIsFullScreen(false);
-  };
+  }, []);
+
+  // Мемоизируем HTML для встроенной карты - обновляем только при изменении зума или координат
+  const embeddedMapHTML = useMemo(() => createMapHTML(false, currentZoom), [
+    createMapHTML,
+    currentZoom,
+    mapCenter.latitude,
+    mapCenter.longitude
+  ]);
+
+  // Мемоизируем HTML для полноэкранной карты - обновляем только при изменении зума или координат
+  const fullScreenMapHTML = useMemo(() => createMapHTML(true, fullScreenZoom), [
+    createMapHTML,
+    fullScreenZoom,
+    mapCenter.latitude,
+    mapCenter.longitude
+  ]);
 
   return (
     <>
@@ -243,7 +279,7 @@ export const EmbeddedMapSelector: React.FC<EmbeddedMapSelectorProps> = ({
       <View style={styles.embeddedMapContainer}>
         <WebView
           ref={webViewRef}
-          source={{ html: createMapHTML(false) }}
+          source={{ html: embeddedMapHTML }}
           style={styles.embeddedWebView}
           onMessage={handleWebViewMessage}
           javaScriptEnabled={true}
@@ -273,7 +309,8 @@ export const EmbeddedMapSelector: React.FC<EmbeddedMapSelectorProps> = ({
 
           {/* Полноэкранная карта */}
           <WebView
-            source={{ html: createMapHTML(true) }}
+            ref={fullScreenWebViewRef}
+            source={{ html: fullScreenMapHTML }}
             style={styles.fullScreenWebView}
             onMessage={handleWebViewMessage}
             javaScriptEnabled={true}
