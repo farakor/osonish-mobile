@@ -88,9 +88,15 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# Environment files
 .env*.local
 .env
+# Разрешаем шаблоны для разных сред, но блокируем локальные переопределения
+!.env.development
+!.env.production
+.env.development.local
+.env.production.local
+.old_env
 
 # typescript
 *.tsbuildinfo

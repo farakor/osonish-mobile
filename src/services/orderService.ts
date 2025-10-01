@@ -3563,11 +3563,13 @@ export class OrderService {
   }
 
   /**
-   * Автоматически завершает заказы в 20:00 GMT+5 в день выполнения
+   * Автоматически обновляет статусы заказов в 20:00 GMT+5 в день выполнения:
+   * - Заказы со статусом "В работе" (in_progress) завершаются автоматически
+   * - Заказы со статусом "Новый" (new) и "Отклик получен" (response_received) отменяются автоматически
    */
   async autoCompleteOrders(): Promise<void> {
     try {
-      console.log('[OrderService] 🔄 Проверка заказов для автозавершения...');
+      console.log('[OrderService] 🔄 Проверка заказов для автоматического обновления статусов...');
 
       // Получаем текущее время
       const now = new Date();
@@ -3582,7 +3584,7 @@ export class OrderService {
       // Проверяем, что время >= 20:00
       const currentHour = gmtPlus5Time.getHours();
       if (currentHour < 20) {
-        console.log(`[OrderService] ⏰ Еще не время для автозавершения (текущий час: ${currentHour})`);
+        console.log(`[OrderService] ⏰ Еще не время для автоматического обновления статусов (текущий час: ${currentHour})`);
         return;
       }
 
@@ -3590,76 +3592,486 @@ export class OrderService {
       const todayGMTPlus5 = gmtPlus5Time.toISOString().split('T')[0];
       console.log(`[OrderService] 📅 Ищем заказы на дату: ${todayGMTPlus5}`);
 
-      // Ищем заказы со статусом 'in_progress' на сегодняшнюю дату
-      const { data: ordersToComplete, error } = await supabase
+      // 1. Ищем заказы со статусом 'in_progress' на сегодняшнюю дату для автозавершения
+      const startOfDay = `${todayGMTPlus5}T00:00:00.000Z`;
+      const endOfDay = `${todayGMTPlus5}T23:59:59.999Z`;
+
+      const { data: ordersToComplete, error: completeError } = await supabase
         .from('orders')
         .select('id, customer_id, title')
         .eq('status', 'in_progress')
-        .eq('service_date', todayGMTPlus5);
+        .gte('service_date', startOfDay)
+        .lte('service_date', endOfDay);
 
-      if (error) {
-        console.error('[OrderService] ❌ Ошибка получения заказов для автозавершения:', error);
-        return;
-      }
+      if (completeError) {
+        console.error('[OrderService] ❌ Ошибка получения заказов для автозавершения:', completeError);
+      } else {
+        if (ordersToComplete && ordersToComplete.length > 0) {
+          console.log(`[OrderService] 📋 Найдено ${ordersToComplete.length} заказов "В работе" для автозавершения`);
 
-      if (!ordersToComplete || ordersToComplete.length === 0) {
-        console.log('[OrderService] ✅ Нет заказов для автозавершения');
-        return;
-      }
+          // Завершаем каждый заказ
+          for (const order of ordersToComplete) {
+            try {
+              console.log(`[OrderService] 🔄 Автозавершение заказа: ${order.id}`);
 
-      console.log(`[OrderService] 📋 Найдено ${ordersToComplete.length} заказов для автозавершения`);
+              // Обновляем статус заказа на 'completed' и помечаем как автозавершенный
+              const { error: updateError } = await supabase
+                .from('orders')
+                .update({
+                  status: 'completed',
+                  auto_completed: true,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', order.id);
 
-      // Завершаем каждый заказ
-      for (const order of ordersToComplete) {
-        try {
-          console.log(`[OrderService] 🔄 Автозавершение заказа: ${order.id}`);
+              if (updateError) {
+                console.error(`[OrderService] ❌ Ошибка обновления заказа ${order.id}:`, updateError);
+                continue;
+              }
 
-          // Обновляем статус заказа на 'completed' и помечаем как автозавершенный
-          const { error: updateError } = await supabase
-            .from('orders')
-            .update({
-              status: 'completed',
-              auto_completed: true,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', order.id);
+              // Обновляем статус принятых откликов на 'completed'
+              const { error: applicantsError } = await supabase
+                .from('applicants')
+                .update({
+                  status: 'completed',
+                  updated_at: new Date().toISOString()
+                })
+                .eq('order_id', order.id)
+                .eq('status', 'accepted');
 
-          if (updateError) {
-            console.error(`[OrderService] ❌ Ошибка обновления заказа ${order.id}:`, updateError);
-            continue;
+              if (applicantsError) {
+                console.error(`[OrderService] ❌ Ошибка обновления откликов для заказа ${order.id}:`, applicantsError);
+              }
+
+              // Отправляем уведомление о завершении заказа
+              await this.sendOrderCompletedNotifications(order.id);
+
+              // Добавляем запись о необходимости оценки
+              await this.addPendingRating(order.customer_id, order.id);
+
+              console.log(`[OrderService] ✅ Заказ ${order.id} автоматически завершен`);
+
+            } catch (orderError) {
+              console.error(`[OrderService] ❌ Ошибка при автозавершении заказа ${order.id}:`, orderError);
+            }
           }
-
-          // Обновляем статус принятых откликов на 'completed'
-          const { error: applicantsError } = await supabase
-            .from('applicants')
-            .update({
-              status: 'completed',
-              updated_at: new Date().toISOString()
-            })
-            .eq('order_id', order.id)
-            .eq('status', 'accepted');
-
-          if (applicantsError) {
-            console.error(`[OrderService] ❌ Ошибка обновления откликов для заказа ${order.id}:`, applicantsError);
-          }
-
-          // Отправляем уведомление о завершении заказа
-          await this.sendOrderCompletedNotifications(order.id);
-
-          // Добавляем запись о необходимости оценки
-          await this.addPendingRating(order.customer_id, order.id);
-
-          console.log(`[OrderService] ✅ Заказ ${order.id} автоматически завершен`);
-
-        } catch (orderError) {
-          console.error(`[OrderService] ❌ Ошибка при автозавершении заказа ${order.id}:`, orderError);
+        } else {
+          console.log('[OrderService] ✅ Нет заказов "В работе" для автозавершения');
         }
       }
 
-      console.log('[OrderService] ✅ Автозавершение заказов завершено');
+      // 2. Ищем заказы со статусом 'new' и 'response_received' на сегодняшнюю дату для автоотмены
+      const { data: ordersToCancel, error: cancelError } = await supabase
+        .from('orders')
+        .select('id, customer_id, title, status')
+        .in('status', ['new', 'response_received'])
+        .gte('service_date', startOfDay)
+        .lte('service_date', endOfDay);
+
+      if (cancelError) {
+        console.error('[OrderService] ❌ Ошибка получения заказов для автоотмены:', cancelError);
+      } else {
+        if (ordersToCancel && ordersToCancel.length > 0) {
+          console.log(`[OrderService] 📋 Найдено ${ordersToCancel.length} заказов "Новый"/"Отклик получен" для автоотмены`);
+
+          // Отменяем каждый заказ
+          for (const order of ordersToCancel) {
+            try {
+              console.log(`[OrderService] 🔄 Автоотмена заказа: ${order.id} (статус: ${order.status})`);
+
+              // Обновляем статус заказа на 'cancelled' и помечаем как автоотмененный
+              const { error: updateError } = await supabase
+                .from('orders')
+                .update({
+                  status: 'cancelled',
+                  auto_cancelled: true,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', order.id);
+
+              if (updateError) {
+                console.error(`[OrderService] ❌ Ошибка обновления заказа ${order.id}:`, updateError);
+                continue;
+              }
+
+              // Отменяем все ожидающие отклики
+              const { error: applicantsError } = await supabase
+                .from('applicants')
+                .update({
+                  status: 'cancelled',
+                  updated_at: new Date().toISOString()
+                })
+                .eq('order_id', order.id)
+                .eq('status', 'pending');
+
+              if (applicantsError) {
+                console.error(`[OrderService] ❌ Ошибка отмены откликов для заказа ${order.id}:`, applicantsError);
+              }
+
+              // Получаем отклики для отправки уведомлений
+              const { data: applicants } = await supabase
+                .from('applicants')
+                .select('worker_id')
+                .eq('order_id', order.id)
+                .eq('status', 'pending');
+
+              // Отправляем уведомление об отмене заказа
+              if (applicants && applicants.length > 0) {
+                await this.sendOrderCancelledNotifications(order.id, order.title, applicants);
+              }
+
+              console.log(`[OrderService] ✅ Заказ ${order.id} автоматически отменен`);
+
+            } catch (orderError) {
+              console.error(`[OrderService] ❌ Ошибка при автоотмене заказа ${order.id}:`, orderError);
+            }
+          }
+        } else {
+          console.log('[OrderService] ✅ Нет заказов "Новый"/"Отклик получен" для автоотмены');
+        }
+      }
+
+      console.log('[OrderService] ✅ Автоматическое обновление статусов заказов завершено');
 
     } catch (error) {
-      console.error('[OrderService] ❌ Ошибка автозавершения заказов:', error);
+      console.error('[OrderService] ❌ Ошибка автоматического обновления статусов заказов:', error);
+    }
+  }
+
+  /**
+   * ТЕСТОВАЯ версия автообновления заказов БЕЗ проверки времени
+   * Обрабатывает ВСЕ заказы на сегодняшнюю дату (не только тестовые)
+   * Используется только для тестирования в режиме разработки
+   */
+  async autoCompleteOrdersForTesting(): Promise<void> {
+    try {
+      console.log('[OrderService] 🧪 ТЕСТ: Принудительное обновление статусов заказов (без проверки времени)...');
+
+      // Получаем сегодняшнюю дату без проверки времени
+      const today = new Date().toISOString().split('T')[0];
+      console.log(`[OrderService] 📅 ТЕСТ: Ищем заказы на дату: ${today}`);
+
+      // Отладочная информация - показываем все заказы пользователя на сегодня
+      const authState = authService.getAuthState();
+      if (authState.isAuthenticated && authState.user) {
+        // Ищем заказы по дате с учетом времени (используем диапазон дат)
+        const startOfDay = `${today}T00:00:00.000Z`;
+        const endOfDay = `${today}T23:59:59.999Z`;
+
+        const { data: allTodayOrders, error: debugError } = await supabase
+          .from('orders')
+          .select('id, title, status, service_date, customer_id')
+          .eq('customer_id', authState.user.id)
+          .gte('service_date', startOfDay)
+          .lte('service_date', endOfDay);
+
+        if (!debugError && allTodayOrders) {
+          console.log(`[OrderService] 🔍 ОТЛАДКА: Найдено ${allTodayOrders.length} заказов пользователя на сегодня:`);
+          allTodayOrders.forEach((order: any) => {
+            console.log(`  - ${order.id}: "${order.title}" (статус: ${order.status})`);
+          });
+        }
+      }
+
+      // 1. Ищем заказы со статусом 'in_progress' на сегодняшнюю дату для автозавершения
+      const startOfDay = `${today}T00:00:00.000Z`;
+      const endOfDay = `${today}T23:59:59.999Z`;
+
+      const { data: ordersToComplete, error: completeError } = await supabase
+        .from('orders')
+        .select('id, customer_id, title')
+        .eq('status', 'in_progress')
+        .gte('service_date', startOfDay)
+        .lte('service_date', endOfDay);
+
+      if (completeError) {
+        console.error('[OrderService] ❌ ТЕСТ: Ошибка получения заказов для автозавершения:', completeError);
+      } else {
+        if (ordersToComplete && ordersToComplete.length > 0) {
+          console.log(`[OrderService] 📋 ТЕСТ: Найдено ${ordersToComplete.length} заказов "В работе" для автозавершения`);
+
+          // Завершаем каждый заказ
+          for (const order of ordersToComplete) {
+            try {
+              console.log(`[OrderService] 🔄 ТЕСТ: Автозавершение заказа: ${order.id}`);
+
+              // Обновляем статус заказа на 'completed' и помечаем как автозавершенный
+              const { error: updateError } = await supabase
+                .from('orders')
+                .update({
+                  status: 'completed',
+                  auto_completed: true,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', order.id);
+
+              if (updateError) {
+                console.error(`[OrderService] ❌ ТЕСТ: Ошибка обновления заказа ${order.id}:`, updateError);
+                continue;
+              }
+
+              // Обновляем статус принятых откликов на 'completed'
+              const { error: applicantsError } = await supabase
+                .from('applicants')
+                .update({
+                  status: 'completed',
+                  updated_at: new Date().toISOString()
+                })
+                .eq('order_id', order.id)
+                .eq('status', 'accepted');
+
+              if (applicantsError) {
+                console.error(`[OrderService] ❌ ТЕСТ: Ошибка обновления откликов для заказа ${order.id}:`, applicantsError);
+              }
+
+              // Отправляем уведомление о завершении заказа
+              await this.sendOrderCompletedNotifications(order.id);
+
+              // Добавляем запись о необходимости оценки
+              await this.addPendingRating(order.customer_id, order.id);
+
+              console.log(`[OrderService] ✅ ТЕСТ: Заказ ${order.id} автоматически завершен`);
+
+            } catch (orderError) {
+              console.error(`[OrderService] ❌ ТЕСТ: Ошибка при автозавершении заказа ${order.id}:`, orderError);
+            }
+          }
+        } else {
+          console.log('[OrderService] ✅ ТЕСТ: Нет заказов "В работе" для автозавершения');
+        }
+      }
+
+      // 2. Ищем заказы со статусом 'new' и 'response_received' на сегодняшнюю дату для автоотмены
+      const { data: ordersToCancel, error: cancelError } = await supabase
+        .from('orders')
+        .select('id, customer_id, title, status')
+        .in('status', ['new', 'response_received'])
+        .gte('service_date', startOfDay)
+        .lte('service_date', endOfDay);
+
+      if (cancelError) {
+        console.error('[OrderService] ❌ ТЕСТ: Ошибка получения заказов для автоотмены:', cancelError);
+      } else {
+        if (ordersToCancel && ordersToCancel.length > 0) {
+          console.log(`[OrderService] 📋 ТЕСТ: Найдено ${ordersToCancel.length} заказов "Новый"/"Отклик получен" для автоотмены`);
+
+          // Отменяем каждый заказ
+          for (const order of ordersToCancel) {
+            try {
+              console.log(`[OrderService] 🔄 ТЕСТ: Автоотмена заказа: ${order.id} (статус: ${order.status})`);
+
+              // Обновляем статус заказа на 'cancelled' и помечаем как автоотмененный
+              const { error: updateError } = await supabase
+                .from('orders')
+                .update({
+                  status: 'cancelled',
+                  auto_cancelled: true,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', order.id);
+
+              if (updateError) {
+                console.error(`[OrderService] ❌ ТЕСТ: Ошибка обновления заказа ${order.id}:`, updateError);
+                continue;
+              }
+
+              // Отменяем все ожидающие отклики
+              const { error: applicantsError } = await supabase
+                .from('applicants')
+                .update({
+                  status: 'cancelled',
+                  updated_at: new Date().toISOString()
+                })
+                .eq('order_id', order.id)
+                .eq('status', 'pending');
+
+              if (applicantsError) {
+                console.error(`[OrderService] ❌ ТЕСТ: Ошибка отмены откликов для заказа ${order.id}:`, applicantsError);
+              }
+
+              // Получаем отклики для отправки уведомлений
+              const { data: applicants } = await supabase
+                .from('applicants')
+                .select('worker_id')
+                .eq('order_id', order.id)
+                .eq('status', 'pending');
+
+              // Отправляем уведомление об отмене заказа
+              if (applicants && applicants.length > 0) {
+                await this.sendOrderCancelledNotifications(order.id, order.title, applicants);
+              }
+
+              console.log(`[OrderService] ✅ ТЕСТ: Заказ ${order.id} автоматически отменен`);
+
+            } catch (orderError) {
+              console.error(`[OrderService] ❌ ТЕСТ: Ошибка при автоотмене заказа ${order.id}:`, orderError);
+            }
+          }
+        } else {
+          console.log('[OrderService] ✅ ТЕСТ: Нет заказов "Новый"/"Отклик получен" для автоотмены');
+        }
+      }
+
+      console.log('[OrderService] ✅ ТЕСТ: Принудительное автоматическое обновление статусов заказов завершено');
+
+    } catch (error) {
+      console.error('[OrderService] ❌ ТЕСТ: Ошибка принудительного автоматического обновления статусов заказов:', error);
+    }
+  }
+
+  /**
+   * ТЕСТОВАЯ версия автообновления ТОЛЬКО тестовых заказов БЕЗ проверки времени
+   * Обрабатывает только заказы с префиксом "🧪 ТЕСТ:"
+   * Используется для безопасного тестирования без влияния на реальные заказы
+   */
+  async autoCompleteTestOrdersOnly(): Promise<void> {
+    try {
+      console.log('[OrderService] 🧪 ТЕСТ: Принудительное обновление ТОЛЬКО тестовых заказов (без проверки времени)...');
+
+      // Получаем сегодняшнюю дату без проверки времени
+      const today = new Date().toISOString().split('T')[0];
+      console.log(`[OrderService] 📅 ТЕСТ: Ищем ТОЛЬКО тестовые заказы на дату: ${today}`);
+
+      // 1. Ищем ТОЛЬКО тестовые заказы со статусом 'in_progress' на сегодняшнюю дату для автозавершения
+      const { data: ordersToComplete, error: completeError } = await supabase
+        .from('orders')
+        .select('id, customer_id, title')
+        .eq('status', 'in_progress')
+        .eq('service_date', today)
+        .like('title', '🧪 ТЕСТ:%');
+
+      if (completeError) {
+        console.error('[OrderService] ❌ ТЕСТ: Ошибка получения тестовых заказов для автозавершения:', completeError);
+      } else {
+        if (ordersToComplete && ordersToComplete.length > 0) {
+          console.log(`[OrderService] 📋 ТЕСТ: Найдено ${ordersToComplete.length} ТЕСТОВЫХ заказов "В работе" для автозавершения`);
+
+          // Завершаем каждый заказ
+          for (const order of ordersToComplete) {
+            try {
+              console.log(`[OrderService] 🔄 ТЕСТ: Автозавершение тестового заказа: ${order.id}`);
+
+              // Обновляем статус заказа на 'completed' и помечаем как автозавершенный
+              const { error: updateError } = await supabase
+                .from('orders')
+                .update({
+                  status: 'completed',
+                  auto_completed: true,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', order.id);
+
+              if (updateError) {
+                console.error(`[OrderService] ❌ ТЕСТ: Ошибка обновления тестового заказа ${order.id}:`, updateError);
+                continue;
+              }
+
+              // Обновляем статус принятых откликов на 'completed'
+              const { error: applicantsError } = await supabase
+                .from('applicants')
+                .update({
+                  status: 'completed',
+                  updated_at: new Date().toISOString()
+                })
+                .eq('order_id', order.id)
+                .eq('status', 'accepted');
+
+              if (applicantsError) {
+                console.error(`[OrderService] ❌ ТЕСТ: Ошибка обновления откликов для тестового заказа ${order.id}:`, applicantsError);
+              }
+
+              // Отправляем уведомление о завершении заказа
+              await this.sendOrderCompletedNotifications(order.id);
+
+              // Добавляем запись о необходимости оценки
+              await this.addPendingRating(order.customer_id, order.id);
+
+              console.log(`[OrderService] ✅ ТЕСТ: Тестовый заказ ${order.id} автоматически завершен`);
+
+            } catch (orderError) {
+              console.error(`[OrderService] ❌ ТЕСТ: Ошибка при автозавершении тестового заказа ${order.id}:`, orderError);
+            }
+          }
+        } else {
+          console.log('[OrderService] ✅ ТЕСТ: Нет ТЕСТОВЫХ заказов "В работе" для автозавершения');
+        }
+      }
+
+      // 2. Ищем ТОЛЬКО тестовые заказы со статусом 'new' и 'response_received' на сегодняшнюю дату для автоотмены
+      const { data: ordersToCancel, error: cancelError } = await supabase
+        .from('orders')
+        .select('id, customer_id, title, status')
+        .in('status', ['new', 'response_received'])
+        .eq('service_date', today)
+        .like('title', '🧪 ТЕСТ:%');
+
+      if (cancelError) {
+        console.error('[OrderService] ❌ ТЕСТ: Ошибка получения тестовых заказов для автоотмены:', cancelError);
+      } else {
+        if (ordersToCancel && ordersToCancel.length > 0) {
+          console.log(`[OrderService] 📋 ТЕСТ: Найдено ${ordersToCancel.length} ТЕСТОВЫХ заказов "Новый"/"Отклик получен" для автоотмены`);
+
+          // Отменяем каждый заказ
+          for (const order of ordersToCancel) {
+            try {
+              console.log(`[OrderService] 🔄 ТЕСТ: Автоотмена тестового заказа: ${order.id} (статус: ${order.status})`);
+
+              // Обновляем статус заказа на 'cancelled' и помечаем как автоотмененный
+              const { error: updateError } = await supabase
+                .from('orders')
+                .update({
+                  status: 'cancelled',
+                  auto_cancelled: true,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', order.id);
+
+              if (updateError) {
+                console.error(`[OrderService] ❌ ТЕСТ: Ошибка обновления тестового заказа ${order.id}:`, updateError);
+                continue;
+              }
+
+              // Отменяем все ожидающие отклики
+              const { error: applicantsError } = await supabase
+                .from('applicants')
+                .update({
+                  status: 'cancelled',
+                  updated_at: new Date().toISOString()
+                })
+                .eq('order_id', order.id)
+                .eq('status', 'pending');
+
+              if (applicantsError) {
+                console.error(`[OrderService] ❌ ТЕСТ: Ошибка отмены откликов для тестового заказа ${order.id}:`, applicantsError);
+              }
+
+              // Получаем отклики для отправки уведомлений
+              const { data: applicants } = await supabase
+                .from('applicants')
+                .select('worker_id')
+                .eq('order_id', order.id)
+                .eq('status', 'pending');
+
+              // Отправляем уведомление об отмене заказа
+              if (applicants && applicants.length > 0) {
+                await this.sendOrderCancelledNotifications(order.id, order.title, applicants);
+              }
+
+              console.log(`[OrderService] ✅ ТЕСТ: Тестовый заказ ${order.id} автоматически отменен`);
+
+            } catch (orderError) {
+              console.error(`[OrderService] ❌ ТЕСТ: Ошибка при автоотмене тестового заказа ${order.id}:`, orderError);
+            }
+          }
+        } else {
+          console.log('[OrderService] ✅ ТЕСТ: Нет ТЕСТОВЫХ заказов "Новый"/"Отклик получен" для автоотмены');
+        }
+      }
+
+      console.log('[OrderService] ✅ ТЕСТ: Принудительное автоматическое обновление ТОЛЬКО тестовых заказов завершено');
+
+    } catch (error) {
+      console.error('[OrderService] ❌ ТЕСТ: Ошибка принудительного автоматического обновления тестовых заказов:', error);
     }
   }
 

@@ -130,7 +130,7 @@ export const CustomerHomeScreen: React.FC = () => {
         const orderId = firstPendingRating.order_id;
 
         // Получаем принятых исполнителей для этого заказа
-        const acceptedWorkers = await orderService.getAcceptedApplicants(orderId);
+        const acceptedWorkers = await orderService.getAcceptedWorkersForOrder(orderId);
 
         if (acceptedWorkers && acceptedWorkers.length > 0) {
           // Переходим на экран оценки

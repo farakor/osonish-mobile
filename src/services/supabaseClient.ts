@@ -1,14 +1,30 @@
 import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
+import Constants from 'expo-constants';
 
-// 🔧 НАСТРОЙКА SUPABASE:
-// 1. Создайте проект на https://supabase.com
-// 2. Скопируйте ваши URL и ключи из Settings -> API
-// 3. Скопируйте этот файл как supabaseClient.ts
-// 4. Замените YOUR_SUPABASE_URL и YOUR_SUPABASE_ANON_KEY на ваши реальные значения
+// 🔧 НАСТРОЙКА SUPABASE С ПОДДЕРЖКОЙ РАЗНЫХ СРЕД:
+// 1. Создайте два проекта на https://supabase.com (development и production)
+// 2. Настройте переменные в .env.development и .env.production
+// 3. Используйте npm run start:dev для тестирования, npm run start:prod для продакшена
 
-const supabaseUrl = 'https://qmbavgwkxtqudchuahdv.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtYmF2Z3dreHRxdWRjaHVhaGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3ODkzNzksImV4cCI6MjA2OTM2NTM3OX0.Gn5_S1eYrFpXNXMVHO0zfb8dclNZG1cjAqLHb5Wq0D4';
+// Получаем настройки из переменных окружения
+const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+// Определяем среду выполнения
+const isDevelopment = __DEV__ || process.env.NODE_ENV === 'development';
+const environment = isDevelopment ? 'DEVELOPMENT' : 'PRODUCTION';
+
+// Логируем информацию о текущей среде
+console.log(`🌍 Запуск в режиме: ${environment}`);
+console.log(`🔗 Supabase URL: ${supabaseUrl}`);
+console.log(`📱 Режим разработки: ${isDevelopment ? 'ДА' : 'НЕТ'}`);
+
+// Предупреждение при использовании продакшен данных в режиме разработки
+if (isDevelopment && supabaseUrl?.includes('qmbavgwkxtqudchuahdv')) {
+  console.warn('⚠️ ВНИМАНИЕ: Вы используете ПРОДАКШЕН базу данных в режиме разработки!');
+  console.warn('⚠️ Рекомендуется создать отдельный проект Supabase для тестирования.');
+}
 
 // Проверяем что URL корректный
 if (!supabaseUrl || supabaseUrl.includes('YOUR_SUPABASE_URL')) {

@@ -4,12 +4,19 @@
   "main": "index.ts",
   "scripts": {
     "start": "expo start --go",
-    "start:dev": "expo start --dev-client",
+    "start:dev": "NODE_ENV=development expo start --dev-client",
+    "start:prod": "NODE_ENV=production expo start --go",
     "android": "expo start --android --go",
-    "android:dev": "expo start --android --dev-client",
+    "android:dev": "NODE_ENV=development expo start --android --dev-client",
+    "android:prod": "NODE_ENV=production expo start --android --go",
     "ios": "expo start --ios --go",
-    "ios:dev": "expo start --ios --dev-client",
+    "ios:dev": "NODE_ENV=development expo start --ios --dev-client",
+    "ios:prod": "NODE_ENV=production expo start --ios --go",
     "web": "expo start --web",
+    "web:dev": "NODE_ENV=development expo start --web",
+    "web:prod": "NODE_ENV=production expo start --web",
+    "build:dev": "NODE_ENV=development eas build",
+    "build:prod": "NODE_ENV=production eas build",
     "test-notifications": "node test-notifications.js"
   },
   "dependencies": {
