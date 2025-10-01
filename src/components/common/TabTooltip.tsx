@@ -1,16 +1,18 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Platform } from 'react-native';
+import { View, Text, StyleSheet, Animated, Platform, TouchableOpacity } from 'react-native';
 
 interface TabTooltipProps {
   visible: boolean;
   text: string;
   color?: string;
+  onDismiss?: () => void;
 }
 
 export const TabTooltip: React.FC<TabTooltipProps> = ({
   visible,
   text,
-  color = '#E10000'
+  color = '#E10000',
+  onDismiss
 }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(10)).current;
@@ -48,33 +50,50 @@ export const TabTooltip: React.FC<TabTooltipProps> = ({
   if (!visible) return null;
 
   return (
-    <Animated.View
-      style={[
-        styles.tooltip,
-        {
-          backgroundColor: color,
-          opacity: fadeAnim,
-          transform: [{ translateY }],
-        },
-      ]}
+    <TouchableOpacity
+      activeOpacity={1}
+      onPress={onDismiss}
+      style={{ position: 'absolute' }}
     >
-      <Text style={styles.tooltipText}>{text}</Text>
-      <View style={[styles.arrow, { borderTopColor: color }]} />
-    </Animated.View>
+      <Animated.View
+        style={[
+          styles.tooltip,
+          {
+            backgroundColor: color,
+            opacity: fadeAnim,
+            transform: [{ translateY }],
+          },
+        ]}
+      >
+        <Text style={styles.tooltipText}>{text}</Text>
+        <TouchableOpacity
+          onPress={onDismiss}
+          style={styles.closeButton}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Text style={styles.closeButtonText}>✕</Text>
+        </TouchableOpacity>
+        <View style={[styles.arrow, { borderTopColor: color }]} />
+      </Animated.View>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   tooltip: {
     position: 'absolute',
-    bottom: 30,
+    top: -60,
     left: '50%',
-    marginLeft: -75,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    marginLeft: -90,
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+    paddingRight: 28,
+    paddingLeft: 10,
     borderRadius: 6,
-    minWidth: 150,
-    maxWidth: 180,
+    width: 180,
+    minHeight: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -89,15 +108,33 @@ const styles = StyleSheet.create({
   },
   tooltipText: {
     color: '#fff',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
-    lineHeight: 15,
+    lineHeight: 17,
+    flexShrink: 1,
+    width: '100%',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 22,
+    height: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    lineHeight: 16,
   },
   arrow: {
     position: 'absolute',
     bottom: -5,
-    left: '50%',
+    left: '70%',
     marginLeft: -5,
     width: 0,
     height: 0,

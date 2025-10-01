@@ -35,7 +35,7 @@ export function WorkerTabNavigator() {
   const tabBarStyle = getBottomTabBarStyle(insets);
   const t = useNavigationTranslation();
   const tWorker = useWorkerTranslation();
-  const { acceptedCount } = useAcceptedApplicationsCount();
+  const { acceptedCount, showTooltip, dismissTooltip } = useAcceptedApplicationsCount();
 
   return (
     <Tab.Navigator
@@ -125,9 +125,10 @@ export function WorkerTabNavigator() {
                     </Text>
                   </View>
                   <TabTooltip
-                    visible={!focused && acceptedCount > 0}
+                    visible={!focused && showTooltip}
                     text={tWorker('accepted_applications_tooltip', { count: acceptedCount })}
                     color="#E10000"
+                    onDismiss={dismissTooltip}
                   />
                 </>
               )}
