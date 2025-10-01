@@ -30,7 +30,7 @@ import BankNoteIcon from '../../../assets/bank-note-01.svg';
 import PhoneIcon from '../../../assets/phone-call-01-white.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import LottieView from 'lottie-react-native';
-import { HeaderWithBack, PriceConfirmationModal, ProposePriceModal, MediaViewer, OrderLocationMap, StatusBadge } from '../../components/common';
+import { HeaderWithBack, PriceConfirmationModal, ProposePriceModal, MediaViewer, OrderLocationMap, StatusBadge, CustomerPhoneModal } from '../../components/common';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { getCategoryEmoji, getCategoryLabel } from '../../utils/categoryUtils';
@@ -224,6 +224,7 @@ export const JobDetailsScreen: React.FC = () => {
   const [hasApplied, setHasApplied] = useState(false);
   const [applicationStatus, setApplicationStatus] = useState<'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled' | null>(null);
   const [customer, setCustomer] = useState<User | null>(null);
+  const [customerPhoneModalVisible, setCustomerPhoneModalVisible] = useState(false);
   const [priceConfirmationVisible, setPriceConfirmationVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [userLocation, setUserLocation] = useState<LocationCoords | null>(null);
@@ -393,8 +394,8 @@ export const JobDetailsScreen: React.FC = () => {
         return;
       }
 
-      // Показываем модалку подтверждения цены
-      setPriceConfirmationVisible(true);
+      // Показываем модалку с номером телефона заказчика
+      setCustomerPhoneModalVisible(true);
     } catch (error) {
       console.error('Ошибка при открытии формы отклика:', error);
       Alert.alert(tWorker('general_error'), tWorker('general_error'));
@@ -435,6 +436,12 @@ export const JobDetailsScreen: React.FC = () => {
       console.error('Ошибка отклика на заказ:', error);
       Alert.alert(tWorker('general_error'), tWorker('send_response_general_error'));
     }
+  };
+
+  const handleContinueResponse = () => {
+    // Закрываем модалку с номером телефона и показываем модалку подтверждения цены
+    setCustomerPhoneModalVisible(false);
+    setPriceConfirmationVisible(true);
   };
 
   const handleProposePrice = () => {
@@ -771,6 +778,15 @@ export const JobDetailsScreen: React.FC = () => {
           )}
         </View>
       </View>
+
+      {/* Модалка с номером телефона заказчика */}
+      <CustomerPhoneModal
+        visible={customerPhoneModalVisible}
+        onClose={() => setCustomerPhoneModalVisible(false)}
+        onContinue={handleContinueResponse}
+        customerPhone={customer?.phone || ''}
+        customerName={customer ? `${customer.lastName} ${customer.firstName}` : ''}
+      />
 
       {/* Модалка подтверждения цены */}
       <PriceConfirmationModal

@@ -260,18 +260,16 @@ export const getAndroidNavigationBarBackground = (insets: ReturnType<typeof useP
  */
 export const getImprovedFixedBottomStyle = (insets: ReturnType<typeof usePlatformSafeAreaInsets>) => {
   if (Platform.OS === 'android') {
-    // Увеличенные отступы для Android с navigation bar
-    const baseBottomPadding = Math.max(insets.bottom, 24);
-    const extraPadding = isSmallScreen() ? 24 : 16;
+    // На Android учитываем navigation bar + фиксированный отступ
     return {
-      paddingBottom: baseBottomPadding + extraPadding,
+      paddingBottom: Math.max(insets.bottom, 16),
       paddingTop: 16,
     };
   }
 
-  // На iOS используем safe area + дополнительный отступ
+  // На iOS равные отступы сверху и снизу
   return {
-    paddingBottom: Math.max(insets.bottom, 20),
+    paddingBottom: 16,
     paddingTop: 16,
   };
 };

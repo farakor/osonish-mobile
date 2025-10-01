@@ -1,10 +1,11 @@
 import React from 'react';
-import { Text, Platform, TouchableOpacity, View } from 'react-native';
+import { Text, Platform, TouchableOpacity, View, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { theme } from '../constants';
 import { noElevationStyles } from '../utils/noShadowStyles';
 import { usePlatformSafeAreaInsets, getBottomTabBarStyle } from '../utils/safeAreaUtils';
-import { useNavigationTranslation } from '../hooks/useTranslation';
+import { useNavigationTranslation, useWorkerTranslation } from '../hooks/useTranslation';
+import { useAcceptedApplicationsCount } from '../hooks';
 import type { WorkerTabParamList } from '../types';
 import {
   WorkerJobsScreen,
@@ -16,6 +17,7 @@ import {
   AnimatedTabLabel,
   AnimatedTabIndicator,
   withAnimatedTabScreen,
+  TabTooltip,
 } from '../components/common';
 import HomeIcon from '../../assets/home-02.svg';
 import FileIcon from '../../assets/file-02.svg';
@@ -32,6 +34,8 @@ export function WorkerTabNavigator() {
   const insets = usePlatformSafeAreaInsets();
   const tabBarStyle = getBottomTabBarStyle(insets);
   const t = useNavigationTranslation();
+  const tWorker = useWorkerTranslation();
+  const { acceptedCount } = useAcceptedApplicationsCount();
 
   return (
     <Tab.Navigator
@@ -105,13 +109,29 @@ export function WorkerTabNavigator() {
             </AnimatedTabLabel>
           ),
           tabBarIcon: ({ color, size, focused }) => (
-            <AnimatedTabIcon focused={focused} color={color}>
-              <FileIcon
-                width={25}
-                height={25}
-                color={focused ? color : '#1a1a1a'}
-              />
-            </AnimatedTabIcon>
+            <View>
+              <AnimatedTabIcon focused={focused} color={color}>
+                <FileIcon
+                  width={25}
+                  height={25}
+                  color={focused ? color : '#1a1a1a'}
+                />
+              </AnimatedTabIcon>
+              {acceptedCount > 0 && (
+                <>
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>
+                      {acceptedCount > 99 ? '99+' : acceptedCount}
+                    </Text>
+                  </View>
+                  <TabTooltip
+                    visible={!focused && acceptedCount > 0}
+                    text={tWorker('accepted_applications_tooltip', { count: acceptedCount })}
+                    color="#E10000"
+                  />
+                </>
+              )}
+            </View>
           ),
         }}
       />
@@ -139,4 +159,27 @@ export function WorkerTabNavigator() {
       />
     </Tab.Navigator>
   );
-} 
+}
+
+const styles = StyleSheet.create({
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -10,
+    backgroundColor: '#E10000',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+}); 

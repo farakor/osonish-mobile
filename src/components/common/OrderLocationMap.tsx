@@ -65,19 +65,19 @@ export const OrderLocationMap: React.FC<OrderLocationMapProps> = ({
       </body>
     </html>
   `;
-  // Функция для открытия в Яндекс.Навигаторе
-  const openInYandexNavigator = async () => {
+  // Функция для открытия в Яндекс.Картах
+  const openInYandexMaps = async () => {
     try {
-      // Сначала пробуем открыть в Яндекс.Навигаторе
-      const yandexNavUrl = `yandexnavi://build_route_on_map?lat_to=${latitude}&lon_to=${longitude}`;
-      const canOpenYandexNav = await Linking.canOpenURL(yandexNavUrl);
+      // Сначала пробуем открыть в приложении Яндекс.Карты
+      const yandexMapsAppUrl = `yandexmaps://maps.yandex.ru/?rtext=~${latitude},${longitude}&rtt=auto`;
+      const canOpenYandexMaps = await Linking.canOpenURL(yandexMapsAppUrl);
 
-      if (canOpenYandexNav) {
-        await Linking.openURL(yandexNavUrl);
+      if (canOpenYandexMaps) {
+        await Linking.openURL(yandexMapsAppUrl);
       } else {
-        // Если Яндекс.Навигатор не установлен, открываем в Яндекс.Картах в браузере
-        const yandexMapsUrl = `https://yandex.ru/maps/?rtext=~${latitude},${longitude}&rtt=auto`;
-        await Linking.openURL(yandexMapsUrl);
+        // Если Яндекс.Карты не установлены, открываем веб-версию
+        const yandexMapsWebUrl = `https://yandex.ru/maps/?rtext=~${latitude},${longitude}&rtt=auto`;
+        await Linking.openURL(yandexMapsWebUrl);
       }
     } catch (error) {
       console.error('Ошибка при открытии навигации:', error);
@@ -92,8 +92,8 @@ export const OrderLocationMap: React.FC<OrderLocationMapProps> = ({
       t('choose_app_subtitle'),
       [
         {
-          text: t('yandex_navigator'),
-          onPress: openInYandexNavigator,
+          text: t('yandex_maps'),
+          onPress: openInYandexMaps,
         },
         {
           text: t('google_maps'),

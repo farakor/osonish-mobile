@@ -2,7 +2,7 @@
   "expo": {
     "name": "Osonish",
     "slug": "osonish-mobile",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "default",
     "sdkVersion": "54.0.0",
     "icon": "./assets/Appicon-appstore.png",
@@ -26,7 +26,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.farakor.osonishmobile",
-      "buildNumber": "10",
+      "buildNumber": "11",
       "icon": "./assets/Appicon-appstore.png",
       "infoPlist": {
         "UIBackgroundModes": [
@@ -36,12 +36,16 @@
         "NSPhotoLibraryUsageDescription": "Это приложение использует доступ к фотогалерее для загрузки изображений к заказам и профилю пользователя.",
         "NSCameraUsageDescription": "Это приложение использует камеру для создания фотографий заказов и профиля пользователя.",
         "NSLocationWhenInUseUsageDescription": "Это приложение использует геолокацию для определения местоположения заказов и поиска ближайших исполнителей.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Это приложение использует геолокацию для определения местоположения заказов и поиска ближайших исполнителей."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Это приложение использует геолокацию для определения местоположения заказов и поиска ближайших исполнителей.",
+        "LSApplicationQueriesSchemes": [
+          "yandexmaps",
+          "comgooglemaps"
+        ]
       }
     },
     "android": {
       "package": "com.farakor.osonishmobile",
-      "versionCode": 2,
+      "versionCode": 3,
       "icon": "./assets/Appicon-playstore.png",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon-foreground.png",
@@ -67,7 +71,21 @@
       "softwareKeyboardLayoutMode": "pan",
       "statusBarStyle": "auto",
       "navigationBarStyle": "auto",
-      "enableEdgeToEdge": true
+      "enableEdgeToEdge": true,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "yandexmaps"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

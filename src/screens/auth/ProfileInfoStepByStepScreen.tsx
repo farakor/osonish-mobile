@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import {
   Modal,
   Keyboard,
   StatusBar,
+  ScrollView,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -133,6 +134,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
 
   // Рефы для полей ввода
   const lastNameInputRef = React.useRef<TextInput>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Состояние клавиатуры для Android
   const [keyboardInfo, setKeyboardInfo] = useState<KeyboardInfo>({
@@ -466,6 +468,18 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
     }
   });
 
+  // Функция для автоскролла к полю ввода
+  const scrollToInput = (offset: number = 0) => {
+    if (scrollViewRef.current) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({
+          y: offset,
+          animated: true,
+        });
+      }, 300);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!firstName.trim() || !lastName.trim() || !birthDate || !privacyAccepted) {
       Alert.alert(tError('error'), t('fill_required_fields'));
@@ -595,6 +609,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                     }}
                     onFocus={() => {
                       setFirstNameFocused(true);
+                      scrollToInput(0); // Первое поле, прокручиваем в начало
                       // Небольшая задержка для корректного позиционирования
                       if (Platform.OS === 'android') {
                         setTimeout(() => {
@@ -621,6 +636,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                     returnKeyType="done"
                     onFocus={() => {
                       setLastNameFocused(true);
+                      scrollToInput(80); // Второе поле, прокручиваем немного вниз
                       // Небольшая задержка для корректного позиционирования
                       if (Platform.OS === 'android') {
                         setTimeout(() => {
@@ -663,6 +679,7 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
                     autoFocus
                     onFocus={() => {
                       setBirthDateFocused(true);
+                      scrollToInput(0); // Единственное поле на шаге, прокручиваем в начало
                       // Небольшая задержка для корректного позиционирования
                       if (Platform.OS === 'android') {
                         setTimeout(() => {
@@ -803,12 +820,15 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
             {isDataLoaded && <StepCounter currentStep={currentStep} totalSteps={totalSteps} t={t} />}
 
             {/* Content */}
-            <View style={[
-              styles.mainContent,
-              keyboardAwareStyles.content
-            ]}>
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.mainContent}
+              contentContainerStyle={keyboardAwareStyles.content}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
               {isDataLoaded && renderStep()}
-            </View>
+            </ScrollView>
 
             {/* Navigation */}
             <Animated.View style={[
@@ -890,12 +910,15 @@ export const ProfileInfoStepByStepScreen: React.FC = () => {
             {isDataLoaded && <StepCounter currentStep={currentStep} totalSteps={totalSteps} t={t} />}
 
             {/* Content */}
-            <View style={[
-              styles.mainContent,
-              keyboardAwareStyles.content
-            ]}>
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.mainContent}
+              contentContainerStyle={keyboardAwareStyles.content}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
               {isDataLoaded && renderStep()}
-            </View>
+            </ScrollView>
 
             {/* Navigation */}
             <Animated.View style={[
@@ -1054,7 +1077,7 @@ const styles = StyleSheet.create({
     borderColor: '#F6F7F9',
     borderRadius: theme.borderRadius.lg,
     paddingHorizontal: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
-    paddingVertical: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
+    paddingVertical: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
     fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,
     color: theme.colors.text.primary,
     fontFamily: Platform.select({
@@ -1241,9 +1264,11 @@ const styles = StyleSheet.create({
   navigation: {
     flexDirection: 'row',
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    paddingTop: theme.spacing.md,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
     backgroundColor: theme.colors.background,
     // Минимальная высота для стабильности
     minHeight: 80,

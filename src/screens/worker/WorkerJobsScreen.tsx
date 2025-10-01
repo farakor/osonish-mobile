@@ -22,7 +22,7 @@ import { notificationService } from '../../services/notificationService';
 import { locationService, LocationCoords } from '../../services/locationService';
 import { supabase } from '../../services/supabaseClient';
 import { Order } from '../../types';
-import { PriceConfirmationModal, ProposePriceModal, ModernActionButton, OrderStatsWidget } from '../../components/common';
+import { PriceConfirmationModal, ProposePriceModal, CustomerPhoneModal, ModernActionButton, OrderStatsWidget } from '../../components/common';
 import { ModernOrderCard } from '../../components/cards';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -120,9 +120,12 @@ const WorkerJobsScreen: React.FC = () => {
   }, [selectedCategory]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [customerPhoneModalVisible, setCustomerPhoneModalVisible] = useState(false);
   const [priceConfirmationVisible, setPriceConfirmationVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerName, setCustomerName] = useState('');
   const [userApplications, setUserApplications] = useState<Set<string>>(new Set());
   const [userLocation, setUserLocation] = useState<LocationCoords | undefined>(undefined);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -331,9 +334,16 @@ const WorkerJobsScreen: React.FC = () => {
         return;
       }
 
-      // Показываем модалку подтверждения цены
+      // Загружаем информацию о заказчике
+      const customerData = await authService.findUserById(order.customerId);
+      if (customerData) {
+        setCustomerPhone(customerData.phone || '');
+        setCustomerName(`${customerData.lastName} ${customerData.firstName}`);
+      }
+
+      // Показываем модалку с номером телефона заказчика
       setSelectedOrder(order);
-      setPriceConfirmationVisible(true);
+      setCustomerPhoneModalVisible(true);
     } catch (error) {
       console.error('Ошибка при открытии формы отклика:', error);
       Alert.alert(t('general_error'), t('general_error'));
@@ -386,6 +396,12 @@ const WorkerJobsScreen: React.FC = () => {
       console.error('Ошибка отклика на заказ:', error);
       Alert.alert(t('general_error'), t('send_response_general_error'));
     }
+  };
+
+  const handleContinueResponse = () => {
+    // Закрываем модалку с номером телефона и показываем модалку подтверждения цены
+    setCustomerPhoneModalVisible(false);
+    setPriceConfirmationVisible(true);
   };
 
   const handleProposePrice = () => {
@@ -613,6 +629,18 @@ const WorkerJobsScreen: React.FC = () => {
           }
         />
       </SafeAreaView>
+
+      {/* Модалка с номером телефона заказчика */}
+      <CustomerPhoneModal
+        visible={customerPhoneModalVisible}
+        onClose={() => {
+          setCustomerPhoneModalVisible(false);
+          setSelectedOrder(null);
+        }}
+        onContinue={handleContinueResponse}
+        customerPhone={customerPhone}
+        customerName={customerName}
+      />
 
       {/* Модалка подтверждения цены */}
       <PriceConfirmationModal

@@ -238,8 +238,8 @@ export const AnimatedCategoryCard: React.FC<{
         <View style={[styles.categoryIconContainer, isSmallScreen && styles.categoryIconContainerSmall]}>
           <AnimatedIcon
             source={getCategoryAnimation(categoryKey)}
-            width={isSmallScreen ? 32 : 40}
-            height={isSmallScreen ? 32 : 40}
+            width={isSmallScreen ? 30 : 36} // Уменьшили размер иконки
+            height={isSmallScreen ? 30 : 36} // Уменьшили размер иконки
             loop={true}
             autoPlay={false}
             speed={0.8}
@@ -638,9 +638,9 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
-    width: 120,
-    height: 120,
-    marginHorizontal: 8,
+    width: 105, // Уменьшили размер карточки
+    height: 105, // Уменьшили размер карточки
+    marginHorizontal: 6, // Уменьшили отступ между карточками для лучшего размещения
     marginVertical: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -659,19 +659,19 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   categoryIconContainer: {
-    width: 48,
-    height: 48,
+    width: 42, // Уменьшили размер контейнера иконки
+    height: 42, // Уменьшили размер контейнера иконки
     backgroundColor: 'transparent',
-    borderRadius: 24,
+    borderRadius: 21,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   categoryIconContainerSmall: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginBottom: 6,
+    width: 36, // Уменьшили размер контейнера иконки для маленьких экранов
+    height: 36, // Уменьшили размер контейнера иконки для маленьких экранов
+    borderRadius: 18,
+    marginBottom: 4,
   },
   categoryEmoji: {
     fontSize: 32,
@@ -690,7 +690,7 @@ const styles = StyleSheet.create({
   },
   categoriesGrid: {
     paddingVertical: theme.spacing.sm, // Уменьшили с lg до sm для поднятия сетки выше
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg, // Увеличили отступ от края экрана для всех устройств
   },
   categoryRow: {
     flexDirection: 'row',
@@ -823,17 +823,17 @@ const styles = StyleSheet.create({
   // Стили для маленьких экранов
   categoriesGridSmall: {
     paddingVertical: theme.spacing.xs, // Уменьшили с md до xs для маленьких экранов
-    paddingHorizontal: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg, // Увеличили отступ от края экрана для маленьких устройств
   },
   categoryRowSmall: {
     marginBottom: theme.spacing.xs, // Уменьшили отступ между строками для маленьких экранов
   },
   categoryCardSmall: {
-    width: 100,
-    height: 80,
+    width: 90, // Уменьшили размер карточки для маленьких экранов
+    height: 75, // Уменьшили размер карточки для маленьких экранов
     paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.xs,
-    marginHorizontal: theme.spacing.xs,
+    marginHorizontal: 4, // Уменьшили отступ между карточками для экономии места
   },
   categoryEmojiSmall: {
     fontSize: 28,

@@ -27,7 +27,7 @@ import Animated, {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
-import { usePlatformSafeAreaInsets, getImprovedFixedBottomStyle } from '../../utils/safeAreaUtils';
+import { usePlatformSafeAreaInsets } from '../../utils/safeAreaUtils';
 import CalendarDateIcon from '../../../assets/calendar-date.svg';
 import * as ImagePicker from 'expo-image-picker';
 import { VideoView, useVideoPlayer } from 'expo-video';
@@ -120,9 +120,7 @@ const StepCounter: React.FC<{ currentStep: number; totalSteps: number; t: any }>
 // Функция для получения оптимизированных отступов навигации
 const getNavigationPadding = (insets: ReturnType<typeof usePlatformSafeAreaInsets>) => ({
   paddingTop: theme.spacing.md,
-  paddingBottom: Platform.OS === 'android'
-    ? 14
-    : Math.max(insets.bottom, theme.spacing.sm),
+  paddingBottom: theme.spacing.md,
 });
 
 
@@ -1479,7 +1477,7 @@ const styles = StyleSheet.create({
     borderColor: '#F6F7F9',
     borderRadius: theme.borderRadius.lg,
     paddingHorizontal: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
-    paddingVertical: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
+    paddingVertical: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
     fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,
     color: theme.colors.text.primary,
     fontFamily: Platform.select({
@@ -1678,6 +1676,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
     backgroundColor: theme.colors.background,
   },
   navigationSpacer: {
