@@ -12,9 +12,7 @@
     "extra": {
       "eas": {
         "projectId": "d25e6650-1e06-4ebb-8988-0085861affbf"
-      },
-      "supabaseUrl": "https://qmbavgwkxtqudchuahdv.supabase.co",
-      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtYmF2Z3dreHRxdWRjaHVhaGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3ODkzNzksImV4cCI6MjA2OTM2NTM3OX0.Gn5_S1eYrFpXNXMVHO0zfb8dclNZG1cjAqLHb5Wq0D4"
+      }
     },
     "splash": {
       "image": "./assets/splash-icon.png",

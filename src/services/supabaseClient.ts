@@ -8,8 +8,9 @@ import Constants from 'expo-constants';
 // 3. Используйте npm run start:dev для тестирования, npm run start:prod для продакшена
 
 // Получаем настройки из переменных окружения
-const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+// Приоритет: process.env (из EAS билда) → Constants.expoConfig.extra (из app.json) → .env файлы
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || Constants.expoConfig?.extra?.supabaseUrl;
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || Constants.expoConfig?.extra?.supabaseAnonKey;
 
 // Определяем среду выполнения
 const isDevelopment = __DEV__ || process.env.NODE_ENV === 'development';
