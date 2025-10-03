@@ -10,4 +10,7 @@ export { SupportScreen } from './SupportScreen';
 export { OrderDetailsScreen } from './OrderDetailsScreen';
 export { ApplicantsListScreen } from './ApplicantsListScreen';
 export { WorkerProfileScreen } from './WorkerProfileScreen';
-export { RatingScreen } from './RatingScreen'; 
+export { RatingScreen } from './RatingScreen';
+export { ProfessionalMastersListScreen } from './ProfessionalMastersListScreen';
+export { ProfessionalMasterProfileScreen } from './ProfessionalMasterProfileScreen';
+export { CategoriesScreen } from './CategoriesScreen'; 

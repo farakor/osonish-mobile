@@ -65,10 +65,20 @@ export const RoleSelectionScreen: React.FC = () => {
         return;
       }
 
-      // Переходим к экрану выбора города
-      navigation.navigate('CitySelection', { role: selectedRole });
+      // Сохраняем выбранную роль в данные профиля
+      const profileData = JSON.parse(profileDataString);
+      profileData.role = selectedRole;
+      await AsyncStorage.default.setItem('@temp_profile_data', JSON.stringify(profileData));
+
+      // Если выбран исполнитель, переходим к выбору типа исполнителя
+      if (selectedRole === 'worker') {
+        navigation.navigate('WorkerTypeSelection');
+      } else {
+        // Для заказчика сразу переходим к выбору города
+        navigation.navigate('CitySelection', { role: selectedRole });
+      }
     } catch (error) {
-      console.error('Ошибка перехода к выбору города:', error);
+      console.error('Ошибка перехода к следующему шагу:', error);
       Alert.alert(tError('error'), t('general_error_try_again'));
     }
   };

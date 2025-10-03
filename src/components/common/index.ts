@@ -60,3 +60,4 @@ export { PlusIcon } from './PlusIcon';
 export { AnimatedIcon } from './AnimatedIcon';
 export { TestModal } from './TestModal';
 export { TabTooltip } from './TabTooltip';
+export { CategoryIcon } from './CategoryIcon';

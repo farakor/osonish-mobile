@@ -13,6 +13,9 @@ import {
   SmsVerificationScreen,
   ProfileInfoStepByStepScreen,
   RoleSelectionScreen,
+  WorkerTypeSelectionScreen,
+  SpecializationSelectionScreen,
+  ProfessionalAboutMeScreen,
   CitySelectionScreen,
   LoadingScreen,
   LanguageSelectionScreen
@@ -67,6 +70,18 @@ export function AppNavigator() {
         <Stack.Screen
           name="RoleSelection"
           component={RoleSelectionScreen}
+        />
+        <Stack.Screen
+          name="WorkerTypeSelection"
+          component={WorkerTypeSelectionScreen}
+        />
+        <Stack.Screen
+          name="SpecializationSelection"
+          component={SpecializationSelectionScreen}
+        />
+        <Stack.Screen
+          name="ProfessionalAboutMe"
+          component={ProfessionalAboutMeScreen}
         />
         <Stack.Screen
           name="CitySelection"

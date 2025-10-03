@@ -1,5 +1,5 @@
 // Navigation types
-import { Applicant, User, City } from './index';
+import { Applicant, User, City, Specialization } from './index';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -11,7 +11,10 @@ export type RootStackParamList = {
   SmsVerification: { phone: string };
   ProfileInfo: { phone: string };
   RoleSelection: undefined;
-  CitySelection: { role: 'customer' | 'worker' };
+  WorkerTypeSelection: undefined; // Новый экран выбора типа исполнителя
+  SpecializationSelection: undefined; // Новый экран выбора специализаций
+  ProfessionalAboutMe: undefined; // Новый экран "О себе" для профмастеров
+  CitySelection: { role: 'customer' | 'worker'; workerType?: 'daily_worker' | 'professional' };
   Loading: {
     profileData: any;
     role: 'customer' | 'worker';
@@ -38,6 +41,9 @@ export type CustomerStackParamList = {
   EditOrder: { orderId: string };
   ApplicantsList: { orderId: string; currentUser?: User };
   WorkerProfile: { workerId: string; workerName: string };
+  ProfessionalMasterProfile: { masterId: string }; // Новый экран профиля профмастера
+  ProfessionalMastersList: { specializationId?: string }; // Новый экран списка профмастеров
+  Categories: undefined; // Экран всех категорий
   Rating: { orderId: string; acceptedWorkers: Applicant[] };
   EditProfile: undefined;
   Notifications: undefined;
@@ -48,6 +54,7 @@ export type CustomerStackParamList = {
 
 export type CustomerTabParamList = {
   Home: undefined;
+  Categories: undefined;
   CreateOrder: {
     repeatOrderData?: {
       title: string;

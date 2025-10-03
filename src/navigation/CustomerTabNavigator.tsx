@@ -10,23 +10,24 @@ import {
   CustomerHomeScreen,
   CreateOrderStepByStepScreen,
   MyOrdersScreen,
-  CustomerProfileScreen
+  CustomerProfileScreen,
+  CategoriesScreen
 } from '../screens/customer';
 import {
   AnimatedTabIcon,
-  AnimatedTabLabel,
-  AnimatedTabIndicator,
   withAnimatedTabScreen,
 } from '../components/common';
 import HomeIcon from '../../assets/home-02.svg';
-import CreateOrderIcon from '../../assets/file-plus-03.svg';
+import CategoryIcon from '../../assets/card-icons/category.svg';
 import MyOrdersIcon from '../../assets/file-02.svg';
 import ProfileIcon from '../../assets/user-01.svg';
+import PlusSquareIcon from '../../assets/plus-square.svg';
 
 const Tab = createBottomTabNavigator<CustomerTabParamList>();
 
 // Создаем анимированные версии экранов
 const AnimatedCustomerHomeScreen = withAnimatedTabScreen(CustomerHomeScreen);
+const AnimatedCategoriesScreen = withAnimatedTabScreen(CategoriesScreen);
 // Убираем анимированную обертку для экрана создания заказа, так как у него есть собственные анимации
 const AnimatedCreateOrderScreen = CreateOrderStepByStepScreen;
 const AnimatedMyOrdersScreen = withAnimatedTabScreen(MyOrdersScreen);
@@ -65,9 +66,6 @@ export function CustomerTabNavigator() {
         tabBarIconStyle: {
           marginBottom: 0,
         },
-        // Добавляем анимацию переходов между экранами
-        animationEnabled: true,
-        animationTypeForReplace: 'push',
         // Отключаем ripple эффект на Android
         tabBarButton: Platform.OS === 'android' ? (props: any) => (
           <TouchableOpacity
@@ -83,11 +81,13 @@ export function CustomerTabNavigator() {
         component={AnimatedCustomerHomeScreen}
         options={{
           tabBarLabel: ({ focused, color }) => (
-            <AnimatedTabLabel focused={focused} color={color}>
-              <Text style={{ color, fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.medium }}>
-                {t('home')}
-              </Text>
-            </AnimatedTabLabel>
+            <Text style={{
+              color,
+              fontSize: 11,
+              fontWeight: theme.fonts.weights.medium
+            }}>
+              {t('home')}
+            </Text>
           ),
           tabBarIcon: ({ color, size, focused }) => (
             <AnimatedTabIcon focused={focused} color={color}>
@@ -101,19 +101,21 @@ export function CustomerTabNavigator() {
         }}
       />
       <Tab.Screen
-        name="CreateOrder"
-        component={AnimatedCreateOrderScreen}
+        name="Categories"
+        component={AnimatedCategoriesScreen}
         options={{
           tabBarLabel: ({ focused, color }) => (
-            <AnimatedTabLabel focused={focused} color={color}>
-              <Text style={{ color, fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.medium }}>
-                {t('create_order')}
-              </Text>
-            </AnimatedTabLabel>
+            <Text style={{
+              color,
+              fontSize: 11,
+              fontWeight: theme.fonts.weights.medium
+            }}>
+              Категории
+            </Text>
           ),
           tabBarIcon: ({ color, size, focused }) => (
             <AnimatedTabIcon focused={focused} color={color}>
-              <CreateOrderIcon
+              <CategoryIcon
                 width={25}
                 height={25}
                 color={focused ? color : '#1a1a1a'}
@@ -123,15 +125,50 @@ export function CustomerTabNavigator() {
         }}
       />
       <Tab.Screen
+        name="CreateOrder"
+        component={AnimatedCreateOrderScreen}
+        options={{
+          tabBarLabel: ({ focused, color }) => (
+            <Text style={{
+              color: focused ? theme.colors.primary : '#1a1a1a',
+              fontSize: 11,
+              fontWeight: theme.fonts.weights.medium,
+              marginTop: 10
+            }}>
+              Создать
+            </Text>
+          ),
+          tabBarIcon: ({ focused }) => (
+            <View style={{
+              width: 48,
+              height: 48,
+              borderRadius: 24,
+              backgroundColor: theme.colors.primary,
+              justifyContent: 'center',
+              alignItems: 'center',
+              shadowColor: theme.colors.primary,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 4,
+              elevation: 4,
+            }}>
+              <PlusSquareIcon width={24} height={24} color="#FFFFFF" />
+            </View>
+          ),
+        }}
+      />
+      <Tab.Screen
         name="MyOrders"
         component={AnimatedMyOrdersScreen}
         options={{
           tabBarLabel: ({ focused, color }) => (
-            <AnimatedTabLabel focused={focused} color={color}>
-              <Text style={{ color, fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.medium }}>
-                {t('my_orders')}
-              </Text>
-            </AnimatedTabLabel>
+            <Text style={{
+              color,
+              fontSize: 11,
+              fontWeight: theme.fonts.weights.medium
+            }}>
+              {t('my_orders')}
+            </Text>
           ),
           tabBarIcon: ({ color, size, focused }) => (
             <AnimatedTabIcon focused={focused} color={color}>
@@ -149,11 +186,13 @@ export function CustomerTabNavigator() {
         component={AnimatedCustomerProfileScreen}
         options={{
           tabBarLabel: ({ focused, color }) => (
-            <AnimatedTabLabel focused={focused} color={color}>
-              <Text style={{ color, fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.medium }}>
-                {t('profile')}
-              </Text>
-            </AnimatedTabLabel>
+            <Text style={{
+              color,
+              fontSize: 11,
+              fontWeight: theme.fonts.weights.medium
+            }}>
+              {t('profile')}
+            </Text>
           ),
           tabBarIcon: ({ color, size, focused }) => (
             <AnimatedTabIcon focused={focused} color={color}>

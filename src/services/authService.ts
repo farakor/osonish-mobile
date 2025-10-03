@@ -181,6 +181,10 @@ class AuthService {
         isVerified: data.is_verified || false,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
+        workerType: data.worker_type,
+        aboutMe: data.about_me,
+        specializations: data.specializations,
+        workPhotos: data.work_photos,
       };
     } catch (error) {
       console.error(`[AuthService] Ошибка загрузки пользователя ${userId}:`, error);
@@ -373,6 +377,10 @@ class AuthService {
         isVerified: data.is_verified || false,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
+        workerType: data.worker_type,
+        aboutMe: data.about_me,
+        specializations: data.specializations,
+        workPhotos: data.work_photos,
       };
     } catch (error) {
       console.error('Ошибка поиска пользователя по телефону:', error);
@@ -569,22 +577,39 @@ class AuthService {
       // Получаем текущий выбранный язык пользователя
       const currentLanguage = await getUserLanguage();
 
+      // Создаем объект для вставки
+      const insertData: any = {
+        id: userId,
+        phone: formattedPhone,
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+        middle_name: userData.middleName || null,
+        birth_date: userData.birthDate,
+        role: userData.role,
+        city: userData.city || null,
+        profile_image: userData.profileImage || null,
+        preferred_language: currentLanguage,
+        is_verified: true,
+      };
+
+      // Добавляем поля для профессиональных мастеров
+      if (userData.workerType) {
+        insertData.worker_type = userData.workerType;
+      }
+      if (userData.aboutMe) {
+        insertData.about_me = userData.aboutMe;
+      }
+      if (userData.specializations) {
+        insertData.specializations = userData.specializations;
+      }
+      if (userData.workPhotos) {
+        insertData.work_photos = userData.workPhotos;
+      }
+
       // Создаем пользователя в Supabase
       const { data, error } = await supabase
         .from('users')
-        .insert({
-          id: userId,
-          phone: formattedPhone,
-          first_name: userData.firstName,
-          last_name: userData.lastName,
-          middle_name: userData.middleName || null,
-          birth_date: userData.birthDate,
-          role: userData.role,
-          city: userData.city || null,
-          profile_image: userData.profileImage || null,
-          preferred_language: currentLanguage,
-          is_verified: true
-        })
+        .insert(insertData)
         .select()
         .single();
 
@@ -610,6 +635,10 @@ class AuthService {
         isVerified: data.is_verified,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
+        workerType: data.worker_type,
+        aboutMe: data.about_me,
+        specializations: data.specializations,
+        workPhotos: data.work_photos,
       };
 
       // Устанавливаем состояние авторизации
@@ -730,17 +759,34 @@ class AuthService {
         console.log('[AuthService] ✅ Изображение загружено, URL:', profileImageUrl);
       }
 
+      // Подготавливаем объект обновления
+      const updateData: any = {
+        first_name: updates.firstName,
+        last_name: updates.lastName,
+        middle_name: updates.middleName,
+        birth_date: updates.birthDate,
+        profile_image: profileImageUrl,
+        updated_at: new Date().toISOString()
+      };
+
+      // Добавляем поля для профессиональных мастеров, если они есть
+      if (updates.aboutMe !== undefined) {
+        updateData.about_me = updates.aboutMe;
+      }
+      if (updates.specializations !== undefined) {
+        updateData.specializations = updates.specializations;
+      }
+      if (updates.workPhotos !== undefined) {
+        updateData.work_photos = updates.workPhotos;
+      }
+      if (updates.workerType !== undefined) {
+        updateData.worker_type = updates.workerType;
+      }
+
       // Обновляем в Supabase
       const { data, error } = await supabase
         .from('users')
-        .update({
-          first_name: updates.firstName,
-          last_name: updates.lastName,
-          middle_name: updates.middleName,
-          birth_date: updates.birthDate,
-          profile_image: profileImageUrl,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', userId)
         .select()
         .single();
@@ -768,6 +814,11 @@ class AuthService {
         isVerified: data.is_verified,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
+        // Добавляем поля для профессиональных мастеров
+        workerType: data.worker_type,
+        aboutMe: data.about_me,
+        specializations: data.specializations,
+        workPhotos: data.work_photos,
       };
 
       this.authState = {
@@ -775,7 +826,14 @@ class AuthService {
         user: updatedUser
       };
 
+      // Сохраняем обновленную сессию
+      await this.saveSession(updatedUser);
+
       console.log(`[AuthService] Профиль пользователя ${updatedUser.firstName} ${updatedUser.lastName} обновлен`);
+      if (updatedUser.workerType === 'professional') {
+        console.log(`[AuthService] 📸 Фото работ: ${updatedUser.workPhotos?.length || 0}`);
+        console.log(`[AuthService] 🎯 Специализаций: ${updatedUser.specializations?.length || 0}`);
+      }
 
       return {
         success: true,

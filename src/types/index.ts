@@ -15,6 +15,18 @@ export interface User {
   isVerified: boolean;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
+  // Поля для профессиональных мастеров
+  workerType?: 'daily_worker' | 'professional';
+  aboutMe?: string;
+  specializations?: Specialization[];
+  workPhotos?: string[];
+}
+
+// Specialization Types
+export interface Specialization {
+  id: string;
+  name: string;
+  isPrimary: boolean;
 }
 
 export interface AuthState {
@@ -41,6 +53,11 @@ export interface RegisterRequest {
   profileImage?: string;
   role: 'customer' | 'worker';
   city?: string;
+  // Поля для профессиональных мастеров
+  workerType?: 'daily_worker' | 'professional';
+  aboutMe?: string;
+  specializations?: Specialization[];
+  workPhotos?: string[];
 }
 
 export interface AuthResponse {

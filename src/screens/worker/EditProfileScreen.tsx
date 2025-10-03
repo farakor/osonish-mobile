@@ -11,20 +11,25 @@ import {
   Image,
   ActivityIndicator,
   Dimensions,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';;
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
-import { usePlatformSafeAreaInsets, getFixedBottomStyle, getContainerBottomStyle, isSmallScreen } from '../../utils/safeAreaUtils';
+import { usePlatformSafeAreaInsets, getFixedBottomStyle, getContainerBottomStyle, isSmallScreen as isSmallScreenUtil } from '../../utils/safeAreaUtils';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import { HeaderWithBack, PlusIcon } from '../../components/common';
 import { authService } from '../../services/authService';
-import { User } from '../../types';
+import { User, Specialization } from '../../types';
 import { useWorkerTranslation } from '../../hooks/useTranslation';
+import { SPECIALIZATIONS, getSpecializationIcon } from '../../constants/specializations';
+import { mediaService } from '../../services/mediaService';
 
-const { height: screenHeight } = Dimensions.get('window');
+const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
+
+const MAX_WORK_PHOTOS = 10;
 
 export const EditProfileScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -48,6 +53,12 @@ export const EditProfileScreen: React.FC = () => {
   const [firstNameFocused, setFirstNameFocused] = useState(false);
   const [lastNameFocused, setLastNameFocused] = useState(false);
 
+  // Дополнительные поля для профессиональных мастеров
+  const [aboutMe, setAboutMe] = useState('');
+  const [specializations, setSpecializations] = useState<Specialization[]>([]);
+  const [workPhotos, setWorkPhotos] = useState<string[]>([]);
+  const [showSpecializationModal, setShowSpecializationModal] = useState(false);
+
   useEffect(() => {
     loadUserProfile();
   }, []);
@@ -66,6 +77,13 @@ export const EditProfileScreen: React.FC = () => {
         setLastName(userData.lastName || '');
         setBirthDate(userData.birthDate ? new Date(userData.birthDate) : null);
         setProfileImage(userData.profileImage || null);
+
+        // Дополнительные поля для профессиональных мастеров
+        if (userData.workerType === 'professional') {
+          setAboutMe(userData.aboutMe || '');
+          setSpecializations(userData.specializations || []);
+          setWorkPhotos(userData.workPhotos || []);
+        }
       } else {
         Alert.alert(tWorker('general_error'), tWorker('user_not_authorized'));
         navigation.goBack();
@@ -115,6 +133,84 @@ export const EditProfileScreen: React.FC = () => {
     }
   };
 
+  // Функции для работы с фотографиями работ (для профессиональных мастеров)
+  const pickWorkPhoto = async () => {
+    if (workPhotos.length >= MAX_WORK_PHOTOS) {
+      Alert.alert('Внимание', `Можно загрузить максимум ${MAX_WORK_PHOTOS} фотографий`);
+      return;
+    }
+
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Ошибка', 'Необходимо разрешение на доступ к галерее');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setWorkPhotos(prev => [...prev, result.assets[0].uri]);
+      }
+    } catch (error) {
+      console.error('Ошибка выбора фото:', error);
+      Alert.alert('Ошибка', 'Не удалось выбрать фото');
+    }
+  };
+
+  const removeWorkPhoto = (index: number) => {
+    Alert.alert(
+      'Удалить фото?',
+      'Вы уверены, что хотите удалить это фото?',
+      [
+        { text: 'Отмена', style: 'cancel' },
+        {
+          text: 'Удалить',
+          style: 'destructive',
+          onPress: () => {
+            setWorkPhotos(prev => prev.filter((_, i) => i !== index));
+          },
+        },
+      ]
+    );
+  };
+
+  // Функция для переключения специализации
+  const toggleSpecialization = (specId: string) => {
+    const spec = SPECIALIZATIONS.find(s => s.id === specId);
+    if (!spec) return;
+
+    const exists = specializations.find(s => s.id === specId);
+
+    if (exists) {
+      // Удаляем специализацию
+      setSpecializations(prev => prev.filter(s => s.id !== specId));
+    } else {
+      // Добавляем специализацию
+      const newSpec: Specialization = {
+        id: spec.id,
+        name: spec.name,
+        isPrimary: specializations.length === 0, // Первая становится основной
+      };
+      setSpecializations(prev => [...prev, newSpec]);
+    }
+  };
+
+  // Функция для установки основной специализации
+  const setPrimarySpecialization = (specId: string) => {
+    setSpecializations(prev =>
+      prev.map(s => ({
+        ...s,
+        isPrimary: s.id === specId,
+      }))
+    );
+  };
+
   const validateForm = (): boolean => {
     if (!firstName.trim()) {
       Alert.alert(tWorker('general_error'), tWorker('enter_first_name'));
@@ -139,6 +235,24 @@ export const EditProfileScreen: React.FC = () => {
     if (age < 16 || (age === 16 && monthDiff < 0)) {
       Alert.alert(tWorker('general_error'), tWorker('age_minimum_16'));
       return false;
+    }
+
+    // Дополнительная валидация для профессиональных мастеров
+    if (user?.workerType === 'professional') {
+      if (aboutMe.trim().length < 20) {
+        Alert.alert('Внимание', 'Опишите себя более подробно (минимум 20 символов)');
+        return false;
+      }
+
+      if (specializations.length === 0) {
+        Alert.alert('Внимание', 'Выберите хотя бы одну специализацию');
+        return false;
+      }
+
+      if (workPhotos.length === 0) {
+        Alert.alert('Внимание', 'Загрузите хотя бы одно фото ваших работ');
+        return false;
+      }
     }
 
     return true;
@@ -167,6 +281,39 @@ export const EditProfileScreen: React.FC = () => {
         profileImage: profileImage || undefined,
       };
 
+      // Если это профессиональный мастер, добавляем дополнительные поля
+      if (user.workerType === 'professional') {
+        updatedData.aboutMe = aboutMe.trim();
+        updatedData.specializations = specializations;
+
+        // Загружаем новые фото работ (только локальные файлы)
+        const newWorkPhotos = workPhotos.filter(photo => photo.startsWith('file://'));
+        const existingWorkPhotos = workPhotos.filter(photo => !photo.startsWith('file://'));
+
+        if (newWorkPhotos.length > 0) {
+          console.log('[EditProfile] 📸 Загружаем новые фото работ...');
+          const uploadedUrls: string[] = [];
+
+          for (let i = 0; i < newWorkPhotos.length; i++) {
+            const result = await mediaService.uploadWorkPhoto(newWorkPhotos[i]);
+            if (result.success && result.url) {
+              uploadedUrls.push(result.url);
+              console.log(`[EditProfile] Фото ${i + 1}/${newWorkPhotos.length} загружено`);
+            } else {
+              console.error(`[EditProfile] Ошибка загрузки фото ${i + 1}:`, result.error);
+              Alert.alert('Ошибка', `Не удалось загрузить фото ${i + 1}`);
+              setIsSaving(false);
+              setIsUploadingImage(false);
+              return;
+            }
+          }
+
+          updatedData.workPhotos = [...existingWorkPhotos, ...uploadedUrls];
+        } else {
+          updatedData.workPhotos = existingWorkPhotos;
+        }
+      }
+
       const result = await authService.updateProfile(updatedData);
 
       if (result.success && result.user) {
@@ -177,9 +324,13 @@ export const EditProfileScreen: React.FC = () => {
           ? tWorker('profile_photo_updated')
           : tWorker('profile_updated');
 
-        Alert.alert(tWorker('success'), successMessage, [
-          { text: tWorker('ok'), onPress: () => navigation.goBack() }
-        ]);
+        // Закрываем экран редактирования и возвращаемся назад
+        navigation.goBack();
+
+        // Показываем сообщение об успехе после небольшой задержки
+        setTimeout(() => {
+          Alert.alert(tWorker('success'), successMessage);
+        }, 300);
       } else {
         console.error('[EditProfile] ❌ Ошибка обновления профиля:', result.error);
 
@@ -215,13 +366,26 @@ export const EditProfileScreen: React.FC = () => {
   const hasChanges = (): boolean => {
     if (!user) return false;
 
-    return (
+    const basicChanges =
       firstName.trim() !== (user.firstName || '') ||
       lastName.trim() !== (user.lastName || '') ||
       birthDate?.toISOString() !== user.birthDate ||
-      profileImage !== user.profileImage
-    );
+      profileImage !== user.profileImage;
+
+    // Проверяем изменения для профессиональных мастеров
+    if (user.workerType === 'professional') {
+      const professionalChanges =
+        aboutMe.trim() !== (user.aboutMe || '') ||
+        JSON.stringify(specializations) !== JSON.stringify(user.specializations || []) ||
+        JSON.stringify(workPhotos) !== JSON.stringify(user.workPhotos || []);
+
+      return basicChanges || professionalChanges;
+    }
+
+    return basicChanges;
   };
+
+  const isProfessional = user?.workerType === 'professional';
 
   if (isLoading) {
     return (
@@ -345,6 +509,111 @@ export const EditProfileScreen: React.FC = () => {
               </Text>
             </TouchableOpacity>
           </View>
+
+          {/* Дополнительные поля для профессиональных мастеров */}
+          {isProfessional && (
+            <>
+              {/* О себе */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>О себе</Text>
+                <Text style={styles.hint}>
+                  Опишите ваш опыт работы и специализацию
+                </Text>
+                <TextInput
+                  style={styles.textArea}
+                  value={aboutMe}
+                  onChangeText={setAboutMe}
+                  placeholder="Например: Опыт работы сантехником более 10 лет..."
+                  placeholderTextColor="#C7C7CC"
+                  multiline
+                  numberOfLines={6}
+                  maxLength={500}
+                  textAlignVertical="top"
+                />
+                <Text style={styles.charCounter}>
+                  {aboutMe.length} / 500
+                </Text>
+              </View>
+
+              {/* Специализации */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Специализации ({specializations.length})</Text>
+                <Text style={styles.hint}>
+                  Выберите ваши специализации. Нажмите ★ для установки основной.
+                </Text>
+                <View style={styles.specializationsContainer}>
+                  {specializations.map((spec) => (
+                    <TouchableOpacity
+                      key={spec.id}
+                      style={[
+                        styles.specChip,
+                        spec.isPrimary && styles.specChipPrimary,
+                      ]}
+                      onPress={() => setPrimarySpecialization(spec.id)}
+                      onLongPress={() => toggleSpecialization(spec.id)}
+                    >
+                      <Text style={styles.specChipIcon}>
+                        {getSpecializationIcon(spec.id)}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.specChipText,
+                          spec.isPrimary && styles.specChipTextPrimary,
+                        ]}
+                      >
+                        {spec.name}
+                      </Text>
+                      {spec.isPrimary && (
+                        <Text style={styles.specChipStar}>★</Text>
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                  <TouchableOpacity
+                    style={styles.addSpecButton}
+                    onPress={() => setShowSpecializationModal(true)}
+                  >
+                    <Text style={styles.addSpecIcon}>+</Text>
+                    <Text style={styles.addSpecText}>Добавить</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Фото работ */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>
+                  Фото работ {workPhotos.length > 0 && `(${workPhotos.length}/${MAX_WORK_PHOTOS})`}
+                </Text>
+                <Text style={styles.hint}>
+                  Загрузите фотографии выполненных работ
+                </Text>
+                <View style={styles.photosGrid}>
+                  {workPhotos.map((uri, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.photoContainer}
+                      onPress={() => removeWorkPhoto(index)}
+                      activeOpacity={0.8}
+                    >
+                      <Image source={{ uri }} style={styles.workPhoto} />
+                      <View style={styles.removePhotoButton}>
+                        <Text style={styles.removePhotoText}>✕</Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                  {workPhotos.length < MAX_WORK_PHOTOS && (
+                    <TouchableOpacity
+                      style={styles.addPhotoButton}
+                      onPress={pickWorkPhoto}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.addPhotoIcon}>+</Text>
+                      <Text style={styles.addPhotoText}>Добавить</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            </>
+          )}
         </View>
       </ScrollView>
 
@@ -386,6 +655,50 @@ export const EditProfileScreen: React.FC = () => {
             minimumDate={new Date(1950, 0, 1)}
             locale="ru-RU"
           />
+        </View>
+      )}
+
+      {/* Модальное окно выбора специализаций */}
+      {showSpecializationModal && isProfessional && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Выберите специализации</Text>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setShowSpecializationModal(false)}
+              >
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalScrollView}>
+              {SPECIALIZATIONS.map((spec) => {
+                const isSelected = specializations.some(s => s.id === spec.id);
+                return (
+                  <TouchableOpacity
+                    key={spec.id}
+                    style={[
+                      styles.modalSpecItem,
+                      isSelected && styles.modalSpecItemSelected,
+                    ]}
+                    onPress={() => toggleSpecialization(spec.id)}
+                  >
+                    <Text style={styles.modalSpecIcon}>{spec.icon}</Text>
+                    <Text style={styles.modalSpecName}>{spec.name}</Text>
+                    {isSelected && (
+                      <Text style={styles.modalSpecCheck}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.modalDoneButton}
+              onPress={() => setShowSpecializationModal(false)}
+            >
+              <Text style={styles.modalDoneText}>Готово</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </SafeAreaView>
@@ -438,32 +751,32 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     flexGrow: 1,
-    paddingBottom: isSmallScreen() ? 140 : 120,
+    paddingBottom: isSmallScreenUtil() ? 140 : 120,
   },
 
   // Photo Section
   photoSection: {
     alignItems: 'center',
-    paddingVertical: isSmallScreen() ? 20 : 30,
+    paddingVertical: isSmallScreenUtil() ? 20 : 30,
   },
   photoContainer: {
     position: 'relative',
   },
   profileImage: {
-    width: isSmallScreen() ? 100 : 120,
-    height: isSmallScreen() ? 100 : 120,
-    borderRadius: isSmallScreen() ? 50 : 60,
+    width: isSmallScreenUtil() ? 100 : 120,
+    height: isSmallScreenUtil() ? 100 : 120,
+    borderRadius: isSmallScreenUtil() ? 50 : 60,
   },
   avatar: {
-    width: isSmallScreen() ? 100 : 120,
-    height: isSmallScreen() ? 100 : 120,
-    borderRadius: isSmallScreen() ? 50 : 60,
+    width: isSmallScreenUtil() ? 100 : 120,
+    height: isSmallScreenUtil() ? 100 : 120,
+    borderRadius: isSmallScreenUtil() ? 50 : 60,
     backgroundColor: '#679B00',
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    fontSize: isSmallScreen() ? 32 : 40,
+    fontSize: isSmallScreenUtil() ? 32 : 40,
     fontWeight: '600',
     color: '#FFFFFF',
   },
@@ -492,26 +805,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   inputGroup: {
-    marginBottom: isSmallScreen() ? 12 : 20,
+    marginBottom: isSmallScreenUtil() ? 12 : 20,
   },
   label: {
-    fontSize: isSmallScreen() ? 14 : 16,
+    fontSize: isSmallScreenUtil() ? 14 : 16,
     fontWeight: '700',
     color: '#1A1A1A',
-    marginBottom: isSmallScreen() ? 6 : 8,
+    marginBottom: isSmallScreenUtil() ? 6 : 8,
   },
   inputContainer: {
     // Простой контейнер без стилей, чтобы не мешать фокусу
   },
   input: {
     flex: 1,
-    fontSize: isSmallScreen() ? 14 : 16,
+    fontSize: isSmallScreenUtil() ? 14 : 16,
     color: '#1A1A1A',
     paddingRight: 12,
     borderWidth: 1,
     borderColor: '#D5D7DA',
     borderRadius: 12,
-    paddingHorizontal: isSmallScreen() ? 12 : 16,
+    paddingHorizontal: isSmallScreenUtil() ? 12 : 16,
     paddingVertical: 16,
     backgroundColor: '#FFFFFF',
   },
@@ -532,12 +845,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D5D7DA',
     borderRadius: 12,
-    paddingHorizontal: isSmallScreen() ? 12 : 16,
+    paddingHorizontal: isSmallScreenUtil() ? 12 : 16,
     paddingVertical: 16,
     backgroundColor: '#FFFFFF',
   },
   dateInput: {
-    fontSize: isSmallScreen() ? 14 : 16,
+    fontSize: isSmallScreenUtil() ? 14 : 16,
     color: '#1A1A1A',
   },
 
@@ -559,7 +872,7 @@ const styles = StyleSheet.create({
   saveButton: {
     backgroundColor: '#679B00',
     borderRadius: 12,
-    paddingVertical: isSmallScreen() ? 12 : 16,
+    paddingVertical: isSmallScreenUtil() ? 12 : 16,
     alignItems: 'center',
     shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
   },
@@ -568,7 +881,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0, elevation: 0,
   },
   saveButtonText: {
-    fontSize: isSmallScreen() ? 14 : 16,
+    fontSize: isSmallScreenUtil() ? 14 : 16,
     fontWeight: '700',
     color: '#FFFFFF',
     textAlign: 'center',
@@ -602,6 +915,232 @@ const styles = StyleSheet.create({
   doneButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
+    fontWeight: '600',
+  },
+
+  // Дополнительные стили для профессиональных мастеров
+  hint: {
+    fontSize: isSmallScreenUtil() ? 12 : 14,
+    color: theme.colors.text.secondary,
+    marginBottom: 8,
+    lineHeight: 18,
+  },
+  textArea: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#D5D7DA',
+    padding: isSmallScreenUtil() ? 12 : 16,
+    fontSize: isSmallScreenUtil() ? 14 : 16,
+    color: '#1A1A1A',
+    minHeight: 120,
+    textAlignVertical: 'top',
+  },
+  charCounter: {
+    fontSize: 12,
+    color: theme.colors.text.secondary,
+    textAlign: 'right',
+    marginTop: 4,
+  },
+
+  // Специализации
+  specializationsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  specChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#D5D7DA',
+  },
+  specChipPrimary: {
+    backgroundColor: '#679B00',
+    borderColor: '#679B00',
+  },
+  specChipIcon: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+  specChipText: {
+    fontSize: 14,
+    color: '#1A1A1A',
+    fontWeight: '500',
+  },
+  specChipTextPrimary: {
+    color: '#FFFFFF',
+  },
+  specChipStar: {
+    fontSize: 14,
+    color: '#FFD700',
+    marginLeft: 4,
+  },
+  addSpecButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#D5D7DA',
+    borderStyle: 'dashed',
+  },
+  addSpecIcon: {
+    fontSize: 16,
+    color: '#679B00',
+    marginRight: 4,
+  },
+  addSpecText: {
+    fontSize: 14,
+    color: '#679B00',
+    fontWeight: '500',
+  },
+
+  // Фото работ
+  photosGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  photoContainer: {
+    width: (screenWidth - 40 - 16) / 3,
+    height: (screenWidth - 40 - 16) / 3,
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  workPhoto: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  removePhotoButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 24,
+    height: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  removePhotoText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  addPhotoButton: {
+    width: (screenWidth - 40 - 16) / 3,
+    height: (screenWidth - 40 - 16) / 3,
+    borderRadius: 12,
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1,
+    borderColor: '#D5D7DA',
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addPhotoIcon: {
+    fontSize: 32,
+    color: '#679B00',
+    marginBottom: 4,
+  },
+  addPhotoText: {
+    fontSize: 12,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+  },
+
+  // Модальное окно
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    width: '100%',
+    maxHeight: '80%',
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
+  },
+  modalCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F8F9FA',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseText: {
+    fontSize: 20,
+    color: '#1A1A1A',
+  },
+  modalScrollView: {
+    maxHeight: 400,
+  },
+  modalSpecItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8F9FA',
+  },
+  modalSpecItemSelected: {
+    backgroundColor: '#F0F8FF',
+  },
+  modalSpecIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  modalSpecName: {
+    flex: 1,
+    fontSize: 16,
+    color: '#1A1A1A',
+  },
+  modalSpecCheck: {
+    fontSize: 20,
+    color: '#679B00',
+    fontWeight: 'bold',
+  },
+  modalDoneButton: {
+    backgroundColor: '#679B00',
+    borderRadius: 12,
+    padding: 16,
+    margin: 16,
+    alignItems: 'center',
+  },
+  modalDoneText: {
+    color: '#FFFFFF',
+    fontSize: 16,
     fontWeight: '600',
   },
 }); 

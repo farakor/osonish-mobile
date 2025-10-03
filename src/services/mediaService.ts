@@ -650,6 +650,57 @@ export class MediaService {
   }
 
   /**
+   * Загружает фото работы профессионального мастера
+   */
+  async uploadWorkPhoto(imageUri: string): Promise<{ success: boolean; url?: string; error?: string }> {
+    try {
+      console.log('[MediaService] 🖼️ Загружаем фото работы...');
+      console.log('[MediaService] 📱 URI изображения:', imageUri);
+
+      // Определяем размер файла
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      const fileSize = blob.size;
+
+      console.log(`[MediaService] 📏 Размер изображения: ${(fileSize / 1024).toFixed(1)} KB`);
+
+      // Подготавливаем файл для загрузки
+      const fileName = `work_photo_${Date.now()}.jpg`;
+      const file = {
+        uri: imageUri,
+        type: 'image' as const,
+        name: fileName,
+        size: fileSize
+      };
+
+      // Используем существующий метод для загрузки
+      const uploadResult = await this.uploadMediaFiles([file]);
+
+      if (!uploadResult.success || !uploadResult.urls || uploadResult.urls.length === 0) {
+        console.error('[MediaService] ❌ Ошибка загрузки фото работы:', uploadResult.error);
+        return {
+          success: false,
+          error: uploadResult.error || 'Не удалось загрузить изображение'
+        };
+      }
+
+      const photoUrl = uploadResult.urls[0];
+      console.log('[MediaService] ✅ Фото работы успешно загружено:', photoUrl);
+
+      return {
+        success: true,
+        url: photoUrl
+      };
+    } catch (error) {
+      console.error('[MediaService] ❌ Ошибка загрузки фото работы:', error);
+      return {
+        success: false,
+        error: 'Произошла ошибка при загрузке изображения'
+      };
+    }
+  }
+
+  /**
    * Удаляет медиа файлы из Storage (для будущего использования)
    */
   async deleteMediaFiles(urls: string[]): Promise<boolean> {

@@ -41,14 +41,14 @@ export const LoadingScreen: React.FC = () => {
         const registrationPromise = authService.completeRegistration({
           ...profileData,
           role: role,
-          city: selectedCity.name,
+          city: selectedCity.id, // Сохраняем ID вместо названия для универсальности
         });
 
         // Ждем завершения обеих операций
         const [, result] = await Promise.all([minLoadingTime, registrationPromise]);
 
         if (result.success && result.user) {
-          // Сохраняем выбранный город
+          // Сохраняем выбранный город (ID вместо названия для универсальности)
           const AsyncStorage = await import('@react-native-async-storage/async-storage');
           await AsyncStorage.default.setItem('@selected_city', JSON.stringify(selectedCity));
 
