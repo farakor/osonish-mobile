@@ -86,6 +86,8 @@ const getAndroidStatusBarHeight = () => {
 
 type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
 
+type TabType = 'active' | 'completed';
+
 export const MyOrdersScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const t = useCustomerTranslation();
@@ -93,6 +95,7 @@ export const MyOrdersScreen: React.FC = () => {
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>('active');
 
   // Функция для загрузки всех заказов пользователя
   const loadOrders = useCallback(async () => {
@@ -253,10 +256,46 @@ export const MyOrdersScreen: React.FC = () => {
     }
   };
 
-  // Фильтрация заказов - показываем завершенные и отмененные
-  const filteredOrders = allOrders.filter((order: Order) =>
-    order.status === 'completed' || order.status === 'cancelled'
-  );
+  // Фильтрация заказов в зависимости от активного таба
+  const filteredOrders = allOrders
+    .filter((order: Order) => {
+      if (activeTab === 'active') {
+        // Активные заказы: новые, с откликами, в процессе
+        return order.status === 'new' || order.status === 'response_received' || order.status === 'in_progress';
+      } else {
+        // Завершенные заказы: завершенные и отмененные
+        return order.status === 'completed' || order.status === 'cancelled';
+      }
+    })
+    .sort((a, b) => {
+      // Если мы в активных заказах, сортируем по приоритету откликов
+      if (activeTab === 'active') {
+        const aHasPending = (a.pendingApplicantsCount || 0) > 0;
+        const bHasPending = (b.pendingApplicantsCount || 0) > 0;
+        const aHasApplicants = a.applicantsCount > 0;
+        const bHasApplicants = b.applicantsCount > 0;
+        
+        // Приоритет 1: Заказы с непринятыми откликами (требуют внимания)
+        if (aHasPending && !bHasPending) return -1;
+        if (!aHasPending && bHasPending) return 1;
+        
+        // Если оба имеют непринятые отклики, сортируем по их количеству (больше первыми)
+        if (aHasPending && bHasPending) {
+          const pendingDiff = (b.pendingApplicantsCount || 0) - (a.pendingApplicantsCount || 0);
+          if (pendingDiff !== 0) return pendingDiff;
+        }
+        
+        // Приоритет 2: Заказы с откликами (но все уже приняты/отклонены)
+        if (aHasApplicants && !bHasApplicants) return -1;
+        if (!aHasApplicants && bHasApplicants) return 1;
+        
+        // Приоритет 3: Сортировка по дате создания (новые первыми)
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+      
+      // Для завершенных заказов сортируем по дате обновления (последние первыми)
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
 
   const renderOrder = ({ item }: { item: Order }) => (
     <ModernOrderCard
@@ -276,7 +315,31 @@ export const MyOrdersScreen: React.FC = () => {
           <Text style={styles.subtitle}>{t('my_orders_subtitle')}</Text>
         </View>
 
-
+        {/* Tabs */}
+        <View style={styles.tabs}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tabsContent}
+          >
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'active' && styles.activeTab]}
+              onPress={() => setActiveTab('active')}
+            >
+              <Text style={[styles.tabText, activeTab === 'active' && styles.activeTabText]}>
+                {t('orders_tab_active')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'completed' && styles.activeTab]}
+              onPress={() => setActiveTab('completed')}
+            >
+              <Text style={[styles.tabText, activeTab === 'completed' && styles.activeTabText]}>
+                {t('orders_tab_completed')}
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
 
         {/* Orders List */}
         {isLoading && allOrders.length === 0 ? (
@@ -303,10 +366,13 @@ export const MyOrdersScreen: React.FC = () => {
           <View style={styles.emptyState}>
             <SvgXml xml={emptyStateCompletedOrdersSvg} style={styles.emptyStateIcon} />
             <Text style={styles.emptyStateTitle}>
-              {t('no_completed_orders')}
+              {activeTab === 'active' ? t('no_active_orders_empty') : t('no_completed_orders')}
             </Text>
             <Text style={styles.emptyStateText}>
-              {t('no_completed_orders_text')}
+              {activeTab === 'active'
+                ? t('no_active_orders_description_empty')
+                : t('no_completed_orders_text')
+              }
             </Text>
           </View>
         )}
@@ -339,23 +405,21 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
   },
   tabs: {
-    paddingHorizontal: theme.spacing.none,
-    marginBottom: theme.spacing.lg,
-  },
-  tabsContainer: {
-    paddingHorizontal: theme.spacing.none,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    marginBottom: theme.spacing.md,
   },
   tabsContent: {
     paddingHorizontal: theme.spacing.lg,
-    gap: theme.spacing.md,
+    flexDirection: 'row',
+    gap: theme.spacing.xl,
   },
   tab: {
-    flexShrink: 0,
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    alignItems: 'center',
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xs,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
+    marginBottom: -1,
   },
   activeTab: {
     borderBottomColor: theme.colors.primary,
@@ -363,11 +427,11 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
-    fontWeight: theme.fonts.weights.medium,
+    fontWeight: '500',
   },
   activeTabText: {
     color: theme.colors.primary,
-    fontWeight: theme.fonts.weights.semiBold,
+    fontWeight: '600',
   },
   ordersList: {
     paddingTop: theme.spacing.sm,

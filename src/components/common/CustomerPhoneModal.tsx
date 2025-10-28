@@ -21,6 +21,7 @@ interface CustomerPhoneModalProps {
   visible: boolean;
   onClose: () => void;
   onContinue: () => void;
+  onCall?: () => void | Promise<void>; // Новый callback для логирования звонка
   customerPhone: string;
   customerName: string;
 }
@@ -29,6 +30,7 @@ export const CustomerPhoneModal: React.FC<CustomerPhoneModalProps> = ({
   visible,
   onClose,
   onContinue,
+  onCall,
   customerPhone,
   customerName,
 }) => {
@@ -98,11 +100,19 @@ export const CustomerPhoneModal: React.FC<CustomerPhoneModalProps> = ({
     }
   }, [visible, isClosing]);
 
-  const handleCallCustomer = () => {
-    const phoneUrl = `tel:${customerPhone}`;
-    Linking.openURL(phoneUrl).catch((err) => {
+  const handleCallCustomer = async () => {
+    try {
+      // Вызываем callback для логирования звонка, если он передан
+      if (onCall) {
+        await onCall();
+      }
+      
+      // Открываем диалер
+      const phoneUrl = `tel:${customerPhone}`;
+      await Linking.openURL(phoneUrl);
+    } catch (err) {
       console.error('Ошибка при открытии диалера:', err);
-    });
+    }
   };
 
   return (

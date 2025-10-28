@@ -17,7 +17,7 @@ import type { RootStackParamList } from '../../types';
 import { LogoOsonish, AnimatedIcon, HeaderWithBack } from '../../components/common';
 
 // Импортируем анимированные иконки
-const DeliveryManAnimation = require('../../../assets/delivery-man.json');
+const DeliveryManAnimation = require('../../../assets/worker-2.json');
 const OfficeWorkerAnimation = require('../../../assets/office-worker.json');
 import { useAuthTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 
@@ -128,8 +128,8 @@ export const RoleSelectionScreen: React.FC = () => {
       <View style={styles.iconContainer}>
         <AnimatedIcon
           source={role === 'worker' ? DeliveryManAnimation : OfficeWorkerAnimation}
-          width={isSmallScreen ? 60 : 80}
-          height={isSmallScreen ? 60 : 80}
+          width={isSmallScreen ? 45 : 60}
+          height={isSmallScreen ? 45 : 60}
           loop={true}
           autoPlay={false}
           speed={0.8}

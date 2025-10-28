@@ -11,8 +11,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { theme, getSpecializationName } from '../../constants';
+import { theme, getTranslatedSpecializationName } from '../../constants';
 import type { CustomerStackParamList } from '../../types';
+import { useTranslation } from 'react-i18next';
 import { HeaderWithBack } from '../../components/common';
 import { ProfessionalMasterCard } from '../../components/cards';
 import {
@@ -20,6 +21,7 @@ import {
   ProfessionalMaster,
 } from '../../services/professionalMasterService';
 import { authService } from '../../services/authService';
+import { useCustomerTranslation } from '../../hooks/useTranslation';
 
 type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
 type ScreenRouteProp = RouteProp<CustomerStackParamList, 'ProfessionalMastersList'>;
@@ -28,6 +30,8 @@ export const ProfessionalMastersListScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<ScreenRouteProp>();
   const { specializationId } = route.params;
+  const t = useCustomerTranslation();
+  const { t: tCommon } = useTranslation();
 
   const [masters, setMasters] = useState<ProfessionalMaster[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -39,10 +43,12 @@ export const ProfessionalMastersListScreen: React.FC = () => {
       const authState = authService.getAuthState();
       const userCity = authState.user?.city;
 
+      // Если специализация не указана (список "Все мастера"), не показываем дневных работников
       const data = await professionalMasterService.getMasters({
         specializationId,
         city: userCity,
         limit: 50,
+        includeDailyWorkers: !!specializationId, // true если есть специализация, false если это список "Все"
       });
 
       setMasters(data);
@@ -76,16 +82,16 @@ export const ProfessionalMastersListScreen: React.FC = () => {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Text style={styles.emptyStateTitle}>Мастера не найдены</Text>
+      <Text style={styles.emptyStateTitle}>{t('masters_not_found')}</Text>
       <Text style={styles.emptyStateText}>
-        В этой категории пока нет мастеров в вашем городе
+        {t('no_masters_in_city')}
       </Text>
     </View>
   );
 
   const title = specializationId
-    ? getSpecializationName(specializationId)
-    : 'Профессиональные мастера';
+    ? getTranslatedSpecializationName(specializationId, tCommon)
+    : t('professional_masters_title');
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>

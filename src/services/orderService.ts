@@ -96,13 +96,14 @@ export class OrderService {
       const currentTime = new Date().toISOString();
 
       // Создаем заказ в Supabase
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('orders')
         .insert({
           id: orderId,
           title: request.title,
           description: request.description,
-          category: request.category,
+          category: request.category || 'other',
+          specialization_id: request.specializationId || null,
           location: request.location,
           latitude: request.latitude || null,
           longitude: request.longitude || null,
@@ -124,8 +125,49 @@ export class OrderService {
         .select()
         .single();
 
+      // Fallback: если ошибка связана с отсутствием поля specialization_id, пробуем без него
+      if (error && error.message?.includes('specialization_id')) {
+        console.warn('[OrderService] ⚠️ Поле specialization_id не найдено, пробуем создать заказ без него...');
+        console.warn('[OrderService] 📝 Необходимо выполнить миграцию: SQL/add_specialization_id_to_orders.sql');
+        
+        const fallbackResult = await supabase
+          .from('orders')
+          .insert({
+            id: orderId,
+            title: request.title,
+            description: request.description,
+            category: request.category || 'other',
+            location: request.location,
+            latitude: request.latitude || null,
+            longitude: request.longitude || null,
+            budget: request.budget,
+            workers_needed: request.workersNeeded,
+            service_date: request.serviceDate,
+            photos: request.photos || [],
+            customer_id: authState.user.id,
+            status: 'new',
+            applicants_count: 0,
+            transport_paid: request.transportPaid || false,
+            meal_included: request.mealIncluded || false,
+            meal_paid: request.mealPaid || false,
+            auto_completed: false,
+            created_at: currentTime,
+            updated_at: currentTime
+          })
+          .select()
+          .single();
+          
+        data = fallbackResult.data;
+        error = fallbackResult.error;
+        
+        if (!error) {
+          console.warn('[OrderService] ✅ Заказ создан без specialization_id');
+        }
+      }
+
       if (error) {
-        console.error('[OrderService] Ошибка создания заказа в Supabase:', error);
+        console.error('[OrderService] ❌ Ошибка создания заказа в Supabase:', error);
+        console.error('[OrderService] 📋 Детали ошибки:', JSON.stringify(error, null, 2));
         return {
           success: false,
           error: 'Не удалось создать заказ'
@@ -136,7 +178,8 @@ export class OrderService {
         id: data.id,
         title: data.title,
         description: data.description,
-        category: data.category,
+        category: data.category || 'other',
+        specializationId: data.specialization_id || undefined,
         location: data.location,
         latitude: data.latitude || undefined,
         longitude: data.longitude || undefined,
@@ -238,7 +281,7 @@ export class OrderService {
 
       if (request.title !== undefined) updateData.title = request.title;
       if (request.description !== undefined) updateData.description = request.description;
-      if (request.category !== undefined) updateData.category = request.category;
+      if (request.category !== undefined) updateData.category = request.category || 'other';
       if (request.location !== undefined) updateData.location = request.location;
       if (request.latitude !== undefined) updateData.latitude = request.latitude;
       if (request.longitude !== undefined) updateData.longitude = request.longitude;
@@ -268,7 +311,8 @@ export class OrderService {
         id: data.id,
         title: data.title,
         description: data.description,
-        category: data.category,
+        category: data.category || 'other',
+        specializationId: data.specialization_id || undefined,
         location: data.location,
         latitude: data.latitude || undefined,
         longitude: data.longitude || undefined,
@@ -434,7 +478,8 @@ export class OrderService {
         id: item.id,
         title: item.title,
         description: item.description,
-        category: item.category,
+        category: item.category || 'other',
+        specializationId: item.specialization_id || undefined,
         location: item.location,
         latitude: item.latitude || undefined,
         longitude: item.longitude || undefined,
@@ -445,6 +490,7 @@ export class OrderService {
         status: item.status as 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled',
         customerId: item.customer_id,
         applicantsCount: item.applicants_count,
+        viewsCount: item.views_count || 0,
         // Дополнительные удобства
         transportPaid: item.transport_paid || false,
         mealIncluded: item.meal_included || false,
@@ -483,31 +529,46 @@ export class OrderService {
         return [];
       }
 
-      const orders: Order[] = data.map((item: any) => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        category: item.category,
-        location: item.location,
-        latitude: item.latitude || undefined,
-        longitude: item.longitude || undefined,
-        budget: item.budget,
-        workersNeeded: item.workers_needed,
-        serviceDate: item.service_date,
-        photos: item.photos || [],
-        status: item.status as 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled',
-        customerId: item.customer_id,
-        applicantsCount: item.applicants_count,
-        // Дополнительные удобства
-        transportPaid: item.transport_paid || false,
-        mealIncluded: item.meal_included || false,
-        mealPaid: item.meal_paid || false,
-        createdAt: item.created_at,
-        updatedAt: item.updated_at
-      }));
+      // Получаем количество непринятых откликов для каждого заказа
+      const ordersWithPendingCount = await Promise.all(
+        data.map(async (item: any) => {
+          // Подсчитываем непринятые отклики (status = 'pending')
+          const { count: pendingCount } = await supabase
+            .from('applicants')
+            .select('*', { count: 'exact', head: true })
+            .eq('order_id', item.id)
+            .eq('status', 'pending');
 
-      console.log(`[OrderService] Загружено ${orders.length} заказов для заказчика`);
-      return orders;
+          return {
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            category: item.category || 'other',
+            specializationId: item.specialization_id || undefined,
+            location: item.location,
+            latitude: item.latitude || undefined,
+            longitude: item.longitude || undefined,
+            budget: item.budget,
+            workersNeeded: item.workers_needed,
+            serviceDate: item.service_date,
+            photos: item.photos || [],
+            status: item.status as 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled',
+            customerId: item.customer_id,
+            applicantsCount: item.applicants_count,
+            pendingApplicantsCount: pendingCount || 0,
+            viewsCount: item.views_count || 0,
+            // Дополнительные удобства
+            transportPaid: item.transport_paid || false,
+            mealIncluded: item.meal_included || false,
+            mealPaid: item.meal_paid || false,
+            createdAt: item.created_at,
+            updatedAt: item.updated_at
+          };
+        })
+      );
+
+      console.log(`[OrderService] Загружено ${ordersWithPendingCount.length} заказов для заказчика`);
+      return ordersWithPendingCount;
     } catch (error) {
       console.error('[OrderService] Ошибка получения заказов заказчика:', error);
       return [];
@@ -534,7 +595,8 @@ export class OrderService {
         id: item.id,
         title: item.title,
         description: item.description,
-        category: item.category,
+        category: item.category || 'other',
+        specializationId: item.specialization_id || undefined,
         location: item.location,
         latitude: item.latitude || undefined,
         longitude: item.longitude || undefined,
@@ -545,6 +607,7 @@ export class OrderService {
         status: item.status as 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled',
         customerId: item.customer_id,
         applicantsCount: item.applicants_count,
+        viewsCount: item.views_count || 0,
         // Дополнительные удобства
         transportPaid: item.transport_paid || false,
         mealIncluded: item.meal_included || false,
@@ -678,7 +741,8 @@ export class OrderService {
         id: item.id,
         title: item.title,
         description: item.description,
-        category: item.category,
+        category: item.category || 'other',
+        specializationId: item.specialization_id || undefined,
         location: item.location,
         latitude: item.latitude || undefined,
         longitude: item.longitude || undefined,
@@ -689,6 +753,7 @@ export class OrderService {
         status: item.status as 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled',
         customerId: item.customer_id,
         applicantsCount: item.applicants_count,
+        viewsCount: item.views_count || 0,
         // Дополнительные удобства
         transportPaid: item.transport_paid || false,
         mealIncluded: item.meal_included || false,
@@ -725,7 +790,8 @@ export class OrderService {
         id: data.id,
         title: data.title,
         description: data.description,
-        category: data.category,
+        category: data.category || 'other',
+        specializationId: data.specialization_id || undefined,
         location: data.location,
         latitude: data.latitude || undefined,
         longitude: data.longitude || undefined,
@@ -736,6 +802,7 @@ export class OrderService {
         status: data.status as 'new' | 'in_progress' | 'completed' | 'cancelled',
         customerId: data.customer_id,
         applicantsCount: data.applicants_count,
+        viewsCount: data.views_count || 0,
         // Дополнительные удобства
         transportPaid: data.transport_paid || false,
         mealIncluded: data.meal_included || false,
@@ -1041,7 +1108,7 @@ export class OrderService {
           id: item.id,
           orderId: order.id,
           orderTitle: order.title,
-          orderCategory: order.category,
+          orderCategory: order.category || 'other',
           orderDescription: order.description,
           orderLocation: order.location,
           orderLatitude: order.latitude,
@@ -2302,26 +2369,17 @@ export class OrderService {
         console.log(`[OrderService] 📋 Группа "${group.title}": ${group.userIds.length} пользователей`);
       });
 
-      // Отправляем параллельно каждой языковой группе
+      // ⚠️ ОТПРАВКА УВЕДОМЛЕНИЙ ОТКЛЮЧЕНА - ИСПОЛЬЗУЕТСЯ СЕРВЕРНАЯ СИСТЕМА
+      // Уведомления теперь отправляются автоматически через database triggers + CRON
+      // См. SQL/create_notification_triggers.sql и osonish-admin/src/app/api/cron/
+      console.log(`[OrderService] 🔕 Отправка уведомлений из мобильного приложения отключена`);
+      console.log(`[OrderService] 🖥️ Уведомления будут отправлены автоматически с сервера`);
+      
+      // Заглушка для совместимости с кодом ниже
       const batchStartTime = Date.now();
       const batchPromises = Array.from(usersByLanguage.values()).map(async (group) => {
-        console.log(`[OrderService] 🚀 Отправляем пакет для ${group.userIds.length} пользователей: "${group.title}"`);
-
-        try {
-          const batchSentCount = await notificationService.sendNotificationToUsers(
-            group.userIds,
-            group.title,
-            group.body,
-            data,
-            'new_order'
-          );
-
-          console.log(`[OrderService] ✅ Пакет отправлен: ${batchSentCount}/${group.userIds.length} успешно`);
-          return { sent: batchSentCount, failed: group.userIds.length - batchSentCount };
-        } catch (error) {
-          console.error(`[OrderService] ❌ Ошибка отправки пакета:`, error);
-          return { sent: 0, failed: group.userIds.length };
-        }
+        console.log(`[OrderService] 📝 Пропускаем отправку для ${group.userIds.length} пользователей (серверная система)`);
+        return { sent: 0, failed: 0 }; // Возвращаем 0, т.к. отправка на сервере
       });
 
       // Ждем завершения всех пакетов
@@ -2400,7 +2458,8 @@ export class OrderService {
           id: data.id,
           title: data.title,
           description: data.description,
-          category: data.category,
+          category: data.category || 'other',
+          specializationId: data.specialization_id || undefined,
           location: data.location,
           latitude: data.latitude,
           longitude: data.longitude,
@@ -2424,6 +2483,7 @@ export class OrderService {
           title: 'Тестовый заказ для проверки уведомлений',
           description: 'Это тестовый заказ для отладки системы уведомлений',
           category: 'cleaning',
+          specializationId: undefined,
           location: 'Ташкент, Узбекистан',
           budget: 50000,
           workersNeeded: 1,
@@ -2502,17 +2562,16 @@ export class OrderService {
       };
 
       // Отправляем уведомление заказчику
-      const sent = await notificationService.sendNotificationToUser(
-        orderData.customer_id,
-        notification.title,
-        notification.body,
-        data,
-        'new_application'
-      );
+      // ⚠️ ОТКЛЮЧЕНО - используется серверная система (database triggers)
+      // const sent = await notificationService.sendNotificationToUser(
+      //   orderData.customer_id,
+      //   notification.title,
+      //   notification.body,
+      //   data,
+      //   'new_application'
+      // );
 
-      if (sent) {
-        console.log('[OrderService] ✅ Уведомление о новом отклике отправлено заказчику');
-      }
+      console.log('[OrderService] 🔕 Уведомление будет отправлено автоматически с сервера');
     } catch (error) {
       console.error('[OrderService] ❌ Ошибка отправки уведомления о новом отклике:', error);
     }
@@ -2566,17 +2625,16 @@ export class OrderService {
       };
 
       // Отправляем уведомление исполнителю
-      const sent = await notificationService.sendNotificationToUser(
-        applicantData.worker_id,
-        notification.title,
-        notification.body,
-        data,
-        'order_update'
-      );
+      // ⚠️ ОТКЛЮЧЕНО - используется серверная система (database triggers)
+      // const sent = await notificationService.sendNotificationToUser(
+      //   applicantData.worker_id,
+      //   notification.title,
+      //   notification.body,
+      //   data,
+      //   'order_update'
+      // );
 
-      if (sent) {
-        console.log('[OrderService] ✅ Уведомление о выборе отправлено исполнителю');
-      }
+      console.log('[OrderService] 🔕 Уведомление будет отправлено автоматически с сервера');
     } catch (error) {
       console.error('[OrderService] ❌ Ошибка отправки уведомления о выборе исполнителя:', error);
     }
@@ -2685,17 +2743,16 @@ export class OrderService {
       };
 
       // Отправляем уведомление исполнителю
-      const sent = await notificationService.sendNotificationToUser(
-        workerId,
-        notification.title,
-        notification.body,
-        data,
-        'work_reminder'
-      );
+      // ⚠️ ОТКЛЮЧЕНО - используется серверная система (scheduled_reminders + CRON)
+      // const sent = await notificationService.sendNotificationToUser(
+      //   workerId,
+      //   notification.title,
+      //   notification.body,
+      //   data,
+      //   'work_reminder'
+      // );
 
-      if (sent) {
-        console.log('[OrderService] ✅ Напоминание о работе отправлено исполнителю');
-      }
+      console.log('[OrderService] 🔕 Напоминание будет отправлено автоматически с сервера');
     } catch (error) {
       console.error('[OrderService] ❌ Ошибка отправки напоминания о работе:', error);
     }
@@ -2803,17 +2860,16 @@ export class OrderService {
       };
 
       // Отправляем уведомление заказчику
-      const sent = await notificationService.sendNotificationToUser(
-        customerId,
-        notification.title,
-        notification.body,
-        data,
-        'complete_work_reminder'
-      );
+      // ⚠️ ОТКЛЮЧЕНО - используется серверная система (scheduled_reminders + CRON)
+      // const sent = await notificationService.sendNotificationToUser(
+      //   customerId,
+      //   notification.title,
+      //   notification.body,
+      //   data,
+      //   'complete_work_reminder'
+      // );
 
-      if (sent) {
-        console.log('[OrderService] ✅ Напоминание о завершении работы отправлено заказчику');
-      }
+      console.log('[OrderService] 🔕 Напоминание будет отправлено автоматически с сервера');
     } catch (error) {
       console.error('[OrderService] ❌ Ошибка отправки напоминания о завершении работы:', error);
     }
@@ -2875,23 +2931,24 @@ export class OrderService {
         type: 'order_completed'
       };
 
+      // ⚠️ ОТКЛЮЧЕНО - используется серверная система (database triggers)
       // Отправляем уведомления каждому пользователю на его языке
-      let sentCount = 0;
-      for (const workerId of workerIds) {
-        const notification = translatedNotifications.get(workerId);
-        if (notification) {
-          const sent = await notificationService.sendNotificationToUser(
-            workerId,
-            notification.title,
-            notification.body,
-            data,
-            'order_completed'
-          );
-          if (sent) sentCount++;
-        }
-      }
+      // let sentCount = 0;
+      // for (const workerId of workerIds) {
+      //   const notification = translatedNotifications.get(workerId);
+      //   if (notification) {
+      //     const sent = await notificationService.sendNotificationToUser(
+      //       workerId,
+      //       notification.title,
+      //       notification.body,
+      //       data,
+      //       'order_completed'
+      //     );
+      //     if (sent) sentCount++;
+      //   }
+      // }
 
-      console.log(`[OrderService] ✅ Отправлено ${sentCount} уведомлений о завершении заказа`);
+      console.log(`[OrderService] 🔕 Уведомления о завершении будут отправлены автоматически с сервера`);
     } catch (error) {
       console.error('[OrderService] ❌ Ошибка отправки уведомлений о завершении заказа:', error);
     }
@@ -2954,23 +3011,24 @@ export class OrderService {
         type: 'order_updated'
       };
 
+      // ⚠️ ОТКЛЮЧЕНО - используется серверная система (database triggers)
       // Отправляем уведомления каждому пользователю на его языке
-      let sentCount = 0;
-      for (const workerId of workerIds) {
-        const notification = translatedNotifications.get(workerId);
-        if (notification) {
-          const sent = await notificationService.sendNotificationToUser(
-            workerId,
-            notification.title,
-            notification.body,
-            data,
-            'order_update'
-          );
-          if (sent) sentCount++;
-        }
-      }
+      // let sentCount = 0;
+      // for (const workerId of workerIds) {
+      //   const notification = translatedNotifications.get(workerId);
+      //   if (notification) {
+      //     const sent = await notificationService.sendNotificationToUser(
+      //       workerId,
+      //       notification.title,
+      //       notification.body,
+      //       data,
+      //       'order_update'
+      //     );
+      //     if (sent) sentCount++;
+      //   }
+      // }
 
-      console.log(`[OrderService] ✅ Отправлено ${sentCount} уведомлений об обновлении заказа`);
+      console.log(`[OrderService] 🔕 Уведомления об обновлении будут отправлены автоматически с сервера`);
     } catch (error) {
       console.error('[OrderService] ❌ Ошибка отправки уведомлений об обновлении заказа:', error);
     }
@@ -3002,23 +3060,24 @@ export class OrderService {
         type: 'order_cancelled'
       };
 
+      // ⚠️ ОТКЛЮЧЕНО - используется серверная система (database triggers)
       // Отправляем уведомления каждому пользователю на его языке
-      let sentCount = 0;
-      for (const workerId of workerIds) {
-        const notification = translatedNotifications.get(workerId);
-        if (notification) {
-          const sent = await notificationService.sendNotificationToUser(
-            workerId,
-            notification.title,
-            notification.body,
-            data,
-            'order_cancelled'
-          );
-          if (sent) sentCount++;
-        }
-      }
+      // let sentCount = 0;
+      // for (const workerId of workerIds) {
+      //   const notification = translatedNotifications.get(workerId);
+      //   if (notification) {
+      //     const sent = await notificationService.sendNotificationToUser(
+      //       workerId,
+      //       notification.title,
+      //       notification.body,
+      //       data,
+      //       'order_cancelled'
+      //     );
+      //     if (sent) sentCount++;
+      //   }
+      // }
 
-      console.log(`[OrderService] ✅ Отправлено ${sentCount} уведомлений об отмене заказа`);
+      console.log(`[OrderService] 🔕 Уведомления об отмене будут отправлены автоматически с сервера`);
     } catch (error) {
       console.error('[OrderService] ❌ Ошибка отправки уведомлений об отмене заказа:', error);
     }
@@ -3420,6 +3479,60 @@ export class OrderService {
       }
 
       console.log('[OrderService] ✅ Звонок успешно залогирован в базу данных');
+      return true;
+
+    } catch (error) {
+      console.error('[OrderService] ❌ Ошибка логирования звонка:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Логирует звонок без контекста заказа (например, из профиля профессионального мастера)
+   */
+  async logCallAttemptWithoutOrder(callData: {
+    callerId: string;
+    receiverId: string;
+    callerType: 'customer' | 'worker';
+    receiverType: 'customer' | 'worker';
+    phoneNumber: string;
+    callSource: 'professional_profile' | 'worker_profile' | 'other';
+  }): Promise<boolean> {
+    try {
+      console.log('[OrderService] 🔍 logCallAttemptWithoutOrder начал выполнение с данными:', callData);
+
+      // Проверяем доступность Supabase
+      if (!supabase) {
+        console.error('[OrderService] ❌ Supabase не инициализирован');
+        return false;
+      }
+
+      const logEntry = {
+        order_id: null, // Нет контекста заказа
+        caller_id: callData.callerId,
+        receiver_id: callData.receiverId,
+        caller_type: callData.callerType,
+        receiver_type: callData.receiverType,
+        phone_number: callData.phoneNumber,
+        call_source: callData.callSource,
+        order_status: null, // Нет статуса заказа
+        days_since_order_created: null, // Нет даты создания заказа
+        call_initiated_at: new Date().toISOString()
+      };
+
+      console.log('[OrderService] 📝 Подготовлены данные для вставки в call_logs:', logEntry);
+
+      // Создаем запись в таблице call_logs
+      const { error: insertError } = await supabase
+        .from('call_logs')
+        .insert(logEntry);
+
+      if (insertError) {
+        console.error('[OrderService] ❌ Ошибка вставки в call_logs:', insertError);
+        return false;
+      }
+
+      console.log('[OrderService] ✅ Звонок успешно залогирован в базу данных (без контекста заказа)');
       return true;
 
     } catch (error) {
@@ -4150,6 +4263,25 @@ export class OrderService {
       }
     } catch (error) {
       console.error('[OrderService] ❌ Ошибка удаления записи о необходимости оценки:', error);
+    }
+  }
+
+  /**
+   * Увеличить счетчик просмотров заказа
+   */
+  async incrementOrderViews(orderId: string): Promise<void> {
+    try {
+      const { error } = await supabase.rpc('increment_order_views', {
+        order_id_param: orderId
+      });
+
+      if (error) {
+        console.error('[OrderService] Ошибка увеличения счетчика просмотров заказа:', error);
+      } else {
+        console.log(`[OrderService] Просмотр заказа ${orderId} зарегистрирован`);
+      }
+    } catch (error) {
+      console.error('[OrderService] Ошибка в incrementOrderViews:', error);
     }
   }
 }

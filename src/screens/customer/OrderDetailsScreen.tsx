@@ -33,15 +33,16 @@ import CarIcon from '../../../assets/car-01.svg';
 import BankNoteIcon from '../../../assets/bank-note-01.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import LottieView from 'lottie-react-native';
-import { HeaderWithBack, MediaViewer, OrderLocationMap, DropdownMenuItem, StatusBadge, DropdownMenu, StarIcon } from '../../components/common';
+import { HeaderWithBack, MediaViewer, OrderLocationMap, DropdownMenuItem, StatusBadge, DropdownMenu, StarIcon, CategoryIcon as CategoryIconComponent } from '../../components/common';
 import { orderService } from '../../services/orderService';
-import { getCategoryEmoji } from '../../utils/categoryUtils';
+import { getCategoryEmoji, getCategoryLabel } from '../../utils/categoryUtils';
 import { getCategoryAnimation } from '../../utils/categoryIconUtils';
 import { authService } from '../../services/authService';
+import { getSpecializationIcon, getTranslatedSpecializationName, getSpecializationIconComponent } from '../../constants/specializations';
 import { supabase } from '../../services/supabaseClient';
 import { Order, Applicant, User } from '../../types';
-import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation, useCategoriesTranslation } from '../../hooks/useTranslation';
-import { getCategoryLabel } from '../../utils/categoryUtils';
+import { useTranslation } from 'react-i18next';
+import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 
 // SVG иконка empty-state-no-applications
 const emptyStateNoApplicationsSvg = `<svg width="161" height="160" viewBox="0 0 161 160" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -293,10 +294,10 @@ export const OrderDetailsScreen: React.FC = () => {
   const route = useRoute<OrderDetailsRouteProp>();
   const { orderId } = route.params;
   const insets = usePlatformSafeAreaInsets();
+  const { t: translate } = useTranslation();
   const t = useCustomerTranslation();
   const tError = useErrorsTranslation();
   const tCommon = useCommonTranslation();
-  const tCategories = useCategoriesTranslation();
 
 
 
@@ -341,6 +342,11 @@ export const OrderDetailsScreen: React.FC = () => {
         const authState = authService.getAuthState();
         if (authState.user) {
           setCurrentUser(authState.user);
+        }
+
+        // Увеличиваем счетчик просмотров заказа
+        if (orderData) {
+          await orderService.incrementOrderViews(orderId);
         }
       } catch (error) {
         console.error('Ошибка загрузки заказа:', error);
@@ -611,7 +617,7 @@ export const OrderDetailsScreen: React.FC = () => {
             const orderData = {
               title: order.title,
               description: order.description,
-              category: order.category,
+              category: order.category || 'other',
               location: order.location,
               latitude: order.latitude,
               longitude: order.longitude,
@@ -975,9 +981,8 @@ export const OrderDetailsScreen: React.FC = () => {
                 <View style={styles.modernNameActions}>
                   <TouchableOpacity
                     style={styles.reviewsButton}
-                    onPress={() => navigation.navigate('WorkerProfile', {
-                      workerId: item.workerId,
-                      workerName: item.workerName
+                    onPress={() => navigation.navigate('ProfessionalMasterProfile', {
+                      masterId: item.workerId
                     })}
                   >
                     <View style={styles.reviewsButtonContent}>
@@ -1287,18 +1292,30 @@ export const OrderDetailsScreen: React.FC = () => {
           {/* Info Grid */}
           <View style={styles.infoSection}>
             <View style={styles.infoGrid}>
-              {/* Верхний ряд: Категория и Дата */}
+              {/* Верхний ряд: Специализация/Категория и Дата */}
               <View style={styles.infoCard}>
                 <View style={styles.infoIcon}>
-                  <LottieView
-                    source={getCategoryAnimation(order.category)}
-                    style={styles.categoryLottieIcon}
-                    autoPlay={false}
-                    loop={false}
-                    progress={0.5}
-                  />
+                  {order.specializationId ? (
+                    <CategoryIconComponent
+                      icon={getSpecializationIcon(order.specializationId)}
+                      iconComponent={getSpecializationIconComponent(order.specializationId)}
+                      size={22}
+                    />
+                  ) : (
+                    <LottieView
+                      source={getCategoryAnimation(order.category || 'other')}
+                      style={styles.categoryLottieIcon}
+                      autoPlay={false}
+                      loop={false}
+                      progress={0.5}
+                    />
+                  )}
                 </View>
-                <Text style={styles.infoValue}>{getCategoryLabel(order.category, tCategories)}</Text>
+                <Text style={styles.infoValue}>
+                  {order.specializationId 
+                    ? getTranslatedSpecializationName(order.specializationId, translate)
+                    : getCategoryLabel(order.category || 'other', translate)}
+                </Text>
               </View>
 
               <View style={styles.infoCard}>
@@ -1651,6 +1668,9 @@ const styles = StyleSheet.create({
   categoryLottieIcon: {
     width: 22,
     height: 22,
+  },
+  specializationEmoji: {
+    fontSize: 22,
   },
   iconText: {
     fontSize: 16,

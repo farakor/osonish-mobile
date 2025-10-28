@@ -82,7 +82,7 @@ export interface Database {
           id: string;
           title: string;
           description: string;
-          category: string;
+          category?: string; // Опциональное поле
           location: string;
           budget: number;
           workers_needed: number;
@@ -91,6 +91,7 @@ export interface Database {
           customer_id: string;
           status: 'new' | 'in_progress' | 'completed' | 'cancelled';
           applicants_count: number;
+          views_count: number;
           created_at: string;
           updated_at: string;
         };
@@ -98,7 +99,7 @@ export interface Database {
           id?: string;
           title: string;
           description: string;
-          category: string;
+          category?: string; // Опциональное поле
           location: string;
           budget: number;
           workers_needed: number;
@@ -107,6 +108,7 @@ export interface Database {
           customer_id: string;
           status?: 'new' | 'in_progress' | 'completed' | 'cancelled';
           applicants_count?: number;
+          views_count?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -123,6 +125,7 @@ export interface Database {
           customer_id?: string;
           status?: 'new' | 'in_progress' | 'completed' | 'cancelled';
           applicants_count?: number;
+          views_count?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -184,6 +187,7 @@ export interface Database {
           birth_date: string;
           role: 'customer' | 'worker';
           profile_image?: string;
+          profile_views_count: number;
           created_at: string;
           updated_at: string;
         };
@@ -196,6 +200,7 @@ export interface Database {
           birth_date: string;
           role: 'customer' | 'worker';
           profile_image?: string;
+          profile_views_count?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -208,6 +213,7 @@ export interface Database {
           birth_date?: string;
           role?: 'customer' | 'worker';
           profile_image?: string;
+          profile_views_count?: number;
           created_at?: string;
           updated_at?: string;
         };

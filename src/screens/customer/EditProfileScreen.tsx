@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';;
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
 import { usePlatformSafeAreaInsets, getFixedBottomStyle, getContainerBottomStyle, isSmallScreen } from '../../utils/safeAreaUtils';
@@ -29,6 +30,7 @@ const { height: screenHeight } = Dimensions.get('window');
 export const EditProfileScreen: React.FC = () => {
   const navigation = useNavigation();
   const insets = usePlatformSafeAreaInsets();
+  const { i18n } = useTranslation();
   const t = useCustomerTranslation();
   const tError = useErrorsTranslation();
   const tCommon = useCommonTranslation();
@@ -91,7 +93,8 @@ export const EditProfileScreen: React.FC = () => {
 
   const formatDate = (date: Date | null) => {
     if (!date) return '';
-    return date.toLocaleDateString('ru-RU', {
+    const locale = i18n.language === 'uz' ? 'uz-UZ' : 'ru-RU';
+    return date.toLocaleDateString(locale, {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -387,7 +390,7 @@ export const EditProfileScreen: React.FC = () => {
             onChange={handleDateChange}
             maximumDate={new Date()}
             minimumDate={new Date(1950, 0, 1)}
-            locale="ru-RU"
+            {...(Platform.OS === 'ios' && { locale: i18n.language === 'uz' ? 'uz-UZ' : 'ru-RU' })}
           />
         </View>
       )}

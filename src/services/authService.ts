@@ -167,6 +167,8 @@ class AuthService {
         return null;
       }
 
+      console.log('[AuthService] 📊 Данные из БД - profile_views_count:', data.profile_views_count, 'workerType:', data.worker_type);
+
       return {
         id: data.id,
         phone: data.phone,
@@ -185,6 +187,7 @@ class AuthService {
         aboutMe: data.about_me,
         specializations: data.specializations,
         workPhotos: data.work_photos,
+        profileViewsCount: data.profile_views_count || 0,
       };
     } catch (error) {
       console.error(`[AuthService] Ошибка загрузки пользователя ${userId}:`, error);
@@ -381,6 +384,7 @@ class AuthService {
         aboutMe: data.about_me,
         specializations: data.specializations,
         workPhotos: data.work_photos,
+        profileViewsCount: data.profile_views_count || 0,
       };
     } catch (error) {
       console.error('Ошибка поиска пользователя по телефону:', error);
@@ -577,6 +581,46 @@ class AuthService {
       // Получаем текущий выбранный язык пользователя
       const currentLanguage = await getUserLanguage();
 
+      // Загружаем изображение профиля в Storage, если это локальный URI
+      let profileImageUrl = userData.profileImage;
+      if (userData.profileImage && userData.profileImage.startsWith('file://')) {
+        console.log('[AuthService] 🔄 Загружаем изображение профиля в Storage...');
+        const uploadResult = await this.uploadProfileImage(userData.profileImage, userId);
+        if (!uploadResult.success) {
+          console.error('[AuthService] ❌ Не удалось загрузить изображение профиля:', uploadResult.error);
+          // Не прерываем регистрацию, но выводим предупреждение
+          profileImageUrl = null;
+        } else {
+          profileImageUrl = uploadResult.url;
+          console.log('[AuthService] ✅ Изображение профиля загружено, URL:', profileImageUrl);
+        }
+      }
+
+      // Загружаем фотографии работ в Storage, если это локальные URI
+      let workPhotosUrls = userData.workPhotos;
+      if (userData.workPhotos && userData.workPhotos.length > 0) {
+        console.log('[AuthService] 🔄 Загружаем фотографии работ в Storage...');
+        const uploadedPhotos: string[] = [];
+        
+        for (const photoUri of userData.workPhotos) {
+          if (photoUri.startsWith('file://')) {
+            const uploadResult = await this.uploadWorkPhoto(photoUri, userId);
+            if (uploadResult.success && uploadResult.url) {
+              uploadedPhotos.push(uploadResult.url);
+              console.log('[AuthService] ✅ Фотография работы загружена:', uploadResult.url);
+            } else {
+              console.error('[AuthService] ❌ Не удалось загрузить фотографию работы:', uploadResult.error);
+            }
+          } else {
+            // Если это уже URL, добавляем как есть
+            uploadedPhotos.push(photoUri);
+          }
+        }
+        
+        workPhotosUrls = uploadedPhotos.length > 0 ? uploadedPhotos : undefined;
+        console.log('[AuthService] 📸 Загружено фотографий работ:', uploadedPhotos.length);
+      }
+
       // Создаем объект для вставки
       const insertData: any = {
         id: userId,
@@ -587,7 +631,7 @@ class AuthService {
         birth_date: userData.birthDate,
         role: userData.role,
         city: userData.city || null,
-        profile_image: userData.profileImage || null,
+        profile_image: profileImageUrl || null,
         preferred_language: currentLanguage,
         is_verified: true,
       };
@@ -602,8 +646,8 @@ class AuthService {
       if (userData.specializations) {
         insertData.specializations = userData.specializations;
       }
-      if (userData.workPhotos) {
-        insertData.work_photos = userData.workPhotos;
+      if (workPhotosUrls) {
+        insertData.work_photos = workPhotosUrls;
       }
 
       // Создаем пользователя в Supabase
@@ -639,6 +683,7 @@ class AuthService {
         aboutMe: data.about_me,
         specializations: data.specializations,
         workPhotos: data.work_photos,
+        profileViewsCount: data.profile_views_count || 0,
       };
 
       // Устанавливаем состояние авторизации
@@ -675,12 +720,15 @@ class AuthService {
   }
 
   // Загрузка аватара пользователя в Supabase Storage
-  async uploadProfileImage(imageUri: string): Promise<{ success: boolean; url?: string; error?: string }> {
+  async uploadProfileImage(imageUri: string, userId?: string): Promise<{ success: boolean; url?: string; error?: string }> {
     try {
-      if (!this.authState.user) {
+      // Используем переданный userId или берем из authState
+      const targetUserId = userId || this.authState.user?.id;
+      
+      if (!targetUserId) {
         return {
           success: false,
-          error: 'Пользователь не авторизован'
+          error: 'Не указан ID пользователя'
         };
       }
 
@@ -695,7 +743,7 @@ class AuthService {
       console.log(`[AuthService] 📏 Размер изображения: ${(fileSize / 1024).toFixed(1)} KB`);
 
       // Подготавливаем файл для загрузки
-      const fileName = `profile_${this.authState.user.id}_${Date.now()}.jpg`;
+      const fileName = `profile_${targetUserId}_${Date.now()}.jpg`;
       const file = {
         uri: imageUri,
         type: 'image' as const,
@@ -723,6 +771,65 @@ class AuthService {
       };
     } catch (error) {
       console.error('[AuthService] ❌ Ошибка загрузки аватара:', error);
+      return {
+        success: false,
+        error: 'Произошла ошибка при загрузке изображения'
+      };
+    }
+  }
+
+  // Загрузка фотографии работы в Supabase Storage
+  async uploadWorkPhoto(imageUri: string, userId?: string): Promise<{ success: boolean; url?: string; error?: string }> {
+    try {
+      // Используем переданный userId или берем из authState
+      const targetUserId = userId || this.authState.user?.id;
+      
+      if (!targetUserId) {
+        return {
+          success: false,
+          error: 'Не указан ID пользователя'
+        };
+      }
+
+      console.log('[AuthService] 🖼️ Загружаем фотографию работы...');
+      console.log('[AuthService] 📱 URI изображения:', imageUri);
+
+      // Определяем размер файла
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      const fileSize = blob.size;
+
+      console.log(`[AuthService] 📏 Размер изображения: ${(fileSize / 1024).toFixed(1)} KB`);
+
+      // Подготавливаем файл для загрузки
+      const fileName = `work_${targetUserId}_${Date.now()}.jpg`;
+      const file = {
+        uri: imageUri,
+        type: 'image' as const,
+        name: fileName,
+        size: fileSize
+      };
+
+      // Используем mediaService для загрузки
+      const uploadResult = await mediaService.uploadMediaFiles([file]);
+
+      if (!uploadResult.success || !uploadResult.urls || uploadResult.urls.length === 0) {
+        console.error('[AuthService] ❌ Ошибка загрузки фотографии работы:', uploadResult.error);
+        return {
+          success: false,
+          error: uploadResult.error || 'Не удалось загрузить изображение'
+        };
+      }
+
+      const workPhotoUrl = uploadResult.urls[0];
+      console.log('[AuthService] ✅ Фотография работы успешно загружена:', workPhotoUrl);
+
+      return {
+        success: true,
+        url: workPhotoUrl
+      };
+    } catch (error) {
+      console.error('[AuthService] ❌ Ошибка загрузки фотографии работы:', error);
       return {
         success: false,
         error: 'Произошла ошибка при загрузке изображения'
@@ -819,6 +926,7 @@ class AuthService {
         aboutMe: data.about_me,
         specializations: data.specializations,
         workPhotos: data.work_photos,
+        profileViewsCount: data.profile_views_count || 0,
       };
 
       this.authState = {

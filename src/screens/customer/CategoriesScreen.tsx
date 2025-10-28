@@ -13,9 +13,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { CustomerStackParamList } from '../../types';
-import { theme, SPECIALIZATIONS } from '../../constants';
+import { theme, SPECIALIZATIONS, getTranslatedSpecializationName } from '../../constants';
 import { lightElevationStyles } from '../../utils/noShadowStyles';
 import { CategoryIcon } from '../../components/common';
+import { useNavigationTranslation, useCustomerTranslation } from '../../hooks/useTranslation';
+import { useTranslation } from 'react-i18next';
+import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
 
 type NavigationProp = NativeStackNavigationProp<CustomerStackParamList, 'Categories'>;
 
@@ -28,6 +31,9 @@ const getAndroidStatusBarHeight = () => {
 
 export const CategoriesScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const t = useNavigationTranslation();
+  const tCustomer = useCustomerTranslation();
+  const { t: tCommon } = useTranslation();
 
   const handleCategoryPress = (specializationId: string) => {
     navigation.navigate('ProfessionalMastersList', { specializationId });
@@ -43,10 +49,10 @@ export const CategoriesScreen: React.FC = () => {
         {/* Header */}
         <View style={[styles.header, { paddingTop: theme.spacing.lg + getAndroidStatusBarHeight() }]}>
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-            <Text style={styles.backButtonText}>←</Text>
+            <ArrowBackIcon width={20} height={20} stroke={theme.colors.text.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Категории</Text>
-          <View style={styles.backButton} />
+          <Text style={styles.headerTitle}>{t('categories')}</Text>
+          <View style={styles.placeholder} />
         </View>
 
         {/* Categories Grid */}
@@ -69,10 +75,17 @@ export const CategoriesScreen: React.FC = () => {
                   style={styles.categoryIconWrapper}
                 />
                 <Text style={styles.categoryName} numberOfLines={2}>
-                  {category.name}
+                  {getTranslatedSpecializationName(category.id, tCommon)}
                 </Text>
               </TouchableOpacity>
             ))}
+          </View>
+
+          {/* Info Message */}
+          <View style={styles.infoContainer}>
+            <Text style={styles.infoText}>
+              {tCustomer('category_not_found_hint')}
+            </Text>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -100,12 +113,15 @@ const styles = StyleSheet.create({
   backButton: {
     width: 40,
     height: 40,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
+    ...lightElevationStyles,
   },
-  backButtonText: {
-    fontSize: 28,
-    color: theme.colors.text.primary,
+  placeholder: {
+    width: 40,
+    height: 40,
   },
   headerTitle: {
     fontSize: theme.fonts.sizes.xl,
@@ -113,6 +129,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
   },
   scrollContent: {
+    paddingTop: 5,
     paddingBottom: theme.spacing.xxl,
   },
   categoriesGrid: {
@@ -139,6 +156,17 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     textAlign: 'center',
     fontWeight: '500',
+  },
+  infoContainer: {
+    marginTop: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.lg,
+    alignItems: 'center',
+  },
+  infoText: {
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
 

@@ -15,16 +15,17 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';;
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
 import { usePlatformSafeAreaInsets, getFixedBottomStyle, getContainerBottomStyle, isSmallScreen as isSmallScreenUtil } from '../../utils/safeAreaUtils';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
-import { HeaderWithBack, PlusIcon } from '../../components/common';
+import { HeaderWithBack, PlusIcon, CategoryIcon } from '../../components/common';
 import { authService } from '../../services/authService';
 import { User, Specialization } from '../../types';
 import { useWorkerTranslation } from '../../hooks/useTranslation';
-import { SPECIALIZATIONS, getSpecializationIcon } from '../../constants/specializations';
+import { SPECIALIZATIONS, getSpecializationById, getTranslatedSpecializationName, getTranslatedSpecializationNameSingular } from '../../constants/specializations';
 import { mediaService } from '../../services/mediaService';
 
 const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
@@ -34,6 +35,7 @@ const MAX_WORK_PHOTOS = 10;
 export const EditProfileScreen: React.FC = () => {
   const navigation = useNavigation();
   const insets = usePlatformSafeAreaInsets();
+  const { i18n, t } = useTranslation();
   const tWorker = useWorkerTranslation();
 
   // Состояние загрузки и данных пользователя
@@ -107,7 +109,8 @@ export const EditProfileScreen: React.FC = () => {
 
   const formatDate = (date: Date | null) => {
     if (!date) return '';
-    return date.toLocaleDateString('ru-RU', {
+    const locale = i18n.language === 'uz' ? 'uz-UZ' : 'ru-RU';
+    return date.toLocaleDateString(locale, {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -136,41 +139,42 @@ export const EditProfileScreen: React.FC = () => {
   // Функции для работы с фотографиями работ (для профессиональных мастеров)
   const pickWorkPhoto = async () => {
     if (workPhotos.length >= MAX_WORK_PHOTOS) {
-      Alert.alert('Внимание', `Можно загрузить максимум ${MAX_WORK_PHOTOS} фотографий`);
+      Alert.alert(tWorker('general_error'), tWorker('max_work_photos_warning', { count: MAX_WORK_PHOTOS }));
       return;
     }
 
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Ошибка', 'Необходимо разрешение на доступ к галерее');
+        Alert.alert(tWorker('general_error'), tWorker('gallery_access_required'));
         return;
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
+        mediaTypes: ['images'],
+        allowsMultipleSelection: true,
+        selectionLimit: MAX_WORK_PHOTOS - workPhotos.length,
         quality: 0.8,
       });
 
-      if (!result.canceled && result.assets[0]) {
-        setWorkPhotos(prev => [...prev, result.assets[0].uri]);
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const newPhotoUris = result.assets.map(asset => asset.uri);
+        setWorkPhotos(prev => [...prev, ...newPhotoUris]);
       }
     } catch (error) {
       console.error('Ошибка выбора фото:', error);
-      Alert.alert('Ошибка', 'Не удалось выбрать фото');
+      Alert.alert(tWorker('general_error'), tWorker('photo_selection_error'));
     }
   };
 
   const removeWorkPhoto = (index: number) => {
     Alert.alert(
-      'Удалить фото?',
-      'Вы уверены, что хотите удалить это фото?',
+      tWorker('delete_photo_title'),
+      tWorker('delete_photo_message'),
       [
-        { text: 'Отмена', style: 'cancel' },
+        { text: tWorker('cancel'), style: 'cancel' },
         {
-          text: 'Удалить',
+          text: tWorker('delete_photo_confirm'),
           style: 'destructive',
           onPress: () => {
             setWorkPhotos(prev => prev.filter((_, i) => i !== index));
@@ -192,10 +196,14 @@ export const EditProfileScreen: React.FC = () => {
       setSpecializations(prev => prev.filter(s => s.id !== specId));
     } else {
       // Добавляем специализацию
+      // Новая специализация становится основной если:
+      // 1. Это первая выбранная специализация
+      // 2. Или среди уже выбранных нет основной
+      const hasPrimary = specializations.some(s => s.isPrimary);
       const newSpec: Specialization = {
         id: spec.id,
         name: spec.name,
-        isPrimary: specializations.length === 0, // Первая становится основной
+        isPrimary: specializations.length === 0 || !hasPrimary,
       };
       setSpecializations(prev => [...prev, newSpec]);
     }
@@ -240,17 +248,17 @@ export const EditProfileScreen: React.FC = () => {
     // Дополнительная валидация для профессиональных мастеров
     if (user?.workerType === 'professional') {
       if (aboutMe.trim().length < 20) {
-        Alert.alert('Внимание', 'Опишите себя более подробно (минимум 20 символов)');
+        Alert.alert(tWorker('general_error'), tWorker('about_me_min_length'));
         return false;
       }
 
       if (specializations.length === 0) {
-        Alert.alert('Внимание', 'Выберите хотя бы одну специализацию');
+        Alert.alert(tWorker('general_error'), tWorker('select_specialization'));
         return false;
       }
 
       if (workPhotos.length === 0) {
-        Alert.alert('Внимание', 'Загрузите хотя бы одно фото ваших работ');
+        Alert.alert(tWorker('general_error'), tWorker('upload_work_photo'));
         return false;
       }
     }
@@ -301,7 +309,7 @@ export const EditProfileScreen: React.FC = () => {
               console.log(`[EditProfile] Фото ${i + 1}/${newWorkPhotos.length} загружено`);
             } else {
               console.error(`[EditProfile] Ошибка загрузки фото ${i + 1}:`, result.error);
-              Alert.alert('Ошибка', `Не удалось загрузить фото ${i + 1}`);
+              Alert.alert(tWorker('general_error'), tWorker('photo_upload_failed', { index: i + 1 }));
               setIsSaving(false);
               setIsUploadingImage(false);
               return;
@@ -515,15 +523,15 @@ export const EditProfileScreen: React.FC = () => {
             <>
               {/* О себе */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>О себе</Text>
+                <Text style={styles.label}>{tWorker('about_me_label')}</Text>
                 <Text style={styles.hint}>
-                  Опишите ваш опыт работы и специализацию
+                  {tWorker('about_me_hint')}
                 </Text>
                 <TextInput
                   style={styles.textArea}
                   value={aboutMe}
                   onChangeText={setAboutMe}
-                  placeholder="Например: Опыт работы сантехником более 10 лет..."
+                  placeholder={tWorker('about_me_placeholder')}
                   placeholderTextColor="#C7C7CC"
                   multiline
                   numberOfLines={6}
@@ -531,49 +539,55 @@ export const EditProfileScreen: React.FC = () => {
                   textAlignVertical="top"
                 />
                 <Text style={styles.charCounter}>
-                  {aboutMe.length} / 500
+                  {tWorker('char_counter', { current: aboutMe.length, max: 500 })}
                 </Text>
               </View>
 
               {/* Специализации */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Специализации ({specializations.length})</Text>
+                <Text style={styles.label}>{tWorker('specializations_label', { count: specializations.length })}</Text>
                 <Text style={styles.hint}>
-                  Выберите ваши специализации. Нажмите ★ для установки основной.
+                  {tWorker('specializations_hint')}
                 </Text>
                 <View style={styles.specializationsContainer}>
-                  {specializations.map((spec) => (
-                    <TouchableOpacity
-                      key={spec.id}
-                      style={[
-                        styles.specChip,
-                        spec.isPrimary && styles.specChipPrimary,
-                      ]}
-                      onPress={() => setPrimarySpecialization(spec.id)}
-                      onLongPress={() => toggleSpecialization(spec.id)}
-                    >
-                      <Text style={styles.specChipIcon}>
-                        {getSpecializationIcon(spec.id)}
-                      </Text>
-                      <Text
+                  {specializations.map((spec) => {
+                    const specializationData = getSpecializationById(spec.id);
+                    return (
+                      <TouchableOpacity
+                        key={spec.id}
                         style={[
-                          styles.specChipText,
-                          spec.isPrimary && styles.specChipTextPrimary,
+                          styles.specChip,
+                          spec.isPrimary && styles.specChipPrimary,
                         ]}
+                        onPress={() => setPrimarySpecialization(spec.id)}
+                        onLongPress={() => toggleSpecialization(spec.id)}
                       >
-                        {spec.name}
-                      </Text>
-                      {spec.isPrimary && (
-                        <Text style={styles.specChipStar}>★</Text>
-                      )}
-                    </TouchableOpacity>
-                  ))}
+                        <CategoryIcon
+                          icon={specializationData?.icon || '🔨'}
+                          iconComponent={specializationData?.iconComponent}
+                          size={16}
+                          style={styles.specChipIconWrapper}
+                        />
+                        <Text
+                          style={[
+                            styles.specChipText,
+                            spec.isPrimary && styles.specChipTextPrimary,
+                          ]}
+                        >
+                          {getTranslatedSpecializationNameSingular(spec.id, t)}
+                        </Text>
+                        {spec.isPrimary && (
+                          <Text style={styles.specChipStar}>★</Text>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
                   <TouchableOpacity
                     style={styles.addSpecButton}
                     onPress={() => setShowSpecializationModal(true)}
                   >
                     <Text style={styles.addSpecIcon}>+</Text>
-                    <Text style={styles.addSpecText}>Добавить</Text>
+                    <Text style={styles.addSpecText}>{tWorker('add_specialization')}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -581,16 +595,16 @@ export const EditProfileScreen: React.FC = () => {
               {/* Фото работ */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>
-                  Фото работ {workPhotos.length > 0 && `(${workPhotos.length}/${MAX_WORK_PHOTOS})`}
+                  {workPhotos.length > 0 ? tWorker('work_photos_count', { count: workPhotos.length, max: MAX_WORK_PHOTOS }) : tWorker('work_photos_label')}
                 </Text>
                 <Text style={styles.hint}>
-                  Загрузите фотографии выполненных работ
+                  {tWorker('work_photos_hint')}
                 </Text>
                 <View style={styles.photosGrid}>
                   {workPhotos.map((uri, index) => (
                     <TouchableOpacity
                       key={index}
-                      style={styles.photoContainer}
+                      style={styles.workPhotoContainer}
                       onPress={() => removeWorkPhoto(index)}
                       activeOpacity={0.8}
                     >
@@ -607,7 +621,7 @@ export const EditProfileScreen: React.FC = () => {
                       activeOpacity={0.8}
                     >
                       <Text style={styles.addPhotoIcon}>+</Text>
-                      <Text style={styles.addPhotoText}>Добавить</Text>
+                      <Text style={styles.addPhotoText}>{tWorker('add_photo')}</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -653,7 +667,7 @@ export const EditProfileScreen: React.FC = () => {
             onChange={handleDateChange}
             maximumDate={new Date()}
             minimumDate={new Date(1950, 0, 1)}
-            locale="ru-RU"
+            {...(Platform.OS === 'ios' && { locale: i18n.language === 'uz' ? 'uz-UZ' : 'ru-RU' })}
           />
         </View>
       )}
@@ -663,7 +677,7 @@ export const EditProfileScreen: React.FC = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Выберите специализации</Text>
+              <Text style={styles.modalTitle}>{tWorker('choose_specializations_title')}</Text>
               <TouchableOpacity
                 style={styles.modalCloseButton}
                 onPress={() => setShowSpecializationModal(false)}
@@ -683,8 +697,13 @@ export const EditProfileScreen: React.FC = () => {
                     ]}
                     onPress={() => toggleSpecialization(spec.id)}
                   >
-                    <Text style={styles.modalSpecIcon}>{spec.icon}</Text>
-                    <Text style={styles.modalSpecName}>{spec.name}</Text>
+                    <CategoryIcon
+                      icon={spec.icon}
+                      iconComponent={spec.iconComponent}
+                      size={24}
+                      style={styles.modalSpecIconWrapper}
+                    />
+                    <Text style={styles.modalSpecName}>{getTranslatedSpecializationName(spec.id, t)}</Text>
                     {isSelected && (
                       <Text style={styles.modalSpecCheck}>✓</Text>
                     )}
@@ -696,7 +715,7 @@ export const EditProfileScreen: React.FC = () => {
               style={styles.modalDoneButton}
               onPress={() => setShowSpecializationModal(false)}
             >
-              <Text style={styles.modalDoneText}>Готово</Text>
+              <Text style={styles.modalDoneText}>{tWorker('done_button')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -964,8 +983,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#679B00',
     borderColor: '#679B00',
   },
-  specChipIcon: {
-    fontSize: 16,
+  specChipIconWrapper: {
     marginRight: 6,
   },
   specChipText: {
@@ -1010,7 +1028,7 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 8,
   },
-  photoContainer: {
+  workPhotoContainer: {
     width: (screenWidth - 40 - 16) / 3,
     height: (screenWidth - 40 - 16) / 3,
     borderRadius: 12,
@@ -1117,8 +1135,7 @@ const styles = StyleSheet.create({
   modalSpecItemSelected: {
     backgroundColor: '#F0F8FF',
   },
-  modalSpecIcon: {
-    fontSize: 24,
+  modalSpecIconWrapper: {
     marginRight: 12,
   },
   modalSpecName: {

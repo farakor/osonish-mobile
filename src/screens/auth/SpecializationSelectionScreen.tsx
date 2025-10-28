@@ -13,10 +13,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { theme, SPECIALIZATIONS, SpecializationOption } from '../../constants';
 import { noElevationStyles, borderButtonStyles } from '../../utils/noShadowStyles';
 import type { RootStackParamList, Specialization } from '../../types';
-import { HeaderWithBack } from '../../components/common';
+import { HeaderWithBack, CategoryIcon } from '../../components/common';
 
 const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
 const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
@@ -29,6 +30,7 @@ interface SelectedSpecialization extends SpecializationOption {
 
 export const SpecializationSelectionScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const { t } = useTranslation();
   const [selectedSpecializations, setSelectedSpecializations] = useState<SelectedSpecialization[]>([]);
 
   const handleSpecializationToggle = (spec: SpecializationOption) => {
@@ -39,12 +41,19 @@ export const SpecializationSelectionScreen: React.FC = () => {
       setSelectedSpecializations(prev => prev.filter(s => s.id !== spec.id));
     } else {
       if (selectedSpecializations.length >= 3) {
-        Alert.alert('Внимание', 'Можно выбрать максимум 3 специализации');
+        Alert.alert(
+          t('auth.max_specializations_title'),
+          t('auth.max_specializations_message')
+        );
         return;
       }
 
-      // Добавляем специализацию (первая всегда основная)
-      const isPrimary = selectedSpecializations.length === 0;
+      // Добавляем специализацию
+      // Новая специализация становится основной если:
+      // 1. Это первая выбранная специализация
+      // 2. Или среди уже выбранных нет основной
+      const hasPrimary = selectedSpecializations.some(s => s.isPrimary);
+      const isPrimary = selectedSpecializations.length === 0 || !hasPrimary;
       setSelectedSpecializations(prev => [...prev, { ...spec, isPrimary }]);
     }
   };
@@ -60,7 +69,10 @@ export const SpecializationSelectionScreen: React.FC = () => {
 
   const handleContinue = async () => {
     if (selectedSpecializations.length === 0) {
-      Alert.alert('Внимание', 'Выберите хотя бы одну специализацию');
+      Alert.alert(
+        t('auth.min_specializations_title'),
+        t('auth.min_specializations_message')
+      );
       return;
     }
 
@@ -69,7 +81,7 @@ export const SpecializationSelectionScreen: React.FC = () => {
       const profileDataString = await AsyncStorage.default.getItem('@temp_profile_data');
 
       if (!profileDataString) {
-        Alert.alert('Ошибка', 'Данные профиля не найдены');
+        Alert.alert(t('common.error'), t('auth.profile_data_not_found'));
         return;
       }
 
@@ -86,7 +98,7 @@ export const SpecializationSelectionScreen: React.FC = () => {
       navigation.navigate('ProfessionalAboutMe');
     } catch (error) {
       console.error('Ошибка:', error);
-      Alert.alert('Ошибка', 'Произошла ошибка. Попробуйте снова.');
+      Alert.alert(t('common.error'), t('auth.general_error_try_again'));
     }
   };
 
@@ -110,7 +122,12 @@ export const SpecializationSelectionScreen: React.FC = () => {
         onLongPress={() => isSelected && !isPrimary && handleSetPrimary(item.id)}
         activeOpacity={0.8}
       >
-        <Text style={styles.specIcon}>{item.icon}</Text>
+        <CategoryIcon
+          icon={item.icon}
+          iconComponent={item.iconComponent}
+          size={32}
+          style={styles.specIcon}
+        />
         <Text
           style={[
             styles.specName,
@@ -119,7 +136,7 @@ export const SpecializationSelectionScreen: React.FC = () => {
           ]}
           numberOfLines={2}
         >
-          {item.name}
+          {t(`categories.${item.id}`)}
         </Text>
         {isSelected && (
           <View style={[styles.badge, isPrimary && styles.badgePrimary]}>
@@ -134,16 +151,16 @@ export const SpecializationSelectionScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <HeaderWithBack title="Специализации" backAction={handleBackPress} />
+      <HeaderWithBack title={t('auth.specialization_selection_title')} backAction={handleBackPress} />
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.subtitle}>
-            Выберите до 3 специализаций. Первая будет основной.
+            {t('auth.specialization_selection_subtitle')}
           </Text>
           {selectedSpecializations.length > 0 && (
             <View style={styles.counterContainer}>
               <Text style={styles.counterText}>
-                Выбрано: {selectedSpecializations.length} из 3
+                {t('auth.selected_count', { count: selectedSpecializations.length })}
               </Text>
             </View>
           )}
@@ -151,25 +168,27 @@ export const SpecializationSelectionScreen: React.FC = () => {
 
         {selectedSpecializations.length > 0 && (
           <View style={styles.selectedContainer}>
-            <Text style={styles.selectedTitle}>Ваши специализации:</Text>
+            <Text style={styles.selectedTitle}>{t('auth.your_specializations')}</Text>
             <View style={styles.selectedList}>
               {selectedSpecializations.map(spec => (
                 <View key={spec.id} style={styles.selectedChip}>
-                  <Text style={styles.selectedChipIcon}>{spec.icon}</Text>
+                  <CategoryIcon
+                    icon={spec.icon}
+                    iconComponent={spec.iconComponent}
+                    size={16}
+                    style={styles.selectedChipIcon}
+                  />
                   <Text style={styles.selectedChipText}>
-                    {spec.name} {spec.isPrimary && '★'}
+                    {t(`categories.${spec.id}`)} {spec.isPrimary && '★'}
                   </Text>
                 </View>
               ))}
             </View>
-            <Text style={styles.hintText}>
-              💡 Длинное нажатие для смены основной специализации
-            </Text>
           </View>
         )}
 
         <FlatList
-          data={SPECIALIZATIONS}
+          data={SPECIALIZATIONS.filter(spec => spec.id !== 'one_day_job')}
           renderItem={renderSpecializationCard}
           keyExtractor={(item) => item.id}
           numColumns={3}
@@ -193,7 +212,7 @@ export const SpecializationSelectionScreen: React.FC = () => {
               selectedSpecializations.length === 0 && styles.continueButtonTextDisabled,
             ]}
           >
-            Продолжить
+            {t('common.continue')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -263,19 +282,12 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
   },
   selectedChipIcon: {
-    fontSize: 16,
     marginRight: 4,
   },
   selectedChipText: {
     fontSize: theme.fonts.sizes.xs,
     color: theme.colors.primary,
     fontWeight: '500',
-  },
-  hintText: {
-    fontSize: theme.fonts.sizes.xs,
-    color: theme.colors.text.secondary,
-    marginTop: theme.spacing.sm,
-    fontStyle: 'italic',
   },
   specGrid: {
     paddingBottom: theme.spacing.xl,
@@ -307,7 +319,6 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
   },
   specIcon: {
-    fontSize: 32,
     marginBottom: theme.spacing.xs,
   },
   specName: {

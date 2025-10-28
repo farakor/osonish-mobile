@@ -26,7 +26,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { theme } from '../../constants';
-import { noElevationStyles } from '../../utils/noShadowStyles';
+import { noElevationStyles, lightElevationStyles } from '../../utils/noShadowStyles';
 import { usePlatformSafeAreaInsets } from '../../utils/safeAreaUtils';
 import CalendarDateIcon from '../../../assets/calendar-date.svg';
 import * as ImagePicker from 'expo-image-picker';
@@ -50,13 +50,18 @@ import {
   HeaderWithBack,
   EmbeddedMapSelector,
 } from '../../components/common';
-import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation, useCategoriesTranslation } from '../../hooks/useTranslation';
-import { useTranslatedCategories, getCategoryLabel } from '../../utils/categoryUtils';
+import { useTranslation } from 'react-i18next';
+import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
+import { SPECIALIZATIONS, getTranslatedSpecializationName } from '../../constants/specializations';
+import { CategoryIcon } from '../../components/common/CategoryIcon';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 // Определяем маленький экран для Android (высота меньше 1080px)
 const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
+
+// Расчет ширины карточки специализации (3 колонки)
+const specializationCardWidth = (screenWidth - theme.spacing.lg * 4 - theme.spacing.sm * 3) / 4;
 
 type CreateOrderRouteProp = RouteProp<CustomerTabParamList, 'CreateOrder'>;
 
@@ -109,10 +114,10 @@ const VideoPreview: React.FC<{ uri: string }> = ({ uri }) => {
 };
 
 // Компонент для отображения номера шага с анимацией
-const StepCounter: React.FC<{ currentStep: number; totalSteps: number; t: any }> = ({ currentStep, totalSteps, t }) => {
+const StepCounter: React.FC<{ currentStep: number; totalSteps: number; tCustomer: any }> = ({ currentStep, totalSteps, tCustomer }) => {
   return (
     <View style={styles.stepCounterContainer}>
-      <Text style={styles.progressText}>{t('step_counter', { current: currentStep, total: totalSteps })}</Text>
+      <Text style={styles.progressText}>{tCustomer('step_counter', { current: currentStep, total: totalSteps })}</Text>
     </View>
   );
 };
@@ -146,6 +151,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
   const insets = usePlatformSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute<CreateOrderRouteProp>();
+  const { i18n } = useTranslation();
 
   // Получаем параметры для повторения заказа
   const { repeatOrderData, startFromDateStep } = route.params || {};
@@ -153,7 +159,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(startFromDateStep ? 8 : 1);
   const [title, setTitle] = useState(repeatOrderData?.title || '');
   const [description, setDescription] = useState(repeatOrderData?.description || '');
-  const [category, setCategory] = useState(repeatOrderData?.category || '');
+  const [specializationId, setSpecializationId] = useState<string>('');
   const [budget, setBudget] = useState(repeatOrderData?.budget ? repeatOrderData.budget.toString() : '');
   const [workersCount, setWorkersCount] = useState(repeatOrderData?.workersNeeded ? repeatOrderData.workersNeeded.toString() : '1');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -180,11 +186,10 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [animationResetKey, setAnimationResetKey] = useState(0);
   const [locationUpdateKey, setLocationUpdateKey] = useState(0);
-  const t = useCustomerTranslation();
+  const { t } = useTranslation();
+  const tCustomer = useCustomerTranslation();
   const tError = useErrorsTranslation();
   const tCommon = useCommonTranslation();
-  const tCategories = useCategoriesTranslation();
-  const categories = useTranslatedCategories();
 
   // Ref для поля местоположения
   const locationInputRef = useRef<any>(null);
@@ -243,7 +248,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
   };
 
   const formatDate = (date: Date | null) => {
-    if (!date) return t('select_date');
+    if (!date) return tCustomer('select_date');
     return date.toLocaleDateString('ru-RU', {
       weekday: 'short',
       month: 'short',
@@ -255,7 +260,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
 
 
   const formatTime = (time: string | null) => {
-    if (!time) return t('select_time');
+    if (!time) return tCustomer('select_time');
     return time;
   };
 
@@ -290,15 +295,15 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
   const pickMedia = async () => {
     setMediaError(null);
     if (mediaFiles.length >= 5) {
-      setMediaError(t('max_files_error'));
+      setMediaError(tCustomer('max_files_error'));
       return;
     }
     Alert.alert(
-      t('add_photo_video'),
-      t('choose_source'),
+      tCustomer('add_photo_video'),
+      tCustomer('choose_source'),
       [
         {
-          text: t('take_photo_video'),
+          text: tCustomer('take_photo_video'),
           onPress: async () => {
             try {
               // Проверяем текущие разрешения
@@ -314,7 +319,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
 
               if (finalStatus !== 'granted') {
                 Alert.alert(
-                  t('no_camera_access'),
+                  tCustomer('no_camera_access'),
                   'Пожалуйста, разрешите доступ к камере в настройках приложения',
                   [
                     { text: 'Отмена', style: 'cancel' },
@@ -345,11 +350,11 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           },
         },
         {
-          text: t('choose_from_gallery'),
+          text: tCustomer('choose_from_gallery'),
           onPress: async () => {
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (status !== 'granted') {
-              Alert.alert(t('no_media_access'));
+              Alert.alert(tCustomer('no_media_access'));
               return;
             }
             let result = await ImagePicker.launchImageLibraryAsync({
@@ -462,14 +467,14 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           setLocationUpdateKey(prev => prev + 1);
         }
 
-        Alert.alert(tCommon('success'), t('location_success'));
+        Alert.alert(tCommon('success'), tCustomer('location_success'));
       } else {
         console.log('[getCurrentLocation] ❌ Координаты не получены');
-        Alert.alert(tError('error'), t('location_error'));
+        Alert.alert(tError('error'), tCustomer('location_error'));
       }
     } catch (error) {
       console.error('[getCurrentLocation] ❌ Ошибка получения местоположения:', error);
-      Alert.alert(tError('error'), t('location_error'));
+      Alert.alert(tError('error'), tCustomer('location_error'));
     } finally {
       console.log('[getCurrentLocation] 🏁 Завершение получения местоположения');
       setIsGettingLocation(false);
@@ -481,8 +486,8 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
     switch (currentStep) {
       case 1: // Название
         return title.trim().length > 0 && title.length <= theme.orderValidation.title.maxLength;
-      case 2: // Категория (теперь необязательна)
-        return true;
+      case 2: // Специализация
+        return !!specializationId;
       case 3: // Описание (теперь необязательно)
         return true;
       case 4: // Местоположение
@@ -508,33 +513,37 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
     switch (currentStep) {
       case 1: // Название
         if (!title.trim()) {
-          Alert.alert(tError('error'), t('fill_title_error'));
+          Alert.alert(tError('error'), tCustomer('fill_title_error'));
           return false;
         }
         if (title.length > theme.orderValidation.title.maxLength) {
-          Alert.alert(tError('error'), t('title_too_long_error'));
+          Alert.alert(tError('error'), tCustomer('title_too_long_error'));
           return false;
         }
         return true;
-      case 2: // Категория (теперь необязательна, можно пропустить)
+      case 2: // Специализация
+        if (!specializationId) {
+          Alert.alert(tError('error'), tCustomer('select_specialization_error'));
+          return false;
+        }
         return true;
       case 3: // Описание (теперь необязательно, можно пропустить)
         return true;
       case 4: // Местоположение
         if (!location.trim()) {
-          Alert.alert(tError('error'), t('fill_location_error'));
+          Alert.alert(tError('error'), tCustomer('fill_location_error'));
           return false;
         }
         return true;
       case 5: // Количество работников
         if (!workersCount || parseInt(workersCount) < 1) {
-          Alert.alert(tError('error'), t('select_workers_error'));
+          Alert.alert(tError('error'), tCustomer('select_workers_error'));
           return false;
         }
         return true;
       case 6: // Бюджет
         if (!budget.trim()) {
-          Alert.alert(tError('error'), t('fill_budget_error'));
+          Alert.alert(tError('error'), tCustomer('fill_budget_error'));
           return false;
         }
         return true;
@@ -542,11 +551,11 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
         return true;
       case 8: // Дата и время
         if (!selectedDate) {
-          Alert.alert(tError('error'), t('select_date_error'));
+          Alert.alert(tError('error'), tCustomer('select_date_error'));
           return false;
         }
         if (!selectedTime) {
-          Alert.alert(tError('error'), t('select_time_error'));
+          Alert.alert(tError('error'), tCustomer('select_time_error'));
           return false;
         }
         return true;
@@ -560,11 +569,6 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
   };
 
   const nextStep = () => {
-    // Специальная обработка для шага выбора категории
-    if (currentStep === 2 && !category) {
-      setCategory('other'); // Автоматически выбираем "Другое" если категория не выбрана
-    }
-
     // Специальная обработка для шага описания работы
     if (currentStep === 3 && !description.trim()) {
       setDescription(tCommon('default_description')); // Автоматически устанавливаем стандартное описание
@@ -590,26 +594,23 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
     try {
       console.log('[CreateOrder] 📋 Проверяем поля...');
 
-      // Если категория не выбрана, автоматически устанавливаем "other"
-      const finalCategory = category || 'other';
-
       // Если описание не заполнено, автоматически устанавливаем стандартное описание
       const finalDescription = description.trim() || tCommon('default_description');
 
       if (!title.trim() || !budget.trim() || !selectedDate || !selectedTime || !location.trim()) {
         console.log('[CreateOrder] ❌ Не все поля заполнены');
-        Alert.alert(tError('error'), t('fill_required_fields'));
+        Alert.alert(tError('error'), tCustomer('fill_required_fields'));
         return;
       }
 
       // Проверяем ограничения по длине
       if (title.length > theme.orderValidation.title.maxLength) {
-        Alert.alert(tError('error'), t('title_too_long_error'));
+        Alert.alert(tError('error'), tCustomer('title_too_long_error'));
         return;
       }
 
       if (description.length > theme.orderValidation.description.maxLength) {
-        Alert.alert(tError('error'), t('description_too_long_error'));
+        Alert.alert(tError('error'), tCustomer('description_too_long_error'));
         return;
       }
 
@@ -668,7 +669,6 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
       const orderData: CreateOrderRequest = {
         title: title.trim(),
         description: finalDescription,
-        category: finalCategory,
         location: location.trim(),
         latitude: coordinates?.latitude,
         longitude: coordinates?.longitude,
@@ -685,11 +685,14 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
         transportPaid,
         mealIncluded,
         mealPaid,
+        // Специализация
+        specializationId,
       };
 
       console.log('[CreateOrder] 📋 Создаем заказ с данными:', {
         ...orderData,
-        photos: `${mediaUrls.length} медиа файлов`
+        photos: `${mediaUrls.length} медиа файлов`,
+        specializationId: orderData.specializationId || 'НЕ УКАЗАНО'
       });
 
       console.log('[CreateOrder] 🌐 Вызываем orderService.createOrder...');
@@ -700,10 +703,10 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
         console.log('[CreateOrder] ✅ Заказ создан успешно');
         console.log('[CreateOrder] 📱 Показываем Alert об успехе...');
         Alert.alert(
-          t('order_created_success'),
+          tCustomer('order_created_success'),
           mediaFiles.length > 0
-            ? t('order_created_with_media', { count: mediaFiles.length })
-            : t('order_created_simple'),
+            ? tCustomer('order_created_with_media', { count: mediaFiles.length })
+            : tCustomer('order_created_simple'),
           [
             {
               text: tCommon('ok'),
@@ -714,7 +717,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                   // Очистка формы
                   setTitle('');
                   setDescription('');
-                  setCategory('');
+                  setSpecializationId('');
                   setBudget('');
                   setWorkersCount('1');
                   setSelectedDate(null);
@@ -750,12 +753,12 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
       } else {
         console.error('[CreateOrder] ❌ Ошибка создания заказа:', response.error);
         console.log('[CreateOrder] 📱 Показываем Alert об ошибке...');
-        Alert.alert(tError('error'), response.error || t('create_order_error'));
+        Alert.alert(tError('error'), response.error || tCustomer('create_order_error'));
       }
     } catch (error) {
       console.error('[CreateOrder] ❌ Общая ошибка создания заказа:', error);
       console.log('[CreateOrder] 📱 Показываем Alert об общей ошибке...');
-      Alert.alert(tError('error'), `${t('create_order_failed')}: ${error instanceof Error ? error.message : String(error)}`);
+      Alert.alert(tError('error'), `${tCustomer('create_order_failed')}: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       console.log('[CreateOrder] 🏁 ЗАВЕРШЕНИЕ handleSubmit - сбрасываем флаги...');
       setIsLoading(false);
@@ -765,16 +768,16 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
 
   const getStepTitle = () => {
     switch (currentStep) {
-      case 1: return t('header_step1'); // Название
-      case 2: return t('header_step2'); // Категория
-      case 3: return t('header_step3'); // Описание
-      case 4: return t('header_step4'); // Местоположение
-      case 5: return t('header_step7'); // Количество работников
-      case 6: return t('header_step5'); // Бюджет
-      case 7: return t('header_step6'); // Дополнительные удобства
-      case 8: return t('header_step8'); // Дата и время
-      case 9: return t('header_step9'); // Медиа
-      case 10: return t('header_step10'); // Подтверждение
+      case 1: return tCustomer('header_step1'); // Название
+      case 2: return tCustomer('header_step2'); // Категория
+      case 3: return tCustomer('header_step3'); // Описание
+      case 4: return tCustomer('header_step4'); // Местоположение
+      case 5: return tCustomer('header_step7'); // Количество работников
+      case 6: return tCustomer('header_step5'); // Бюджет
+      case 7: return tCustomer('header_step6'); // Дополнительные удобства
+      case 8: return tCustomer('header_step8'); // Дата и время
+      case 9: return tCustomer('header_step9'); // Медиа
+      case 10: return tCustomer('header_step10'); // Подтверждение
       default: return '';
     }
   };
@@ -786,11 +789,11 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 1} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 1} delay={0} resetKey={`${animationResetKey}-step-1`}>
-                <Text style={styles.stepTitle}>{t('step1_title')}</Text>
+                <Text style={styles.stepTitle}>{tCustomer('step1_title')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 1} delay={150} resetKey={`${animationResetKey}-step-1`}>
-                <Text style={styles.stepSubtitle}>{t('step1_subtitle')}</Text>
+                <Text style={styles.stepSubtitle}>{tCustomer('step1_subtitle')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 1} delay={200} resetKey={`${animationResetKey}-step-1`}>
@@ -799,7 +802,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                     style={getInputStyle(titleFocused)}
                     value={title}
                     onChangeText={setTitle}
-                    placeholder={t('title_placeholder')}
+                    placeholder={tCustomer('title_placeholder')}
                     placeholderTextColor={theme.colors.text.secondary}
                     maxLength={theme.orderValidation.title.maxLength}
                     autoFocus
@@ -818,25 +821,56 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
       case 2:
         return (
           <AnimatedStepContainer isActive={currentStep === 2} direction="right">
-            <View style={styles.stepContent}>
-              <AnimatedField isActive={currentStep === 2} delay={0} resetKey={`${animationResetKey}-step-2`}>
-                <Text style={styles.stepTitle}>{t('step2_title')}</Text>
-              </AnimatedField>
+            <ScrollView 
+              style={styles.stepScrollView}
+              contentContainerStyle={styles.stepScrollContent}
+              showsVerticalScrollIndicator={false}
+              bounces={true}
+            >
+              <View style={styles.stepContent}>
+                <AnimatedField isActive={currentStep === 2} delay={0} resetKey={`${animationResetKey}-step-2`}>
+                  <Text style={styles.stepTitle}>{tCustomer('step2_specialization_title')}</Text>
+                </AnimatedField>
 
-              <AnimatedField isActive={currentStep === 2} delay={150} resetKey={`${animationResetKey}-step-2`}>
-                <Text style={styles.stepSubtitle}>{t('step2_subtitle')}</Text>
-              </AnimatedField>
+                <AnimatedField isActive={currentStep === 2} delay={150} resetKey={`${animationResetKey}-step-2`}>
+                  <Text style={styles.stepSubtitle}>{tCustomer('step2_specialization_subtitle')}</Text>
+                </AnimatedField>
 
-              <AnimatedCategoryGrid
-                categories={categories}
-                selectedCategory={category}
-                onSelectCategory={setCategory}
-                isActive={currentStep === 2}
-                resetKey={`${animationResetKey}-step-2`}
-                isSmallScreen={isSmallScreen}
-              />
+                {/* Сетка специализаций */}
+                <AnimatedField isActive={currentStep === 2} delay={200} resetKey={`${animationResetKey}-step-2-grid`}>
+                  <View style={styles.specializationsGrid}>
+                    {SPECIALIZATIONS.map((spec) => (
+                      <TouchableOpacity
+                        key={spec.id}
+                        style={[
+                          styles.specializationCard,
+                          specializationId === spec.id && styles.specializationCardSelected,
+                        ]}
+                        onPress={() => setSpecializationId(spec.id)}
+                        activeOpacity={0.8}
+                      >
+                        <CategoryIcon
+                          icon={spec.icon}
+                          iconComponent={spec.iconComponent}
+                          size={32}
+                          style={styles.specializationIconWrapper}
+                        />
+                        <Text 
+                          style={[
+                            styles.specializationName,
+                            specializationId === spec.id && styles.specializationNameSelected,
+                          ]}
+                          numberOfLines={2}
+                        >
+                          {getTranslatedSpecializationName(spec.id, t)}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </AnimatedField>
 
-            </View>
+              </View>
+            </ScrollView>
           </AnimatedStepContainer>
         );
 
@@ -845,11 +879,11 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 3} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 3} delay={0} resetKey={`${animationResetKey}-step-3`}>
-                <Text style={styles.stepTitle}>{t('step3_title')}</Text>
+                <Text style={styles.stepTitle}>{tCustomer('step3_title')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 3} delay={150} resetKey={`${animationResetKey}-step-3`}>
-                <Text style={styles.stepSubtitle}>{t('step3_subtitle')}</Text>
+                <Text style={styles.stepSubtitle}>{tCustomer('step3_subtitle')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 3} delay={200} resetKey={`${animationResetKey}-step-3`}>
@@ -858,7 +892,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                     style={getInputStyle(descriptionFocused, true)}
                     value={description}
                     onChangeText={setDescription}
-                    placeholder={t('description_placeholder')}
+                    placeholder={tCustomer('description_placeholder')}
                     placeholderTextColor={theme.colors.text.secondary}
                     maxLength={theme.orderValidation.description.maxLength}
                     multiline
@@ -882,11 +916,11 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 4} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 4} delay={0} resetKey={`${animationResetKey}-step-4`}>
-                <Text style={styles.stepTitle}>{t('step4_title')}</Text>
+                <Text style={styles.stepTitle}>{tCustomer('step4_title')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 4} delay={150} resetKey={`${animationResetKey}-step-4`}>
-                <Text style={styles.stepSubtitle}>{t('step4_subtitle')}</Text>
+                <Text style={styles.stepSubtitle}>{tCustomer('step4_subtitle')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 4} delay={200} resetKey={`${animationResetKey}-step-4`}>
@@ -897,7 +931,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                     style={getInputStyle(locationFocused)}
                     value={location}
                     onChangeText={setLocation}
-                    placeholder={t('location_placeholder')}
+                    placeholder={tCustomer('location_placeholder')}
                     placeholderTextColor={theme.colors.text.secondary}
                     onFocus={() => setLocationFocused(true)}
                     onBlur={() => setLocationFocused(false)}
@@ -912,14 +946,14 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                     disabled={isGettingLocation}
                   >
                     <Text style={styles.locationButtonText}>
-                      {isGettingLocation ? `📍 ${t('determining_location')}` : `📍 ${t('my_location')}`}
+                      {isGettingLocation ? `📍 ${tCustomer('determining_location')}` : `📍 ${tCustomer('my_location')}`}
                     </Text>
                   </TouchableOpacity>
                 </View>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 4} delay={300} resetKey={`${animationResetKey}-step-4`}>
-                <Text style={styles.mapSectionTitle}>{t('or_select_on_map')}</Text>
+                <Text style={styles.mapSectionTitle}>{tCustomer('or_select_on_map')}</Text>
                 <EmbeddedMapSelector
                   onLocationSelect={handleMapLocationSelect}
                   initialCoords={coordinates || undefined}
@@ -936,16 +970,16 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 5} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 5} delay={0} resetKey={`${animationResetKey}-step-5`}>
-                <Text style={styles.stepTitle}>{t('step7_title')}</Text>
+                <Text style={styles.stepTitle}>{tCustomer('step7_title')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 5} delay={150} resetKey={`${animationResetKey}-step-5`}>
-                <Text style={styles.stepSubtitle}>{t('step7_subtitle')}</Text>
+                <Text style={styles.stepSubtitle}>{tCustomer('step7_subtitle')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 5} delay={200} resetKey={`${animationResetKey}-step-5`}>
                 <View style={styles.inputContainer}>
-                  <Text style={styles.fieldLabel}>{t('workers_count')}</Text>
+                  <Text style={styles.fieldLabel}>{tCustomer('workers_count')}</Text>
                 </View>
               </AnimatedField>
 
@@ -983,22 +1017,22 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 6} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 6} delay={0} resetKey={`${animationResetKey}-step-6`}>
-                <Text style={styles.stepTitle}>{t('step5_title')}</Text>
+                <Text style={styles.stepTitle}>{tCustomer('step5_title')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 6} delay={150} resetKey={`${animationResetKey}-step-6`}>
-                <Text style={styles.stepSubtitle}>{t('step5_subtitle')}</Text>
+                <Text style={styles.stepSubtitle}>{tCustomer('step5_subtitle')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 6} delay={200} resetKey={`${animationResetKey}-step-6`}>
                 <View style={styles.inputContainer}>
-                  <Text style={styles.fieldLabel}>{t('amount_per_worker')}</Text>
+                  <Text style={styles.fieldLabel}>{tCustomer('amount_per_worker')}</Text>
                   <View style={styles.budgetInputContainer}>
                     <TextInput
                       style={[getInputStyle(budgetFocused), styles.budgetInput]}
                       value={formatBudgetInput(budget)}
                       onChangeText={text => setBudget(formatBudgetInput(text))}
-                      placeholder={t('budget_placeholder')}
+                      placeholder={tCustomer('budget_placeholder')}
                       placeholderTextColor={theme.colors.text.secondary}
                       keyboardType="numeric"
                       autoFocus
@@ -1018,11 +1052,11 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 7} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 7} delay={0} resetKey={`${animationResetKey}-step-7`}>
-                <Text style={styles.stepTitle}>{t('step6_title')}</Text>
+                <Text style={styles.stepTitle}>{tCustomer('step6_title')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 7} delay={150} resetKey={`${animationResetKey}-step-7`}>
-                <Text style={styles.stepSubtitle}>{t('step6_subtitle')}</Text>
+                <Text style={styles.stepSubtitle}>{tCustomer('step6_subtitle')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 7} delay={200} resetKey={`${animationResetKey}-step-7`}>
@@ -1034,14 +1068,14 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                     <View style={[styles.checkbox, transportPaid && styles.checkboxActive]}>
                       {transportPaid && <Text style={styles.checkboxCheck}>✓</Text>}
                     </View>
-                    <Text style={styles.checkboxLabel}>{t('transport_paid')}</Text>
+                    <Text style={styles.checkboxLabel}>{tCustomer('transport_paid')}</Text>
                   </TouchableOpacity>
                 </View>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 7} delay={250} resetKey={`${animationResetKey}-step-7`}>
                 <View style={styles.inputContainer}>
-                  <Text style={styles.sectionTitle}>{t('meal_section')}</Text>
+                  <Text style={styles.sectionTitle}>{tCustomer('meal_section')}</Text>
                   <View style={styles.mealOptionsContainer}>
                     <TouchableOpacity
                       style={[styles.checkboxContainer, mealIncluded && styles.checkboxContainerActive]}
@@ -1055,7 +1089,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                       <View style={[styles.checkbox, mealIncluded && styles.checkboxActive]}>
                         {mealIncluded && <Text style={styles.checkboxCheck}>✓</Text>}
                       </View>
-                      <Text style={styles.checkboxLabel}>{t('meal_included')}</Text>
+                      <Text style={styles.checkboxLabel}>{tCustomer('meal_included')}</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -1070,7 +1104,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                       <View style={[styles.checkbox, mealPaid && styles.checkboxActive]}>
                         {mealPaid && <Text style={styles.checkboxCheck}>✓</Text>}
                       </View>
-                      <Text style={styles.checkboxLabel}>{t('meal_paid')}</Text>
+                      <Text style={styles.checkboxLabel}>{tCustomer('meal_paid')}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -1084,11 +1118,11 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 8} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 8} delay={0} resetKey={`${animationResetKey}-step-8`}>
-                <Text style={styles.stepTitle}>{t('step8_title')}</Text>
+                <Text style={styles.stepTitle}>{tCustomer('step8_title')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 8} delay={150} resetKey={`${animationResetKey}-step-8`}>
-                <Text style={styles.stepSubtitle}>{t('step8_subtitle')}</Text>
+                <Text style={styles.stepSubtitle}>{tCustomer('step8_subtitle')}</Text>
               </AnimatedField>
 
               <AnimatedInteractiveContainer isActive={currentStep === 8} delay={200} resetKey={`${animationResetKey}-step-8`}>
@@ -1113,7 +1147,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                       onPress={selectTodayDate}
                       activeOpacity={0.7}
                     >
-                      <Text style={styles.quickDateButtonText}>{t('today')}</Text>
+                      <Text style={styles.quickDateButtonText}>{tCustomer('today')}</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -1121,7 +1155,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                       onPress={selectTomorrowDate}
                       activeOpacity={0.7}
                     >
-                      <Text style={styles.quickDateButtonText}>{t('tomorrow')}</Text>
+                      <Text style={styles.quickDateButtonText}>{tCustomer('tomorrow')}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -1160,11 +1194,11 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 9} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 9} delay={0} resetKey={`${animationResetKey}-step-9`}>
-                <Text style={styles.stepTitle}>{t('step9_title')}</Text>
+                <Text style={styles.stepTitle}>{tCustomer('step9_title')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 9} delay={150} resetKey={`${animationResetKey}-step-9`}>
-                <Text style={styles.stepSubtitle}>{t('step9_subtitle')}</Text>
+                <Text style={styles.stepSubtitle}>{tCustomer('step9_subtitle')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 9} delay={200} resetKey={`${animationResetKey}-step-9`}>
@@ -1187,7 +1221,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                     <AnimatedInteractiveContainer isActive={currentStep === 9} delay={300} resetKey={`${animationResetKey}-step-9`}>
                       <TouchableOpacity style={styles.addMediaButton} onPress={pickMedia}>
                         <ImageIcon width={32} height={32} stroke={theme.colors.primary} />
-                        <Text style={styles.addMediaText}>{t('add_media')}</Text>
+                        <Text style={styles.addMediaText}>{tCustomer('add_media')}</Text>
                       </TouchableOpacity>
                     </AnimatedInteractiveContainer>
                   )}
@@ -1207,47 +1241,47 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           <AnimatedStepContainer isActive={currentStep === 10} direction="right">
             <View style={styles.stepContent}>
               <AnimatedField isActive={currentStep === 10} delay={0} resetKey={`${animationResetKey}-step-10`}>
-                <Text style={styles.stepTitle}>{t('step10_title')}</Text>
+                <Text style={styles.stepTitle}>{tCustomer('step10_title')}</Text>
               </AnimatedField>
 
               <AnimatedField isActive={currentStep === 10} delay={150} resetKey={`${animationResetKey}-step-10`}>
-                <Text style={styles.stepSubtitle}>{t('step10_subtitle')}</Text>
+                <Text style={styles.stepSubtitle}>{tCustomer('step10_subtitle')}</Text>
               </AnimatedField>
 
               <View style={styles.summaryContainer}>
                 <AnimatedSummaryGrid
                   items={(() => {
                     const baseItems = [
-                      { label: t('summary_title'), value: title },
-                      { label: t('summary_category'), value: getCategoryLabel(category, tCategories) },
-                      { label: t('summary_description'), value: description },
-                      { label: t('summary_location'), value: location },
-                      { label: t('summary_budget'), value: `${formatBudgetInput(budget)} ${t('sum_per_person')}` },
-                      { label: t('summary_workers'), value: `${workersCount} ${t('person_count')}` }
+                      { label: tCustomer('summary_title'), value: title },
+                      { label: tCustomer('summary_specialization'), value: getTranslatedSpecializationName(specializationId, t) },
+                      { label: tCustomer('summary_description'), value: description },
+                      { label: tCustomer('summary_location'), value: location },
+                      { label: tCustomer('summary_budget'), value: `${formatBudgetInput(budget)} ${tCustomer('sum_per_person')}` },
+                      { label: tCustomer('summary_workers'), value: `${workersCount} ${tCustomer('person_count')}` }
                     ];
 
                     // Добавляем информацию о дополнительных удобствах
                     if (transportPaid || mealIncluded || mealPaid) {
-                      const transportText = transportPaid ? t('transport_paid_yes') : t('transport_paid_no');
-                      baseItems.push({ label: t('transport_info'), value: transportText });
+                      const transportText = transportPaid ? tCustomer('transport_paid_yes') : tCustomer('transport_paid_no');
+                      baseItems.push({ label: tCustomer('transport_info'), value: transportText });
 
                       if (mealIncluded) {
-                        baseItems.push({ label: t('meal_info'), value: t('meal_included_yes') });
+                        baseItems.push({ label: tCustomer('meal_info'), value: tCustomer('meal_included_yes') });
                       } else if (mealPaid) {
-                        baseItems.push({ label: t('meal_info'), value: t('meal_paid_yes') });
+                        baseItems.push({ label: tCustomer('meal_info'), value: tCustomer('meal_paid_yes') });
                       } else {
-                        baseItems.push({ label: t('meal_info'), value: t('meal_included_no') });
+                        baseItems.push({ label: tCustomer('meal_info'), value: tCustomer('meal_included_no') });
                       }
                     }
 
                     // Добавляем медиа файлы если есть
                     if (mediaFiles.length > 0) {
-                      baseItems.push({ label: t('summary_media'), value: `${mediaFiles.length} ${t('files_count')}` });
+                      baseItems.push({ label: tCustomer('summary_media'), value: `${mediaFiles.length} ${tCustomer('files_count')}` });
                     }
 
                     // Добавляем дату и время
-                    const dateTimeValue = selectedTime ? `${formatDate(selectedDate)} ${t('at_time')} ${selectedTime}` : formatDate(selectedDate);
-                    baseItems.push({ label: t('summary_date'), value: dateTimeValue });
+                    const dateTimeValue = selectedTime ? `${formatDate(selectedDate)} ${tCustomer('at_time')} ${selectedTime}` : formatDate(selectedDate);
+                    baseItems.push({ label: tCustomer('summary_date'), value: dateTimeValue });
 
                     return baseItems;
                   })()}
@@ -1276,7 +1310,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
 
           {/* Progress */}
           <AnimatedProgressBar progress={currentStep} total={totalSteps} />
-          <StepCounter currentStep={currentStep} totalSteps={totalSteps} t={t} />
+          <StepCounter currentStep={currentStep} totalSteps={totalSteps} tCustomer={tCustomer} />
 
           {/* Content */}
           <View style={styles.mainContent}>
@@ -1310,7 +1344,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                   resetKey={`${animationResetKey}-step-${currentStep}`}
                 >
                   <Text style={styles.primaryButtonText}>
-                    {currentStep === 2 && !category ? tCommon('skip') :
+                    {currentStep === 2 && !specializationId ? tCommon('skip') :
                       currentStep === 3 && !description.trim() ? tCommon('skip') :
                         tCommon('next')}
                   </Text>
@@ -1326,7 +1360,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 resetKey={`${animationResetKey}-step-${currentStep}`}
               >
                 <Text style={styles.primaryButtonText}>
-                  {isUploadingMedia ? t('uploading_media') : isLoading ? t('creating_order') : t('publish_order')}
+                  {isUploadingMedia ? tCustomer('uploading_media') : isLoading ? tCustomer('creating_order') : tCustomer('publish_order')}
                 </Text>
               </AnimatedNavigationButton>
             )}
@@ -1342,7 +1376,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={theme.colors.primary} />
                 <Text style={styles.loadingText}>
-                  {isUploadingMedia ? t('uploading_media_loading') : t('creating_order_loading')}
+                  {isUploadingMedia ? tCustomer('uploading_media_loading') : tCustomer('creating_order_loading')}
                 </Text>
               </View>
             </View>
@@ -1367,7 +1401,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 display={Platform.OS === 'android' ? 'calendar' : 'spinner'}
                 onChange={handleDateChange}
                 minimumDate={new Date()}
-                locale="ru-RU"
+                {...(Platform.OS === 'ios' && { locale: i18n.language === 'uz' ? 'uz-UZ' : 'ru-RU' })}
               />
             </View>
           )}
@@ -1416,7 +1450,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                   }
                 }}
                 minuteInterval={15}
-                locale="ru-RU"
+                {...(Platform.OS === 'ios' && { locale: i18n.language === 'uz' ? 'uz-UZ' : 'ru-RU' })}
               />
             </View>
           )}
@@ -1451,6 +1485,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
+  stepScrollView: {
+    flex: 1,
+  },
+  stepScrollContent: {
+    flexGrow: 1,
+    paddingBottom: theme.spacing.xl,
+  },
   stepContent: {
     flex: 1,
     paddingTop: isSmallScreen ? theme.spacing.md : theme.spacing.xl,
@@ -1898,5 +1939,41 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.secondary,
     backgroundColor: 'transparent',
+  },
+  // Стили для сетки специализаций (3 колонки)
+  specializationsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: theme.spacing.lg,
+    gap: theme.spacing.sm, // 8px между карточками
+  },
+  specializationCard: {
+    width: specializationCardWidth,
+    height: specializationCardWidth * 1.2,
+    backgroundColor: theme.colors.white,
+    borderRadius: 12,
+    padding: theme.spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 0,
+    ...lightElevationStyles,
+  },
+  specializationCardSelected: {
+    borderWidth: 0.5,
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary + '10',
+  },
+  specializationIconWrapper: {
+    marginBottom: theme.spacing.xs,
+  },
+  specializationName: {
+    fontSize: 11,
+    color: theme.colors.text.primary,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  specializationNameSelected: {
+    color: theme.colors.primary,
+    fontWeight: theme.fonts.weights.semiBold,
   },
 });

@@ -22,6 +22,7 @@ import { UpdateOrderRequest, Order } from '../../types';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
 import { HeaderWithBack } from '../../components/common';
+import { useTranslation } from 'react-i18next';
 import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 import { useTranslatedCategories, getCategoryKeyFromLabel } from '../../utils/categoryUtils';
 import { getCategoryAnimation } from '../../utils/categoryIconUtils';
@@ -46,6 +47,7 @@ export const EditOrderScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<EditOrderRouteProp>();
   const { orderId } = route.params;
+  const { i18n } = useTranslation();
   const t = useCustomerTranslation();
   const tError = useErrorsTranslation();
   const tCommon = useCommonTranslation();
@@ -111,7 +113,7 @@ export const EditOrderScreen: React.FC = () => {
         // Заполняем форму данными заказа
         setTitle(orderData.title);
         setDescription(orderData.description);
-        setCategory(getCategoryKeyFromLabel(orderData.category));
+        setCategory(getCategoryKeyFromLabel(orderData.category || 'other'));
         setBudget(formatNumber(orderData.budget.toString()));
         setWorkersCount(orderData.workersNeeded.toString());
         setSelectedDate(new Date(orderData.serviceDate));
@@ -271,7 +273,7 @@ export const EditOrderScreen: React.FC = () => {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        mediaTypes: ['images', 'videos'],
         allowsEditing: false,
         quality: 1.0, // Максимальное качество, оптимизация будет в MediaService
         allowsMultipleSelection: false,
@@ -735,7 +737,7 @@ export const EditOrderScreen: React.FC = () => {
             display="spinner"
             onChange={handleDateChange}
             minimumDate={new Date()}
-            locale="ru-RU"
+            {...(Platform.OS === 'ios' && { locale: i18n.language === 'uz' ? 'uz-UZ' : 'ru-RU' })}
           />
         </View>
       )}

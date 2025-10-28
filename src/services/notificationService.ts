@@ -13,6 +13,7 @@ try {
   console.warn('[NotificationService] ⚠️ expo-notifications недоступен:', error.message);
 }
 import { supabase } from './supabaseClient';
+import { supabaseAdmin, isAdminAvailable } from './supabaseAdminClient';
 import { authService } from './authService';
 // Убираем прямую работу с FCM/APNs. Используем только Expo Push Service
 import { productionNotificationService } from './productionNotificationService';
@@ -355,6 +356,9 @@ class NotificationService {
 
   /**
    * Отправка push уведомления конкретному пользователю
+   * 
+   * ⚠️ ОТКЛЮЧЕНО: Уведомления теперь отправляются только с сервера
+   * См. osonish-admin/src/app/api/cron/process-notification-queue/route.ts
    */
   async sendNotificationToUser(
     userId: string,
@@ -363,6 +367,18 @@ class NotificationService {
     data: any = {},
     notificationType: PushNotificationData['notificationType']
   ): Promise<boolean> {
+    // 🚫 KILL SWITCH: Отключаем отправку уведомлений из мобильного приложения
+    console.log(`\n🚫 [NotificationService] ОТПРАВКА ОТКЛЮЧЕНА - используется серверная система`);
+    console.log(`[NotificationService] 👤 Пользователь: ${userId}`);
+    console.log(`[NotificationService] 📝 Заголовок: "${title}"`);
+    console.log(`[NotificationService] 📄 Текст: "${body}"`);
+    console.log(`[NotificationService] 🏷️ Тип: ${notificationType}`);
+    console.log(`[NotificationService] 🖥️ Уведомление будет отправлено автоматически с сервера через database triggers`);
+    console.log(`[NotificationService] 📚 Документация: SQL/create_notification_triggers.sql`);
+    return true; // Возвращаем true для обратной совместимости
+    
+    // ========== СТАРЫЙ КОД (ОТКЛЮЧЕН) ==========
+    /*
     try {
       console.log(`\n🔔 [NotificationService] ОТПРАВКА УВЕДОМЛЕНИЯ ПОЛЬЗОВАТЕЛЮ ${userId}`);
       console.log(`[NotificationService] 📝 Заголовок: "${title}"`);
@@ -415,7 +431,7 @@ class NotificationService {
       console.log(`[NotificationService] 📋 Информация о токенах:`);
       tokens.forEach((tokenData, index) => {
         const tokenPreview = tokenData.token.substring(0, 20) + '...';
-        console.log(`[NotificationService]   ${index + 1}. ${tokenPreview} (создан: ${tokenData.created_at})`);
+        console.log(`[NotificationService]   ${index + 1}. ${tokenPreview} (создан: ${tokenData.createdAt || 'неизвестно'})`);
       });
 
       // 🔧 ИСПРАВЛЕНИЕ: Используем только САМЫЙ НОВЫЙ токен для предотвращения дублирования
@@ -477,10 +493,15 @@ class NotificationService {
       console.error('[NotificationService] 📊 Stack trace:', error instanceof Error ? error.stack : 'Нет stack trace');
       return false;
     }
+    */
+    // ========== КОНЕЦ СТАРОГО КОДА ==========
   }
 
   /**
    * Отправка push уведомления множественным пользователям (ОПТИМИЗИРОВАННАЯ)
+   * 
+   * ⚠️ ОТКЛЮЧЕНО: Уведомления теперь отправляются только с сервера
+   * См. osonish-admin/src/app/api/cron/process-notification-queue/route.ts
    */
   async sendNotificationToUsers(
     userIds: string[],
@@ -489,6 +510,18 @@ class NotificationService {
     data: any = {},
     notificationType: PushNotificationData['notificationType']
   ): Promise<number> {
+    // 🚫 KILL SWITCH: Отключаем пакетную отправку уведомлений из мобильного приложения
+    console.log(`\n🚫 [NotificationService] ПАКЕТНАЯ ОТПРАВКА ОТКЛЮЧЕНА - используется серверная система`);
+    console.log(`[NotificationService] 👥 Пользователей: ${userIds.length}`);
+    console.log(`[NotificationService] 📝 Заголовок: "${title}"`);
+    console.log(`[NotificationService] 📄 Текст: "${body}"`);
+    console.log(`[NotificationService] 🏷️ Тип: ${notificationType}`);
+    console.log(`[NotificationService] 🖥️ Уведомления будут отправлены автоматически с сервера через database triggers`);
+    console.log(`[NotificationService] 📚 Документация: SQL/create_notification_triggers.sql`);
+    return userIds.length; // Возвращаем количество пользователей для обратной совместимости
+    
+    // ========== СТАРЫЙ КОД (ОТКЛЮЧЕН) ==========
+    /*
     try {
       console.log(`\n🚀 [NotificationService] ПАКЕТНАЯ ОТПРАВКА ${userIds.length} ПОЛЬЗОВАТЕЛЯМ`);
       console.log(`[NotificationService] 📝 Заголовок: "${title}"`);
@@ -498,7 +531,14 @@ class NotificationService {
       console.log(`[NotificationService] 🔍 Получаем токены для ${userIds.length} пользователей...`);
       const tokensStartTime = Date.now();
 
-      const { data: tokenData, error: tokensError } = await supabase
+      // Используем админский клиент для массовых операций (обходит RLS ограничения)
+      const client = isAdminAvailable() ? supabaseAdmin : supabase;
+      if (!isAdminAvailable()) {
+        console.warn('[NotificationService] ⚠️ Используется обычный клиент (ANON_KEY). Могут быть ограничения.');
+        console.warn('[NotificationService] ⚠️ Для массовых операций настройте SUPABASE_SERVICE_ROLE_KEY');
+      }
+
+      const { data: tokenData, error: tokensError } = await client
         .from('push_tokens')
         .select('user_id, token, device_type, created_at')
         .in('user_id', userIds)
@@ -535,7 +575,7 @@ class NotificationService {
       console.log(`[NotificationService] 🔍 Проверяем настройки уведомлений...`);
       const settingsStartTime = Date.now();
 
-      const { data: settingsData, error: settingsError } = await supabase
+      const { data: settingsData, error: settingsError } = await client
         .from('user_notification_settings')
         .select('user_id, all_notifications_enabled')
         .in('user_id', Array.from(userTokens.keys()));
@@ -635,6 +675,8 @@ class NotificationService {
       console.error('[NotificationService] 📊 Stack trace:', error instanceof Error ? error.stack : 'Нет stack trace');
       return 0;
     }
+    */
+    // ========== КОНЕЦ СТАРОГО КОДА ==========
   }
 
   /**

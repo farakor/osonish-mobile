@@ -7,6 +7,7 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "node": "22.12.0",
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://ruuseponrzonvyyqpdsc.supabase.co",
         "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1dXNlcG9ucnpvbnZ5eXFwZHNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyMTYxMDcsImV4cCI6MjA3NDc5MjEwN30.lFnQP75nfaVCG3IS-OPzW2Phvc4o0_32nlTtL2yHsBo",
@@ -21,6 +22,7 @@
     },
     "preview": {
       "distribution": "internal",
+      "node": "22.12.0",
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://ruuseponrzonvyyqpdsc.supabase.co",
         "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1dXNlcG9ucnpvbnZ5eXFwZHNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyMTYxMDcsImV4cCI6MjA3NDc5MjEwN30.lFnQP75nfaVCG3IS-OPzW2Phvc4o0_32nlTtL2yHsBo",
@@ -36,6 +38,7 @@
     },
     "production": {
       "autoIncrement": true,
+      "node": "22.12.0",
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://qmbavgwkxtqudchuahdv.supabase.co",
         "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtYmF2Z3dreHRxdWRjaHVhaGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3ODkzNzksImV4cCI6MjA2OTM2NTM3OX0.Gn5_S1eYrFpXNXMVHO0zfb8dclNZG1cjAqLHb5Wq0D4",

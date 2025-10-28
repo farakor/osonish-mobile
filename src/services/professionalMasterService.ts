@@ -2,10 +2,10 @@ import { supabase } from './supabaseClient';
 import { User, Specialization } from '../types';
 
 export interface ProfessionalMaster extends User {
-  workerType: 'professional';
-  aboutMe: string;
+  workerType: 'professional' | 'daily_worker';
+  aboutMe?: string;
   specializations: Specialization[];
-  workPhotos: string[];
+  workPhotos?: string[];
   averageRating: number;
   totalReviews: number;
   completedJobs: number;
@@ -16,6 +16,7 @@ export interface GetMastersParams {
   city?: string;
   limit?: number;
   offset?: number;
+  includeDailyWorkers?: boolean;
 }
 
 class ProfessionalMasterService {
@@ -29,14 +30,18 @@ class ProfessionalMasterService {
         city,
         limit = 20,
         offset = 0,
+        includeDailyWorkers = true,
       } = params;
 
-      // Загружаем профессиональных мастеров (фильтрацию делаем на клиенте)
+      // Определяем типы работников для выборки
+      const workerTypes = includeDailyWorkers ? ['professional', 'daily_worker'] : ['professional'];
+
+      // Загружаем профессиональных мастеров и работников на день (фильтрацию делаем на клиенте)
       let query = supabase
         .from('users')
         .select('*')
         .eq('role', 'worker')
-        .eq('worker_type', 'professional');
+        .in('worker_type', workerTypes);
 
       // Фильтр по городу
       if (city) {
@@ -64,6 +69,13 @@ class ProfessionalMasterService {
         const hasSpecializations = user.specializations &&
           Array.isArray(user.specializations) &&
           user.specializations.length > 0;
+        
+        // Для daily_worker фотографии работ не обязательны (если они включены в выборку)
+        if (user.worker_type === 'daily_worker' && includeDailyWorkers) {
+          return hasSpecializations;
+        }
+        
+        // Для professional требуем фотографии работ
         const hasWorkPhotos = user.work_photos &&
           Array.isArray(user.work_photos) &&
           user.work_photos.length > 0;
@@ -100,6 +112,7 @@ class ProfessionalMasterService {
             aboutMe: user.about_me,
             specializations: user.specializations || [],
             workPhotos: user.work_photos || [],
+            profileViewsCount: user.profile_views_count || 0,
             averageRating: stats.averageRating,
             totalReviews: stats.totalReviews,
             completedJobs: stats.completedJobs,
@@ -123,7 +136,7 @@ class ProfessionalMasterService {
         .from('users')
         .select('*')
         .eq('id', masterId)
-        .eq('worker_type', 'professional')
+        .in('worker_type', ['professional', 'daily_worker'])
         .single();
 
       if (error || !data) {
@@ -148,6 +161,7 @@ class ProfessionalMasterService {
         aboutMe: data.about_me,
         specializations: data.specializations || [],
         workPhotos: data.work_photos || [],
+        profileViewsCount: data.profile_views_count || 0,
         averageRating: stats.averageRating,
         totalReviews: stats.totalReviews,
         completedJobs: stats.completedJobs,
@@ -209,14 +223,17 @@ class ProfessionalMasterService {
   /**
    * Получить рандомный список мастеров из разных специализаций
    */
-  async getRandomMasters(city?: string, limit: number = 10): Promise<ProfessionalMaster[]> {
+  async getRandomMasters(city?: string, limit: number = 10, includeDailyWorkers: boolean = false): Promise<ProfessionalMaster[]> {
     try {
-      // DEBUG: Проверяем всех профессиональных мастеров без фильтров
+      // Определяем типы работников для выборки
+      const workerTypes = includeDailyWorkers ? ['professional', 'daily_worker'] : ['professional'];
+      
+      // DEBUG: Проверяем всех профессиональных мастеров и работников на день без фильтров
       const { data: allProfessionals } = await supabase
         .from('users')
         .select('id, first_name, last_name, city, worker_type, specializations, work_photos')
         .eq('role', 'worker')
-        .eq('worker_type', 'professional');
+        .in('worker_type', workerTypes);
 
       console.log('[ProfessionalMasterService] DEBUG - Всего профмастеров в БД:', allProfessionals?.length || 0);
       if (allProfessionals && allProfessionals.length > 0) {
@@ -236,9 +253,8 @@ class ProfessionalMasterService {
         .from('users')
         .select('*')
         .eq('role', 'worker')
-        .eq('worker_type', 'professional')
-        .not('specializations', 'is', null)
-        .not('work_photos', 'is', null);
+        .in('worker_type', workerTypes)
+        .not('specializations', 'is', null);
 
       if (city) {
         query = query.eq('city', city);
@@ -259,12 +275,25 @@ class ProfessionalMasterService {
         const hasSpecializations = user.specializations &&
           Array.isArray(user.specializations) &&
           user.specializations.length > 0;
+
+        // Для daily_worker фотографии работ не обязательны (если они включены в выборку)
+        if (user.worker_type === 'daily_worker' && includeDailyWorkers) {
+          if (!hasSpecializations) {
+            console.log(`[ProfessionalMasterService] Пропущен daily_worker ${user.first_name} ${user.last_name}:`, {
+              hasSpecializations,
+              specializationsValue: user.specializations,
+            });
+          }
+          return hasSpecializations;
+        }
+
+        // Для professional требуем фотографии работ
         const hasWorkPhotos = user.work_photos &&
           Array.isArray(user.work_photos) &&
           user.work_photos.length > 0;
 
         if (!hasSpecializations || !hasWorkPhotos) {
-          console.log(`[ProfessionalMasterService] Пропущен мастер ${user.first_name} ${user.last_name}:`, {
+          console.log(`[ProfessionalMasterService] Пропущен professional ${user.first_name} ${user.last_name}:`, {
             hasSpecializations,
             specializationsValue: user.specializations,
             hasWorkPhotos,
@@ -310,6 +339,7 @@ class ProfessionalMasterService {
             aboutMe: user.about_me,
             specializations: user.specializations || [],
             workPhotos: user.work_photos || [],
+            profileViewsCount: user.profile_views_count || 0,
             averageRating: stats.averageRating,
             totalReviews: stats.totalReviews,
             completedJobs: stats.completedJobs,
@@ -333,9 +363,8 @@ class ProfessionalMasterService {
         .from('users')
         .select('*')
         .eq('role', 'worker')
-        .eq('worker_type', 'professional')
-        .not('specializations', 'is', null)
-        .not('work_photos', 'is', null);
+        .in('worker_type', ['professional', 'daily_worker'])
+        .not('specializations', 'is', null);
 
       if (city) {
         supabaseQuery = supabaseQuery.eq('city', city);
@@ -372,6 +401,7 @@ class ProfessionalMasterService {
             aboutMe: user.about_me,
             specializations: user.specializations || [],
             workPhotos: user.work_photos || [],
+            profileViewsCount: user.profile_views_count || 0,
             averageRating: stats.averageRating,
             totalReviews: stats.totalReviews,
             completedJobs: stats.completedJobs,
@@ -382,6 +412,66 @@ class ProfessionalMasterService {
       return mastersWithStats;
     } catch (error) {
       console.error('Ошибка в searchMasters:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Увеличить счетчик просмотров профиля мастера
+   */
+  async incrementProfileViews(masterId: string): Promise<void> {
+    try {
+      const { error } = await supabase.rpc('increment_profile_views', {
+        user_id_param: masterId
+      });
+
+      if (error) {
+        console.error('Ошибка увеличения счетчика просмотров профиля:', error);
+      } else {
+        console.log(`[ProfessionalMasterService] Просмотр профиля мастера ${masterId} зарегистрирован`);
+      }
+    } catch (error) {
+      console.error('Ошибка в incrementProfileViews:', error);
+    }
+  }
+
+  /**
+   * Получить отзывы о профессиональном мастере
+   */
+  async getMasterReviews(masterId: string): Promise<any[]> {
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select(`
+          *,
+          order:order_id (title),
+          customer:customer_id (first_name, last_name)
+        `)
+        .eq('worker_id', masterId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('[ProfessionalMasterService] Ошибка получения отзывов:', error);
+        return [];
+      }
+
+      if (!data) return [];
+
+      return data.map((item: any) => ({
+        id: item.id,
+        orderId: item.order_id,
+        customerId: item.customer_id,
+        workerId: item.worker_id,
+        customerName: item.customer
+          ? `${item.customer.first_name} ${item.customer.last_name}`
+          : 'Пользователь',
+        rating: item.rating,
+        comment: item.comment,
+        createdAt: item.created_at,
+        orderTitle: item.order?.title || null,
+      }));
+    } catch (error) {
+      console.error('[ProfessionalMasterService] Ошибка получения отзывов:', error);
       return [];
     }
   }

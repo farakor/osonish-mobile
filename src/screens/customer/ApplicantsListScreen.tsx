@@ -474,9 +474,8 @@ export const ApplicantsListScreen: React.FC = () => {
                 <View style={styles.modernNameActions}>
                   <TouchableOpacity
                     style={styles.reviewsButton}
-                    onPress={() => navigation.navigate('WorkerProfile', {
-                      workerId: item.workerId,
-                      workerName: item.workerName
+                    onPress={() => navigation.navigate('ProfessionalMasterProfile', {
+                      masterId: item.workerId
                     })}
                   >
                     <View style={styles.reviewsButtonContent}>

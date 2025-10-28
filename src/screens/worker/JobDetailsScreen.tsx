@@ -30,15 +30,17 @@ import BankNoteIcon from '../../../assets/bank-note-01.svg';
 import PhoneIcon from '../../../assets/phone-call-01-white.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import LottieView from 'lottie-react-native';
-import { HeaderWithBack, PriceConfirmationModal, ProposePriceModal, MediaViewer, OrderLocationMap, StatusBadge, CustomerPhoneModal } from '../../components/common';
+import { HeaderWithBack, PriceConfirmationModal, ProposePriceModal, MediaViewer, OrderLocationMap, StatusBadge, CustomerPhoneModal, CategoryIcon as CategoryIconComponent } from '../../components/common';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { getCategoryEmoji, getCategoryLabel } from '../../utils/categoryUtils';
 import { getCategoryAnimation } from '../../utils/categoryIconUtils';
 import { locationService, LocationCoords } from '../../services/locationService';
+import { getSpecializationIcon, getTranslatedSpecializationName, getSpecializationIconComponent } from '../../constants/specializations';
 import { supabase } from '../../services/supabaseClient';
 import { Order, User } from '../../types';
-import { useCustomerTranslation, useCategoriesTranslation, useWorkerTranslation } from '../../hooks/useTranslation';
+import { useTranslation } from 'react-i18next';
+import { useCustomerTranslation, useWorkerTranslation } from '../../hooks/useTranslation';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48; // 24px margin on each side
@@ -215,8 +217,8 @@ export const JobDetailsScreen: React.FC = () => {
   const route = useRoute<JobDetailsRouteProp>();
   const { orderId } = route.params;
   const insets = usePlatformSafeAreaInsets();
+  const { t: translate } = useTranslation();
   const t = useCustomerTranslation();
-  const tCategories = useCategoriesTranslation();
   const tWorker = useWorkerTranslation();
 
   const [order, setOrder] = useState<Order | null>(null);
@@ -257,6 +259,11 @@ export const JobDetailsScreen: React.FC = () => {
         } else if (orderData && orderData.latitude && orderData.longitude) {
           // При наличии координат очищаем возможные старые значения
           setMapCoords(null);
+        }
+
+        // Увеличиваем счетчик просмотров заказа
+        if (orderData) {
+          await orderService.incrementOrderViews(orderId);
         }
 
         // Проверяем статус заявки пользователя
@@ -483,7 +490,36 @@ export const JobDetailsScreen: React.FC = () => {
     }
   };
 
-  // Функция для звонка заказчику
+  // Функция для логирования звонка заказчику (используется в модальном окне)
+  const logCallToCustomer = async () => {
+    try {
+      console.log('[JobDetailsScreen] 📞 Логируем звонок заказчику из модального окна');
+      const authState = authService.getAuthState();
+      if (order && customer && authState.user) {
+        await orderService.logCallAttempt({
+          orderId: order.id,
+          callerId: authState.user.id,
+          receiverId: customer.id,
+          callerType: 'worker',
+          receiverType: 'customer',
+          phoneNumber: customer.phone,
+          callSource: 'job_details'
+        });
+        console.log('[JobDetailsScreen] ✅ Звонок успешно залогирован');
+      } else {
+        console.warn('[JobDetailsScreen] ⚠️ Не удалось залогировать звонок - отсутствуют данные:', {
+          hasOrder: !!order,
+          hasCustomer: !!customer,
+          hasUser: !!authState.user
+        });
+      }
+    } catch (error) {
+      console.error('[JobDetailsScreen] ❌ Ошибка логирования звонка:', error);
+      // Не прерываем процесс звонка, даже если логирование не удалось
+    }
+  };
+
+  // Функция для звонка заказчику (с подтверждением)
   const handleCallCustomer = async () => {
     if (!customer?.phone) {
       Alert.alert(tWorker('general_error'), tWorker('phone_call_error'));
@@ -503,19 +539,7 @@ export const JobDetailsScreen: React.FC = () => {
           onPress: async () => {
             try {
               // Логируем попытку звонка перед открытием диалера
-              const authState = authService.getAuthState();
-              if (order && customer && authState.user) {
-                await orderService.logCallAttempt({
-                  orderId: order.id,
-                  callerId: authState.user.id,
-                  receiverId: customer.id,
-                  callerType: 'worker',
-                  receiverType: 'customer',
-                  phoneNumber: customer.phone,
-                  callSource: 'job_details'
-                });
-                console.log('[JobDetailsScreen] ✅ Звонок залогирован');
-              }
+              await logCallToCustomer();
 
               // Открываем диалер
               const phoneUrl = `tel:${customer.phone}`;
@@ -523,7 +547,7 @@ export const JobDetailsScreen: React.FC = () => {
                 Alert.alert(tWorker('general_error'), tWorker('phone_call_error'));
               });
             } catch (error) {
-              console.error('[JobDetailsScreen] ❌ Ошибка логирования звонка:', error);
+              console.error('[JobDetailsScreen] ❌ Ошибка при звонке:', error);
               // Все равно открываем диалер, даже если логирование не удалось
               const phoneUrl = `tel:${customer.phone}`;
               Linking.openURL(phoneUrl).catch(() => {
@@ -649,18 +673,30 @@ export const JobDetailsScreen: React.FC = () => {
           {/* Info Grid */}
           <View style={styles.infoSection}>
             <View style={styles.infoGrid}>
-              {/* Верхний ряд: Категория и Дата */}
+              {/* Верхний ряд: Специализация/Категория и Дата */}
               <View style={styles.infoCard}>
                 <View style={styles.infoIcon}>
-                  <LottieView
-                    source={getCategoryAnimation(order.category)}
-                    style={styles.categoryLottieIcon}
-                    autoPlay={false}
-                    loop={false}
-                    progress={0.5}
-                  />
+                  {order.specializationId ? (
+                    <CategoryIconComponent
+                      icon={getSpecializationIcon(order.specializationId)}
+                      iconComponent={getSpecializationIconComponent(order.specializationId)}
+                      size={22}
+                    />
+                  ) : (
+                    <LottieView
+                      source={getCategoryAnimation(order.category || 'other')}
+                      style={styles.categoryLottieIcon}
+                      autoPlay={false}
+                      loop={false}
+                      progress={0.5}
+                    />
+                  )}
                 </View>
-                <Text style={styles.infoValue}>{getCategoryLabel(order.category, tCategories)}</Text>
+                <Text style={styles.infoValue}>
+                  {order.specializationId 
+                    ? getTranslatedSpecializationName(order.specializationId, translate)
+                    : getCategoryLabel(order.category || 'other', translate)}
+                </Text>
               </View>
 
               <View style={styles.infoCard}>
@@ -784,6 +820,7 @@ export const JobDetailsScreen: React.FC = () => {
         visible={customerPhoneModalVisible}
         onClose={() => setCustomerPhoneModalVisible(false)}
         onContinue={handleContinueResponse}
+        onCall={logCallToCustomer}
         customerPhone={customer?.phone || ''}
         customerName={customer ? `${customer.lastName} ${customer.firstName}` : ''}
       />
@@ -1030,6 +1067,9 @@ const styles = StyleSheet.create({
   categoryLottieIcon: {
     width: 22,
     height: 22,
+  },
+  specializationEmoji: {
+    fontSize: 22,
   },
   iconText: {
     fontSize: 16,

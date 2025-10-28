@@ -20,6 +20,7 @@ export interface User {
   aboutMe?: string;
   specializations?: Specialization[];
   workPhotos?: string[];
+  profileViewsCount?: number; // Количество просмотров профиля
 }
 
 // Specialization Types
@@ -75,7 +76,8 @@ export interface Order {
   id: string;
   title: string;
   description: string;
-  category: string;
+  category?: string; // Опциональное поле для обратной совместимости
+  specializationId?: string; // ID специализации для профессиональных мастеров
   location: string;
   latitude?: number; // широта для расчета дистанции
   longitude?: number; // долгота для расчета дистанции
@@ -86,6 +88,8 @@ export interface Order {
   status: 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled' | 'rejected';
   customerId: string;
   applicantsCount: number;
+  pendingApplicantsCount?: number; // Количество непринятых откликов (ожидающих рассмотрения)
+  viewsCount?: number; // Количество просмотров заказа
   // Дополнительные удобства
   transportPaid?: boolean; // Проезд оплачивается отдельно
   mealIncluded?: boolean; // Питание включено
@@ -98,7 +102,7 @@ export interface Order {
 export interface CreateOrderRequest {
   title: string;
   description: string;
-  category: string;
+  category?: string; // Опциональное поле для обратной совместимости (по умолчанию 'other')
   location: string;
   latitude?: number; // широта места выполнения заказа
   longitude?: number; // долгота места выполнения заказа
@@ -110,6 +114,7 @@ export interface CreateOrderRequest {
   transportPaid?: boolean; // Проезд оплачивается отдельно
   mealIncluded?: boolean; // Питание включено
   mealPaid?: boolean; // Питание оплачивается
+  specializationId?: string; // ID специализации для профессиональных мастеров
 }
 
 // API Response Types

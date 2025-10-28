@@ -7,11 +7,14 @@ import {
   Image,
   Platform,
 } from 'react-native';
-import { theme, getSpecializationIcon } from '../../constants';
+import { theme, getSpecializationIcon, getTranslatedSpecializationNameSingular } from '../../constants';
 import ProBadge from '../../../assets/pro_badge.svg';
-import StarIcon from '../../../assets/star-rev-yellow.svg';
+import EyeIcon from '../../../assets/eye.svg';
 import { lightElevationStyles } from '../../utils/noShadowStyles';
 import { ProfessionalMaster } from '../../services/professionalMasterService';
+import { useTranslation } from 'react-i18next';
+
+const VIEWS_COLOR = '#9AA0A6'; // Цвет для счетчика просмотров
 
 interface ProfessionalMasterCardProps {
   master: ProfessionalMaster;
@@ -22,6 +25,8 @@ export const ProfessionalMasterCard: React.FC<ProfessionalMasterCardProps> = ({
   master,
   onPress,
 }) => {
+  const { t } = useTranslation();
+  
   // Получаем основную специализацию
   const primarySpecialization = master.specializations.find(s => s.isPrimary);
   const specIcon = primarySpecialization
@@ -56,30 +61,24 @@ export const ProfessionalMasterCard: React.FC<ProfessionalMasterCardProps> = ({
           <Text style={styles.name} numberOfLines={1}>
             {master.firstName} {master.lastName}
           </Text>
-          {/* Бейдж профессионального мастера */}
-          <View style={styles.proBadgeContainer}>
-            <ProBadge width={44} height={18} />
-          </View>
+          {/* Бейдж профессионального мастера - не показываем для daily_worker */}
+          {master.workerType !== 'daily_worker' && (
+            <View style={styles.proBadgeContainer}>
+              <ProBadge width={44} height={18} />
+            </View>
+          )}
         </View>
 
         {primarySpecialization && (
           <Text style={styles.specialization} numberOfLines={1}>
-            {primarySpecialization.name}
+            {getTranslatedSpecializationNameSingular(primarySpecialization.id, t)}
           </Text>
         )}
 
-        <View style={styles.ratingContainer}>
-          <StarIcon width={16} height={16} fill="#FDB022" style={styles.ratingIcon} />
-          <Text style={styles.ratingText}>
-            {master.averageRating > 0
-              ? master.averageRating.toFixed(1)
-              : 'Новый'}
-          </Text>
-          {master.totalReviews > 0 && (
-            <Text style={styles.reviewsCount}>
-              ({master.totalReviews})
-            </Text>
-          )}
+        {/* Views Count */}
+        <View style={styles.viewsContainer}>
+          <EyeIcon width={14} height={14} stroke={VIEWS_COLOR} strokeWidth={1.5} />
+          <Text style={styles.viewsText}>{master.profileViewsCount || 0}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -141,22 +140,15 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing.xs,
   },
-  ratingContainer: {
+  viewsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
   },
-  ratingIcon: {
-    marginRight: 4,
-  },
-  ratingText: {
-    fontSize: theme.fonts.sizes.sm,
-    fontWeight: '600',
-    color: theme.colors.text.primary,
-  },
-  reviewsCount: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
-    marginLeft: 4,
+  viewsText: {
+    fontSize: 12,
+    color: VIEWS_COLOR,
+    fontWeight: '500',
   },
 });
 

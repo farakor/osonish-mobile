@@ -93,7 +93,7 @@ export class TestingHelpers {
 
       console.log('📋 Доступные заказы для исполнителей:', allOrders.length);
       allOrders.forEach((order, index) => {
-        console.log(`${index + 1}. "${order.title}" - ${order.budget} сум (${order.category})`);
+        console.log(`${index + 1}. "${order.title}" - ${order.budget} сум (${order.category || 'other'})`);
       });
     } catch (error) {
       console.error('❌ Ошибка получения статистики:', error);

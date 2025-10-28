@@ -59,7 +59,7 @@ export type CustomerTabParamList = {
     repeatOrderData?: {
       title: string;
       description: string;
-      category: string;
+      category?: string; // Опциональное поле
       location: string;
       latitude?: number;
       longitude?: number;

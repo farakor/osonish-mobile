@@ -12,17 +12,19 @@ import { Order } from '../../types';
 import { locationService, LocationCoords } from '../../services/locationService';
 import { getCategoryEmoji, getCategoryLabel } from '../../utils/categoryUtils';
 import { getCategoryAnimation } from '../../utils/categoryIconUtils';
-import { useCustomerTranslation, useCategoriesTranslation } from '../../hooks/useTranslation';
+import { useCustomerTranslation } from '../../hooks/useTranslation';
+import { useTranslation } from 'react-i18next';
 import { getStatusInfo } from '../../utils/statusUtils';
+import { getSpecializationIcon, getTranslatedSpecializationName, getSpecializationIconComponent } from '../../constants/specializations';
+import { CategoryIcon } from '../common';
 
 // Константа для цвета иконок в деталях карточки
 const DETAIL_ICON_COLOR = '#5F6368';
+const VIEWS_COLOR = '#9AA0A6'; // Цвет для счетчика просмотров
 
 // SVG импорты
-import CalendarIcon from '../../../assets/card-icons/calendar.svg';
-import LocationIcon from '../../../assets/card-icons/location.svg';
-import CategoryIcon from '../../../assets/card-icons/category.svg';
 import OtklikiIcon from '../../../assets/card-icons/otkliki.svg';
+import EyeIcon from '../../../assets/eye.svg';
 
 interface ModernOrderCardProps {
   order: Order;
@@ -45,7 +47,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
 }) => {
   const [isPressed, setIsPressed] = useState(false);
   const t = useCustomerTranslation();
-  const tCategories = useCategoriesTranslation();
+  const { t: translate } = useTranslation();
   const formatBudget = (amount: number) => {
     return `${amount.toLocaleString('ru-RU')} ${t('currency_sum')}`;
   };
@@ -109,19 +111,10 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
     };
   };
 
-  // Компонент для отображения адреса с цветной дистанцией
-  const LocationText = () => {
+  // Получаем только дистанцию для отображения в header
+  const getDistanceText = () => {
     const locationData = getLocationData();
-
-    if (locationData.hasDistance) {
-      return (
-        <Text style={styles.detailText}>
-          {locationData.address} <Text style={styles.distanceText}>({locationData.distance})</Text>
-        </Text>
-      );
-    }
-
-    return <Text style={styles.detailText}>{locationData.address}</Text>;
+    return locationData.hasDistance ? locationData.distance : null;
   };
 
   return (
@@ -143,32 +136,49 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
         <View style={styles.header}>
           <View style={styles.categoryIconContainer}>
             <View style={styles.categoryIcon}>
-              <LottieView
-                source={getCategoryAnimation(order.category)}
-                style={styles.categoryLottieIcon}
-                autoPlay={false}
-                loop={false}
-                progress={0.5}
-              />
+              {order.specializationId ? (
+                <CategoryIcon
+                  icon={getSpecializationIcon(order.specializationId)}
+                  iconComponent={getSpecializationIconComponent(order.specializationId)}
+                  size={28}
+                />
+              ) : (
+                <LottieView
+                  source={getCategoryAnimation(order.category || 'other')}
+                  style={styles.categoryLottieIcon}
+                  autoPlay={false}
+                  loop={false}
+                  progress={0.5}
+                />
+              )}
             </View>
-            <Text style={styles.categoryText} numberOfLines={1} ellipsizeMode="tail">
-              {getCategoryLabel(order.category, tCategories)}
-            </Text>
+            <View style={styles.categoryTextContainer}>
+              <Text style={styles.categoryText} numberOfLines={1} ellipsizeMode="tail">
+                {order.specializationId 
+                  ? getTranslatedSpecializationName(order.specializationId, translate)
+                  : getCategoryLabel(order.category || 'other', translate)}
+              </Text>
+              <Text style={styles.dateUnderCategory} numberOfLines={1} ellipsizeMode="tail">
+                {formatDate(order.serviceDate)}
+              </Text>
+            </View>
           </View>
-          <View style={[
-            styles.statusPill,
-            {
-              backgroundColor: getStatusInfo(order.status, t, workerView).backgroundColor
-            }
-          ]}>
-            <Text style={[
-              styles.statusPillText,
-              {
-                color: getStatusInfo(order.status, t, workerView).color
-              }
-            ]}>
-              {getStatusInfo(order.status, t, workerView).text}
-            </Text>
+          <View style={styles.rightColumn}>
+            {/* Distance */}
+            {getDistanceText() && (
+              <Text style={styles.distanceText}>{getDistanceText()}</Text>
+            )}
+            {/* Views Count */}
+            <View style={styles.viewsContainer}>
+              <EyeIcon width={14} height={14} stroke={VIEWS_COLOR} strokeWidth={1.5} />
+              <Text style={styles.viewsText}>{order.viewsCount || 0}</Text>
+            </View>
+            {/* Response Received Badge */}
+            {!workerView && (order.pendingApplicantsCount || 0) > 0 && (
+              <View style={styles.responseBadge}>
+                <Text style={styles.responseBadgeText}>{t('response_received_badge')}</Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -187,105 +197,23 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
         </Text>
 
         {/* Details Grid */}
-        <View style={styles.detailsGrid}>
-          {workerView ? (
-            <>
-              {/* Режим для исполнителей */}
-              {/* Первая строка: Только Дата */}
-              <View style={styles.detailsRow}>
-                <View style={styles.detailItem}>
-                  <View style={styles.iconWrapper}>
-                    <CalendarIcon
-                      width={20}
-                      height={20}
-                      color={DETAIL_ICON_COLOR}
-                      style={styles.detailIcon}
-                    />
-                  </View>
-                  <Text style={styles.detailText} numberOfLines={1} ellipsizeMode="tail">{formatDate(order.serviceDate)}</Text>
+        {showApplicantsCount && (
+          <View style={styles.detailsGrid}>
+            <View style={styles.detailsRow}>
+              <View style={styles.detailItem}>
+                <View style={styles.iconWrapper}>
+                  <OtklikiIcon
+                    width={20}
+                    height={20}
+                    color={DETAIL_ICON_COLOR}
+                    style={styles.detailIcon}
+                  />
                 </View>
+                <Text style={styles.detailText}>{t('applications_count', { count: order.applicantsCount })}</Text>
               </View>
-
-              {/* Вторая строка: Локация на всю ширину */}
-              <View style={styles.detailsRow}>
-                <View style={styles.detailItemFullWidth}>
-                  <View style={styles.iconWrapper}>
-                    <LocationIcon
-                      width={20}
-                      height={20}
-                      color={DETAIL_ICON_COLOR}
-                      style={styles.detailIcon}
-                    />
-                  </View>
-                  <LocationText />
-                </View>
-              </View>
-
-              {/* Третья строка: Заявки (если показывается) */}
-              {showApplicantsCount && (
-                <View style={styles.detailsRow}>
-                  <View style={styles.detailItem}>
-                    <View style={styles.iconWrapper}>
-                      <OtklikiIcon
-                        width={20}
-                        height={20}
-                        color={DETAIL_ICON_COLOR}
-                        style={styles.detailIcon}
-                      />
-                    </View>
-                    <Text style={styles.detailText}>{t('applications_count', { count: order.applicantsCount })}</Text>
-                  </View>
-                </View>
-              )}
-            </>
-          ) : (
-            <>
-              {/* Режим для заказчиков */}
-              {/* Первая строка: Дата + Количество заявок */}
-              <View style={styles.detailsRow}>
-                <View style={styles.detailItemDate}>
-                  <View style={styles.iconWrapper}>
-                    <CalendarIcon
-                      width={20}
-                      height={20}
-                      color={DETAIL_ICON_COLOR}
-                      style={styles.detailIcon}
-                    />
-                  </View>
-                  <Text style={styles.detailText} numberOfLines={1} ellipsizeMode="tail">{formatDate(order.serviceDate)}</Text>
-                </View>
-                {showApplicantsCount && (
-                  <View style={styles.detailItemApplicants}>
-                    <View style={styles.iconWrapper}>
-                      <OtklikiIcon
-                        width={20}
-                        height={20}
-                        color={DETAIL_ICON_COLOR}
-                        style={styles.detailIcon}
-                      />
-                    </View>
-                    <Text style={styles.detailText}>{t('applications_count', { count: order.applicantsCount })}</Text>
-                  </View>
-                )}
-              </View>
-
-              {/* Вторая строка: Локация на всю ширину */}
-              <View style={styles.detailsRow}>
-                <View style={styles.detailItemFullWidth}>
-                  <View style={styles.iconWrapper}>
-                    <LocationIcon
-                      width={20}
-                      height={20}
-                      color={DETAIL_ICON_COLOR}
-                      style={styles.detailIcon}
-                    />
-                  </View>
-                  <LocationText />
-                </View>
-              </View>
-            </>
-          )}
-        </View>
+            </View>
+          </View>
+        )}
 
 
 
@@ -363,7 +291,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: theme.spacing.sm,
   },
   categoryIconContainer: {
@@ -386,11 +314,24 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
   },
+  categoryEmoji: {
+    fontSize: 24,
+  },
+  categoryTextContainer: {
+    flex: 1,
+    flexShrink: 1,
+  },
   categoryText: {
     fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.medium,
     color: theme.colors.text.primary,
-    flex: 1,
+    flexShrink: 1,
+  },
+  dateUnderCategory: {
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.regular,
+    color: DETAIL_ICON_COLOR,
+    marginTop: 2,
     flexShrink: 1,
   },
   timeInfo: {
@@ -402,26 +343,46 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.regular,
     flexShrink: 1,
   },
-  statusPill: {
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: 12,
-    alignSelf: 'flex-end',
-    flexShrink: 0,
+  rightColumn: {
+    alignItems: 'flex-end',
+    gap: 4,
   },
-  statusPillText: {
-    fontSize: theme.fonts.sizes.xs,
-    fontWeight: theme.fonts.weights.semiBold,
+  viewsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    gap: 4,
+  },
+  viewsText: {
+    fontSize: 12,
+    color: VIEWS_COLOR,
+    fontWeight: '500',
+  },
+  responseBadge: {
+    backgroundColor: '#E10000',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  responseBadgeText: {
+    fontSize: 10,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   title: {
     fontSize: theme.fonts.sizes.xl,
     fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
     lineHeight: 28,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   detailsGrid: {
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
     gap: theme.spacing.sm,
   },
   detailsRow: {
@@ -433,25 +394,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: theme.spacing.xs,
-  },
-  detailItemDate: {
-    flex: 2, // Больше места для даты
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: theme.spacing.xs,
-  },
-  detailItemApplicants: {
-    flex: 1, // Меньше места для заявок
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: theme.spacing.xs,
-    justifyContent: 'flex-end', // Выравниваем по правому краю
-  },
-  detailItemFullWidth: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: theme.spacing.xs,
-    width: '100%',
   },
   iconWrapper: {
     marginRight: theme.spacing.sm,
@@ -469,15 +411,16 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   distanceText: {
-    fontSize: theme.fonts.sizes.sm,
+    fontSize: 14,
     color: '#E10000',
-    fontWeight: theme.fonts.weights.medium,
+    fontWeight: '600',
+    textAlign: 'right',
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: theme.spacing.md,
+    marginTop: theme.spacing.sm,
   },
   priceContainer: {
     flex: 1,

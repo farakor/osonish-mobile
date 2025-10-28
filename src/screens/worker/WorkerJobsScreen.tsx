@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
-  StyleSheet, ScrollView,
+  StyleSheet,
   TouchableOpacity,
   TextInput,
   FlatList,
@@ -10,6 +10,7 @@ import {
   RefreshControl,
   StatusBar,
   Platform,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';;
 import { SvgXml } from 'react-native-svg';
@@ -29,7 +30,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { WorkerStackParamList } from '../../types/navigation';
 import NotificationIcon from '../../../assets/notification-message.svg';
 import { useWorkerTranslation, useCustomerTranslation, useCategoriesTranslation } from '../../hooks/useTranslation';
-import { getCategoryEmoji, getCategoryLabel } from '../../utils/categoryUtils';
+import { SPECIALIZATIONS, getTranslatedSpecializationName, getSpecializationIconComponent } from '../../constants/specializations';
 
 // SVG иконка empty-state-no-applied-jobs
 const emptyStateNoAppliedJobsSvg = `<svg width="161" height="160" viewBox="0 0 161 160" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -66,14 +67,14 @@ const getAndroidStatusBarHeight = () => {
   return Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0;
 };
 
-// Отдельный компонент для карточки заказа
+// Отдельный компонент для карточки заказа с мемоизацией
 const JobCard: React.FC<{
   item: Order;
   onApply: (orderId: string) => void;
   hasApplied?: boolean;
   navigation: WorkerNavigationProp;
   userLocation?: LocationCoords;
-}> = ({ item, onApply, hasApplied = false, navigation, userLocation }) => {
+}> = React.memo(({ item, onApply, hasApplied = false, navigation, userLocation }) => {
   const tWorker = useWorkerTranslation();
 
   const actionButton = (
@@ -97,7 +98,18 @@ const JobCard: React.FC<{
       workerView={true}
     />
   );
-};
+}, (prevProps, nextProps) => {
+  // Оптимизация: ре-рендер только если изменились ключевые поля
+  return (
+    prevProps.item.id === nextProps.item.id &&
+    prevProps.item.title === nextProps.item.title &&
+    prevProps.item.budget === nextProps.item.budget &&
+    prevProps.item.status === nextProps.item.status &&
+    prevProps.hasApplied === nextProps.hasApplied &&
+    prevProps.userLocation?.latitude === nextProps.userLocation?.latitude &&
+    prevProps.userLocation?.longitude === nextProps.userLocation?.longitude
+  );
+});
 
 const WorkerJobsScreen: React.FC = () => {
   const navigation = useNavigation<WorkerNavigationProp>();
@@ -108,16 +120,10 @@ const WorkerJobsScreen: React.FC = () => {
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Мемоизируем переведенную категорию "Все"
-  const allCategoriesLabel = useMemo(() => t('all_categories'), [t]);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  // Состояние для фильтра по специализации
+  const [selectedSpecialization, setSelectedSpecialization] = useState<string | null>('all');
+  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
 
-  // Инициализируем selectedCategory с ключом "all"
-  useEffect(() => {
-    if (!selectedCategory) {
-      setSelectedCategory('all');
-    }
-  }, [selectedCategory]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [customerPhoneModalVisible, setCustomerPhoneModalVisible] = useState(false);
@@ -267,59 +273,48 @@ const WorkerJobsScreen: React.FC = () => {
     let filtered = orders.filter(order => {
       const matchesSearch = order.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         order.description.toLowerCase().includes(searchQuery.toLowerCase());
-      // Теперь selectedCategory содержит originalKey, поэтому сравниваем с order.category напрямую
-      const matchesCategory = !selectedCategory || selectedCategory === 'all' || order.category === selectedCategory;
-      return matchesSearch && matchesCategory;
+      // Фильтрация по специализации
+      const matchesSpecialization = !selectedSpecialization || 
+        selectedSpecialization === 'all' || 
+        order.specializationId === selectedSpecialization;
+      return matchesSearch && matchesSpecialization;
     });
 
     setFilteredOrders(filtered);
-  }, [orders, searchQuery, selectedCategory]);
+  }, [orders, searchQuery, selectedSpecialization]);
 
-  // Мемоизируем категории
-  const categories = useMemo(() => {
-    // Получаем уникальные категории и фильтруем пустые/undefined значения
-    const rawCategories = orders.map(order => order.category);
-    const allCategories = [...new Set(rawCategories)]
-      .filter(category => category && category.trim() !== '');
+  // Мемоизируем специализации из существующих заказов
+  const availableSpecializations = useMemo(() => {
+    // Получаем уникальные specializationId из заказов
+    const specializationIds = [...new Set(
+      orders
+        .map(order => order.specializationId)
+        .filter(id => id !== undefined && id !== null)
+    )] as string[];
 
-    // Отладочная информация
-    if (__DEV__) {
-      console.log('Raw categories from orders:', rawCategories);
-      console.log('Unique categories after filtering:', allCategories);
-    }
+    console.log('[WorkerJobsScreen] Найденные specializationId:', specializationIds);
 
-    const categoriesWithCounts = [
+    const specializationsWithCounts = [
       {
         id: 'all',
-        originalKey: 'all',
-        label: allCategoriesLabel,
-        emoji: '📋',
-        count: orders.length
+        name: t('all_categories'),
+        count: orders.length,
+        IconComponent: undefined // Для "Все" нет иконки
       },
-      ...allCategories.map(category => ({
-        id: category,
-        originalKey: category, // Сохраняем оригинальный ключ для фильтрации
-        label: getCategoryLabel(category, tCategories), // Используем переведенное название
-        emoji: getCategoryEmoji(category),
-        count: orders.filter(order => order.category === category).length
+      ...specializationIds.map(specId => ({
+        id: specId,
+        name: tCategories(specId), // Используем tCategories напрямую с ключом специализации
+        count: orders.filter(order => order.specializationId === specId).length,
+        IconComponent: getSpecializationIconComponent(specId) // Получаем SVG компонент иконки
       }))
     ];
 
-    // Дополнительная проверка на уникальность по originalKey (не по label!)
-    const uniqueCategories = categoriesWithCounts.filter((category, index, self) =>
-      index === self.findIndex(c => c.originalKey === category.originalKey)
-    );
-
-    if (__DEV__) {
-      console.log('Final unique categories:', uniqueCategories.map(c => ({ original: c.originalKey, translated: c.label })));
-    }
-
-    return uniqueCategories;
-  }, [orders, allCategoriesLabel, tCategories]);
+    return specializationsWithCounts;
+  }, [orders, t, tCategories]);
 
 
 
-  const handleApplyToJob = async (orderId: string) => {
+  const handleApplyToJob = React.useCallback(async (orderId: string) => {
     try {
       const authState = authService.getAuthState();
       if (!authState.isAuthenticated || !authState.user) {
@@ -348,7 +343,7 @@ const WorkerJobsScreen: React.FC = () => {
       console.error('Ошибка при открытии формы отклика:', error);
       Alert.alert(t('general_error'), t('general_error'));
     }
-  };
+  }, [orders, t]);
 
   const handleAcceptPrice = async () => {
     try {
@@ -395,6 +390,35 @@ const WorkerJobsScreen: React.FC = () => {
     } catch (error) {
       console.error('Ошибка отклика на заказ:', error);
       Alert.alert(t('general_error'), t('send_response_general_error'));
+    }
+  };
+
+  // Функция для логирования звонка заказчику (используется в модальном окне)
+  const logCallToCustomer = async () => {
+    try {
+      console.log('[WorkerJobsScreen] 📞 Логируем звонок заказчику из модального окна');
+      const authState = authService.getAuthState();
+      if (selectedOrder && customerPhone && authState.user) {
+        await orderService.logCallAttempt({
+          orderId: selectedOrder.id,
+          callerId: authState.user.id,
+          receiverId: selectedOrder.customerId,
+          callerType: 'worker',
+          receiverType: 'customer',
+          phoneNumber: customerPhone,
+          callSource: 'job_details'
+        });
+        console.log('[WorkerJobsScreen] ✅ Звонок успешно залогирован');
+      } else {
+        console.warn('[WorkerJobsScreen] ⚠️ Не удалось залогировать звонок - отсутствуют данные:', {
+          hasSelectedOrder: !!selectedOrder,
+          hasCustomerPhone: !!customerPhone,
+          hasUser: !!authState.user
+        });
+      }
+    } catch (error) {
+      console.error('[WorkerJobsScreen] ❌ Ошибка логирования звонка:', error);
+      // Не прерываем процесс звонка, даже если логирование не удалось
     }
   };
 
@@ -476,7 +500,7 @@ const WorkerJobsScreen: React.FC = () => {
     });
   };
 
-  const renderJobCard = ({ item }: { item: Order }) => {
+  const renderJobCard = React.useCallback(({ item }: { item: Order }) => {
     // На главном экране показываем только заказы без откликов, поэтому hasApplied всегда false
     return (
       <JobCard
@@ -487,7 +511,43 @@ const WorkerJobsScreen: React.FC = () => {
         userLocation={userLocation}
       />
     );
-  };
+  }, [handleApplyToJob, navigation, userLocation]);
+
+  const renderEmptyComponent = React.useCallback(() => {
+    const hasSearchOrFilter = searchQuery || (selectedSpecialization && selectedSpecialization !== 'all');
+
+    return (
+      <View style={styles.emptyState}>
+        {hasSearchOrFilter ? (
+          <>
+            <SvgXml xml={emptyStateNoAppliedJobsSvg} style={styles.emptyStateIcon} />
+            <Text style={styles.emptyStateTitle}>{t('no_orders')}</Text>
+            <Text style={styles.emptyStateText}>
+              {t('no_orders_by_search')}
+            </Text>
+          </>
+        ) : (
+          <>
+            <SvgXml xml={emptyStateNoAppliedJobsSvg} style={styles.emptyStateIcon} />
+            <Text style={styles.emptyStateTitle}>{t('no_new_orders_yet')}</Text>
+            <Text style={styles.emptyStateText}>
+              {t('pull_to_refresh')}
+            </Text>
+            <OrderStatsWidget
+              pendingCount={applicationStats.pending}
+              inProgressCount={applicationStats.inProgress}
+              onPendingPress={handlePendingOrdersPress}
+              onInProgressPress={handleInProgressOrdersPress}
+            />
+          </>
+        )}
+      </View>
+    );
+  }, [searchQuery, selectedSpecialization, applicationStats, t]);
+
+  const handleRefresh = React.useCallback(() => {
+    loadOrders(true);
+  }, []);
 
 
 
@@ -541,39 +601,32 @@ const WorkerJobsScreen: React.FC = () => {
           />
         </View>
 
-        {/* Улучшенная карусель категорий */}
-        <View style={styles.categoriesSection}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.categoriesContainer}
-            contentContainerStyle={styles.categoriesContent}
+        {/* Дропдаун для фильтра по специализации */}
+        <View style={styles.filterSection}>
+          <TouchableOpacity
+            style={styles.dropdownButton}
+            onPress={() => setIsDropdownVisible(true)}
+            activeOpacity={0.8}
           >
-            {categories.map((category) => (
-              <TouchableOpacity
-                key={category.id}
-                style={[
-                  styles.categoryChip,
-                  selectedCategory === category.originalKey && styles.categoryChipActive
-                ]}
-                onPress={() => setSelectedCategory(category.originalKey)}
-              >
-                <Text style={styles.categoryEmoji}>{category.emoji}</Text>
-                <Text style={[
-                  styles.categoryChipText,
-                  selectedCategory === category.originalKey && styles.categoryChipTextActive
-                ]}>
-                  {category.label}
-                </Text>
-                <Text style={[
-                  styles.categoryChipCount,
-                  selectedCategory === category.originalKey && styles.categoryChipCountActive
-                ]}>
-                  ({category.count})
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+            {(() => {
+              const selectedSpec = availableSpecializations.find(s => s.id === selectedSpecialization);
+              const IconComponent = selectedSpec?.IconComponent;
+              return (
+                <>
+                  {IconComponent && (
+                    <IconComponent width={20} height={20} style={styles.dropdownButtonIcon} />
+                  )}
+                  <Text style={styles.dropdownButtonText}>
+                    {selectedSpec?.name || t('all_categories')}
+                  </Text>
+                  <Text style={styles.dropdownButtonCount}>
+                    ({selectedSpec?.count || orders.length})
+                  </Text>
+                  <Text style={styles.dropdownArrow}>▼</Text>
+                </>
+              );
+            })()}
+          </TouchableOpacity>
         </View>
 
         <FlatList
@@ -583,50 +636,26 @@ const WorkerJobsScreen: React.FC = () => {
           style={styles.jobsList}
           contentContainerStyle={styles.jobsListContent}
           showsVerticalScrollIndicator={false}
+          // Оптимизации производительности
+          initialNumToRender={5}
+          maxToRenderPerBatch={5}
+          updateCellsBatchingPeriod={50}
+          windowSize={10}
+          removeClippedSubviews={Platform.OS === 'android'}
+          // Оптимизация скроллинга
+          getItemLayout={(data, index) => ({
+            length: 280,
+            offset: 280 * index,
+            index,
+          })}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
-              onRefresh={() => loadOrders(true)}
+              onRefresh={handleRefresh}
               colors={[theme.colors.primary]}
             />
           }
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              {(() => {
-                const hasSearchOrFilter = searchQuery || (selectedCategory && selectedCategory !== 'all');
-
-                if (hasSearchOrFilter) {
-                  // Показываем обычное пустое состояние для поиска/фильтров
-                  return (
-                    <>
-                      <SvgXml xml={emptyStateNoAppliedJobsSvg} style={styles.emptyStateIcon} />
-                      <Text style={styles.emptyStateTitle}>{t('no_orders')}</Text>
-                      <Text style={styles.emptyStateText}>
-                        {t('no_orders_by_search')}
-                      </Text>
-                    </>
-                  );
-                } else {
-                  // Показываем виджет статистики когда нет новых заказов
-                  return (
-                    <>
-                      <SvgXml xml={emptyStateNoAppliedJobsSvg} style={styles.emptyStateIcon} />
-                      <Text style={styles.emptyStateTitle}>{t('no_new_orders_yet')}</Text>
-                      <Text style={styles.emptyStateText}>
-                        {t('pull_to_refresh')}
-                      </Text>
-                      <OrderStatsWidget
-                        pendingCount={applicationStats.pending}
-                        inProgressCount={applicationStats.inProgress}
-                        onPendingPress={handlePendingOrdersPress}
-                        onInProgressPress={handleInProgressOrdersPress}
-                      />
-                    </>
-                  );
-                }
-              })()}
-            </View>
-          }
+          ListEmptyComponent={renderEmptyComponent}
         />
       </SafeAreaView>
 
@@ -638,6 +667,7 @@ const WorkerJobsScreen: React.FC = () => {
           setSelectedOrder(null);
         }}
         onContinue={handleContinueResponse}
+        onCall={logCallToCustomer}
         customerPhone={customerPhone}
         customerName={customerName}
       />
@@ -666,6 +696,77 @@ const WorkerJobsScreen: React.FC = () => {
         originalPrice={selectedOrder?.budget || 0}
         orderTitle={selectedOrder?.title || ''}
       />
+
+      {/* Модальное окно выбора специализации */}
+      <Modal
+        visible={isDropdownVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsDropdownVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.dropdownOverlay}
+          activeOpacity={1}
+          onPress={() => setIsDropdownVisible(false)}
+        >
+          <View style={styles.dropdownModal}>
+            <View style={styles.dropdownHeader}>
+              <Text style={styles.dropdownTitle}>{t('filter')}</Text>
+              <TouchableOpacity
+                onPress={() => setIsDropdownVisible(false)}
+                style={styles.dropdownCloseButton}
+              >
+                <Text style={styles.dropdownCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={availableSpecializations}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => {
+                const IconComponent = item.IconComponent;
+                return (
+                  <TouchableOpacity
+                    style={[
+                      styles.dropdownItem,
+                      selectedSpecialization === item.id && styles.dropdownItemActive
+                    ]}
+                    onPress={() => {
+                      setSelectedSpecialization(item.id);
+                      setIsDropdownVisible(false);
+                    }}
+                  >
+                    {IconComponent && (
+                      <IconComponent 
+                        width={24} 
+                        height={24} 
+                        style={[
+                          styles.dropdownItemIcon,
+                          selectedSpecialization === item.id && styles.dropdownItemIconActive
+                        ]} 
+                      />
+                    )}
+                    <Text style={[
+                      styles.dropdownItemText,
+                      selectedSpecialization === item.id && styles.dropdownItemTextActive
+                    ]}>
+                      {item.name}
+                    </Text>
+                    <Text style={[
+                      styles.dropdownItemCount,
+                      selectedSpecialization === item.id && styles.dropdownItemCountActive
+                    ]}>
+                      ({item.count})
+                    </Text>
+                    {selectedSpecialization === item.id && (
+                      <Text style={styles.dropdownItemCheck}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -728,50 +829,118 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     borderWidth: 0, borderColor: theme.colors.border,
   },
-  categoriesSection: {
+  filterSection: {
     backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.lg,
   },
-  categoriesContainer: {
-    paddingLeft: theme.spacing.lg,
-  },
-  categoriesContent: {
-    paddingRight: theme.spacing.lg,
-  },
-  categoryChip: {
+  dropdownButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#5A8A00',
-    borderRadius: 20,
+    borderRadius: 12,
     paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    marginRight: theme.spacing.sm,
-    borderWidth: 0, borderColor: 'transparent',
-  },
-  categoryChipActive: {
-    backgroundColor: 'transparent',
+    paddingVertical: theme.spacing.md,
     borderWidth: 1,
-    borderColor: theme.colors.white,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  categoryEmoji: {
-    fontSize: 16,
-    marginRight: theme.spacing.xs,
+  dropdownButtonIcon: {
+    marginRight: theme.spacing.sm,
+    tintColor: theme.colors.white,
   },
-  categoryChipText: {
-    fontSize: theme.fonts.sizes.sm,
+  dropdownButtonText: {
+    flex: 1,
+    fontSize: theme.fonts.sizes.md,
     fontWeight: theme.fonts.weights.medium,
     color: theme.colors.white,
-    marginRight: theme.spacing.xs,
   },
-  categoryChipTextActive: {
+  dropdownButtonCount: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.white,
+    marginRight: theme.spacing.sm,
+  },
+  dropdownArrow: {
+    fontSize: 12,
     color: theme.colors.white,
   },
-  categoryChipCount: {
-    fontSize: theme.fonts.sizes.xs,
-    color: theme.colors.white,
+  dropdownOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.lg,
   },
-  categoryChipCountActive: {
-    color: theme.colors.white,
+  dropdownModal: {
+    backgroundColor: theme.colors.white,
+    borderRadius: 16,
+    width: '100%',
+    maxHeight: '70%',
+    overflow: 'hidden',
+  },
+  dropdownHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: theme.spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  dropdownTitle: {
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.bold,
+    color: theme.colors.text.primary,
+  },
+  dropdownCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: theme.colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownCloseText: {
+    fontSize: 20,
+    color: theme.colors.text.secondary,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  dropdownItemActive: {
+    backgroundColor: theme.colors.background,
+  },
+  dropdownItemIcon: {
+    marginRight: theme.spacing.md,
+    tintColor: theme.colors.text.secondary,
+  },
+  dropdownItemIconActive: {
+    tintColor: theme.colors.primary,
+  },
+  dropdownItemText: {
+    flex: 1,
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.text.primary,
+  },
+  dropdownItemTextActive: {
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.primary,
+  },
+  dropdownItemCount: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
+    marginRight: theme.spacing.sm,
+  },
+  dropdownItemCountActive: {
+    color: theme.colors.primary,
+  },
+  dropdownItemCheck: {
+    fontSize: 18,
+    color: theme.colors.primary,
+    fontWeight: theme.fonts.weights.bold,
   },
   jobsList: {
     flex: 1,

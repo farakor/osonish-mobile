@@ -12,10 +12,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../../constants';
 import { noElevationStyles, borderButtonStyles } from '../../utils/noShadowStyles';
 import type { RootStackParamList } from '../../types';
-import { HeaderWithBack } from '../../components/common';
+import { HeaderWithBack, AnimatedIcon } from '../../components/common';
+
+// Импортируем анимированные иконки
+const WorkerAnimation = require('../../../assets/worker.json');
+const LaborSafetyAnimation = require('../../../assets/labor-safety.json');
 
 const { height: screenHeight } = Dimensions.get('window');
 const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
@@ -25,6 +30,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const WorkerTypeSelectionScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const { t } = useTranslation();
   const [selectedType, setSelectedType] = useState<WorkerType | null>(null);
 
   const handleTypeSelect = (type: WorkerType) => {
@@ -39,13 +45,25 @@ export const WorkerTypeSelectionScreen: React.FC = () => {
       const profileDataString = await AsyncStorage.default.getItem('@temp_profile_data');
 
       if (!profileDataString) {
-        Alert.alert('Ошибка', 'Данные профиля не найдены');
+        Alert.alert(t('common.error'), t('auth.profile_data_not_found'));
         return;
       }
 
       // Сохраняем выбранный тип исполнителя
       const profileData = JSON.parse(profileDataString);
       profileData.workerType = selectedType;
+
+      // Если выбран daily_worker, автоматически добавляем специализацию "one_day_job"
+      if (selectedType === 'daily_worker') {
+        profileData.specializations = [
+          {
+            id: 'one_day_job',
+            name: 'Работа на 1 день',
+            isPrimary: true
+          }
+        ];
+      }
+
       await AsyncStorage.default.setItem('@temp_profile_data', JSON.stringify(profileData));
 
       if (selectedType === 'professional') {
@@ -57,7 +75,7 @@ export const WorkerTypeSelectionScreen: React.FC = () => {
       }
     } catch (error) {
       console.error('Ошибка:', error);
-      Alert.alert('Ошибка', 'Произошла ошибка. Попробуйте снова.');
+      Alert.alert(t('common.error'), t('auth.general_error_try_again'));
     }
   };
 
@@ -69,14 +87,14 @@ export const WorkerTypeSelectionScreen: React.FC = () => {
     type,
     title,
     description,
-    icon,
+    animationSource,
     isSelected,
     onPress,
   }: {
     type: WorkerType;
     title: string;
     description: string;
-    icon: string;
+    animationSource: any;
     isSelected: boolean;
     onPress: () => void;
   }) => (
@@ -89,7 +107,15 @@ export const WorkerTypeSelectionScreen: React.FC = () => {
       activeOpacity={0.8}
     >
       <View style={styles.iconContainer}>
-        <Text style={styles.icon}>{icon}</Text>
+        <AnimatedIcon
+          source={animationSource}
+          width={isSmallScreen ? 45 : 60}
+          height={isSmallScreen ? 45 : 60}
+          loop={true}
+          autoPlay={false}
+          speed={0.8}
+          isSelected={isSelected}
+        />
       </View>
       <Text style={[styles.typeTitle, isSelected && styles.typeTitleSelected]}>
         {title}
@@ -107,29 +133,29 @@ export const WorkerTypeSelectionScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <HeaderWithBack title="Тип исполнителя" backAction={handleBackPress} />
+      <HeaderWithBack title={t('auth.worker_type_selection_title')} backAction={handleBackPress} />
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.subtitle}>
-            Выберите, как вы хотите работать на платформе
+            {t('auth.worker_type_selection_subtitle')}
           </Text>
         </View>
 
         <View style={styles.typesContainer}>
           <TypeCard
             type="daily_worker"
-            title="Ищу дневную работу"
-            description="Получайте различные заказы на день от заказчиков"
-            icon="💼"
+            title={t('auth.daily_worker_title')}
+            description={t('auth.daily_worker_description')}
+            animationSource={WorkerAnimation}
             isSelected={selectedType === 'daily_worker'}
             onPress={() => handleTypeSelect('daily_worker')}
           />
 
           <TypeCard
             type="professional"
-            title="Я профессиональный мастер"
-            description="Создайте профиль мастера с портфолио и специализациями"
-            icon="⚒️"
+            title={t('auth.professional_master_title')}
+            description={t('auth.professional_master_description')}
+            animationSource={LaborSafetyAnimation}
             isSelected={selectedType === 'professional'}
             onPress={() => handleTypeSelect('professional')}
           />
@@ -150,7 +176,7 @@ export const WorkerTypeSelectionScreen: React.FC = () => {
               !selectedType && styles.continueButtonTextDisabled,
             ]}
           >
-            Продолжить
+            {t('common.continue')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -204,9 +230,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: isSmallScreen ? theme.spacing.xs : theme.spacing.sm,
-  },
-  icon: {
-    fontSize: 48,
   },
   typeTitle: {
     fontSize: isSmallScreen ? 16 : 18,

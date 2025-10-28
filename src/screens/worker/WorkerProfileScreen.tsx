@@ -47,6 +47,7 @@ interface WorkerStats {
   rating: number;
   totalReviews: number;
   monthsOnPlatform: number;
+  profileViewsCount: number; // Количество просмотров профиля
   activeApplications: number;
   earnings: number;
   earningsChange?: number; // Процентное изменение заработка
@@ -80,6 +81,7 @@ export const WorkerProfileScreen: React.FC = () => {
     rating: 0,
     totalReviews: 0,
     monthsOnPlatform: 0,
+    profileViewsCount: 0,
     activeApplications: 0,
     earnings: 0,
     earningsChange: 12.8 // Заглушка для демонстрации
@@ -155,6 +157,16 @@ export const WorkerProfileScreen: React.FC = () => {
         return;
       }
 
+      // Перезагружаем данные пользователя из базы для получения актуального profileViewsCount
+      const freshUser = await authService.findUserById(authState.user.id);
+      const currentUser = freshUser || authState.user;
+      
+      // Обновляем state пользователя актуальными данными
+      if (freshUser) {
+        setUser(freshUser);
+        authService.getAuthState().user = freshUser;
+      }
+
       // Получаем реальные данные о заявках исполнителя
       const applications = await orderService.getWorkerApplications();
 
@@ -165,27 +177,33 @@ export const WorkerProfileScreen: React.FC = () => {
       ).length;
 
       // Получаем рейтинг из новой системы отзывов
-      const workerRating = await orderService.getWorkerRating(authState.user.id);
+      const workerRating = await orderService.getWorkerRating(currentUser.id);
       const averageRating = workerRating?.averageRating || 0;
       const totalReviews = workerRating?.totalReviews || 0;
 
       // Расчет месяцев на платформе
       let monthsOnPlatform = 0;
-      if (authState.user?.createdAt) {
-        const createdDate = new Date(authState.user.createdAt);
+      if (currentUser?.createdAt) {
+        const createdDate = new Date(currentUser.createdAt);
         const now = new Date();
         const diffTime = Math.abs(now.getTime() - createdDate.getTime());
         monthsOnPlatform = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30));
       }
 
       // Получаем заработок с принятых заказов (не дожидаясь завершения)
-      const earnings = await orderService.getWorkerEarnings(authState.user.id);
+      const earnings = await orderService.getWorkerEarnings(currentUser.id);
+
+      // Получаем количество просмотров профиля из свежих данных
+      const profileViewsCount = currentUser.profileViewsCount || 0;
+      
+      console.log('[WorkerProfile] 📊 Данные для статистики - profileViewsCount:', profileViewsCount, 'workerType:', currentUser.workerType);
 
       setStats({
         completedJobs,
         rating: averageRating,
         totalReviews,
         monthsOnPlatform: Math.max(monthsOnPlatform, 1),
+        profileViewsCount,
         activeApplications,
         earnings
       });
@@ -194,6 +212,7 @@ export const WorkerProfileScreen: React.FC = () => {
         completedJobs,
         averageRating,
         monthsOnPlatform,
+        profileViewsCount,
         activeApplications,
         earnings,
         totalReviews: workerRating?.totalReviews || 0
@@ -503,12 +522,21 @@ export const WorkerProfileScreen: React.FC = () => {
               <Text style={styles.statLabel}>{tWorker('rating')}</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>
-                {stats.monthsOnPlatform > 12
-                  ? `${Math.floor(stats.monthsOnPlatform / 12)} ${tWorker('years_short')}`
-                  : `${stats.monthsOnPlatform} ${tWorker('months_short')}`}
-              </Text>
-              <Text style={styles.statLabel}>{tWorker('on_platform')}</Text>
+              {user?.workerType === 'professional' ? (
+                <>
+                  <Text style={styles.statValue}>{stats.profileViewsCount}</Text>
+                  <Text style={styles.statLabel}>{tWorker('profile_views')}</Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.statValue}>
+                    {stats.monthsOnPlatform > 12
+                      ? `${Math.floor(stats.monthsOnPlatform / 12)} ${tWorker('years_short')}`
+                      : `${stats.monthsOnPlatform} ${tWorker('months_short')}`}
+                  </Text>
+                  <Text style={styles.statLabel}>{tWorker('on_platform')}</Text>
+                </>
+              )}
             </View>
           </View>
 

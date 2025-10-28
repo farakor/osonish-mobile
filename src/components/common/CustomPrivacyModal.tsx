@@ -9,19 +9,11 @@ import { View,
   Platform,
   StatusBar,
   BackHandler } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';;
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-
-// Функция для получения высоты статус-бара на Android
-const getStatusBarHeight = () => {
-  if (Platform.OS === 'android') {
-    return StatusBar.currentHeight || 24;
-  }
-  return 0;
-};
 
 interface CustomPrivacyModalProps {
   visible: boolean;
@@ -38,6 +30,15 @@ export const CustomPrivacyModal: React.FC<CustomPrivacyModalProps> = ({
 }) => {
   const slideAnim = useRef(new Animated.Value(screenHeight)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const insets = useSafeAreaInsets();
+
+  // Функция для получения высоты статус-бара
+  const getStatusBarHeight = () => {
+    if (Platform.OS === 'android') {
+      return StatusBar.currentHeight || 24;
+    }
+    return insets.top;
+  };
 
   useEffect(() => {
     if (visible) {

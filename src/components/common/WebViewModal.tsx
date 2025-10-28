@@ -6,11 +6,11 @@ import { Modal,
   StyleSheet, StatusBar,
   Platform,
   ActivityIndicator, } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';;
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface WebViewModalProps {
   visible: boolean;
@@ -21,11 +21,25 @@ interface WebViewModalProps {
 
 export const WebViewModal: React.FC<WebViewModalProps> = ({ visible, url, title, onClose }) => {
   const [loading, setLoading] = React.useState(true);
+  const insets = useSafeAreaInsets();
+
+  // Получаем высоту статус бара для Android
+  const getStatusBarHeight = () => {
+    if (Platform.OS === 'android') {
+      return StatusBar.currentHeight || 24;
+    }
+    return insets.top;
+  };
+
+  const statusBarHeight = getStatusBarHeight();
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+
+        {/* Отступ для статус бара */}
+        <View style={{ height: statusBarHeight, backgroundColor: '#FFFFFF' }} />
 
         {/* Header */}
         <View style={styles.header}>
@@ -66,7 +80,7 @@ export const WebViewModal: React.FC<WebViewModalProps> = ({ visible, url, title,
             allowsBackForwardNavigationGestures={true}
           />
         </View>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 };

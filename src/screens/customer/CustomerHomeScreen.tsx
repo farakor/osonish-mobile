@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,60 +9,82 @@ import {
   Platform,
   ScrollView,
   Dimensions,
-  Animated,
-  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';;
-import { LinearGradient } from 'expo-linear-gradient';
-import { theme, SPECIALIZATIONS } from '../../constants';
+import { theme, SPECIALIZATIONS, getTranslatedSpecializationName } from '../../constants';
 import { lightElevationStyles } from '../../utils/noShadowStyles';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CustomerTabParamList, CustomerStackParamList } from '../../types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import NotificationIcon from '../../../assets/notification-message.svg';
+import ArrowNarrowRight from '../../../assets/arrow-narrow-right.svg';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { notificationService } from '../../services/notificationService';
 import { professionalMasterService, ProfessionalMaster } from '../../services/professionalMasterService';
-import { supabase } from '../../services/supabaseClient';
-import { Order } from '../../types';
-import { ModernOrderCard, ProfessionalMasterCard } from '../../components/cards';
+import { ProfessionalMasterCard } from '../../components/cards';
 import { CategoryIcon } from '../../components/common';
 import { useCustomerTranslation } from '../../hooks/useTranslation';
+import { useTranslation } from 'react-i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: screenWidth } = Dimensions.get('window');
 const categoryCardWidth = (screenWidth - theme.spacing.lg * 2 - theme.spacing.sm * 3) / 4;
 const categoryCardHeight = categoryCardWidth * 1.2;
 const categoriesPerRow = 4;
-const initialRows = 2; // Показываем 8 категорий (2 ряда по 4)
-const totalRows = Math.ceil(SPECIALIZATIONS.length / categoriesPerRow);
-const initialHeight = (categoryCardHeight + theme.spacing.sm) * initialRows;
-const fullHeight = (categoryCardHeight + theme.spacing.sm) * totalRows;
+const maxVisibleCategories = 7; // Показываем 7 категорий + 1 кнопка "Показать все"
 
 // Функция для получения высоты статусбара только на Android
 const getAndroidStatusBarHeight = () => {
   return Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0;
 };
 
+const RESPONSE_NOTIFICATION_KEY = '@response_notification_dismissed';
+
 export const CustomerHomeScreen: React.FC = () => {
-  const [newOrders, setNewOrders] = useState<Order[]>([]);
   const [professionalMasters, setProfessionalMasters] = useState<ProfessionalMaster[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [showAllCategories, setShowAllCategories] = useState(false);
-  const categoriesHeight = useRef(new Animated.Value(initialHeight)).current;
-  const fadeOpacity = useRef(new Animated.Value(1)).current;
+  const [showResponseNotification, setShowResponseNotification] = useState(false);
+  const [hasOrdersWithResponses, setHasOrdersWithResponses] = useState(false);
   const navigation = useNavigation<BottomTabNavigationProp<CustomerTabParamList> & NativeStackNavigationProp<CustomerStackParamList>>();
   const t = useCustomerTranslation();
+  const { t: tCommon } = useTranslation();
 
-  // Функция для загрузки новых заказов и уведомлений
-  const loadNewOrders = useCallback(async () => {
+  // Функция для проверки заказов с откликами
+  const checkOrdersWithResponses = useCallback(async () => {
+    try {
+      const authState = authService.getAuthState();
+      if (!authState.isAuthenticated || !authState.user) {
+        return;
+      }
+
+      // Получаем заказы заказчика
+      const orders = await orderService.getCustomerOrders();
+      
+      // Проверяем, есть ли заказы со статусом 'response_received'
+      const ordersWithResponses = orders.filter(order => order.status === 'response_received');
+      const hasResponses = ordersWithResponses.length > 0;
+      setHasOrdersWithResponses(hasResponses);
+
+      if (hasResponses) {
+        // Проверяем, была ли модалка закрыта ранее
+        const dismissed = await AsyncStorage.getItem(RESPONSE_NOTIFICATION_KEY);
+        if (!dismissed) {
+          setShowResponseNotification(true);
+        }
+      }
+    } catch (error) {
+      console.error('[CustomerHomeScreen] Ошибка проверки заказов с откликами:', error);
+    }
+  }, []);
+
+  // Функция для загрузки уведомлений и профессиональных мастеров
+  const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const orders = await orderService.getUserNewOrders();
-      setNewOrders(orders);
 
       // Загружаем количество непрочитанных уведомлений
       const authState = authService.getAuthState();
@@ -84,20 +106,23 @@ export const CustomerHomeScreen: React.FC = () => {
           });
         }
         setProfessionalMasters(masters);
+
+        // Проверяем заказы с откликами
+        await checkOrdersWithResponses();
       }
     } catch (error) {
-      console.error('Ошибка загрузки заказов:', error);
+      console.error('Ошибка загрузки данных:', error);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [checkOrdersWithResponses]);
 
   // Функция для обновления списка (pull-to-refresh)
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadNewOrders();
+    await loadData();
     setRefreshing(false);
-  }, [loadNewOrders]);
+  }, [loadData]);
 
   // Проверяем заказы, требующие оценки
   const checkPendingRatings = useCallback(async () => {
@@ -135,99 +160,35 @@ export const CustomerHomeScreen: React.FC = () => {
     }
   }, [navigation]);
 
-  // Загружаем заказы при первом открытии и при фокусе на экране
+  // Загружаем данные при первом открытии и при фокусе на экране
   useFocusEffect(
     useCallback(() => {
-      loadNewOrders();
+      loadData();
       checkPendingRatings();
-    }, [loadNewOrders, checkPendingRatings])
+    }, [loadData, checkPendingRatings])
   );
 
-  // Анимация раскрытия категорий
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(categoriesHeight, {
-        toValue: showAllCategories ? fullHeight : initialHeight,
-        duration: 500,
-        easing: Easing.bezier(0.4, 0.0, 0.2, 1),
-        useNativeDriver: false,
-      }),
-      Animated.timing(fadeOpacity, {
-        toValue: showAllCategories ? 0 : 1,
-        duration: 250,
-        easing: Easing.ease,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [showAllCategories]);
-
-  // Real-time обновления для заказов пользователя
-  useEffect(() => {
-    const authState = authService.getAuthState();
-    if (!authState.isAuthenticated || !authState.user) {
-      return;
-    }
-
-    console.log('[CustomerHomeScreen] Подключаем real-time обновления заказов');
-
-    const ordersSubscription = supabase
-      .channel('customer_orders_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'orders',
-          filter: `customer_id=eq.${authState.user.id}`
-        },
-        (payload: any) => {
-          console.log('[CustomerHomeScreen] Real-time изменение заказов:', payload);
-          loadNewOrders();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      console.log('[CustomerHomeScreen] Отключаем real-time обновления заказов');
-      ordersSubscription.unsubscribe();
-    };
-  }, [loadNewOrders]);
-
-  // Real-time обновления для откликов (влияют на счетчик откликов в заказах)
-  useEffect(() => {
-    const authState = authService.getAuthState();
-    if (!authState.isAuthenticated || !authState.user) {
-      return;
-    }
-
-    console.log('[CustomerHomeScreen] Подключаем real-time обновления откликов');
-
-    const applicantsSubscription = supabase
-      .channel('customer_applicants_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'applicants'
-        },
-        (payload: any) => {
-          console.log('[CustomerHomeScreen] Real-time изменение откликов:', payload);
-          // Обновляем заказы чтобы увидеть изменения в счетчике откликов
-          loadNewOrders();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      console.log('[CustomerHomeScreen] Отключаем real-time обновления откликов');
-      applicantsSubscription.unsubscribe();
-    };
-  }, [loadNewOrders]);
-
-  const handleOrderPress = (orderId: string) => {
-    navigation.navigate('OrderDetails', { orderId });
+  // Функция закрытия модалки
+  const handleCloseNotification = async () => {
+    setShowResponseNotification(false);
+    await AsyncStorage.setItem(RESPONSE_NOTIFICATION_KEY, 'true');
   };
+
+  // Функция перехода к заказам
+  const handleGoToOrders = async () => {
+    setShowResponseNotification(false);
+    await AsyncStorage.setItem(RESPONSE_NOTIFICATION_KEY, 'true');
+    navigation.navigate('MyOrders');
+  };
+
+  // Сброс состояния модалки при изменении статуса заказов
+  useEffect(() => {
+    if (!hasOrdersWithResponses) {
+      AsyncStorage.removeItem(RESPONSE_NOTIFICATION_KEY);
+      setShowResponseNotification(false);
+    }
+  }, [hasOrdersWithResponses]);
+
 
   const handleNotificationsPress = () => {
     navigation.navigate('NotificationsList');
@@ -249,15 +210,6 @@ export const CustomerHomeScreen: React.FC = () => {
     navigation.navigate('Categories');
   };
 
-  const renderOrderCard = ({ item }: { item: Order }) => (
-    <ModernOrderCard
-      order={item}
-      onPress={() => handleOrderPress(item.id)}
-      showApplicantsCount={true}
-      showCreateTime={true}
-    />
-  );
-
   const renderCategoryCard = (item: typeof SPECIALIZATIONS[0], index: number) => (
     <TouchableOpacity
       key={item.id}
@@ -272,7 +224,23 @@ export const CustomerHomeScreen: React.FC = () => {
         style={styles.categoryIconWrapper}
       />
       <Text style={styles.categoryName} numberOfLines={2}>
-        {item.name}
+        {getTranslatedSpecializationName(item.id, tCommon)}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  const renderShowAllCard = () => (
+    <TouchableOpacity
+      key="show-all"
+      style={[styles.categoryCard, styles.showAllCard]}
+      onPress={handleViewAllCategories}
+      activeOpacity={0.8}
+    >
+      <View style={styles.showAllIconWrapper}>
+        <ArrowNarrowRight width={40} height={40} />
+      </View>
+      <Text style={styles.showAllCardText} numberOfLines={2}>
+        {t('show_all_categories')}
       </Text>
     </TouchableOpacity>
   );
@@ -292,10 +260,7 @@ export const CustomerHomeScreen: React.FC = () => {
           <View style={styles.headerLeft}>
             <Text style={styles.greeting}>{t('home_screen')}</Text>
             <Text style={styles.subtitle}>
-              {newOrders.length > 0
-                ? t('active_orders_count', { count: newOrders.length })
-                : t('create_first_order')
-              }
+              {t('find_professional_masters')}
             </Text>
           </View>
           <TouchableOpacity
@@ -315,9 +280,9 @@ export const CustomerHomeScreen: React.FC = () => {
         </View>
 
         {/* Main Content */}
-        {isLoading && newOrders.length === 0 ? (
+        {isLoading ? (
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>{t('loading_orders')}</Text>
+            <Text style={styles.loadingText}>{t('loading_data')}</Text>
           </View>
         ) : (
           <ScrollView
@@ -335,51 +300,55 @@ export const CustomerHomeScreen: React.FC = () => {
             {/* Professional Masters Categories */}
             <View style={styles.mastersSection}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionHeaderTitle}>Профессиональные мастера</Text>
+                <Text style={styles.sectionHeaderTitle}>{t('professional_masters_section')}</Text>
               </View>
-              <View style={styles.categoriesContainer}>
-                <Animated.View
-                  style={[
-                    styles.categoriesGrid,
-                    {
-                      height: categoriesHeight,
-                      overflow: 'hidden',
-                    }
-                  ]}
-                >
-                  {SPECIALIZATIONS.map((item, index) => renderCategoryCard(item, index))}
-                </Animated.View>
-                <Animated.View
-                  style={[
-                    styles.categoriesFadeContainer,
-                    {
-                      opacity: fadeOpacity,
-                      pointerEvents: showAllCategories ? 'none' : 'auto',
-                    }
-                  ]}
-                >
-                  <LinearGradient
-                    colors={['rgba(248, 249, 250, 0)', 'rgba(248, 249, 250, 0.8)', 'rgba(248, 249, 250, 1)']}
-                    style={styles.categoriesFade}
-                  />
-                  <TouchableOpacity
-                    style={styles.showAllButton}
-                    onPress={() => setShowAllCategories(true)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.showAllButtonText}>Показать все</Text>
-                  </TouchableOpacity>
-                </Animated.View>
+              <View style={styles.categoriesGrid}>
+                {SPECIALIZATIONS.slice(0, maxVisibleCategories).map((item, index) => renderCategoryCard(item, index))}
+                {renderShowAllCard()}
               </View>
             </View>
+
+            {/* Response Notification Modal */}
+            {showResponseNotification && (
+              <View style={styles.responseNotificationContainer}>
+                <View style={styles.responseNotification}>
+                  <TouchableOpacity 
+                    style={styles.closeButton}
+                    onPress={handleCloseNotification}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.closeIcon}>✕</Text>
+                  </TouchableOpacity>
+                  
+                  <Text style={styles.notificationTitle}>
+                    {t('response_notification_title')}
+                  </Text>
+                  <Text style={styles.notificationMessage}>
+                    {t('response_notification_message')}
+                  </Text>
+                  
+                  <TouchableOpacity 
+                    style={styles.goToOrdersButton}
+                    onPress={handleGoToOrders}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.goToOrdersButtonText}>
+                      {t('go_to_orders')}
+                    </Text>
+                    <ArrowNarrowRight width={18} height={18} style={styles.buttonIcon} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
 
             {/* Random Professional Masters List */}
             {professionalMasters.length > 0 && (
               <View style={styles.mastersListSection}>
                 <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionHeaderTitle}>Рекомендуем</Text>
-                  <TouchableOpacity onPress={handleViewAllMasters}>
-                    <Text style={styles.viewAllText}>Все →</Text>
+                  <Text style={styles.sectionHeaderTitle}>{t('recommended_masters')}</Text>
+                  <TouchableOpacity onPress={handleViewAllMasters} style={styles.viewAllButton}>
+                    <Text style={styles.viewAllText}>{t('all_masters')}</Text>
+                    <ArrowNarrowRight width={18} height={18} style={styles.viewAllIcon} />
                   </TouchableOpacity>
                 </View>
                 {professionalMasters.map((master) => (
@@ -388,18 +357,6 @@ export const CustomerHomeScreen: React.FC = () => {
                     master={master}
                     onPress={() => handleMasterPress(master.id)}
                   />
-                ))}
-              </View>
-            )}
-
-            {/* Orders List */}
-            {newOrders.length > 0 && (
-              <View style={styles.ordersSection}>
-                <Text style={styles.sectionTitle}>Мои заказы</Text>
-                {newOrders.map((order) => (
-                  <View key={order.id}>
-                    {renderOrderCard({ item: order })}
-                  </View>
                 ))}
               </View>
             )}
@@ -476,48 +433,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.text.primary,
   },
+  viewAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   viewAllText: {
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.primary,
     fontWeight: '500',
   },
-  categoriesContainer: {
-    position: 'relative',
+  viewAllIcon: {
+    color: theme.colors.primary,
   },
   categoriesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     paddingHorizontal: theme.spacing.lg,
     gap: theme.spacing.sm,
-  },
-  categoriesFadeContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    paddingBottom: theme.spacing.md,
-  },
-  categoriesFade: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 120,
-    zIndex: 1,
-  },
-  showAllButton: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: 20,
-    zIndex: 2,
-    ...lightElevationStyles,
-  },
-  showAllButtonText: {
-    color: theme.colors.white,
-    fontSize: theme.fonts.sizes.sm,
-    fontWeight: '600',
   },
   categoryCard: {
     width: categoryCardWidth,
@@ -528,6 +461,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     ...lightElevationStyles,
+  },
+  showAllCard: {
+    backgroundColor: theme.colors.primary,
+  },
+  showAllIconWrapper: {
+    marginBottom: theme.spacing.xs,
+  },
+  showAllCardText: {
+    fontSize: 11,
+    color: theme.colors.white,
+    textAlign: 'center',
+    fontWeight: '600',
   },
   categoryIconWrapper: {
     marginBottom: theme.spacing.xs,
@@ -584,5 +529,74 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: theme.fonts.weights.bold,
     lineHeight: 16,
+  },
+  responseNotificationContainer: {
+    paddingHorizontal: theme.spacing.lg,
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
+  },
+  responseNotification: {
+    backgroundColor: '#ECFDF5',
+    borderRadius: 16,
+    padding: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    shadowColor: '#10B981',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.14,
+    shadowRadius: 6,
+    elevation: 3,
+    position: 'relative',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  closeIcon: {
+    fontSize: 20,
+    color: theme.colors.text.secondary,
+    fontWeight: '400',
+  },
+  notificationTitle: {
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.bold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.sm,
+    paddingRight: theme.spacing.xl,
+  },
+  notificationMessage: {
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing.md,
+    lineHeight: 20,
+  },
+  goToOrdersButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.primary,
+    borderRadius: 12,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    gap: 8,
+  },
+  goToOrdersButtonText: {
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.white,
+  },
+  buttonIcon: {
+    color: theme.colors.white,
   },
 }); 

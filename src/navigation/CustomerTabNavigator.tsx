@@ -53,9 +53,12 @@ export function CustomerTabNavigator() {
           shadowOpacity: 0.1,
           shadowRadius: 4,
           elevation: 8,
-          paddingTop: theme.spacing.sm,
+          paddingTop: Platform.OS === 'android' ? 12 : theme.spacing.sm,
           justifyContent: 'center',
+          overflow: 'visible',
           ...tabBarStyle, // Применяем стили с учетом платформы в конце
+          // Переопределяем высоту для Android, чтобы кнопка выпирала
+          ...(Platform.OS === 'android' && { height: 80 + (tabBarStyle.paddingBottom || 20) }),
         },
         tabBarLabelStyle: {
           fontSize: theme.fonts.sizes.sm,
@@ -110,7 +113,7 @@ export function CustomerTabNavigator() {
               fontSize: 11,
               fontWeight: theme.fonts.weights.medium
             }}>
-              Категории
+              {t('categories')}
             </Text>
           ),
           tabBarIcon: ({ color, size, focused }) => (
@@ -128,31 +131,24 @@ export function CustomerTabNavigator() {
         name="CreateOrder"
         component={AnimatedCreateOrderScreen}
         options={{
-          tabBarLabel: ({ focused, color }) => (
-            <Text style={{
-              color: focused ? theme.colors.primary : '#1a1a1a',
-              fontSize: 11,
-              fontWeight: theme.fonts.weights.medium,
-              marginTop: 10
-            }}>
-              Создать
-            </Text>
-          ),
+          tabBarLabel: () => null,
           tabBarIcon: ({ focused }) => (
             <View style={{
-              width: 48,
-              height: 48,
-              borderRadius: 24,
+              position: 'absolute',
+              top: Platform.OS === 'android' ? 0 : -5,
+              width: 56,
+              height: 56,
+              borderRadius: 28,
               backgroundColor: theme.colors.primary,
               justifyContent: 'center',
               alignItems: 'center',
               shadowColor: theme.colors.primary,
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.25,
-              shadowRadius: 4,
-              elevation: 4,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 2,
+              elevation: 2,
             }}>
-              <PlusSquareIcon width={24} height={24} color="#FFFFFF" />
+              <PlusSquareIcon width={28} height={28} color="#FFFFFF" />
             </View>
           ),
         }}

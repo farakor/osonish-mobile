@@ -93,7 +93,7 @@ export const getCategoryLabel = (categoryKey: string, t: (key: string) => string
   };
 
   const translationKey = keyMap[categoryKey];
-  return translationKey ? t(translationKey) : categoryKey;
+  return translationKey ? t(`categories.${translationKey}`) : categoryKey;
 };
 
 // Функция для получения ключа категории по переведенному названию (для обратной совместимости)

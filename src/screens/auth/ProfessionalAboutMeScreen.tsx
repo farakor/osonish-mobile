@@ -13,7 +13,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as ImagePicker from 'expo-image-picker';
@@ -21,6 +21,7 @@ import { theme } from '../../constants';
 import { noElevationStyles, borderButtonStyles } from '../../utils/noShadowStyles';
 import type { RootStackParamList } from '../../types';
 import { HeaderWithBack } from '../../components/common';
+import { useAuthTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
 
 const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
 const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
@@ -32,47 +33,52 @@ const MIN_PHOTOS = 1;
 
 export const ProfessionalAboutMeScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const insets = useSafeAreaInsets();
+  const t = useAuthTranslation();
+  const tError = useErrorsTranslation();
+  const tCommon = useCommonTranslation();
   const [aboutMe, setAboutMe] = useState('');
   const [workPhotos, setWorkPhotos] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
   const handlePickImage = async () => {
     if (workPhotos.length >= MAX_PHOTOS) {
-      Alert.alert('Внимание', `Можно загрузить максимум ${MAX_PHOTOS} фотографий`);
+      Alert.alert(t('max_photos_warning'), t('max_photos_message', { max: MAX_PHOTOS }));
       return;
     }
 
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Ошибка', 'Необходимо разрешение на доступ к галерее');
+        Alert.alert(tError('error'), t('gallery_permission_error'));
         return;
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
+        mediaTypes: ['images'],
+        allowsMultipleSelection: true,
+        selectionLimit: MAX_PHOTOS - workPhotos.length,
         quality: 0.8,
       });
 
-      if (!result.canceled && result.assets[0]) {
-        setWorkPhotos(prev => [...prev, result.assets[0].uri]);
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const newPhotoUris = result.assets.map(asset => asset.uri);
+        setWorkPhotos(prev => [...prev, ...newPhotoUris]);
       }
     } catch (error) {
       console.error('Ошибка выбора фото:', error);
-      Alert.alert('Ошибка', 'Не удалось выбрать фото');
+      Alert.alert(tError('error'), t('photo_selection_error'));
     }
   };
 
   const handleRemovePhoto = (index: number) => {
     Alert.alert(
-      'Удалить фото?',
-      'Вы уверены, что хотите удалить это фото?',
+      t('delete_photo_title'),
+      t('delete_photo_message'),
       [
-        { text: 'Отмена', style: 'cancel' },
+        { text: tCommon('cancel'), style: 'cancel' },
         {
-          text: 'Удалить',
+          text: tCommon('delete'),
           style: 'destructive',
           onPress: () => {
             setWorkPhotos(prev => prev.filter((_, i) => i !== index));
@@ -84,12 +90,12 @@ export const ProfessionalAboutMeScreen: React.FC = () => {
 
   const handleContinue = async () => {
     if (aboutMe.trim().length < 20) {
-      Alert.alert('Внимание', 'Опишите себя более подробно (минимум 20 символов)');
+      Alert.alert(t('max_photos_warning'), t('about_me_min_length_error'));
       return;
     }
 
     if (workPhotos.length < MIN_PHOTOS) {
-      Alert.alert('Внимание', `Загрузите хотя бы ${MIN_PHOTOS} фото ваших работ`);
+      Alert.alert(t('max_photos_warning'), t('min_photos_error', { min: MIN_PHOTOS }));
       return;
     }
 
@@ -99,11 +105,11 @@ export const ProfessionalAboutMeScreen: React.FC = () => {
       const profileDataString = await AsyncStorage.default.getItem('@temp_profile_data');
 
       if (!profileDataString) {
-        Alert.alert('Ошибка', 'Данные профиля не найдены');
+        Alert.alert(tError('error'), t('profile_data_not_found_error'));
         return;
       }
 
-      console.log('[ProfessionalAboutMe] Загрузка фото работ в Storage...');
+      console.log(`[ProfessionalAboutMe] ${t('uploading_photos')}`);
 
       // Загружаем фото работ в Supabase Storage
       const { mediaService } = await import('../../services/mediaService');
@@ -120,7 +126,7 @@ export const ProfessionalAboutMeScreen: React.FC = () => {
           console.log(`[ProfessionalAboutMe] Фото ${i + 1} успешно загружено:`, result.url);
         } else {
           console.error(`[ProfessionalAboutMe] Ошибка загрузки фото ${i + 1}:`, result.error);
-          Alert.alert('Ошибка', `Не удалось загрузить фото ${i + 1}: ${result.error}`);
+          Alert.alert(tError('error'), t('photo_upload_error', { index: i + 1, error: result.error }));
           return;
         }
       }
@@ -137,7 +143,7 @@ export const ProfessionalAboutMeScreen: React.FC = () => {
       navigation.navigate('CitySelection', { role: 'worker', workerType: 'professional' });
     } catch (error) {
       console.error('Ошибка:', error);
-      Alert.alert('Ошибка', 'Произошла ошибка. Попробуйте снова.');
+      Alert.alert(tError('error'), t('general_error'));
     } finally {
       setIsUploading(false);
     }
@@ -148,12 +154,12 @@ export const ProfessionalAboutMeScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <HeaderWithBack title="О себе" backAction={handleBackPress} />
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <HeaderWithBack title={t('about_me_screen_title')} backAction={handleBackPress} />
       <KeyboardAvoidingView
         style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <ScrollView
           style={styles.content}
@@ -162,20 +168,25 @@ export const ProfessionalAboutMeScreen: React.FC = () => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Расскажите о себе</Text>
+            <Text style={styles.sectionTitle}>{t('about_me_section_title')}</Text>
             <Text style={styles.sectionHint}>
-              Опишите ваш опыт работы, достижения и что вы умеете делать лучше всего
+              {t('about_me_section_hint')}
             </Text>
             <TextInput
               style={styles.textArea}
               value={aboutMe}
               onChangeText={setAboutMe}
-              placeholder="Например: Опыт работы сантехником более 10 лет. Специализируюсь на установке..."
+              placeholder={t('about_me_placeholder')}
               placeholderTextColor={theme.colors.text.secondary}
               multiline
               numberOfLines={6}
               maxLength={500}
               textAlignVertical="top"
+              returnKeyType="done"
+              blurOnSubmit={true}
+              onSubmitEditing={() => {
+                // Скрываем клавиатуру при нажатии "Готово"
+              }}
             />
             <Text style={styles.charCounter}>
               {aboutMe.length} / 500
@@ -184,35 +195,47 @@ export const ProfessionalAboutMeScreen: React.FC = () => {
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>
-              Фото ваших работ {workPhotos.length > 0 && `(${workPhotos.length}/${MAX_PHOTOS})`}
+              {workPhotos.length > 0 
+                ? t('work_photos_title_with_count', { count: workPhotos.length, max: MAX_PHOTOS })
+                : t('work_photos_title')
+              }
             </Text>
             <Text style={styles.sectionHint}>
-              Загрузите фотографии выполненных работ. Минимум {MIN_PHOTOS} фото.
+              {t('work_photos_hint', { min: MIN_PHOTOS })}
             </Text>
 
             <View style={styles.photosGrid}>
-              {workPhotos.map((uri, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.photoContainer}
-                  onPress={() => handleRemovePhoto(index)}
-                  activeOpacity={0.8}
-                >
-                  <Image source={{ uri }} style={styles.photo} />
-                  <View style={styles.removeButton}>
-                    <Text style={styles.removeButtonText}>✕</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
+              {workPhotos.map((uri, index) => {
+                const isNotLastInRow = (index + 1) % 3 !== 0;
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.photoContainer,
+                      isNotLastInRow && styles.photoContainerWithMargin,
+                    ]}
+                    onPress={() => handleRemovePhoto(index)}
+                    activeOpacity={0.8}
+                  >
+                    <Image source={{ uri }} style={styles.photo} />
+                    <View style={styles.removeButton}>
+                      <Text style={styles.removeButtonText}>✕</Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
 
               {workPhotos.length < MAX_PHOTOS && (
                 <TouchableOpacity
-                  style={styles.addPhotoButton}
+                  style={[
+                    styles.addPhotoButton,
+                    (workPhotos.length + 1) % 3 !== 0 && styles.photoContainerWithMargin,
+                  ]}
                   onPress={handlePickImage}
                   activeOpacity={0.8}
                 >
                   <Text style={styles.addPhotoIcon}>+</Text>
-                  <Text style={styles.addPhotoText}>Добавить фото</Text>
+                  <Text style={styles.addPhotoText}>{t('add_photo_button')}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -220,43 +243,47 @@ export const ProfessionalAboutMeScreen: React.FC = () => {
 
           <View style={{ height: 100 }} />
         </ScrollView>
-
-        <View style={styles.bottomContainer}>
-          <TouchableOpacity
-            style={[
-              styles.continueButton,
-              (aboutMe.trim().length < 20 || workPhotos.length < MIN_PHOTOS) &&
-              styles.continueButtonDisabled,
-            ]}
-            onPress={handleContinue}
-            disabled={
-              isUploading ||
-              aboutMe.trim().length < 20 ||
-              workPhotos.length < MIN_PHOTOS
-            }
-            activeOpacity={0.8}
-          >
-            {isUploading ? (
-              <ActivityIndicator color={theme.colors.white} />
-            ) : (
-              <Text
-                style={[
-                  styles.continueButtonText,
-                  (aboutMe.trim().length < 20 || workPhotos.length < MIN_PHOTOS) &&
-                  styles.continueButtonTextDisabled,
-                ]}
-              >
-                Продолжить
-              </Text>
-            )}
-          </TouchableOpacity>
-        </View>
       </KeyboardAvoidingView>
+
+      <View style={[styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, theme.spacing.md) }]}>
+        <TouchableOpacity
+          style={[
+            styles.continueButton,
+            (aboutMe.trim().length < 20 || workPhotos.length < MIN_PHOTOS) &&
+            styles.continueButtonDisabled,
+          ]}
+          onPress={handleContinue}
+          disabled={
+            isUploading ||
+            aboutMe.trim().length < 20 ||
+            workPhotos.length < MIN_PHOTOS
+          }
+          activeOpacity={0.8}
+        >
+          {isUploading ? (
+            <ActivityIndicator color={theme.colors.white} />
+          ) : (
+            <Text
+              style={[
+                styles.continueButtonText,
+                (aboutMe.trim().length < 20 || workPhotos.length < MIN_PHOTOS) &&
+                styles.continueButtonTextDisabled,
+              ]}
+            >
+              {tCommon('continue')}
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
 
-const photoSize = (screenWidth - theme.spacing.lg * 2 - theme.spacing.sm * 2) / 3;
+// Формула: (ширина_экрана - отступы_контейнера - отступы_между_фото) / количество_в_ряд
+// Для 3 фото в ряд: отступы между фото = 2 * 8px = 16px
+const PHOTOS_PER_ROW = 3;
+const PHOTO_GAP = theme.spacing.sm; // 8px
+const photoSize = Math.floor((screenWidth - theme.spacing.lg * 2 - PHOTO_GAP * (PHOTOS_PER_ROW - 1)) / PHOTOS_PER_ROW);
 
 const styles = StyleSheet.create({
   container: {
@@ -306,7 +333,6 @@ const styles = StyleSheet.create({
   photosGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.sm,
   },
   photoContainer: {
     width: photoSize,
@@ -314,6 +340,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     position: 'relative',
+    marginBottom: PHOTO_GAP,
+  },
+  photoContainerWithMargin: {
+    marginRight: PHOTO_GAP,
   },
   photo: {
     width: '100%',
@@ -343,6 +373,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: PHOTO_GAP,
     ...borderButtonStyles,
   },
   addPhotoIcon: {
@@ -358,7 +389,7 @@ const styles = StyleSheet.create({
   bottomContainer: {
     backgroundColor: theme.colors.background,
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    paddingTop: theme.spacing.md,
     borderTopWidth: 1,
     borderTopColor: '#E5E5E5',
   },

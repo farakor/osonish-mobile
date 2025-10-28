@@ -6,7 +6,7 @@ import { Modal,
   StyleSheet, ScrollView,
   StatusBar,
   Platform, } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';;
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../constants';
 import { noElevationStyles } from '../../utils/noShadowStyles';
@@ -20,6 +20,17 @@ export const TermsModal: React.FC<TermsModalProps> = ({
   visible,
   onClose,
 }) => {
+  const insets = useSafeAreaInsets();
+
+  // Получаем высоту статус бара
+  const getStatusBarHeight = () => {
+    if (Platform.OS === 'android') {
+      return StatusBar.currentHeight || 24;
+    }
+    return insets.top;
+  };
+
+  const statusBarHeight = getStatusBarHeight();
   const termsText = `УСЛОВИЯ ИСПОЛЬЗОВАНИЯ СЕРВИСА "ОСОНИШ"
 
 1. ОБЩИЕ ПОЛОЖЕНИЯ
@@ -131,11 +142,13 @@ Email: support@osonish.uz
       onRequestClose={onClose}
     >
       <View style={styles.modalContainer}>
-        <SafeAreaView style={styles.safeArea}>
-          <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+        <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
 
-          {/* Header */}
-          <View style={styles.header}>
+        {/* Отступ для статус бара */}
+        <View style={{ height: statusBarHeight, backgroundColor: theme.colors.background }} />
+
+        {/* Header */}
+        <View style={styles.header}>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <Ionicons name="close" size={24} color={theme.colors.text.primary} />
             </TouchableOpacity>
@@ -150,16 +163,15 @@ Email: support@osonish.uz
             </View>
           </ScrollView>
 
-          {/* Footer */}
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={styles.closeFooterButton}
-              onPress={onClose}
-            >
-              <Text style={styles.closeFooterButtonText}>Закрыть</Text>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
+        {/* Footer */}
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.closeFooterButton}
+            onPress={onClose}
+          >
+            <Text style={styles.closeFooterButtonText}>Закрыть</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </Modal>
   );
@@ -169,9 +181,6 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     backgroundColor: theme.colors.background,
-  },
-  safeArea: {
-    flex: 1,
   },
   header: {
     flexDirection: 'row',
