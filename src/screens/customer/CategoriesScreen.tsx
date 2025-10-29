@@ -10,10 +10,10 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { CustomerStackParamList } from '../../types';
-import { theme, SPECIALIZATIONS, getTranslatedSpecializationName } from '../../constants';
+import { theme, getTranslatedSpecializationName, getTopLevelCategories, getSubcategoriesByParentId } from '../../constants';
 import { lightElevationStyles } from '../../utils/noShadowStyles';
 import { CategoryIcon } from '../../components/common';
 import { useNavigationTranslation, useCustomerTranslation } from '../../hooks/useTranslation';
@@ -32,17 +32,39 @@ const getAndroidStatusBarHeight = () => {
 
 export const CategoriesScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const route = useRoute<RouteProp<CustomerStackParamList, 'Categories'>>();
+  const parentCategoryId = route.params?.parentCategoryId;
+  
   const t = useNavigationTranslation();
   const tCustomer = useCustomerTranslation();
   const { t: tCommon } = useTranslation();
 
+  // Определяем, какие категории показывать
+  const categories = parentCategoryId 
+    ? getSubcategoriesByParentId(parentCategoryId)
+    : getTopLevelCategories();
+
   const handleCategoryPress = (specializationId: string) => {
-    navigation.navigate('ProfessionalMastersList', { specializationId });
+    const category = categories.find(c => c.id === specializationId);
+    
+    // Если это родительская категория, показываем её подкатегории
+    if (category?.isParent) {
+      // @ts-ignore - push существует в NativeStackNavigationProp
+      navigation.push('Categories', { parentCategoryId: specializationId });
+    } else {
+      // Иначе переходим к списку мастеров
+      navigation.navigate('ProfessionalMastersList', { specializationId });
+    }
   };
 
   const handleBack = () => {
     navigation.goBack();
   };
+
+  // Определяем заголовок
+  const headerTitle = parentCategoryId
+    ? getTranslatedSpecializationName(parentCategoryId, tCommon)
+    : t('categories');
 
   return (
     <View style={styles.container}>
@@ -52,7 +74,7 @@ export const CategoriesScreen: React.FC = () => {
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
             <ArrowBackIcon width={20} height={20} stroke={theme.colors.text.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('categories')}</Text>
+          <Text style={styles.headerTitle}>{headerTitle}</Text>
           <View style={styles.placeholder} />
         </View>
 
@@ -62,7 +84,7 @@ export const CategoriesScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.categoriesGrid}>
-            {SPECIALIZATIONS.map((category) => (
+            {categories.map((category) => (
               <TouchableOpacity
                 key={category.id}
                 style={styles.categoryCard}

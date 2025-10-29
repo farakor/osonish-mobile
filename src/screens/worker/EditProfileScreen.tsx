@@ -686,7 +686,7 @@ export const EditProfileScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalScrollView}>
-              {SPECIALIZATIONS.map((spec) => {
+              {SPECIALIZATIONS.filter(spec => !spec.isParent).map((spec) => {
                 const isSelected = specializations.some(s => s.id === spec.id);
                 return (
                   <TouchableOpacity

@@ -188,7 +188,7 @@ export const SpecializationSelectionScreen: React.FC = () => {
         )}
 
         <FlatList
-          data={SPECIALIZATIONS.filter(spec => spec.id !== 'one_day_job')}
+          data={SPECIALIZATIONS.filter(spec => spec.id !== 'one_day_job' && !spec.isParent)}
           renderItem={renderSpecializationCard}
           keyExtractor={(item) => item.id}
           numColumns={3}

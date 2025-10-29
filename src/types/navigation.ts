@@ -43,7 +43,7 @@ export type CustomerStackParamList = {
   WorkerProfile: { workerId: string; workerName: string };
   ProfessionalMasterProfile: { masterId: string }; // Новый экран профиля профмастера
   ProfessionalMastersList: { specializationId?: string }; // Новый экран списка профмастеров
-  Categories: undefined; // Экран всех категорий
+  Categories: { parentCategoryId?: string }; // Экран всех категорий с возможностью показа подкатегорий
   Rating: { orderId: string; acceptedWorkers: Applicant[] };
   EditProfile: undefined;
   Notifications: undefined;
@@ -54,7 +54,7 @@ export type CustomerStackParamList = {
 
 export type CustomerTabParamList = {
   Home: undefined;
-  Categories: undefined;
+  Categories: { parentCategoryId?: string };
   CreateOrder: {
     repeatOrderData?: {
       title: string;

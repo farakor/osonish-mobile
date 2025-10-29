@@ -839,7 +839,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                 {/* Сетка специализаций */}
                 <AnimatedField isActive={currentStep === 2} delay={200} resetKey={`${animationResetKey}-step-2-grid`}>
                   <View style={styles.specializationsGrid}>
-                    {SPECIALIZATIONS.map((spec) => (
+                    {SPECIALIZATIONS.filter(spec => !spec.isParent).map((spec) => (
                       <TouchableOpacity
                         key={spec.id}
                         style={[
