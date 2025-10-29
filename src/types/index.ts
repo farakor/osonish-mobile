@@ -87,6 +87,7 @@ export interface Order {
   photos?: string[]; // массив URL фотографий
   status: 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled' | 'rejected';
   customerId: string;
+  customerCity?: string; // Город заказчика
   applicantsCount: number;
   pendingApplicantsCount?: number; // Количество непринятых откликов (ожидающих рассмотрения)
   viewsCount?: number; // Количество просмотров заказа

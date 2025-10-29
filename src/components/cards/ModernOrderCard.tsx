@@ -12,6 +12,7 @@ import { Order } from '../../types';
 import { locationService, LocationCoords } from '../../services/locationService';
 import { getCategoryEmoji, getCategoryLabel } from '../../utils/categoryUtils';
 import { getCategoryAnimation } from '../../utils/categoryIconUtils';
+import { getCityName } from '../../utils/cityUtils';
 import { useCustomerTranslation } from '../../hooks/useTranslation';
 import { useTranslation } from 'react-i18next';
 import { getStatusInfo } from '../../utils/statusUtils';
@@ -25,6 +26,7 @@ const VIEWS_COLOR = '#9AA0A6'; // Цвет для счетчика просмо�
 // SVG импорты
 import OtklikiIcon from '../../../assets/card-icons/otkliki.svg';
 import EyeIcon from '../../../assets/eye.svg';
+import MarkerIcon from '../../../assets/marker-pin-06.svg';
 
 interface ModernOrderCardProps {
   order: Order;
@@ -168,10 +170,20 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
             {getDistanceText() && (
               <Text style={styles.distanceText}>{getDistanceText()}</Text>
             )}
-            {/* Views Count */}
-            <View style={styles.viewsContainer}>
-              <EyeIcon width={14} height={14} stroke={VIEWS_COLOR} strokeWidth={1.5} />
-              <Text style={styles.viewsText}>{order.viewsCount || 0}</Text>
+            {/* City and Views in one row */}
+            <View style={styles.cityViewsRow}>
+              {/* City */}
+              {order.customerCity && (
+                <View style={styles.cityContainer}>
+                  <MarkerIcon width={12} height={12} stroke={VIEWS_COLOR} strokeWidth={1.5} />
+                  <Text style={styles.cityText}>{getCityName(order.customerCity)}</Text>
+                </View>
+              )}
+              {/* Views Count */}
+              <View style={styles.viewsContainer}>
+                <EyeIcon width={14} height={14} stroke={VIEWS_COLOR} strokeWidth={1.5} />
+                <Text style={styles.viewsText}>{order.viewsCount || 0}</Text>
+              </View>
             </View>
             {/* Response Received Badge */}
             {!workerView && (order.pendingApplicantsCount || 0) > 0 && (
@@ -346,6 +358,23 @@ const styles = StyleSheet.create({
   rightColumn: {
     alignItems: 'flex-end',
     gap: 4,
+  },
+  cityViewsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2, // Уменьшен отступ между городом и просмотрами
+  },
+  cityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    gap: 3,
+  },
+  cityText: {
+    fontSize: 11,
+    color: VIEWS_COLOR,
+    fontWeight: '500',
   },
   viewsContainer: {
     flexDirection: 'row',

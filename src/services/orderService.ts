@@ -582,7 +582,10 @@ export class OrderService {
     try {
       const { data, error } = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+          *,
+          customer:users!customer_id(city)
+        `)
         .in('status', ['new', 'response_received'])
         .order('created_at', { ascending: false });
 
@@ -606,6 +609,7 @@ export class OrderService {
         photos: item.photos || [],
         status: item.status as 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled',
         customerId: item.customer_id,
+        customerCity: item.customer?.city || undefined,
         applicantsCount: item.applicants_count,
         viewsCount: item.views_count || 0,
         // Дополнительные удобства

@@ -3,10 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity, Dimensions,
+  TouchableOpacity,
+  Dimensions,
   Alert,
   Platform,
   StatusBar,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';;
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -17,6 +19,7 @@ import { noElevationStyles, borderButtonStyles } from '../../utils/noShadowStyle
 import type { RootStackParamList, City } from '../../types';
 import { LogoOsonish, AnimatedIcon, HeaderWithBack } from '../../components/common';
 import { useAuthTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
+import { UZBEKISTAN_CITIES, getCityName } from '../../utils/cityUtils';
 
 // Импортируем анимированную иконку пина
 const PinAnimation = require('../../../assets/pin.json');
@@ -49,14 +52,12 @@ export const CitySelectionScreen: React.FC = () => {
   const tError = useErrorsTranslation();
   const tCommon = useCommonTranslation();
 
-  // Доступные города (пока только Самарканд)
-  const AVAILABLE_CITIES: City[] = [
-    {
-      id: 'samarkand',
-      name: t('samarkand_city'),
-      isAvailable: true,
-    },
-  ];
+  // Доступные города Узбекистана
+  const AVAILABLE_CITIES: City[] = UZBEKISTAN_CITIES.map(cityId => ({
+    id: cityId,
+    name: getCityName(cityId),
+    isAvailable: true, // Все города теперь доступны
+  }));
 
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
 
@@ -120,8 +121,8 @@ export const CitySelectionScreen: React.FC = () => {
       <View style={styles.iconContainer}>
         <AnimatedIcon
           source={PinAnimation}
-          width={isSmallScreen ? 32 : 40}
-          height={isSmallScreen ? 32 : 40}
+          width={isSmallScreen ? 24 : 28}
+          height={isSmallScreen ? 24 : 28}
           loop={true}
           autoPlay={false}
           speed={0.8}
@@ -155,16 +156,14 @@ export const CitySelectionScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <HeaderWithBack title={t('city_selection_title')} backAction={handleBackPress} />
-      <View style={styles.content}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.header}>
           <Text style={styles.subtitle}>
             {t('city_selection_subtitle')}
-          </Text>
-        </View>
-
-        <View style={styles.noticeContainer}>
-          <Text style={styles.noticeText}>
-            {t('city_notice')}
           </Text>
         </View>
 
@@ -178,7 +177,9 @@ export const CitySelectionScreen: React.FC = () => {
             />
           ))}
         </View>
+      </ScrollView>
 
+      <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[
             styles.continueButton,
@@ -205,25 +206,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.md,
+    paddingBottom: theme.spacing.lg,
   },
-  logoSection: {
-    alignItems: 'center',
-    marginBottom: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
+  buttonContainer: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
+    backgroundColor: theme.colors.background,
   },
   header: {
     alignItems: 'center',
-    marginBottom: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
-  },
-  title: {
-    fontSize: isSmallScreen ? theme.fonts.sizes.xl : theme.fonts.sizes.xxl,
-    fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.text.primary,
-    textAlign: 'center',
-    marginBottom: isSmallScreen ? theme.spacing.sm : theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
   subtitle: {
     fontSize: isSmallScreen ? theme.fonts.sizes.sm : theme.fonts.sizes.md,
@@ -231,26 +229,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: isSmallScreen ? 18 : 22,
   },
-  noticeContainer: {
-    backgroundColor: `${theme.colors.primary}15`,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    marginBottom: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
-  },
-  noticeText: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.primary,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
   citiesContainer: {
-    gap: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
-    marginBottom: isSmallScreen ? theme.spacing.xl : theme.spacing.xxl,
+    gap: isSmallScreen ? 8 : 10,
   },
   cityCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
+    padding: isSmallScreen ? 12 : 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -268,19 +253,19 @@ const styles = StyleSheet.create({
     ...noElevationStyles,
   },
   iconContainer: {
-    width: isSmallScreen ? 48 : 56,
-    height: isSmallScreen ? 48 : 56,
+    width: isSmallScreen ? 36 : 40,
+    height: isSmallScreen ? 36 : 40,
     backgroundColor: 'transparent',
-    borderRadius: isSmallScreen ? 24 : 28,
+    borderRadius: isSmallScreen ? 18 : 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
+    marginRight: isSmallScreen ? 8 : 10,
   },
   cityInfo: {
     flex: 1,
   },
   cityName: {
-    fontSize: isSmallScreen ? 16 : 18,
+    fontSize: isSmallScreen ? 15 : 16,
     fontWeight: '600',
     color: '#1A1A1A',
   },
@@ -296,9 +281,9 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.xs,
   },
   radioButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     borderWidth: 2,
     borderColor: '#E5E5E7',
     backgroundColor: '#FFFFFF',
@@ -309,9 +294,9 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
   },
   radioButtonInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: theme.colors.primary,
   },
   continueButton: {
@@ -319,7 +304,6 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     paddingVertical: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
     alignItems: 'center',
-    marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
     minHeight: isSmallScreen ? 44 : 48,
   },
   continueButtonDisabled: {

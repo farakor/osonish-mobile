@@ -23,7 +23,8 @@ import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
 type NavigationProp = NativeStackNavigationProp<CustomerStackParamList, 'Categories'>;
 
 const { width: screenWidth } = Dimensions.get('window');
-const categoryCardWidth = (screenWidth - theme.spacing.lg * 2 - theme.spacing.sm * 3) / 4;
+// Для 3 колонок: вычитаем отступы контейнера и делим на 3
+const categoryCardWidth = (screenWidth - theme.spacing.lg * 2) / 3 - theme.spacing.sm;
 
 const getAndroidStatusBarHeight = () => {
   return Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0;
@@ -137,6 +138,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     paddingHorizontal: theme.spacing.lg,
     gap: theme.spacing.sm,
+    justifyContent: 'space-between',
   },
   categoryCard: {
     width: categoryCardWidth,
@@ -152,7 +154,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
   },
   categoryName: {
-    fontSize: 11,
+    fontSize: 13,
     color: theme.colors.text.primary,
     textAlign: 'center',
     fontWeight: '500',

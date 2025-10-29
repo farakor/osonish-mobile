@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,10 +8,12 @@ import {
   StatusBar,
   Platform,
   ScrollView,
-  Dimensions,
+  TextInput,
+  Modal,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';;
-import { theme, SPECIALIZATIONS, getTranslatedSpecializationName } from '../../constants';
+import { theme, SPECIALIZATIONS } from '../../constants';
 import { lightElevationStyles } from '../../utils/noShadowStyles';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -19,21 +21,18 @@ import type { CustomerTabParamList, CustomerStackParamList } from '../../types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import NotificationIcon from '../../../assets/notification-message.svg';
 import ArrowNarrowRight from '../../../assets/arrow-narrow-right.svg';
+import FilterIcon from '../../../assets/filter-lines.svg';
+import ChevronDownIcon from '../../../assets/chevron-down.svg';
 import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { notificationService } from '../../services/notificationService';
-import { professionalMasterService, ProfessionalMaster } from '../../services/professionalMasterService';
-import { ProfessionalMasterCard } from '../../components/cards';
-import { CategoryIcon } from '../../components/common';
-import { useCustomerTranslation } from '../../hooks/useTranslation';
+import { ModernOrderCard } from '../../components/cards';
+import { useCustomerTranslation, useCategoriesTranslation } from '../../hooks/useTranslation';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const { width: screenWidth } = Dimensions.get('window');
-const categoryCardWidth = (screenWidth - theme.spacing.lg * 2 - theme.spacing.sm * 3) / 4;
-const categoryCardHeight = categoryCardWidth * 1.2;
-const categoriesPerRow = 4;
-const maxVisibleCategories = 7; // Показываем 7 категорий + 1 кнопка "Показать все"
+import { Order } from '../../types';
+import { getSpecializationIconComponent } from '../../constants/specializations';
+import { getCityName, getAllCities } from '../../utils/cityUtils';
 
 // Функция для получения высоты статусбара только на Android
 const getAndroidStatusBarHeight = () => {
@@ -43,7 +42,14 @@ const getAndroidStatusBarHeight = () => {
 const RESPONSE_NOTIFICATION_KEY = '@response_notification_dismissed';
 
 export const CustomerHomeScreen: React.FC = () => {
-  const [professionalMasters, setProfessionalMasters] = useState<ProfessionalMaster[]>([]);
+  const [availableOrders, setAvailableOrders] = useState<any[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedSpecialization, setSelectedSpecialization] = useState<string | null>('all');
+  const [selectedCity, setSelectedCity] = useState<string | null>('all');
+  const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -51,6 +57,7 @@ export const CustomerHomeScreen: React.FC = () => {
   const [hasOrdersWithResponses, setHasOrdersWithResponses] = useState(false);
   const navigation = useNavigation<BottomTabNavigationProp<CustomerTabParamList> & NativeStackNavigationProp<CustomerStackParamList>>();
   const t = useCustomerTranslation();
+  const tCategories = useCategoriesTranslation();
   const { t: tCommon } = useTranslation();
 
   // Функция для проверки заказов с откликами
@@ -81,7 +88,7 @@ export const CustomerHomeScreen: React.FC = () => {
     }
   }, []);
 
-  // Функция для загрузки уведомлений и профессиональных мастеров
+  // Функция для загрузки уведомлений и доступных заказов
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -92,20 +99,11 @@ export const CustomerHomeScreen: React.FC = () => {
         const count = await notificationService.getUnreadNotificationsCount(authState.user.id);
         setUnreadCount(count);
 
-        // Загружаем профессиональных мастеров
-        const masters = await professionalMasterService.getRandomMasters(authState.user.city, 6);
-        console.log('[CustomerHomeScreen] Загружено мастеров:', masters.length);
-        console.log('[CustomerHomeScreen] Город пользователя:', authState.user.city);
-        if (masters.length > 0) {
-          console.log('[CustomerHomeScreen] Пример мастера:', {
-            id: masters[0].id,
-            name: `${masters[0].firstName} ${masters[0].lastName}`,
-            city: masters[0].city,
-            specializations: masters[0].specializations,
-            workPhotos: masters[0].workPhotos?.length || 0,
-          });
-        }
-        setProfessionalMasters(masters);
+        // Загружаем доступные заказы (включая собственные)
+        const orders = await orderService.getAvailableOrdersForWorker();
+        console.log('[CustomerHomeScreen] Загружено доступных заказов:', orders.length);
+        setAvailableOrders(orders);
+        setFilteredOrders(orders.slice(0, 10)); // Показываем первые 10 заказов
 
         // Проверяем заказы с откликами
         await checkOrdersWithResponses();
@@ -123,6 +121,86 @@ export const CustomerHomeScreen: React.FC = () => {
     await loadData();
     setRefreshing(false);
   }, [loadData]);
+
+  // Мемоизируем специализации из существующих заказов
+  const availableSpecializations = useMemo(() => {
+    // Получаем уникальные specializationId из заказов
+    const specializationIds = [...new Set(
+      availableOrders
+        .map(order => order.specializationId)
+        .filter(id => id !== undefined && id !== null)
+    )] as string[];
+
+    const specializationsWithCounts = [
+      {
+        id: 'all',
+        name: t('all_categories'),
+        count: availableOrders.length,
+        IconComponent: undefined
+      },
+      ...specializationIds.map(specId => ({
+        id: specId,
+        name: tCategories(specId),
+        count: availableOrders.filter(order => order.specializationId === specId).length,
+        IconComponent: getSpecializationIconComponent(specId)
+      }))
+    ];
+
+    return specializationsWithCounts;
+  }, [availableOrders, t, tCategories]);
+
+  // Мемоизируем города из существующих заказов
+  const availableCities = useMemo(() => {
+    // Получаем уникальные customerCity из заказов
+    const cityIds = [...new Set(
+      availableOrders
+        .map(order => order.customerCity)
+        .filter(cityId => cityId !== undefined && cityId !== null)
+    )] as string[];
+
+    const citiesWithCounts = [
+      {
+        id: 'all',
+        name: t('all_cities') || 'Все города',
+        count: availableOrders.length
+      },
+      ...cityIds.map(cityId => ({
+        id: cityId,
+        name: getCityName(cityId),
+        count: availableOrders.filter(order => order.customerCity === cityId).length
+      }))
+    ];
+
+    return citiesWithCounts;
+  }, [availableOrders, t]);
+
+  // Фильтрация по специализации и поиску
+  useEffect(() => {
+    let filtered = availableOrders;
+
+    // Фильтр по специализации
+    if (selectedSpecialization && selectedSpecialization !== 'all') {
+      filtered = filtered.filter(order => order.specializationId === selectedSpecialization);
+    }
+
+    // Фильтр по городу
+    if (selectedCity && selectedCity !== 'all') {
+      filtered = filtered.filter(order => order.customerCity === selectedCity);
+    }
+
+    // Фильтр по поисковому запросу
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(order => {
+        const matchesTitle = order.title.toLowerCase().includes(query);
+        const matchesDescription = order.description.toLowerCase().includes(query);
+        const matchesLocation = order.location?.toLowerCase().includes(query);
+        return matchesTitle || matchesDescription || matchesLocation;
+      });
+    }
+
+    setFilteredOrders(filtered.slice(0, 10));
+  }, [availableOrders, searchQuery, selectedSpecialization, selectedCity]);
 
   // Проверяем заказы, требующие оценки
   const checkPendingRatings = useCallback(async () => {
@@ -194,74 +272,40 @@ export const CustomerHomeScreen: React.FC = () => {
     navigation.navigate('NotificationsList');
   };
 
-  const handleCategoryPress = (specializationId: string) => {
-    navigation.navigate('ProfessionalMastersList', { specializationId });
+  const handleOrderPress = (orderId: string) => {
+    // Переходим к экрану деталей заказа
+    navigation.navigate('OrderDetails', { orderId });
   };
 
-  const handleMasterPress = (masterId: string) => {
-    navigation.navigate('ProfessionalMasterProfile', { masterId });
+  const handleViewAllOrders = () => {
+    // Можно добавить отдельный экран со всеми доступными заказами
+    // Или перейти в раздел заказов
+    navigation.navigate('MyOrders');
   };
-
-  const handleViewAllMasters = () => {
-    navigation.navigate('ProfessionalMastersList', {});
-  };
-
-  const handleViewAllCategories = () => {
-    navigation.navigate('Categories');
-  };
-
-  const renderCategoryCard = (item: typeof SPECIALIZATIONS[0], index: number) => (
-    <TouchableOpacity
-      key={item.id}
-      style={styles.categoryCard}
-      onPress={() => handleCategoryPress(item.id)}
-      activeOpacity={0.8}
-    >
-      <CategoryIcon
-        icon={item.icon}
-        iconComponent={item.iconComponent}
-        size={32}
-        style={styles.categoryIconWrapper}
-      />
-      <Text style={styles.categoryName} numberOfLines={2}>
-        {getTranslatedSpecializationName(item.id, tCommon)}
-      </Text>
-    </TouchableOpacity>
-  );
-
-  const renderShowAllCard = () => (
-    <TouchableOpacity
-      key="show-all"
-      style={[styles.categoryCard, styles.showAllCard]}
-      onPress={handleViewAllCategories}
-      activeOpacity={0.8}
-    >
-      <View style={styles.showAllIconWrapper}>
-        <ArrowNarrowRight width={40} height={40} />
-      </View>
-      <Text style={styles.showAllCardText} numberOfLines={2}>
-        {t('show_all_categories')}
-      </Text>
-    </TouchableOpacity>
-  );
-
-  const renderMasterCard = ({ item }: { item: ProfessionalMaster }) => (
-    <ProfessionalMasterCard
-      master={item}
-      onPress={() => handleMasterPress(item.id)}
-    />
-  );
 
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.content} edges={['top', 'left', 'right']}>
-        {/* Header with notifications */}
+        {/* Header with search and notifications */}
         <View style={[styles.header, { paddingTop: theme.spacing.lg + getAndroidStatusBarHeight() }]}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.greeting}>{t('home_screen')}</Text>
-            <Text style={styles.subtitle}>
-              {t('find_professional_masters')}
-            </Text>
+          <View style={styles.searchContainer}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder={t('search_orders')}
+              placeholderTextColor={theme.colors.text.secondary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            <TouchableOpacity
+              style={styles.filterButton}
+              onPress={() => setIsFilterModalVisible(true)}
+              activeOpacity={0.7}
+            >
+              <FilterIcon width={20} height={20} style={styles.filterIcon} />
+              {((selectedSpecialization && selectedSpecialization !== 'all') || (selectedCity && selectedCity !== 'all')) && (
+                <View style={styles.filterBadge} />
+              )}
+            </TouchableOpacity>
           </View>
           <TouchableOpacity
             style={styles.notificationButton}
@@ -297,16 +341,27 @@ export const CustomerHomeScreen: React.FC = () => {
               />
             }
           >
-            {/* Professional Masters Categories */}
-            <View style={styles.mastersSection}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionHeaderTitle}>{t('professional_masters_section')}</Text>
+            {/* Available Orders Section */}
+            {filteredOrders.length > 0 && (
+              <View style={styles.availableOrdersSection}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionHeaderTitle}>{t('available_orders_section')}</Text>
+                  <TouchableOpacity onPress={handleViewAllOrders} style={styles.viewAllButton}>
+                    <Text style={styles.viewAllText}>{t('view_all_orders')}</Text>
+                    <ArrowNarrowRight width={18} height={18} style={styles.viewAllIcon} />
+                  </TouchableOpacity>
+                </View>
+                {filteredOrders.map((order) => (
+                  <ModernOrderCard
+                    key={order.id}
+                    order={order}
+                    onPress={() => handleOrderPress(order.id)}
+                    showApplicantsCount={true}
+                    showCreateTime={false}
+                  />
+                ))}
               </View>
-              <View style={styles.categoriesGrid}>
-                {SPECIALIZATIONS.slice(0, maxVisibleCategories).map((item, index) => renderCategoryCard(item, index))}
-                {renderShowAllCard()}
-              </View>
-            </View>
+            )}
 
             {/* Response Notification Modal */}
             {showResponseNotification && (
@@ -340,29 +395,189 @@ export const CustomerHomeScreen: React.FC = () => {
                 </View>
               </View>
             )}
-
-            {/* Random Professional Masters List */}
-            {professionalMasters.length > 0 && (
-              <View style={styles.mastersListSection}>
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionHeaderTitle}>{t('recommended_masters')}</Text>
-                  <TouchableOpacity onPress={handleViewAllMasters} style={styles.viewAllButton}>
-                    <Text style={styles.viewAllText}>{t('all_masters')}</Text>
-                    <ArrowNarrowRight width={18} height={18} style={styles.viewAllIcon} />
-                  </TouchableOpacity>
-                </View>
-                {professionalMasters.map((master) => (
-                  <ProfessionalMasterCard
-                    key={master.id}
-                    master={master}
-                    onPress={() => handleMasterPress(master.id)}
-                  />
-                ))}
-              </View>
-            )}
           </ScrollView>
         )}
       </SafeAreaView>
+
+      {/* Filter Modal */}
+      <Modal
+        visible={isFilterModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsFilterModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsFilterModalVisible(false)}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('filters')}</Text>
+              <TouchableOpacity
+                onPress={() => setIsFilterModalVisible(false)}
+                style={styles.modalCloseButton}
+              >
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.dropdownContainer}>
+              {/* Дропдаун для категорий */}
+              <View style={styles.dropdownSection}>
+                <Text style={styles.dropdownLabel}>{t('filter_by_category')}</Text>
+                <TouchableOpacity
+                  style={styles.dropdownHeader}
+                  onPress={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.dropdownHeaderText}>
+                    {availableSpecializations.find(s => s.id === selectedSpecialization)?.name || t('all_categories')}
+                  </Text>
+                  <ChevronDownIcon 
+                    width={20} 
+                    height={20} 
+                    style={[
+                      styles.dropdownChevron,
+                      isCategoryDropdownOpen && styles.dropdownChevronOpen
+                    ]} 
+                  />
+                </TouchableOpacity>
+                {isCategoryDropdownOpen && (
+                  <ScrollView 
+                    style={styles.dropdownScrollView}
+                    nestedScrollEnabled={true}
+                    showsVerticalScrollIndicator={false}
+                  >
+                    {availableSpecializations.map((item) => {
+                      const IconComponent = item.IconComponent;
+                      return (
+                        <TouchableOpacity
+                          key={item.id}
+                          style={[
+                            styles.dropdownItem,
+                            selectedSpecialization === item.id && styles.dropdownItemActive
+                          ]}
+                          onPress={() => {
+                            setSelectedSpecialization(item.id);
+                            setIsCategoryDropdownOpen(false);
+                          }}
+                        >
+                          {IconComponent && (
+                            <IconComponent 
+                              width={20} 
+                              height={20} 
+                              style={[
+                                styles.dropdownItemIcon,
+                                selectedSpecialization === item.id && styles.dropdownItemIconActive
+                              ]} 
+                            />
+                          )}
+                          <Text style={[
+                            styles.dropdownItemText,
+                            selectedSpecialization === item.id && styles.dropdownItemTextActive
+                          ]}>
+                            {item.name}
+                          </Text>
+                          <Text style={[
+                            styles.dropdownItemCount,
+                            selectedSpecialization === item.id && styles.dropdownItemCountActive
+                          ]}>
+                            ({item.count})
+                          </Text>
+                          {selectedSpecialization === item.id && (
+                            <Text style={styles.dropdownItemCheck}>✓</Text>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                )}
+              </View>
+
+              {/* Дропдаун для городов */}
+              <View style={styles.dropdownSection}>
+                <Text style={styles.dropdownLabel}>{t('filter_by_city')}</Text>
+                <TouchableOpacity
+                  style={styles.dropdownHeader}
+                  onPress={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.dropdownHeaderText}>
+                    {availableCities.find(c => c.id === selectedCity)?.name || t('all_cities')}
+                  </Text>
+                  <ChevronDownIcon 
+                    width={20} 
+                    height={20} 
+                    style={[
+                      styles.dropdownChevron,
+                      isCityDropdownOpen && styles.dropdownChevronOpen
+                    ]} 
+                  />
+                </TouchableOpacity>
+                {isCityDropdownOpen && (
+                  <ScrollView 
+                    style={styles.dropdownScrollView}
+                    nestedScrollEnabled={true}
+                    showsVerticalScrollIndicator={false}
+                  >
+                    {availableCities.map((item) => (
+                      <TouchableOpacity
+                        key={item.id}
+                        style={[
+                          styles.dropdownItem,
+                          selectedCity === item.id && styles.dropdownItemActive
+                        ]}
+                        onPress={() => {
+                          setSelectedCity(item.id);
+                          setIsCityDropdownOpen(false);
+                        }}
+                      >
+                        <Text style={[
+                          styles.dropdownItemText,
+                          selectedCity === item.id && styles.dropdownItemTextActive
+                        ]}>
+                          {item.name}
+                        </Text>
+                        <Text style={[
+                          styles.dropdownItemCount,
+                          selectedCity === item.id && styles.dropdownItemCountActive
+                        ]}>
+                          ({item.count})
+                        </Text>
+                        {selectedCity === item.id && (
+                          <Text style={styles.dropdownItemCheck}>✓</Text>
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                )}
+              </View>
+            </View>
+
+            {/* Кнопки применить и сбросить */}
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={styles.resetButton}
+                onPress={() => {
+                  setSelectedSpecialization('all');
+                  setSelectedCity('all');
+                  setIsCategoryDropdownOpen(false);
+                  setIsCityDropdownOpen(false);
+                }}
+              >
+                <Text style={styles.resetButtonText}>{t('reset_filters')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.applyButton}
+                onPress={() => setIsFilterModalVisible(false)}
+              >
+                <Text style={styles.applyButtonText}>{t('apply')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -384,11 +599,51 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
     backgroundColor: theme.colors.background,
+    gap: theme.spacing.sm,
+  },
+  searchContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  searchInput: {
+    backgroundColor: theme.colors.white,
+    borderRadius: 12,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
+    paddingRight: 48,
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.text.primary,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    height: 48,
+  },
+  filterButton: {
+    position: 'absolute',
+    right: 8,
+    top: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterIcon: {
+    tintColor: theme.colors.white,
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF3B30',
   },
   headerLeft: {
     flex: 1,
@@ -409,17 +664,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: theme.spacing.xxl,
-  },
-  mastersSection: {
-    marginTop: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: theme.fonts.sizes.lg,
-    fontWeight: '600',
-    color: theme.colors.text.primary,
-    paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -446,44 +690,7 @@ const styles = StyleSheet.create({
   viewAllIcon: {
     color: theme.colors.primary,
   },
-  categoriesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: theme.spacing.lg,
-    gap: theme.spacing.sm,
-  },
-  categoryCard: {
-    width: categoryCardWidth,
-    height: categoryCardWidth * 1.2,
-    backgroundColor: theme.colors.white,
-    borderRadius: 12,
-    padding: theme.spacing.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...lightElevationStyles,
-  },
-  showAllCard: {
-    backgroundColor: theme.colors.primary,
-  },
-  showAllIconWrapper: {
-    marginBottom: theme.spacing.xs,
-  },
-  showAllCardText: {
-    fontSize: 11,
-    color: theme.colors.white,
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-  categoryIconWrapper: {
-    marginBottom: theme.spacing.xs,
-  },
-  categoryName: {
-    fontSize: 11,
-    color: theme.colors.text.primary,
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-  mastersListSection: {
+  availableOrdersSection: {
     marginBottom: theme.spacing.lg,
   },
   ordersSection: {
@@ -598,5 +805,167 @@ const styles = StyleSheet.create({
   },
   buttonIcon: {
     color: theme.colors.white,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.lg,
+  },
+  modalContent: {
+    backgroundColor: theme.colors.white,
+    borderRadius: 16,
+    width: '100%',
+    maxHeight: '80%',
+    overflow: 'hidden',
+  },
+  dropdownContainer: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+  },
+  dropdownSection: {
+    marginBottom: theme.spacing.lg,
+  },
+  dropdownLabel: {
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  dropdownHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: theme.spacing.md,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.white,
+  },
+  dropdownHeaderText: {
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.text.primary,
+    fontWeight: theme.fonts.weights.medium,
+    flex: 1,
+  },
+  dropdownChevron: {
+    tintColor: theme.colors.text.secondary,
+    transition: 'transform 0.2s',
+  },
+  dropdownChevronOpen: {
+    transform: [{ rotate: '180deg' }],
+  },
+  dropdownScrollView: {
+    maxHeight: 180,
+    marginTop: theme.spacing.sm,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.white,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  dropdownItemActive: {
+    backgroundColor: '#F0F9FF',
+  },
+  dropdownItemIcon: {
+    marginRight: theme.spacing.sm,
+    tintColor: theme.colors.text.secondary,
+  },
+  dropdownItemIconActive: {
+    tintColor: theme.colors.primary,
+  },
+  dropdownItemText: {
+    flex: 1,
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.text.primary,
+  },
+  dropdownItemTextActive: {
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.primary,
+  },
+  dropdownItemCount: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
+    marginRight: theme.spacing.sm,
+  },
+  dropdownItemCountActive: {
+    color: theme.colors.primary,
+    fontWeight: theme.fonts.weights.semiBold,
+  },
+  dropdownItemCheck: {
+    fontSize: 16,
+    color: theme.colors.primary,
+    fontWeight: theme.fonts.weights.bold,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: theme.spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: theme.spacing.md,
+    padding: theme.spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    backgroundColor: theme.colors.white,
+  },
+  resetButton: {
+    flex: 1,
+    paddingVertical: theme.spacing.md,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resetButtonText: {
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.text.primary,
+  },
+  applyButton: {
+    flex: 1,
+    paddingVertical: theme.spacing.md,
+    borderRadius: 12,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  applyButtonText: {
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.white,
+  },
+  modalTitle: {
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.bold,
+    color: theme.colors.text.primary,
+  },
+  modalCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: theme.colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseText: {
+    fontSize: 20,
+    color: theme.colors.text.secondary,
   },
 }); 
