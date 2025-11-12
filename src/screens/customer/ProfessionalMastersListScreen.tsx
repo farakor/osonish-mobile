@@ -22,6 +22,7 @@ import {
 } from '../../services/professionalMasterService';
 import { authService } from '../../services/authService';
 import { useCustomerTranslation } from '../../hooks/useTranslation';
+import { MasterCardSkeleton } from '../../components/skeletons';
 
 type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
 type ScreenRouteProp = RouteProp<CustomerStackParamList, 'ProfessionalMastersList'>;
@@ -69,14 +70,19 @@ export const ProfessionalMastersListScreen: React.FC = () => {
     setRefreshing(false);
   }, [loadMasters]);
 
-  const handleMasterPress = (masterId: string) => {
-    navigation.navigate('ProfessionalMasterProfile', { masterId });
+  const handleMasterPress = (master: ProfessionalMaster) => {
+    // Для job_seeker сразу открываем экран резюме
+    if (master.workerType === 'job_seeker') {
+      navigation.navigate('JobSeekerProfile', { masterId: master.id });
+    } else {
+      navigation.navigate('ProfessionalMasterProfile', { masterId: master.id });
+    }
   };
 
   const renderMasterCard = ({ item }: { item: ProfessionalMaster }) => (
     <ProfessionalMasterCard
       master={item}
-      onPress={() => handleMasterPress(item.id)}
+      onPress={() => handleMasterPress(item)}
     />
   );
 
@@ -98,9 +104,13 @@ export const ProfessionalMastersListScreen: React.FC = () => {
       <HeaderWithBack title={title} backAction={() => navigation.goBack()} />
 
       {isLoading && masters.length === 0 ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        </View>
+        <FlatList
+          data={[1, 2, 3, 4, 5]}
+          renderItem={() => <MasterCardSkeleton />}
+          keyExtractor={(item) => `skeleton-${item}`}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+        />
       ) : (
         <FlatList
           data={masters}
@@ -109,6 +119,18 @@ export const ProfessionalMastersListScreen: React.FC = () => {
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmptyState}
+          // Оптимизация производительности - виртуализация
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={50}
+          initialNumToRender={10}
+          windowSize={10}
+          // Оптимизация высоты элементов
+          getItemLayout={(data, index) => ({
+            length: 200, // Примерная высота карточки мастера
+            offset: 200 * index,
+            index,
+          })}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}

@@ -423,7 +423,7 @@ export const EditProfileScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F4F5FC" />
 
       <HeaderWithBack title={tWorker('edit_profile_title')} />
 
@@ -550,11 +550,11 @@ export const EditProfileScreen: React.FC = () => {
                   {tWorker('specializations_hint')}
                 </Text>
                 <View style={styles.specializationsContainer}>
-                  {specializations.map((spec) => {
+                  {specializations.map((spec, index) => {
                     const specializationData = getSpecializationById(spec.id);
                     return (
                       <TouchableOpacity
-                        key={spec.id}
+                        key={`spec-${spec.id}-${index}`}
                         style={[
                           styles.specChip,
                           spec.isPrimary && styles.specChipPrimary,
@@ -727,7 +727,7 @@ export const EditProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F4F5FC',
   },
   loadingContainer: {
     flex: 1,
@@ -882,7 +882,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 0, // Динамически устанавливается через getFixedBottomStyle
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F4F5FC',
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
     // Убираем тени для чистого вида

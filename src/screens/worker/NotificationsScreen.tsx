@@ -99,7 +99,7 @@ export const NotificationsScreen: React.FC = () => {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
+        <StatusBar barStyle="dark-content" backgroundColor="#F4F5FC" />
         <HeaderWithBack title={tWorker('settings_and_notifications')} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -111,7 +111,7 @@ export const NotificationsScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F4F5FC" />
       <HeaderWithBack title={tWorker('settings_and_notifications')} />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -177,7 +177,7 @@ export const NotificationsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F4F5FC',
   },
 
   scrollView: {
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 0, // Динамически устанавливается через getFixedBottomStyle
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F4F5FC',
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
     // Убираем тени для чистого вида

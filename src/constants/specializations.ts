@@ -422,7 +422,7 @@ export const SPECIALIZATIONS: SpecializationOption[] = [
     parentId: 'security',
   },
   {
-    id: 'it_security_specialist',
+    id: 'security_it_specialist',
     name: 'Специалист по информационной безопасности',
     icon: '🔒',
     parentId: 'security',
@@ -488,7 +488,7 @@ export const SPECIALIZATIONS: SpecializationOption[] = [
     parentId: 'senior_management',
   },
   {
-    id: 'logistics_head',
+    id: 'senior_logistics_head',
     name: 'Руководитель отдела логистики',
     icon: '🚚',
     parentId: 'senior_management',
@@ -500,7 +500,7 @@ export const SPECIALIZATIONS: SpecializationOption[] = [
     parentId: 'senior_management',
   },
   {
-    id: 'hr_head',
+    id: 'senior_hr_head',
     name: 'Руководитель отдела персонала',
     icon: '👔',
     parentId: 'senior_management',
@@ -518,7 +518,7 @@ export const SPECIALIZATIONS: SpecializationOption[] = [
     parentId: 'senior_management',
   },
   {
-    id: 'cfo',
+    id: 'senior_cfo',
     name: 'Финансовый директор (CFO)',
     icon: '💵',
     parentId: 'senior_management',

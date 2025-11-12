@@ -18,6 +18,7 @@ import ImageIcon from '../../../assets/image-03.svg';
 import { orderService } from '../../services/orderService';
 import { mediaService } from '../../services/mediaService';
 import { locationService, LocationCoords } from '../../services/locationService';
+import { authService } from '../../services/authService';
 import { UpdateOrderRequest, Order } from '../../types';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
@@ -95,6 +96,17 @@ export const EditOrderScreen: React.FC = () => {
         if (!orderData) {
           Alert.alert(t('error'), t('order_not_found'));
           navigation.goBack();
+          return;
+        }
+
+        // Проверяем, что заказ принадлежит текущему пользователю
+        const authState = authService.getAuthState();
+        if (!authState.isAuthenticated || !authState.user || orderData.customerId !== authState.user.id) {
+          Alert.alert(
+            t('error'),
+            t('cannot_edit_other_user_order'),
+            [{ text: t('ok'), onPress: () => navigation.goBack() }]
+          );
           return;
         }
 

@@ -28,6 +28,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StyleSheet } from 'react-native';
 import { Applicant, Order } from '../../types';
 import { useCustomerTranslation } from '../../hooks/useTranslation';
+import { ApplicantCardSkeleton } from '../../components/skeletons';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -594,9 +595,14 @@ export const ApplicantsListScreen: React.FC = () => {
       <View style={styles.container}>
         <SafeAreaView style={styles.content}>
           <HeaderWithBack title={t('applicants_list_title')} />
-          <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>{t('loading_applicants')}</Text>
-          </View>
+          <FlatList
+            data={[1, 2, 3, 4, 5]}
+            renderItem={() => <ApplicantCardSkeleton />}
+            keyExtractor={(item) => `skeleton-${item}`}
+            style={styles.applicantsList}
+            contentContainerStyle={styles.applicantsListContent}
+            showsVerticalScrollIndicator={false}
+          />
         </SafeAreaView>
       </View>
     );
@@ -636,6 +642,18 @@ export const ApplicantsListScreen: React.FC = () => {
           style={styles.applicantsList}
           contentContainerStyle={styles.applicantsListContent}
           showsVerticalScrollIndicator={false}
+          // Оптимизация производительности - виртуализация
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={50}
+          initialNumToRender={10}
+          windowSize={10}
+          // Оптимизация высоты элементов
+          getItemLayout={(data, index) => ({
+            length: 160, // Примерная высота карточки отклика
+            offset: 160 * index,
+            index,
+          })}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}

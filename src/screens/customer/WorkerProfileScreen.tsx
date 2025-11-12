@@ -20,7 +20,10 @@ import { WorkerProfile, Review } from '../../types';
 import { CustomerStackParamList } from '../../types/navigation';
 import { orderService } from '../../services/orderService';
 import UserIcon from '../../../assets/user-01.svg';
-import { useCustomerTranslation, useTranslation } from '../../hooks/useTranslation';
+import { useCustomerTranslation, useTranslation, useAuthTranslation } from '../../hooks/useTranslation';
+import { getSpecializationById, getTranslatedSpecializationNameSingular } from '../../constants/specializations';
+import CVBadge from '../../../assets/cv_badge.svg';
+import { CategoryIcon } from '../../components/common/CategoryIcon';
 
 // SVG иконка empty-state-no-reviews
 const emptyStateNoReviewsSvg = `<svg width="161" height="160" viewBox="0 0 161 160" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -84,6 +87,7 @@ export const WorkerProfileScreen: React.FC = () => {
   const { workerId, workerName } = route.params;
   const t = useCustomerTranslation();
   const { t: tCommon } = useTranslation();
+  const { t: tAuth } = useAuthTranslation();
 
   const [workerProfile, setWorkerProfile] = useState<WorkerProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -281,6 +285,94 @@ export const WorkerProfileScreen: React.FC = () => {
               </View>
             </View>
           </LinearGradient>
+
+          {/* Резюме для job_seeker */}
+          {workerProfile.workerType === 'job_seeker' && (
+            <View style={styles.resumeSection}>
+              <View style={styles.resumeHeader}>
+                <CVBadge width={40} height={20} style={styles.cvBadgeIcon} />
+                <Text style={styles.resumeTitle}>{tAuth('job_seeker_profile_title')}</Text>
+              </View>
+
+              {/* Специализации */}
+              {workerProfile.specializations && workerProfile.specializations.length > 0 && (
+                <View style={styles.resumeBlock}>
+                  <Text style={styles.resumeBlockTitle}>{tAuth('specialization_selection_title')}</Text>
+                  <View style={styles.specializationsContainer}>
+                    {workerProfile.specializations.map((spec, index) => {
+                      const specData = getSpecializationById(spec.id);
+                      return (
+                        <View key={spec.id} style={[styles.specializationChip, spec.isPrimary && styles.primarySpecializationChip]}>
+                          {specData?.iconComponent && (
+                            <CategoryIcon icon={specData.icon} iconComponent={specData.iconComponent} size={14} style={styles.chipIcon} />
+                          )}
+                          <Text style={[styles.specializationChipText, spec.isPrimary && styles.primarySpecializationChipText]}>
+                            {getTranslatedSpecializationNameSingular(spec.id, tCommon)}
+                          </Text>
+                          {spec.isPrimary && <Text style={styles.primaryLabel}>★</Text>}
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+
+              {/* Образование */}
+              {workerProfile.education && workerProfile.education.length > 0 && (
+                <View style={styles.resumeBlock}>
+                  <Text style={styles.resumeBlockTitle}>{tAuth('education_section')}</Text>
+                  {workerProfile.education.map((edu, index) => (
+                    <View key={index} style={styles.resumeItem}>
+                      <View style={styles.resumeItemHeader}>
+                        <Text style={styles.resumeItemTitle}>{edu.institution}</Text>
+                        {(edu.yearStart || edu.yearEnd) && (
+                          <Text style={styles.resumeItemYears}>
+                            {edu.yearStart || '?'} - {edu.yearEnd || 'н.в.'}
+                          </Text>
+                        )}
+                      </View>
+                      {edu.degree && <Text style={styles.resumeItemSubtitle}>{edu.degree}</Text>}
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* Опыт работы */}
+              {workerProfile.workExperience && workerProfile.workExperience.length > 0 && (
+                <View style={styles.resumeBlock}>
+                  <Text style={styles.resumeBlockTitle}>{tAuth('experience_section')}</Text>
+                  {workerProfile.workExperience.map((work, index) => (
+                    <View key={index} style={styles.resumeItem}>
+                      <View style={styles.resumeItemHeader}>
+                        <Text style={styles.resumeItemTitle}>{work.position}</Text>
+                        {(work.yearStart || work.yearEnd) && (
+                          <Text style={styles.resumeItemYears}>
+                            {work.yearStart || '?'} - {work.yearEnd || 'н.в.'}
+                          </Text>
+                        )}
+                      </View>
+                      <Text style={styles.resumeItemSubtitle}>{work.company}</Text>
+                      {work.description && <Text style={styles.resumeItemDescription}>{work.description}</Text>}
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* Навыки */}
+              {workerProfile.skills && workerProfile.skills.length > 0 && (
+                <View style={styles.resumeBlock}>
+                  <Text style={styles.resumeBlockTitle}>{tAuth('my_skills')}</Text>
+                  <View style={styles.skillsContainer}>
+                    {workerProfile.skills.map((skill, index) => (
+                      <View key={index} style={styles.skillChip}>
+                        <Text style={styles.skillChipText}>{skill}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+            </View>
+          )}
 
           {/* Отзывы */}
           <View style={styles.reviewsSection}>
@@ -534,5 +626,120 @@ const styles = StyleSheet.create({
     top: 55,
     left: '65%',
     transform: [{ rotate: '-167deg' }],
+  },
+
+  // Resume Section Styles
+  resumeSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+  },
+  resumeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  cvBadgeIcon: {
+    marginRight: 8,
+  },
+  resumeTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1A1A1A',
+  },
+  resumeBlock: {
+    marginBottom: 20,
+  },
+  resumeBlockTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 12,
+  },
+  specializationsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  specializationChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  primarySpecializationChip: {
+    backgroundColor: `${theme.colors.primary}15`,
+    borderColor: theme.colors.primary,
+  },
+  chipIcon: {
+    marginRight: 6,
+  },
+  specializationChipText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: theme.colors.text.primary,
+  },
+  primarySpecializationChipText: {
+    color: theme.colors.primary,
+    fontWeight: '600',
+  },
+  primaryLabel: {
+    fontSize: 14,
+    color: theme.colors.primary,
+    marginLeft: 4,
+  },
+  resumeItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  resumeItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 4,
+  },
+  resumeItemTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    flex: 1,
+    marginRight: 12,
+  },
+  resumeItemYears: {
+    fontSize: 12,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  resumeItemSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  resumeItemDescription: {
+    fontSize: 13,
+    color: '#6B7280',
+    lineHeight: 18,
+  },
+  skillsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  skillChip: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
+  },
+  skillChipText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#FFFFFF',
   },
 });

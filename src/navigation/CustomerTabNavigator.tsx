@@ -1,14 +1,15 @@
-import React from 'react';
-import { Text, Platform, TouchableOpacity, View } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Text, Platform, TouchableOpacity, View, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../constants';
 import { noElevationStyles } from '../utils/noShadowStyles';
 import { usePlatformSafeAreaInsets, getBottomTabBarStyle } from '../utils/safeAreaUtils';
 import { useNavigationTranslation } from '../hooks/useTranslation';
-import type { CustomerTabParamList } from '../types';
+import type { CustomerTabParamList, RootStackParamList } from '../types';
 import {
   CustomerHomeScreen,
-  CreateOrderStepByStepScreen,
   MyOrdersScreen,
   CustomerProfileScreen,
   CategoriesScreen
@@ -17,19 +18,21 @@ import {
   AnimatedTabIcon,
   withAnimatedTabScreen,
 } from '../components/common';
+import { FloatingTabBar } from '../components/navigation';
+import { AuthRequiredModal } from '../components/auth/AuthRequiredModal';
+import { authService } from '../services/authService';
 import HomeIcon from '../../assets/home-02.svg';
 import CategoryIcon from '../../assets/card-icons/category.svg';
 import MyOrdersIcon from '../../assets/file-02.svg';
 import ProfileIcon from '../../assets/user-01.svg';
-import PlusSquareIcon from '../../assets/plus-square.svg';
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const Tab = createBottomTabNavigator<CustomerTabParamList>();
 
 // Создаем анимированные версии экранов
 const AnimatedCustomerHomeScreen = withAnimatedTabScreen(CustomerHomeScreen);
 const AnimatedCategoriesScreen = withAnimatedTabScreen(CategoriesScreen);
-// Убираем анимированную обертку для экрана создания заказа, так как у него есть собственные анимации
-const AnimatedCreateOrderScreen = CreateOrderStepByStepScreen;
 const AnimatedMyOrdersScreen = withAnimatedTabScreen(MyOrdersScreen);
 const AnimatedCustomerProfileScreen = withAnimatedTabScreen(CustomerProfileScreen);
 
@@ -37,170 +40,226 @@ export function CustomerTabNavigator() {
   const insets = usePlatformSafeAreaInsets();
   const tabBarStyle = getBottomTabBarStyle(insets);
   const t = useNavigationTranslation();
+  const navigation = useNavigation<NavigationProp>();
+  const [isAuthModalVisible, setIsAuthModalVisible] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const checkAuth = (): boolean => {
+    const authState = authService.getAuthState();
+    return authState.isAuthenticated && !!authState.user;
+  };
+
+  // Отслеживаем изменения авторизации
+  useEffect(() => {
+    const updateAuthState = () => {
+      const authStatus = checkAuth();
+      setIsAuthenticated(authStatus);
+    };
+
+    // Проверяем при монтировании
+    updateAuthState();
+
+    // Проверяем каждые 500ms для отслеживания изменений
+    const interval = setInterval(updateAuthState, 500);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleAuthModalClose = () => {
+    setIsAuthModalVisible(false);
+  };
 
   return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: '#1a1a1a',
-        tabBarStyle: {
-          backgroundColor: '#fff',
-          borderTopWidth: 0,
-          // Легкая тень для меню бара
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-          elevation: 8,
-          paddingTop: Platform.OS === 'android' ? 12 : theme.spacing.sm,
-          justifyContent: 'center',
-          overflow: 'visible',
-          ...tabBarStyle, // Применяем стили с учетом платформы в конце
-          // Переопределяем высоту для Android, чтобы кнопка выпирала
-          ...(Platform.OS === 'android' && { height: 80 + (tabBarStyle.paddingBottom || 20) }),
-        },
-        tabBarLabelStyle: {
-          fontSize: theme.fonts.sizes.sm,
-          fontWeight: theme.fonts.weights.medium,
-          marginBottom: 0,
-          marginTop: theme.spacing.xs,
-        },
-        tabBarIconStyle: {
-          marginBottom: 0,
-        },
-        // Отключаем ripple эффект на Android
-        tabBarButton: Platform.OS === 'android' ? (props: any) => (
-          <TouchableOpacity
-            {...props}
-            activeOpacity={0.8}
-            style={[props.style, { overflow: 'hidden' }]}
-          />
-        ) : undefined,
-      }}
-    >
-      <Tab.Screen
-        name="Home"
-        component={AnimatedCustomerHomeScreen}
-        options={{
-          tabBarLabel: ({ focused, color }) => (
-            <Text style={{
-              color,
-              fontSize: 11,
-              fontWeight: theme.fonts.weights.medium
-            }}>
-              {t('home')}
-            </Text>
-          ),
-          tabBarIcon: ({ color, size, focused }) => (
-            <AnimatedTabIcon focused={focused} color={color}>
-              <HomeIcon
-                width={25}
-                height={25}
-                color={focused ? color : '#1a1a1a'}
-              />
-            </AnimatedTabIcon>
-          ),
+    <>
+      <Tab.Navigator
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: theme.colors.primary,
+          tabBarInactiveTintColor: '#666',
+          tabBarStyle: {
+            position: 'absolute',
+            backgroundColor: 'transparent',
+            borderTopWidth: 0,
+            elevation: 0,
+            shadowOpacity: 0,
+          },
+          tabBarBackground: () => <View style={{ flex: 1 }} />,
+          // Светло-синий фон для всех экранов табов
+          sceneStyle: { backgroundColor: '#F4F5FC' },
         }}
+        tabBar={(props) => (
+          <FloatingTabBar>
+            {props.state.routes
+              .filter((route) => {
+                // Скрываем "Мои заказы" для неавторизованных пользователей
+                if (route.name === 'MyOrders' && !isAuthenticated) {
+                  return false;
+                }
+                return true;
+              })
+              .map((route, index) => {
+                const { options } = props.descriptors[route.key];
+                const actualIndex = props.state.routes.indexOf(route);
+                const isFocused = props.state.index === actualIndex;
+
+                const onPress = () => {
+                  // Проверяем, если это таб "Profile" и пользователь не авторизован
+                  if (route.name === 'Profile' && !checkAuth()) {
+                    console.log('[CustomerTabNavigator] 🔒 Попытка открыть профиль без авторизации');
+                    setIsAuthModalVisible(true);
+                    return;
+                  }
+
+                  const event = props.navigation.emit({
+                    type: 'tabPress',
+                    target: route.key,
+                    canPreventDefault: true,
+                  });
+
+                  if (!isFocused && !event.defaultPrevented) {
+                    props.navigation.navigate(route.name);
+                  }
+                };
+
+              // Обычные табы
+              return (
+                <TouchableOpacity
+                  key={route.key}
+                  accessibilityRole="button"
+                  accessibilityState={isFocused ? { selected: true } : {}}
+                  accessibilityLabel={options.tabBarAccessibilityLabel}
+                  testID={options.tabBarTestID}
+                  onPress={onPress}
+                  style={styles.tabButton}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.tabContent}>
+                    {options.tabBarIcon && options.tabBarIcon({
+                      focused: isFocused,
+                      color: isFocused ? theme.colors.primary : '#666',
+                      size: 24,
+                    })}
+                    {options.tabBarLabel && typeof options.tabBarLabel === 'function' && (
+                      options.tabBarLabel({
+                        focused: isFocused,
+                        color: isFocused ? theme.colors.primary : '#666',
+                        position: 'below-icon',
+                        children: route.name,
+                      })
+                    )}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </FloatingTabBar>
+        )}
+      >
+        <Tab.Screen
+          name="Home"
+          component={AnimatedCustomerHomeScreen}
+          options={{
+            tabBarLabel: ({ focused, color }) => (
+              <Text style={[styles.tabLabel, { color }]}>
+                {t('home')}
+              </Text>
+            ),
+            tabBarIcon: ({ color, size, focused }) => (
+              <AnimatedTabIcon focused={focused} color={color}>
+                <HomeIcon
+                  width={25}
+                  height={25}
+                  color={color}
+                />
+              </AnimatedTabIcon>
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Categories"
+          component={AnimatedCategoriesScreen}
+          options={{
+            tabBarLabel: ({ focused, color }) => (
+              <Text style={[styles.tabLabel, { color }]}>
+                {t('categories')}
+              </Text>
+            ),
+            tabBarIcon: ({ color, size, focused }) => (
+              <AnimatedTabIcon focused={focused} color={color}>
+                <CategoryIcon
+                  width={25}
+                  height={25}
+                  color={color}
+                />
+              </AnimatedTabIcon>
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="MyOrders"
+          component={AnimatedMyOrdersScreen}
+          options={{
+            tabBarLabel: ({ focused, color }) => (
+              <Text style={[styles.tabLabel, { color }]}>
+                {t('my_orders')}
+              </Text>
+            ),
+            tabBarIcon: ({ color, size, focused }) => (
+              <AnimatedTabIcon focused={focused} color={color}>
+                <MyOrdersIcon
+                  width={25}
+                  height={25}
+                  color={color}
+                />
+              </AnimatedTabIcon>
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Profile"
+          component={AnimatedCustomerProfileScreen}
+          options={{
+            tabBarLabel: ({ focused, color }) => (
+              <Text style={[styles.tabLabel, { color }]}>
+                {t('profile')}
+              </Text>
+            ),
+            tabBarIcon: ({ color, size, focused }) => (
+              <AnimatedTabIcon focused={focused} color={color}>
+                <ProfileIcon
+                  width={25}
+                  height={25}
+                  color={color}
+                />
+              </AnimatedTabIcon>
+            ),
+          }}
+        />
+      </Tab.Navigator>
+
+      {/* Bottom Sheet для авторизации */}
+      <AuthRequiredModal
+        visible={isAuthModalVisible}
+        onClose={handleAuthModalClose}
+        message={t('profile_auth_message')}
       />
-      <Tab.Screen
-        name="Categories"
-        component={AnimatedCategoriesScreen}
-        options={{
-          tabBarLabel: ({ focused, color }) => (
-            <Text style={{
-              color,
-              fontSize: 11,
-              fontWeight: theme.fonts.weights.medium
-            }}>
-              {t('categories')}
-            </Text>
-          ),
-          tabBarIcon: ({ color, size, focused }) => (
-            <AnimatedTabIcon focused={focused} color={color}>
-              <CategoryIcon
-                width={25}
-                height={25}
-                color={focused ? color : '#1a1a1a'}
-              />
-            </AnimatedTabIcon>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="CreateOrder"
-        component={AnimatedCreateOrderScreen}
-        options={{
-          tabBarLabel: () => null,
-          tabBarIcon: ({ focused }) => (
-            <View style={{
-              position: 'absolute',
-              top: Platform.OS === 'android' ? 0 : -5,
-              width: 56,
-              height: 56,
-              borderRadius: 28,
-              backgroundColor: theme.colors.primary,
-              justifyContent: 'center',
-              alignItems: 'center',
-              shadowColor: theme.colors.primary,
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 2,
-              elevation: 2,
-            }}>
-              <PlusSquareIcon width={28} height={28} color="#FFFFFF" />
-            </View>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="MyOrders"
-        component={AnimatedMyOrdersScreen}
-        options={{
-          tabBarLabel: ({ focused, color }) => (
-            <Text style={{
-              color,
-              fontSize: 11,
-              fontWeight: theme.fonts.weights.medium
-            }}>
-              {t('my_orders')}
-            </Text>
-          ),
-          tabBarIcon: ({ color, size, focused }) => (
-            <AnimatedTabIcon focused={focused} color={color}>
-              <MyOrdersIcon
-                width={25}
-                height={25}
-                color={focused ? color : '#1a1a1a'}
-              />
-            </AnimatedTabIcon>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Profile"
-        component={AnimatedCustomerProfileScreen}
-        options={{
-          tabBarLabel: ({ focused, color }) => (
-            <Text style={{
-              color,
-              fontSize: 11,
-              fontWeight: theme.fonts.weights.medium
-            }}>
-              {t('profile')}
-            </Text>
-          ),
-          tabBarIcon: ({ color, size, focused }) => (
-            <AnimatedTabIcon focused={focused} color={color}>
-              <ProfileIcon
-                width={25}
-                height={25}
-                color={focused ? color : '#1a1a1a'}
-              />
-            </AnimatedTabIcon>
-          ),
-        }}
-      />
-    </Tab.Navigator>
+    </>
   );
-} 
+}
+
+const styles = StyleSheet.create({
+  tabButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+  },
+  tabContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabLabel: {
+    fontSize: 11,
+    fontWeight: theme.fonts.weights.medium as any,
+    marginTop: 4,
+  },
+}); 

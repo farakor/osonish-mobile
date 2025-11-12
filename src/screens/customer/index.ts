@@ -1,5 +1,6 @@
 export { CustomerHomeScreen } from './CustomerHomeScreen';
 export { CreateOrderStepByStepScreen } from './CreateOrderStepByStepScreen';
+export { CreateVacancyStepByStepScreen } from './CreateVacancyStepByStepScreen';
 export { EditOrderScreen } from './EditOrderScreen';
 export { MyOrdersScreen } from './MyOrdersScreen';
 export { CustomerProfileScreen } from './CustomerProfileScreen';
@@ -8,9 +9,11 @@ export { NotificationsScreen } from './NotificationsScreen';
 export { NotificationsListScreen } from './NotificationsListScreen';
 export { SupportScreen } from './SupportScreen';
 export { OrderDetailsScreen } from './OrderDetailsScreen';
+export { VacancyDetailsCustomerScreen } from './VacancyDetailsCustomerScreen';
 export { ApplicantsListScreen } from './ApplicantsListScreen';
 export { WorkerProfileScreen } from './WorkerProfileScreen';
 export { RatingScreen } from './RatingScreen';
 export { ProfessionalMastersListScreen } from './ProfessionalMastersListScreen';
 export { ProfessionalMasterProfileScreen } from './ProfessionalMasterProfileScreen';
+export { JobSeekerProfileScreen } from './JobSeekerProfileScreen';
 export { CategoriesScreen } from './CategoriesScreen'; 

@@ -2,7 +2,7 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { CustomerStackParamList } from '../types/navigation';
 import { CustomerTabNavigator } from './CustomerTabNavigator';
-import { OrderDetailsScreen, EditOrderScreen, EditProfileScreen, NotificationsScreen, NotificationsListScreen, SupportScreen, ApplicantsListScreen, RatingScreen, WorkerProfileScreen, ProfessionalMastersListScreen, ProfessionalMasterProfileScreen, CategoriesScreen } from '../screens/customer';
+import { OrderDetailsScreen, EditOrderScreen, EditProfileScreen, NotificationsScreen, NotificationsListScreen, SupportScreen, ApplicantsListScreen, RatingScreen, WorkerProfileScreen, ProfessionalMastersListScreen, ProfessionalMasterProfileScreen, JobSeekerProfileScreen, CategoriesScreen, CreateOrderStepByStepScreen, CreateVacancyStepByStepScreen, VacancyDetailsCustomerScreen } from '../screens/customer';
 import { DocumentWebViewScreen } from '../screens/shared';
 
 const Stack = createNativeStackNavigator<CustomerStackParamList>();
@@ -12,6 +12,7 @@ export function CustomerStackNavigator() {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
+        contentStyle: { backgroundColor: '#F4F5FC' }, // Светло-синий фон
       }}
     >
       <Stack.Screen
@@ -21,6 +22,13 @@ export function CustomerStackNavigator() {
       <Stack.Screen
         name="OrderDetails"
         component={OrderDetailsScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="VacancyDetailsCustomer"
+        component={VacancyDetailsCustomerScreen}
         options={{
           presentation: 'card',
         }}
@@ -61,8 +69,29 @@ export function CustomerStackNavigator() {
         }}
       />
       <Stack.Screen
+        name="JobSeekerProfile"
+        component={JobSeekerProfileScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
         name="Categories"
         component={CategoriesScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="CreateOrder"
+        component={CreateOrderStepByStepScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="CreateVacancy"
+        component={CreateVacancyStepByStepScreen}
         options={{
           presentation: 'card',
         }}

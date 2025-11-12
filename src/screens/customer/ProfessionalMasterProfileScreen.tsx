@@ -36,6 +36,9 @@ import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
 import EmptyStateNoReviews from '../../../assets/empty-state-no-reviews.svg';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
+import { ProfessionalMasterProfileSkeleton } from '../../components/skeletons';
+import { useRequireAuth } from '../../hooks/useRequireAuth';
+import { AuthRequiredModal } from '../../components/auth/AuthRequiredModal';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -57,6 +60,9 @@ export const ProfessionalMasterProfileScreen: React.FC = () => {
   const route = useRoute<ScreenRouteProp>();
   const { masterId } = route.params;
   const { t } = useTranslation();
+  
+  // Hook для проверки авторизации
+  const { requireAuth, isAuthModalVisible, hideAuthModal } = useRequireAuth();
 
   const [master, setMaster] = useState<ProfessionalMaster | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -70,14 +76,25 @@ export const ProfessionalMasterProfileScreen: React.FC = () => {
 
   const loadMaster = async () => {
     try {
-      setIsLoading(true);
+      // Быстро загружаем данные чтобы проверить тип
       const data = await professionalMasterService.getMasterById(masterId);
       console.log('[ProfessionalMasterProfile] Загружен мастер:', {
         id: data?.id,
         name: data ? `${data.firstName} ${data.lastName}` : null,
+        workerType: data?.workerType,
         workPhotos: data?.workPhotos,
         workPhotosLength: data?.workPhotos?.length || 0,
       });
+
+      // Если это job_seeker, перенаправляем на специальный экран резюме
+      if (data && data.workerType === 'job_seeker') {
+        console.log('[ProfessionalMasterProfile] Перенаправление на JobSeekerProfileScreen');
+        navigation.replace('JobSeekerProfile', { masterId });
+        return;
+      }
+
+      // Только теперь показываем загрузку для правильного типа
+      setIsLoading(true);
       setMaster(data);
 
       // Загружаем отзывы о мастере
@@ -99,56 +116,58 @@ export const ProfessionalMasterProfileScreen: React.FC = () => {
 
   const handleCall = () => {
     if (!master) return;
+    
+    requireAuth(async () => {
+      Alert.alert(
+        t('customer.call_master_title'),
+        t('customer.call_master_message', { phone: master.phone }),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('customer.call_master'),
+            onPress: async () => {
+              try {
+                // Логируем звонок перед открытием диалера
+                const authState = authService.getAuthState();
+                if (master && authState.user) {
+                  console.log('[ProfessionalMasterProfile] 📞 Логируем звонок мастеру');
+                  await orderService.logCallAttemptWithoutOrder({
+                    callerId: authState.user.id,
+                    receiverId: master.id, // Используем master.id, а не master.userId
+                    callerType: 'customer',
+                    receiverType: 'worker',
+                    phoneNumber: master.phone,
+                    callSource: 'professional_profile'
+                  });
+                  console.log('[ProfessionalMasterProfile] ✅ Звонок успешно залогирован');
+                } else {
+                  console.warn('[ProfessionalMasterProfile] ⚠️ Не удалось залогировать звонок - отсутствуют данные');
+                }
 
-    Alert.alert(
-      t('customer.call_master_title'),
-      t('customer.call_master_message', { phone: master.phone }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('customer.call_master'),
-          onPress: async () => {
-            try {
-              // Логируем звонок перед открытием диалера
-              const authState = authService.getAuthState();
-              if (master && authState.user) {
-                console.log('[ProfessionalMasterProfile] 📞 Логируем звонок мастеру');
-                await orderService.logCallAttemptWithoutOrder({
-                  callerId: authState.user.id,
-                  receiverId: master.id, // Используем master.id, а не master.userId
-                  callerType: 'customer',
-                  receiverType: 'worker',
-                  phoneNumber: master.phone,
-                  callSource: 'professional_profile'
-                });
-                console.log('[ProfessionalMasterProfile] ✅ Звонок успешно залогирован');
-              } else {
-                console.warn('[ProfessionalMasterProfile] ⚠️ Не удалось залогировать звонок - отсутствуют данные');
+                // Открываем диалер
+                const phoneUrl = `tel:${master.phone}`;
+                const canOpen = await Linking.canOpenURL(phoneUrl);
+                if (canOpen) {
+                  await Linking.openURL(phoneUrl);
+                } else {
+                  Alert.alert(t('common.error'), t('customer.call_error'));
+                }
+              } catch (error) {
+                console.error('[ProfessionalMasterProfile] ❌ Ошибка при звонке:', error);
+                // Все равно пытаемся открыть диалер
+                const phoneUrl = `tel:${master.phone}`;
+                const canOpen = await Linking.canOpenURL(phoneUrl);
+                if (canOpen) {
+                  await Linking.openURL(phoneUrl);
+                } else {
+                  Alert.alert(t('common.error'), t('customer.call_error'));
+                }
               }
-
-              // Открываем диалер
-              const phoneUrl = `tel:${master.phone}`;
-              const canOpen = await Linking.canOpenURL(phoneUrl);
-              if (canOpen) {
-                await Linking.openURL(phoneUrl);
-              } else {
-                Alert.alert(t('common.error'), t('customer.call_error'));
-              }
-            } catch (error) {
-              console.error('[ProfessionalMasterProfile] ❌ Ошибка при звонке:', error);
-              // Все равно пытаемся открыть диалер
-              const phoneUrl = `tel:${master.phone}`;
-              const canOpen = await Linking.canOpenURL(phoneUrl);
-              if (canOpen) {
-                await Linking.openURL(phoneUrl);
-              } else {
-                Alert.alert(t('common.error'), t('customer.call_error'));
-              }
-            }
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    });
   };
 
   const handleShare = async () => {
@@ -232,14 +251,7 @@ export const ProfessionalMasterProfileScreen: React.FC = () => {
   );
 
   if (isLoading) {
-    return (
-      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-        <HeaderWithBack title={t('customer.professional_master_profile')} backAction={() => navigation.goBack()} />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        </View>
-      </SafeAreaView>
-    );
+    return <ProfessionalMasterProfileSkeleton />;
   }
 
   if (!master) {
@@ -350,11 +362,11 @@ export const ProfessionalMasterProfileScreen: React.FC = () => {
                   style={styles.specializationsRow}
                   contentContainerStyle={styles.specializationsRowContent}
                 >
-                  {rowSpecs.map((spec) => {
+                  {rowSpecs.map((spec, specIndex) => {
                     const specializationData = getSpecializationById(spec.id);
                     return (
                       <View
-                        key={spec.id}
+                        key={`${spec.id}-${startIndex + specIndex}`}
                         style={[
                           styles.specChip,
                           spec.isPrimary && styles.specChipPrimary,
@@ -495,6 +507,13 @@ export const ProfessionalMasterProfileScreen: React.FC = () => {
           )}
         </View>
       </Modal>
+      
+      {/* Auth Required Modal */}
+      <AuthRequiredModal 
+        visible={isAuthModalVisible}
+        onClose={hideAuthModal}
+        message={t('customer.call_master_auth_message')}
+      />
     </ViewShot>
   );
 };
@@ -502,19 +521,19 @@ export const ProfessionalMasterProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F4F5FC',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F4F5FC',
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F4F5FC',
   },
   errorText: {
     fontSize: theme.fonts.sizes.lg,

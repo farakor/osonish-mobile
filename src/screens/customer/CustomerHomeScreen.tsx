@@ -27,12 +27,17 @@ import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
 import { notificationService } from '../../services/notificationService';
 import { ModernOrderCard } from '../../components/cards';
+import { VacancyCard } from '../../components/vacancy';
+import { FloatingCreateButton, SortModal, SortOption } from '../../components/common';
+import { AuthRequiredModal } from '../../components/auth/AuthRequiredModal';
 import { useCustomerTranslation, useCategoriesTranslation } from '../../hooks/useTranslation';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Order } from '../../types';
 import { getSpecializationIconComponent } from '../../constants/specializations';
 import { getCityName, getAllCities } from '../../utils/cityUtils';
+import { OrderCardSkeleton } from '../../components/skeletons';
+import { useCustomerHomeData } from '../../hooks/queries';
 
 // Функция для получения высоты статусбара только на Android
 const getAndroidStatusBarHeight = () => {
@@ -42,7 +47,6 @@ const getAndroidStatusBarHeight = () => {
 const RESPONSE_NOTIFICATION_KEY = '@response_notification_dismissed';
 
 export const CustomerHomeScreen: React.FC = () => {
-  const [availableOrders, setAvailableOrders] = useState<any[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSpecialization, setSelectedSpecialization] = useState<string | null>('all');
@@ -50,15 +54,38 @@ export const CustomerHomeScreen: React.FC = () => {
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [showResponseNotification, setShowResponseNotification] = useState(false);
   const [hasOrdersWithResponses, setHasOrdersWithResponses] = useState(false);
+  const [isAuthModalVisible, setIsAuthModalVisible] = useState(false);
+  const [isJobTypeModalVisible, setIsJobTypeModalVisible] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>('date');
+  const [isSortModalVisible, setIsSortModalVisible] = useState(false);
   const navigation = useNavigation<BottomTabNavigationProp<CustomerTabParamList> & NativeStackNavigationProp<CustomerStackParamList>>();
   const t = useCustomerTranslation();
   const tCategories = useCategoriesTranslation();
   const { t: tCommon } = useTranslation();
+
+  // ✨ Parallel fetching - загружает заказы и счетчик уведомлений ОДНОВРЕМЕННО
+  const authState = authService.getAuthState();
+  const userId = authState.user?.id || '';
+  
+  const {
+    orders: availableOrders,
+    unreadCount,
+    isLoading,
+    refetchAll,
+  } = useCustomerHomeData(userId);
+
+  const [refreshing, setRefreshing] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Инициализация filteredOrders один раз при загрузке данных
+  useEffect(() => {
+    if (availableOrders.length > 0 && !isInitialized) {
+      setFilteredOrders(availableOrders.slice(0, 10));
+      setIsInitialized(true);
+    }
+  }, [availableOrders, isInitialized]);
 
   // Функция для проверки заказов с откликами
   const checkOrdersWithResponses = useCallback(async () => {
@@ -88,39 +115,12 @@ export const CustomerHomeScreen: React.FC = () => {
     }
   }, []);
 
-  // Функция для загрузки уведомлений и доступных заказов
-  const loadData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-
-      // Загружаем количество непрочитанных уведомлений
-      const authState = authService.getAuthState();
-      if (authState.isAuthenticated && authState.user) {
-        const count = await notificationService.getUnreadNotificationsCount(authState.user.id);
-        setUnreadCount(count);
-
-        // Загружаем доступные заказы (включая собственные)
-        const orders = await orderService.getAvailableOrdersForWorker();
-        console.log('[CustomerHomeScreen] Загружено доступных заказов:', orders.length);
-        setAvailableOrders(orders);
-        setFilteredOrders(orders.slice(0, 10)); // Показываем первые 10 заказов
-
-        // Проверяем заказы с откликами
-        await checkOrdersWithResponses();
-      }
-    } catch (error) {
-      console.error('Ошибка загрузки данных:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [checkOrdersWithResponses]);
-
   // Функция для обновления списка (pull-to-refresh)
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadData();
+    await Promise.all([refetchAll(), checkOrdersWithResponses()]);
     setRefreshing(false);
-  }, [loadData]);
+  }, [refetchAll, checkOrdersWithResponses]);
 
   // Мемоизируем специализации из существующих заказов
   const availableSpecializations = useMemo(() => {
@@ -147,7 +147,7 @@ export const CustomerHomeScreen: React.FC = () => {
     ];
 
     return specializationsWithCounts;
-  }, [availableOrders, t, tCategories]);
+  }, [availableOrders.length, t, tCategories]);
 
   // Мемоизируем города из существующих заказов
   const availableCities = useMemo(() => {
@@ -172,11 +172,14 @@ export const CustomerHomeScreen: React.FC = () => {
     ];
 
     return citiesWithCounts;
-  }, [availableOrders, t]);
+  }, [availableOrders.length, t]);
 
-  // Фильтрация по специализации и поиску
-  useEffect(() => {
-    let filtered = availableOrders;
+  // Фильтрация по специализации и поиску с мемоизацией
+  const filteredOrdersMemo = useMemo(() => {
+    // Пропускаем если данные еще не загружены
+    if (availableOrders.length === 0) return [];
+
+    let filtered = [...availableOrders]; // Создаем копию один раз
 
     // Фильтр по специализации
     if (selectedSpecialization && selectedSpecialization !== 'all') {
@@ -192,15 +195,33 @@ export const CustomerHomeScreen: React.FC = () => {
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(order => {
-        const matchesTitle = order.title.toLowerCase().includes(query);
-        const matchesDescription = order.description.toLowerCase().includes(query);
+        const matchesTitle = order.title?.toLowerCase().includes(query);
+        const matchesDescription = order.description?.toLowerCase().includes(query);
         const matchesLocation = order.location?.toLowerCase().includes(query);
         return matchesTitle || matchesDescription || matchesLocation;
       });
     }
 
-    setFilteredOrders(filtered.slice(0, 10));
-  }, [availableOrders, searchQuery, selectedSpecialization, selectedCity]);
+    // Сортировка
+    if (sortBy === 'date') {
+      filtered.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA; // От новых к старым
+      });
+    } else if (sortBy === 'views') {
+      filtered.sort((a, b) => (b.viewsCount || 0) - (a.viewsCount || 0)); // От большего к меньшему
+    } else if (sortBy === 'price') {
+      filtered.sort((a, b) => (b.budget || 0) - (a.budget || 0)); // От большего к меньшему
+    }
+
+    return filtered.slice(0, 10);
+  }, [availableOrders.length, searchQuery, selectedSpecialization, selectedCity, sortBy]);
+
+  // Синхронизируем мемоизированные данные с локальным состоянием
+  useEffect(() => {
+    setFilteredOrders(filteredOrdersMemo);
+  }, [filteredOrdersMemo]);
 
   // Проверяем заказы, требующие оценки
   const checkPendingRatings = useCallback(async () => {
@@ -238,12 +259,13 @@ export const CustomerHomeScreen: React.FC = () => {
     }
   }, [navigation]);
 
-  // Загружаем данные при первом открытии и при фокусе на экране
+  // Проверяем заказы, требующие оценки и проверяем отклики при фокусе
   useFocusEffect(
     useCallback(() => {
-      loadData();
+      // Не перезагружаем данные при каждом фокусе, только проверяем статусы
       checkPendingRatings();
-    }, [loadData, checkPendingRatings])
+      checkOrdersWithResponses();
+    }, [checkPendingRatings, checkOrdersWithResponses])
   );
 
   // Функция закрытия модалки
@@ -272,9 +294,13 @@ export const CustomerHomeScreen: React.FC = () => {
     navigation.navigate('NotificationsList');
   };
 
-  const handleOrderPress = (orderId: string) => {
-    // Переходим к экрану деталей заказа
-    navigation.navigate('OrderDetails', { orderId });
+  const handleOrderPress = (order: any) => {
+    // Переходим к экрану деталей заказа или вакансии в зависимости от типа
+    if (order.type === 'vacancy') {
+      navigation.navigate('VacancyDetailsCustomer', { vacancyId: order.id });
+    } else {
+      navigation.navigate('OrderDetails', { orderId: order.id });
+    }
   };
 
   const handleViewAllOrders = () => {
@@ -283,8 +309,17 @@ export const CustomerHomeScreen: React.FC = () => {
     navigation.navigate('MyOrders');
   };
 
+  // Устанавливаем фон статус бара на Android
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      StatusBar.setBackgroundColor('#F4F5FC', true);
+      StatusBar.setBarStyle('dark-content', true);
+    }
+  }, []);
+
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F4F5FC" />
       <SafeAreaView style={styles.content} edges={['top', 'left', 'right']}>
         {/* Header with search and notifications */}
         <View style={[styles.header, { paddingTop: theme.spacing.lg + getAndroidStatusBarHeight() }]}>
@@ -295,6 +330,10 @@ export const CustomerHomeScreen: React.FC = () => {
               placeholderTextColor={theme.colors.text.secondary}
               value={searchQuery}
               onChangeText={setSearchQuery}
+              {...(Platform.OS === 'android' && {
+                includeFontPadding: false,
+                textAlignVertical: 'center' as const,
+              })}
             />
             <TouchableOpacity
               style={styles.filterButton}
@@ -325,11 +364,23 @@ export const CustomerHomeScreen: React.FC = () => {
 
         {/* Main Content */}
         {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>{t('loading_data')}</Text>
-          </View>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.availableOrdersSection}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionHeaderTitle}>{t('available_orders_section')}</Text>
+              </View>
+              {[1, 2, 3, 4, 5].map((item) => (
+                <OrderCardSkeleton key={`skeleton-${item}`} />
+              ))}
+            </View>
+          </ScrollView>
         ) : (
           <ScrollView
+            style={styles.scrollView}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             refreshControl={
@@ -346,19 +397,36 @@ export const CustomerHomeScreen: React.FC = () => {
               <View style={styles.availableOrdersSection}>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionHeaderTitle}>{t('available_orders_section')}</Text>
-                  <TouchableOpacity onPress={handleViewAllOrders} style={styles.viewAllButton}>
-                    <Text style={styles.viewAllText}>{t('view_all_orders')}</Text>
-                    <ArrowNarrowRight width={18} height={18} style={styles.viewAllIcon} />
+                  <TouchableOpacity 
+                    onPress={() => setIsSortModalVisible(true)} 
+                    style={styles.sortButton}
+                  >
+                    <Text style={styles.sortButtonText}>{t('sort_by')}</Text>
+                    <ChevronDownIcon 
+                      width={16} 
+                      height={16} 
+                      style={styles.sortChevron} 
+                    />
                   </TouchableOpacity>
                 </View>
+                
                 {filteredOrders.map((order) => (
-                  <ModernOrderCard
-                    key={order.id}
-                    order={order}
-                    onPress={() => handleOrderPress(order.id)}
-                    showApplicantsCount={true}
-                    showCreateTime={false}
-                  />
+                  order.type === 'vacancy' ? (
+                    <VacancyCard
+                      key={order.id}
+                      vacancy={order}
+                      onPress={() => handleOrderPress(order)}
+                    />
+                  ) : (
+                    <ModernOrderCard
+                      key={order.id}
+                      order={order}
+                      onPress={() => handleOrderPress(order)}
+                      showApplicantsCount={true}
+                      showCreateTime={false}
+                      currentUserId={userId}
+                    />
+                  )
                 ))}
               </View>
             )}
@@ -578,6 +646,99 @@ export const CustomerHomeScreen: React.FC = () => {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Floating Action Button */}
+      <FloatingCreateButton 
+        onPress={() => {
+          const authState = authService.getAuthState();
+          if (authState.isAuthenticated && authState.user) {
+            // Пользователь авторизован - показываем выбор типа работы
+            setIsJobTypeModalVisible(true);
+          } else {
+            // Пользователь не авторизован - показываем Bottom Sheet
+            console.log('[CustomerHomeScreen] 🔒 Попытка создать заказ без авторизации');
+            setIsAuthModalVisible(true);
+          }
+        }}
+      />
+
+      {/* Job Type Selection Modal */}
+      <Modal
+        visible={isJobTypeModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsJobTypeModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsJobTypeModalVisible(false)}
+        >
+          <View style={styles.jobTypeModalContent}>
+            <Text style={styles.jobTypeModalTitle}>Выберите тип работы</Text>
+            
+            <TouchableOpacity
+              style={styles.jobTypeOption}
+              onPress={() => {
+                setIsJobTypeModalVisible(false);
+                navigation.navigate('CreateOrder');
+              }}
+            >
+              <View style={styles.jobTypeOptionContent}>
+                <Text style={styles.jobTypeOptionTitle}>Дневная работа</Text>
+                <Text style={styles.jobTypeOptionDescription}>
+                  Разовые задачи, работа на один день
+                </Text>
+              </View>
+              <ArrowNarrowRight width={24} height={24} color={theme.colors.primary} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.jobTypeOption}
+              onPress={() => {
+                setIsJobTypeModalVisible(false);
+                navigation.navigate('CreateVacancy');
+              }}
+            >
+              <View style={styles.jobTypeOptionContent}>
+                <Text style={styles.jobTypeOptionTitle}>Вакансия</Text>
+                <Text style={styles.jobTypeOptionDescription}>
+                  Постоянная работа, долгосрочная вакансия
+                </Text>
+              </View>
+              <ArrowNarrowRight width={24} height={24} color={theme.colors.primary} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.jobTypeModalCancel}
+              onPress={() => setIsJobTypeModalVisible(false)}
+            >
+              <Text style={styles.jobTypeModalCancelText}>Отмена</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Auth Required Modal */}
+      <AuthRequiredModal
+        visible={isAuthModalVisible}
+        onClose={() => setIsAuthModalVisible(false)}
+        message={t('create_order_auth_message')}
+      />
+
+      {/* Sort Modal */}
+      <SortModal
+        visible={isSortModalVisible}
+        onClose={() => setIsSortModalVisible(false)}
+        currentSort={sortBy}
+        onSelectSort={setSortBy}
+        translations={{
+          title: t('sort_by'),
+          sortByDate: t('sort_by_date'),
+          sortByViews: t('sort_by_views'),
+          sortByPrice: t('sort_by_price'),
+        }}
+      />
     </View>
   );
 };
@@ -585,17 +746,17 @@ export const CustomerHomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F4F5FC',
   },
   content: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F4F5FC',
   },
   contentHeader: {
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F4F5FC',
   },
   header: {
     flexDirection: 'row',
@@ -603,7 +764,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F4F5FC',
     gap: theme.spacing.sm,
   },
   searchContainer: {
@@ -614,7 +775,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
     borderRadius: 12,
     paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
+    paddingVertical: Platform.OS === 'android' ? 0 : theme.spacing.md,
     paddingRight: 48,
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
@@ -662,8 +823,13 @@ const styles = StyleSheet.create({
     paddingTop: theme.spacing.sm,
     paddingBottom: theme.spacing.xl,
   },
+  scrollView: {
+    flex: 1,
+    backgroundColor: '#F4F5FC',
+  },
   scrollContent: {
     paddingBottom: theme.spacing.xxl,
+    backgroundColor: '#F4F5FC',
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -677,6 +843,25 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.text.primary,
   },
+  sortButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: theme.colors.white,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  sortButtonText: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.primary,
+    fontWeight: '500',
+  },
+  sortChevron: {
+    tintColor: theme.colors.primary,
+  },
   viewAllButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -688,7 +873,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   viewAllIcon: {
-    color: theme.colors.primary,
+    tintColor: '#679B00',
   },
   availableOrdersSection: {
     marginBottom: theme.spacing.lg,
@@ -701,6 +886,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: theme.spacing.lg,
+    backgroundColor: '#F4F5FC',
   },
   loadingText: {
     fontSize: theme.fonts.sizes.md,
@@ -708,14 +894,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   notificationButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    ...lightElevationStyles,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   notificationIcon: {
     opacity: 0.7,
@@ -853,7 +1040,6 @@ const styles = StyleSheet.create({
   },
   dropdownChevron: {
     tintColor: theme.colors.text.secondary,
-    transition: 'transform 0.2s',
   },
   dropdownChevronOpen: {
     transform: [{ rotate: '180deg' }],
@@ -967,5 +1153,58 @@ const styles = StyleSheet.create({
   modalCloseText: {
     fontSize: 20,
     color: theme.colors.text.secondary,
+  },
+  // Job Type Modal Styles
+  jobTypeModalContent: {
+    backgroundColor: '#fff',
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.spacing.xl,
+    marginHorizontal: theme.spacing.md,
+    width: '90%',
+    maxWidth: 500,
+    alignSelf: 'center',
+    ...lightElevationStyles,
+  },
+  jobTypeModalTitle: {
+    fontSize: theme.fonts.sizes.xl,
+    fontWeight: theme.fonts.weights.bold as any,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xl,
+    textAlign: 'center',
+  },
+  jobTypeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: theme.spacing.lg,
+    backgroundColor: '#F8F9FA',
+    borderRadius: theme.borderRadius.lg,
+    marginBottom: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  jobTypeOptionContent: {
+    flex: 1,
+    marginRight: theme.spacing.md,
+  },
+  jobTypeOptionTitle: {
+    fontSize: theme.fonts.sizes.lg,
+    fontWeight: theme.fonts.weights.semibold as any,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
+  },
+  jobTypeOptionDescription: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.textSecondary,
+  },
+  jobTypeModalCancel: {
+    padding: theme.spacing.md,
+    alignItems: 'center',
+    marginTop: theme.spacing.md,
+  },
+  jobTypeModalCancelText: {
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.medium as any,
+    color: theme.colors.textSecondary,
   },
 }); 

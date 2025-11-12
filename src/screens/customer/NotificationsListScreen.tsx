@@ -15,6 +15,7 @@ import { HeaderWithBack } from '../../components/common';
 import { notificationService, NotificationItem } from '../../services/notificationService';
 import { authService } from '../../services/authService';
 import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
+import { NotificationCardSkeleton } from '../../components/skeletons';
 
 // SVG иконка check-circle-broken
 const checkCircleBrokenSvg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -271,10 +272,13 @@ export const NotificationsListScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <HeaderWithBack title={t('notifications')} />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>{t('loading_notifications')}</Text>
-        </View>
+        <FlatList
+          data={[1, 2, 3, 4, 5, 6, 7, 8]}
+          renderItem={() => <NotificationCardSkeleton />}
+          keyExtractor={(item) => `skeleton-${item}`}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+        />
       </SafeAreaView>
     );
   }
@@ -291,6 +295,18 @@ export const NotificationsListScreen: React.FC = () => {
         ListEmptyComponent={renderEmptyState}
         contentContainerStyle={notifications.length === 0 ? styles.emptyContainer : styles.contentContainer}
         showsVerticalScrollIndicator={false}
+        // Оптимизация производительности - виртуализация
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={15}
+        updateCellsBatchingPeriod={50}
+        initialNumToRender={15}
+        windowSize={10}
+        // Оптимизация высоты элементов
+        getItemLayout={(data, index) => ({
+          length: 100, // Примерная высота карточки уведомления
+          offset: 100 * index,
+          index,
+        })}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}

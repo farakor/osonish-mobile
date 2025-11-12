@@ -95,33 +95,58 @@ export class OrderService {
       console.log('[OrderService] 🆔 Сгенерированный ID заказа:', orderId);
       const currentTime = new Date().toISOString();
 
+      // Логируем роль создателя заказа для аналитики
+      const createdByRole = authState.user.role;
+      console.log('[OrderService] 👤 Роль создателя заказа:', createdByRole);
+
       // Создаем заказ в Supabase
+      const orderData: any = {
+        id: orderId,
+        type: request.type || 'daily', // Тип заказа: daily или vacancy
+        title: request.title,
+        description: request.description,
+        category: request.category || 'other',
+        specialization_id: request.specializationId || null,
+        location: request.location,
+        latitude: request.latitude || null,
+        longitude: request.longitude || null,
+        budget: request.budget,
+        workers_needed: request.workersNeeded,
+        service_date: request.serviceDate,
+        photos: request.photos || [],
+        customer_id: authState.user.id,
+        created_by_role: createdByRole, // НОВОЕ ПОЛЕ: Роль создателя
+        status: 'new',
+        applicants_count: 0,
+        // Дополнительные удобства
+        transport_paid: request.transportPaid || false,
+        meal_included: request.mealIncluded || false,
+        meal_paid: request.mealPaid || false,
+        auto_completed: false,
+        created_at: currentTime,
+        updated_at: currentTime
+      };
+
+      // Добавляем поля для вакансий
+      if (request.type === 'vacancy') {
+        orderData.job_title = request.jobTitle;
+        orderData.experience_level = request.experienceLevel;
+        orderData.employment_type = request.employmentType;
+        orderData.work_format = request.workFormat;
+        orderData.work_schedule = request.workSchedule;
+        orderData.city = request.city;
+        orderData.salary_from = request.salaryFrom;
+        orderData.salary_to = request.salaryTo;
+        orderData.salary_period = request.salaryPeriod;
+        orderData.salary_type = request.salaryType;
+        orderData.payment_frequency = request.paymentFrequency;
+        orderData.skills = request.skills || [];
+        orderData.languages = request.languages || [];
+      }
+
       let { data, error } = await supabase
         .from('orders')
-        .insert({
-          id: orderId,
-          title: request.title,
-          description: request.description,
-          category: request.category || 'other',
-          specialization_id: request.specializationId || null,
-          location: request.location,
-          latitude: request.latitude || null,
-          longitude: request.longitude || null,
-          budget: request.budget,
-          workers_needed: request.workersNeeded,
-          service_date: request.serviceDate,
-          photos: request.photos || [],
-          customer_id: authState.user.id,
-          status: 'new',
-          applicants_count: 0,
-          // Дополнительные удобства
-          transport_paid: request.transportPaid || false,
-          meal_included: request.mealIncluded || false,
-          meal_paid: request.mealPaid || false,
-          auto_completed: false,
-          created_at: currentTime,
-          updated_at: currentTime
-        })
+        .insert(orderData)
         .select()
         .single();
 
@@ -520,7 +545,10 @@ export class OrderService {
 
       const { data, error } = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+          *,
+          customer:users!customer_id(city)
+        `)
         .eq('customer_id', authState.user.id)
         .order('created_at', { ascending: false });
 
@@ -539,8 +567,100 @@ export class OrderService {
             .eq('order_id', item.id)
             .eq('status', 'pending');
 
+          console.log(`[OrderService] Заказ ${item.id}: applicants_count=${item.applicants_count}, pendingCount=${pendingCount}`);
+
           return {
             id: item.id,
+            type: item.type || 'daily', // Добавляем тип заказа
+            title: item.title,
+            description: item.description,
+            category: item.category || 'other',
+            specializationId: item.specialization_id || undefined,
+            location: item.location,
+            latitude: item.latitude || undefined,
+            longitude: item.longitude || undefined,
+            budget: item.budget,
+            workersNeeded: item.workers_needed,
+            serviceDate: item.service_date,
+            photos: item.photos || [],
+            status: item.status as 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled',
+            customerId: item.customer_id,
+            customerCity: item.customer?.city || undefined,
+            applicantsCount: item.applicants_count,
+            pendingApplicantsCount: pendingCount || 0,
+            viewsCount: item.views_count || 0,
+            // Дополнительные удобства
+            transportPaid: item.transport_paid || false,
+            mealIncluded: item.meal_included || false,
+            mealPaid: item.meal_paid || false,
+            // Поля для вакансий
+            jobTitle: item.job_title,
+            experienceLevel: item.experience_level,
+            employmentType: item.employment_type,
+            workFormat: item.work_format,
+            workSchedule: item.work_schedule,
+            city: item.city,
+            salaryFrom: item.salary_from,
+            salaryTo: item.salary_to,
+            salaryPeriod: item.salary_period,
+            salaryType: item.salary_type,
+            paymentFrequency: item.payment_frequency,
+            skills: item.skills || [],
+            languages: item.languages || [],
+            createdAt: item.created_at,
+            updatedAt: item.updated_at
+          };
+        })
+      );
+
+      console.log(`[OrderService] Загружено ${ordersWithPendingCount.length} заказов для заказчика`);
+      return ordersWithPendingCount;
+    } catch (error) {
+      console.error('[OrderService] Ошибка получения заказов заказчика:', error);
+      return [];
+    }
+  }
+
+  /**
+   * НОВЫЙ МЕТОД: Получение заказов, созданных текущим пользователем
+   * Этот метод используется для отображения заказов в разделе "Мои заказы" у исполнителей
+   * Возвращает заказы, где текущий пользователь является заказчиком (customer_id = current user)
+   */
+  async getMyCreatedOrders(): Promise<Order[]> {
+    try {
+      const authState = authService.getAuthState();
+      if (!authState.isAuthenticated || !authState.user) {
+        console.warn('[OrderService] getMyCreatedOrders: Пользователь не авторизован');
+        return [];
+      }
+
+      console.log('[OrderService] 📋 Загрузка заказов, созданных пользователем:', authState.user.id);
+      console.log('[OrderService] 👤 Роль пользователя:', authState.user.role);
+
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('customer_id', authState.user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('[OrderService] Ошибка получения созданных заказов из Supabase:', error);
+        return [];
+      }
+
+      // Получаем количество непринятых откликов для каждого заказа
+      const ordersWithPendingCount = await Promise.all(
+        data.map(async (item: any) => {
+          // Подсчитываем непринятые отклики (status = 'pending')
+          const { count: pendingCount } = await supabase
+            .from('applicants')
+            .select('*', { count: 'exact', head: true })
+            .eq('order_id', item.id)
+            .eq('status', 'pending');
+
+          return {
+            id: item.id,
+            type: item.type || 'daily', // Добавляем тип заказа
             title: item.title,
             description: item.description,
             category: item.category || 'other',
@@ -561,16 +681,30 @@ export class OrderService {
             transportPaid: item.transport_paid || false,
             mealIncluded: item.meal_included || false,
             mealPaid: item.meal_paid || false,
+            // Поля для вакансий
+            jobTitle: item.job_title,
+            experienceLevel: item.experience_level,
+            employmentType: item.employment_type,
+            workFormat: item.work_format,
+            workSchedule: item.work_schedule,
+            city: item.city,
+            salaryFrom: item.salary_from,
+            salaryTo: item.salary_to,
+            salaryPeriod: item.salary_period,
+            salaryType: item.salary_type,
+            paymentFrequency: item.payment_frequency,
+            skills: item.skills || [],
+            languages: item.languages || [],
             createdAt: item.created_at,
             updatedAt: item.updated_at
           };
         })
       );
 
-      console.log(`[OrderService] Загружено ${ordersWithPendingCount.length} заказов для заказчика`);
+      console.log(`[OrderService] ✅ Загружено ${ordersWithPendingCount.length} заказов, созданных пользователем (роль: ${authState.user.role})`);
       return ordersWithPendingCount;
     } catch (error) {
-      console.error('[OrderService] Ошибка получения заказов заказчика:', error);
+      console.error('[OrderService] Ошибка получения созданных заказов:', error);
       return [];
     }
   }
@@ -596,6 +730,7 @@ export class OrderService {
 
       const orders: Order[] = data.map((item: any) => ({
         id: item.id,
+        type: item.type || 'daily', // Добавляем тип заказа
         title: item.title,
         description: item.description,
         category: item.category || 'other',
@@ -616,6 +751,20 @@ export class OrderService {
         transportPaid: item.transport_paid || false,
         mealIncluded: item.meal_included || false,
         mealPaid: item.meal_paid || false,
+        // Поля для вакансий
+        jobTitle: item.job_title,
+        experienceLevel: item.experience_level,
+        employmentType: item.employment_type,
+        workFormat: item.work_format,
+        workSchedule: item.work_schedule,
+        city: item.city,
+        salaryFrom: item.salary_from,
+        salaryTo: item.salary_to,
+        salaryPeriod: item.salary_period,
+        salaryType: item.salary_type,
+        paymentFrequency: item.payment_frequency,
+        skills: item.skills || [],
+        languages: item.languages || [],
         createdAt: item.created_at,
         updatedAt: item.updated_at
       }));
@@ -718,6 +867,22 @@ export class OrderService {
   }
 
   /**
+   * Получение всех доступных заказов (для гостевого режима и главного экрана)
+   * Не требует авторизации, показывает все новые заказы
+   */
+  async getAvailableOrders(): Promise<Order[]> {
+    try {
+      console.log('[OrderService] Загружаем доступные заказы для главного экрана');
+      const orders = await this.getNewOrdersForWorkers();
+      console.log(`[OrderService] Загружено ${orders.length} доступных заказов`);
+      return orders;
+    } catch (error) {
+      console.error('[OrderService] Ошибка получения доступных заказов:', error);
+      return [];
+    }
+  }
+
+  /**
    * Получение активных заказов для текущего пользователя (заказчика)
    * Включает все заказы кроме завершенных и отмененных
    */
@@ -743,6 +908,7 @@ export class OrderService {
 
       const orders: Order[] = data.map((item: any) => ({
         id: item.id,
+        type: item.type || 'daily', // Добавляем тип заказа
         title: item.title,
         description: item.description,
         category: item.category || 'other',
@@ -762,6 +928,20 @@ export class OrderService {
         transportPaid: item.transport_paid || false,
         mealIncluded: item.meal_included || false,
         mealPaid: item.meal_paid || false,
+        // Поля для вакансий
+        jobTitle: item.job_title,
+        experienceLevel: item.experience_level,
+        employmentType: item.employment_type,
+        workFormat: item.work_format,
+        workSchedule: item.work_schedule,
+        city: item.city,
+        salaryFrom: item.salary_from,
+        salaryTo: item.salary_to,
+        salaryPeriod: item.salary_period,
+        salaryType: item.salary_type,
+        paymentFrequency: item.payment_frequency,
+        skills: item.skills || [],
+        languages: item.languages || [],
         createdAt: item.created_at,
         updatedAt: item.updated_at
       }));
@@ -792,6 +972,7 @@ export class OrderService {
 
       return {
         id: data.id,
+        type: data.type || 'daily', // Добавляем тип заказа
         title: data.title,
         description: data.description,
         category: data.category || 'other',
@@ -811,6 +992,20 @@ export class OrderService {
         transportPaid: data.transport_paid || false,
         mealIncluded: data.meal_included || false,
         mealPaid: data.meal_paid || false,
+        // Поля для вакансий
+        jobTitle: data.job_title,
+        experienceLevel: data.experience_level,
+        employmentType: data.employment_type,
+        workFormat: data.work_format,
+        workSchedule: data.work_schedule,
+        city: data.city,
+        salaryFrom: data.salary_from,
+        salaryTo: data.salary_to,
+        salaryPeriod: data.salary_period,
+        salaryType: data.salary_type,
+        paymentFrequency: data.payment_frequency,
+        skills: data.skills || [],
+        languages: data.languages || [],
         createdAt: data.created_at,
         updatedAt: data.updated_at
       };
@@ -1050,6 +1245,7 @@ export class OrderService {
           *,
           orders!inner (
             id,
+            type,
             title,
             description,
             category,
@@ -1111,6 +1307,7 @@ export class OrderService {
         return {
           id: item.id,
           orderId: order.id,
+          orderType: order.type || 'daily', // Добавляем тип заказа
           orderTitle: order.title,
           orderCategory: order.category || 'other',
           orderDescription: order.description,
@@ -3195,7 +3392,13 @@ export class OrderService {
         totalReviews: workerRating?.totalReviews || 0,
         completedJobs,
         joinedAt: userData.created_at,
-        reviews
+        reviews,
+        workerType: userData.worker_type,
+        // Поля для job_seeker
+        education: userData.education,
+        skills: userData.skills,
+        workExperience: userData.work_experience,
+        specializations: userData.specializations,
       };
 
       console.log(`[OrderService] ✅ Профиль исполнителя загружен: ${workerProfile.firstName} ${workerProfile.lastName}`);

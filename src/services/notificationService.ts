@@ -250,59 +250,22 @@ class NotificationService {
       const deviceType = Platform.OS as 'ios' | 'android';
       const deviceId = Constants.deviceId || Constants.sessionId;
 
-      // Проверяем, существует ли уже такой токен
-      const { data: existingToken, error: checkError } = await supabase
-        .from('push_tokens')
-        .select('id')
-        .eq('user_id', authState.user.id)
-        .eq('token', token)
-        .single();
+      // Используем UPSERT (INSERT ... ON CONFLICT ... DO UPDATE)
+      // Это атомарная операция, которая предотвращает дубликаты
+      const tokenData = {
+        user_id: authState.user.id,
+        token: token,
+        device_type: deviceType,
+        device_id: deviceId,
+        is_active: true
+      };
 
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
-        console.warn('[NotificationService] ⚠️ Ошибка проверки существующего токена:', checkError);
-      }
-
-      // Если токен уже существует, просто обновляем его активность
-      if (existingToken) {
-        const { error: updateError } = await supabase
-          .from('push_tokens')
-          .update({
-            is_active: true,
-            device_id: deviceId,
-            device_type: deviceType
-          })
-          .eq('user_id', authState.user.id)
-          .eq('token', token);
-
-        if (updateError) {
-          console.error('[NotificationService] ❌ Ошибка обновления токена в БД:', updateError);
-          throw updateError;
-        }
-
-        console.log('[NotificationService] ✅ Push token обновлен в БД');
-        return;
-      }
-
-      // Сначала удаляем все существующие токены для этого пользователя и устройства
-      const { error: deleteError } = await supabase
-        .from('push_tokens')
-        .delete()
-        .eq('user_id', authState.user.id)
-        .eq('device_id', deviceId);
-
-      if (deleteError) {
-        console.warn('[NotificationService] ⚠️ Ошибка удаления старых токенов:', deleteError);
-      }
-
-      // Добавляем новый токен
+      // Используем upsert - если токен существует, обновляем его
       const { error } = await supabase
         .from('push_tokens')
-        .insert({
-          user_id: authState.user.id,
-          token: token,
-          device_type: deviceType,
-          device_id: deviceId,
-          is_active: true
+        .upsert(tokenData, {
+          onConflict: 'user_id,token', // Конфликт по комбинации user_id + token
+          ignoreDuplicates: false // Обновляем существующую запись
         });
 
       if (error) {
@@ -310,7 +273,7 @@ class NotificationService {
         throw error;
       }
 
-      console.log('[NotificationService] ✅ Push token сохранен в БД');
+      console.log('[NotificationService] ✅ Push token сохранен/обновлен в БД');
     } catch (error) {
       console.error('[NotificationService] ❌ Ошибка сохранения токена:', error);
       throw error;

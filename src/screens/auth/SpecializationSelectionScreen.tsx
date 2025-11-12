@@ -170,8 +170,8 @@ export const SpecializationSelectionScreen: React.FC = () => {
           <View style={styles.selectedContainer}>
             <Text style={styles.selectedTitle}>{t('auth.your_specializations')}</Text>
             <View style={styles.selectedList}>
-              {selectedSpecializations.map(spec => (
-                <View key={spec.id} style={styles.selectedChip}>
+              {selectedSpecializations.map((spec, index) => (
+                <View key={`selected-${spec.id}-${index}`} style={styles.selectedChip}>
                   <CategoryIcon
                     icon={spec.icon}
                     iconComponent={spec.iconComponent}

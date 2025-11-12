@@ -9,6 +9,8 @@ export { RoleSelectionScreen } from './RoleSelectionScreen';
 export { WorkerTypeSelectionScreen } from './WorkerTypeSelectionScreen';
 export { SpecializationSelectionScreen } from './SpecializationSelectionScreen';
 export { ProfessionalAboutMeScreen } from './ProfessionalAboutMeScreen';
+export { JobSeekerInfoScreen } from './JobSeekerInfoScreen';
+export { JobSeekerInfoStepByStepScreen } from './JobSeekerInfoStepByStepScreen';
 export { CitySelectionScreen } from './CitySelectionScreen';
 export { LoadingScreen } from './LoadingScreen';
 export { LanguageSelectionScreen } from './LanguageSelectionScreen'; 

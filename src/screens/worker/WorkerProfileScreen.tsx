@@ -26,7 +26,7 @@ import LogOutIcon from '../../../assets/log-out-03.svg';
 import FileIcon from '../../../assets/file-05.svg';
 import FileShieldIcon from '../../../assets/file-shield-02.svg';
 import { Ionicons } from '@expo/vector-icons';
-import { useWorkerTranslation, useErrorsTranslation } from '../../hooks/useTranslation';
+import { useWorkerTranslation, useErrorsTranslation, useAuthTranslation } from '../../hooks/useTranslation';
 import { WebViewModal, DeleteAccountModal } from '../../components/common';
 import Constants from 'expo-constants';
 
@@ -61,6 +61,7 @@ export const WorkerProfileScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const tWorker = useWorkerTranslation();
   const tError = useErrorsTranslation();
+  const t = useAuthTranslation();
   const [webViewModal, setWebViewModal] = useState<{
     visible: boolean;
     url: string;
@@ -103,7 +104,7 @@ export const WorkerProfileScreen: React.FC = () => {
       // Сбрасываем настройки статус-бара при фокусе на экран
       StatusBar.setBarStyle('dark-content', true);
       if (Platform.OS === 'android') {
-        StatusBar.setBackgroundColor('#F8F9FA', true);
+        StatusBar.setBackgroundColor('#F4F5FC', true);
       }
 
       return () => {
@@ -321,10 +322,14 @@ export const WorkerProfileScreen: React.FC = () => {
           onPress: async () => {
             try {
               await authService.logout();
-              console.log('Logout successful');
-              navigation.navigate('Auth' as never);
+              console.log('[WorkerProfile] ✅ Выход выполнен успешно');
+              // Переходим на главный экран в гостевом режиме
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'CustomerTabs' }],
+              });
             } catch (error) {
-              console.error('Ошибка выхода:', error);
+              console.error('[WorkerProfile] ❌ Ошибка выхода:', error);
               Alert.alert(tWorker('general_error'), tWorker('logout_error'));
             }
           }
@@ -364,7 +369,11 @@ export const WorkerProfileScreen: React.FC = () => {
               text: tWorker('ok'),
               onPress: () => {
                 setDeleteAccountModal(false);
-                navigation.navigate('Auth' as never);
+                // Переходим на главный экран в гостевом режиме
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'CustomerTabs' }],
+                });
               }
             }
           ]
@@ -540,6 +549,53 @@ export const WorkerProfileScreen: React.FC = () => {
             </View>
           </View>
 
+          {/* Resume Section for Job Seekers */}
+          {user?.workerType === 'job_seeker' && (
+            <View style={styles.resumeSection}>
+              <Text style={styles.sectionTitle}>{t('auth.job_seeker_profile_title')}</Text>
+              
+              {user.desiredSalary && (
+                <View style={styles.resumeItem}>
+                  <Text style={styles.resumeLabel}>{t('auth.salary_expectation')}</Text>
+                  <Text style={styles.resumeValue}>
+                    {user.desiredSalary.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} сум
+                  </Text>
+                </View>
+              )}
+
+              {user.workExperience && (
+                <View style={styles.resumeItem}>
+                  <Text style={styles.resumeLabel}>{t('auth.experience')}</Text>
+                  <Text style={styles.resumeValue}>{user.workExperience}</Text>
+                </View>
+              )}
+
+              {user.resumeText && (
+                <View style={styles.resumeItem}>
+                  <Text style={styles.resumeLabel}>{t('auth.resume_text_label')}</Text>
+                  <Text style={styles.resumeValue}>{user.resumeText}</Text>
+                </View>
+              )}
+
+              {user.skills && user.skills.length > 0 && (
+                <View style={styles.resumeItem}>
+                  <Text style={styles.resumeLabel}>{t('auth.my_skills')}</Text>
+                  <View style={styles.skillsContainer}>
+                    {user.skills.map((skill, index) => (
+                      <View key={index} style={styles.skillTag}>
+                        <Text style={styles.skillText}>{skill}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {!user.resumeText && !user.desiredSalary && (
+                <Text style={styles.noResumeText}>{t('auth.no_resume')}</Text>
+              )}
+            </View>
+          )}
+
           {/* Menu Options */}
           <View style={styles.menuSection}>
             <TouchableOpacity style={styles.menuItem} onPress={handleEditProfile}>
@@ -666,10 +722,11 @@ export const WorkerProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F4F5FC',
   },
   content: {
     flex: 1,
+    backgroundColor: '#F4F5FC',
   },
   contentHeader: {
     paddingHorizontal: theme.spacing.lg,
@@ -1063,6 +1120,62 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '500',
   },
+
+  // Resume Section Styles for Job Seekers
+  resumeSection: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  resumeItem: {
+    marginBottom: 16,
+  },
+  resumeLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#8E8E93',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  resumeValue: {
+    fontSize: 16,
+    color: '#1A1A1A',
+    lineHeight: 24,
+  },
+  skillsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 8,
+  },
+  skillTag: {
+    backgroundColor: 'rgba(103, 155, 0, 0.15)',
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  skillText: {
+    fontSize: 14,
+    color: '#679B00',
+    fontWeight: '500',
+  },
+  noResumeText: {
+    fontSize: 15,
+    color: '#8E8E93',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginTop: 8,
+  },
+  
   versionContainer: {
     alignItems: 'center',
     paddingVertical: 20,

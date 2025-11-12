@@ -1,17 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, AppState, Dimensions } from 'react-native';
+import { View, StyleSheet, AppState } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import LottieView from 'lottie-react-native';
 import { theme } from '../../constants';
 import { authService } from '../../services/authService';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { RootStackParamList } from '../../types';
+// Используем SimpleSplashAnimation - работает гарантированно!
+import { SimpleSplashAnimation } from '../../components/SimpleSplashAnimation';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export function SplashScreen() {
   const navigation = useNavigation<NavigationProp>();
@@ -125,16 +124,16 @@ export function SplashScreen() {
               });
             }
           } else {
-            // Пользователь не авторизован - переходим к экрану авторизации
-            console.log('[SplashScreen] ❌ Пользователь не авторизован, переходим к Auth');
+            // Пользователь не авторизован - переходим в гостевой режим (CustomerTabs)
+            console.log('[SplashScreen] 👤 Пользователь не авторизован, переходим в гостевой режим');
             navigation.reset({
               index: 0,
-              routes: [{ name: 'Auth' }],
+              routes: [{ name: 'CustomerTabs' }],
             });
           }
         } catch (error) {
           console.error('[SplashScreen] ❌ Ошибка при навигации:', error);
-          // В случае ошибки переходим к экрану выбора языка или авторизации
+          // В случае ошибки переходим к экрану выбора языка или гостевому режиму
           if (!isLanguageSelected) {
             navigation.reset({
               index: 0,
@@ -143,7 +142,7 @@ export function SplashScreen() {
           } else {
             navigation.reset({
               index: 0,
-              routes: [{ name: 'Auth' }],
+              routes: [{ name: 'CustomerTabs' }],
             });
           }
         }
@@ -159,26 +158,8 @@ export function SplashScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <LottieView
-        source={require('../../../assets/splash-anim.json')}
-        autoPlay
-        loop={false}
-        style={styles.animation}
-        resizeMode="cover"
-        onAnimationFinish={handleAnimationFinish}
-      />
-    </View>
+    <SimpleSplashAnimation onAnimationComplete={handleAnimationFinish} />
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  animation: {
-    width: screenWidth,
-    height: screenHeight,
-  },
-});
+const styles = StyleSheet.create({});

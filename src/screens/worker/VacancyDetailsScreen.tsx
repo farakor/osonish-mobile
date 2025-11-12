@@ -1,0 +1,463 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  TextInput,
+  Modal,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
+import { theme } from '../../constants';
+import { HeaderWithBack } from '../../components/common';
+import { useVacancyDetails, useHasAppliedToVacancy, useApplyToVacancy } from '../../hooks/queries/useVacancyQueries';
+import {
+  getExperienceLevelLabel,
+  getEmploymentTypeLabel,
+  getWorkFormatLabel,
+  getWorkScheduleLabel,
+  getSalaryPeriodLabel,
+  getSalaryTypeLabel,
+  getPaymentFrequencyLabel,
+  getLanguageLabel,
+} from '../../constants/vacancyOptions';
+import { getCityName } from '../../utils/cityUtils';
+
+type VacancyDetailsRouteProp = RouteProp<{ VacancyDetails: { vacancyId: string } }, 'VacancyDetails'>;
+
+export const VacancyDetailsScreen: React.FC = () => {
+  const navigation = useNavigation();
+  const route = useRoute<VacancyDetailsRouteProp>();
+  const { vacancyId } = route.params;
+  
+  const { data: vacancy, isLoading } = useVacancyDetails(vacancyId);
+  const { data: hasApplied } = useHasAppliedToVacancy(vacancyId);
+  const applyMutation = useApplyToVacancy();
+
+  const [showApplyModal, setShowApplyModal] = useState(false);
+  const [coverLetter, setCoverLetter] = useState('');
+
+  const handleApply = async () => {
+    const result = await applyMutation.mutateAsync({
+      vacancyId,
+      coverLetter: coverLetter.trim() || undefined,
+    });
+
+    if (result.success) {
+      Alert.alert('Успешно', 'Ваш отклик отправлен работодателю');
+      setShowApplyModal(false);
+      setCoverLetter('');
+    } else {
+      Alert.alert('Ошибка', result.error || 'Не удалось отправить отклик');
+    }
+  };
+
+  if (isLoading || !vacancy) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <HeaderWithBack title="Детали вакансии" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const formatSalary = () => {
+    if (vacancy.salaryFrom && vacancy.salaryTo) {
+      const period = vacancy.salaryPeriod ? getSalaryPeriodLabel(vacancy.salaryPeriod) : '';
+      const type = vacancy.salaryType ? ` (${getSalaryTypeLabel(vacancy.salaryType)})` : '';
+      return `${vacancy.salaryFrom.toLocaleString()} - ${vacancy.salaryTo.toLocaleString()} сум ${period}${type}`.toLowerCase();
+    }
+    return 'Договорная';
+  };
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <HeaderWithBack title="Детали вакансии" />
+      
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+        {/* Заголовок и зарплата */}
+        <View style={styles.header}>
+          <Text style={styles.title}>{vacancy.jobTitle || vacancy.title}</Text>
+          <Text style={styles.salary}>{formatSalary()}</Text>
+        </View>
+
+        {/* Основная информация */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Основная информация</Text>
+          
+          {vacancy.city && (
+            <InfoRow icon="📍" label="Город" value={getCityName(vacancy.city)} />
+          )}
+          {vacancy.experienceLevel && (
+            <InfoRow icon="💼" label="Опыт" value={getExperienceLevelLabel(vacancy.experienceLevel)} />
+          )}
+          {vacancy.employmentType && (
+            <InfoRow icon="⏰" label="Занятость" value={getEmploymentTypeLabel(vacancy.employmentType)} />
+          )}
+          {vacancy.workFormat && (
+            <InfoRow icon="🏢" label="Формат" value={getWorkFormatLabel(vacancy.workFormat)} />
+          )}
+          {vacancy.workSchedule && (
+            <InfoRow icon="📅" label="График" value={getWorkScheduleLabel(vacancy.workSchedule)} />
+          )}
+          {vacancy.paymentFrequency && (
+            <InfoRow icon="💰" label="Выплаты" value={getPaymentFrequencyLabel(vacancy.paymentFrequency)} />
+          )}
+        </View>
+
+        {/* Описание */}
+        {vacancy.description && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Описание вакансии</Text>
+            <Text style={styles.description}>{vacancy.description}</Text>
+          </View>
+        )}
+
+        {/* Навыки */}
+        {vacancy.skills && vacancy.skills.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Требуемые навыки</Text>
+            <View style={styles.skillsContainer}>
+              {vacancy.skills.map((skill, index) => (
+                <View key={index} style={styles.skillChip}>
+                  <Text style={styles.skillText}>{skill}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Языки */}
+        {vacancy.languages && vacancy.languages.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Языки</Text>
+            <View style={styles.languagesContainer}>
+              {vacancy.languages.map((langId, index) => (
+                <View key={index} style={styles.languageChip}>
+                  <Text style={styles.languageText}>{getLanguageLabel(langId)}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Адрес */}
+        {vacancy.location && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Адрес</Text>
+            <Text style={styles.locationText}>{vacancy.location}</Text>
+          </View>
+        )}
+
+        <View style={styles.bottomSpacer} />
+      </ScrollView>
+
+      {/* Кнопка откликнуться */}
+      {!hasApplied && (
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.applyButton}
+            onPress={() => setShowApplyModal(true)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.applyButtonText}>Откликнуться на вакансию</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {hasApplied && (
+        <View style={styles.footer}>
+          <View style={styles.appliedBadge}>
+            <Text style={styles.appliedText}>✓ Вы откликнулись на эту вакансию</Text>
+          </View>
+        </View>
+      )}
+
+      {/* Модальное окно для отклика */}
+      <Modal
+        visible={showApplyModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowApplyModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Отклик на вакансию</Text>
+            <Text style={styles.modalSubtitle}>
+              Расскажите, почему вы подходите на эту вакансию (необязательно)
+            </Text>
+            
+            <TextInput
+              style={styles.coverLetterInput}
+              multiline
+              numberOfLines={6}
+              placeholder="Ваше сообщение работодателю..."
+              placeholderTextColor="#9CA3AF"
+              value={coverLetter}
+              onChangeText={setCoverLetter}
+              textAlignVertical="top"
+            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setShowApplyModal(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.cancelButtonText}>Отмена</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.sendButton]}
+                onPress={handleApply}
+                activeOpacity={0.7}
+                disabled={applyMutation.isPending}
+              >
+                {applyMutation.isPending ? (
+                  <ActivityIndicator color={theme.colors.white} />
+                ) : (
+                  <Text style={styles.sendButtonText}>Отправить</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
+  );
+};
+
+// Компонент для строки информации
+const InfoRow: React.FC<{ icon: string; label: string; value: string }> = ({ icon, label, value }) => (
+  <View style={styles.infoRow}>
+    <View style={styles.infoLabel}>
+      <Text style={styles.infoIcon}>{icon}</Text>
+      <Text style={styles.infoLabelText}>{label}:</Text>
+    </View>
+    <Text style={styles.infoValue}>{value}</Text>
+  </View>
+);
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F4F5FC',
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  content: {
+    padding: 16,
+  },
+  header: {
+    backgroundColor: theme.colors.white,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: theme.colors.text,
+    marginBottom: 12,
+  },
+  salary: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: theme.colors.primary,
+  },
+  section: {
+    backgroundColor: theme.colors.white,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: theme.colors.text,
+    marginBottom: 16,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  infoLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  infoIcon: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  infoLabelText: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.text,
+    textAlign: 'right',
+    flex: 1,
+  },
+  description: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: theme.colors.text,
+  },
+  skillsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  skillChip: {
+    backgroundColor: '#F0F7FF',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+  },
+  skillText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: theme.colors.primary,
+  },
+  languagesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  languageChip: {
+    backgroundColor: '#FEF3C7',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+  },
+  languageText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#F59E0B',
+  },
+  locationText: {
+    fontSize: 16,
+    color: theme.colors.text,
+  },
+  bottomSpacer: {
+    height: 100,
+  },
+  footer: {
+    padding: 16,
+    backgroundColor: theme.colors.white,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  applyButton: {
+    backgroundColor: theme.colors.primary,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  applyButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.white,
+  },
+  appliedBadge: {
+    backgroundColor: '#D1FAE5',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  appliedText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#10B981',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: theme.colors.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    minHeight: 400,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: theme.colors.text,
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 20,
+  },
+  coverLetterInput: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    padding: 16,
+    fontSize: 16,
+    color: theme.colors.text,
+    minHeight: 150,
+    marginBottom: 20,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#F3F4F6',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  sendButton: {
+    backgroundColor: theme.colors.primary,
+  },
+  sendButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.white,
+  },
+});
+

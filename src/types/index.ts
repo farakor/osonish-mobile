@@ -16,11 +16,34 @@ export interface User {
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
   // Поля для профессиональных мастеров
-  workerType?: 'daily_worker' | 'professional';
+  workerType?: 'daily_worker' | 'professional' | 'job_seeker';
   aboutMe?: string;
   specializations?: Specialization[];
   workPhotos?: string[];
   profileViewsCount?: number; // Количество просмотров профиля
+  // Поля для ищущих вакансию
+  education?: Education[]; // Образование
+  skills?: string[]; // Навыки
+  workExperience?: WorkExperience[]; // Опыт работы
+  willingToRelocate?: boolean; // Готов к переездам
+  desiredSalary?: number; // Желаемая зарплата
+}
+
+// Education Types
+export interface Education {
+  institution: string; // Название учебного заведения
+  degree?: string; // Степень/специальность
+  yearStart?: string; // Год начала
+  yearEnd?: string; // Год окончания
+}
+
+// Work Experience Types
+export interface WorkExperience {
+  company: string; // Название компании
+  position: string; // Должность
+  yearStart?: string; // Год начала
+  yearEnd?: string; // Год окончания (или "По настоящее время")
+  description?: string; // Описание обязанностей
 }
 
 // Specialization Types
@@ -55,10 +78,16 @@ export interface RegisterRequest {
   role: 'customer' | 'worker';
   city?: string;
   // Поля для профессиональных мастеров
-  workerType?: 'daily_worker' | 'professional';
+  workerType?: 'daily_worker' | 'professional' | 'job_seeker';
   aboutMe?: string;
   specializations?: Specialization[];
   workPhotos?: string[];
+  // Поля для ищущих вакансию
+  education?: Education[];
+  skills?: string[];
+  workExperience?: WorkExperience[];
+  willingToRelocate?: boolean; // Готов к переездам
+  desiredSalary?: number; // Желаемая зарплата
 }
 
 export interface AuthResponse {
@@ -71,9 +100,16 @@ export interface AuthResponse {
   phone?: string;
 }
 
+// Order Type
+export type OrderType = 'daily' | 'vacancy';
+
+// Order Status Type
+export type OrderStatus = 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled' | 'rejected';
+
 // Order Types
 export interface Order {
   id: string;
+  type: OrderType; // Тип работы: daily (дневная работа) или vacancy (вакансия)
   title: string;
   description: string;
   category?: string; // Опциональное поле для обратной совместимости
@@ -85,7 +121,7 @@ export interface Order {
   workersNeeded: number;
   serviceDate: string; // ISO date string
   photos?: string[]; // массив URL фотографий
-  status: 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled' | 'rejected';
+  status: OrderStatus;
   customerId: string;
   customerCity?: string; // Город заказчика
   applicantsCount: number;
@@ -95,12 +131,27 @@ export interface Order {
   transportPaid?: boolean; // Проезд оплачивается отдельно
   mealIncluded?: boolean; // Питание включено
   mealPaid?: boolean; // Питание оплачивается
+  // Поля для вакансий
+  jobTitle?: string; // Название вакансии
+  experienceLevel?: string; // Уровень опыта
+  employmentType?: string; // Тип занятости
+  workFormat?: string; // Формат работы
+  workSchedule?: string; // График работы
+  city?: string; // Город вакансии
+  salaryFrom?: number; // Минимальная зарплата
+  salaryTo?: number; // Максимальная зарплата
+  salaryPeriod?: string; // Период выплаты
+  salaryType?: string; // Тип выплаты (до/после налогов)
+  paymentFrequency?: string; // Частота выплат
+  skills?: string[]; // Требуемые навыки
+  languages?: string[]; // Требуемые языки
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }
 
 // API Request Types
 export interface CreateOrderRequest {
+  type: OrderType; // Тип работы
   title: string;
   description: string;
   category?: string; // Опциональное поле для обратной совместимости (по умолчанию 'other')
@@ -116,6 +167,20 @@ export interface CreateOrderRequest {
   mealIncluded?: boolean; // Питание включено
   mealPaid?: boolean; // Питание оплачивается
   specializationId?: string; // ID специализации для профессиональных мастеров
+  // Поля для вакансий
+  jobTitle?: string;
+  experienceLevel?: string;
+  employmentType?: string;
+  workFormat?: string;
+  workSchedule?: string;
+  city?: string;
+  salaryFrom?: number;
+  salaryTo?: number;
+  salaryPeriod?: string;
+  salaryType?: string;
+  paymentFrequency?: string;
+  skills?: string[];
+  languages?: string[];
 }
 
 // API Response Types
@@ -203,7 +268,8 @@ export interface WorkerApplication {
   orderLongitude?: number;
   orderBudget: number;
   orderServiceDate: string;
-  orderStatus: Order['status'];
+  orderStatus: OrderStatus;
+  orderType?: OrderType; // Тип заказа: daily или vacancy
   customerName: string;
   customerPhone: string;
   rating?: number;
@@ -212,6 +278,61 @@ export interface WorkerApplication {
   proposedPrice?: number;
   appliedAt: string;
   status: 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled';
+}
+
+// Vacancy Application Types
+export type VacancyApplicationStatus = 'pending' | 'accepted' | 'rejected' | 'withdrawn';
+
+export interface VacancyApplication {
+  id: string;
+  vacancyId: string;
+  applicantId: string;
+  applicantName: string;
+  applicantPhone: string;
+  applicantAvatar?: string;
+  applicantRating?: number;
+  applicantCompletedJobs?: number;
+  coverLetter?: string;
+  status: VacancyApplicationStatus;
+  appliedAt: string;
+  updatedAt: string;
+  // Поля соискателя
+  applicantEducation?: Education[];
+  applicantSkills?: string[];
+  applicantWorkExperience?: WorkExperience[];
+  applicantWillingToRelocate?: boolean;
+  applicantDesiredSalary?: number;
+}
+
+export interface CreateVacancyApplicationRequest {
+  vacancyId: string;
+  coverLetter?: string;
+}
+
+export interface CreateVacancyRequest {
+  jobTitle: string;
+  description: string;
+  specializationId: string;
+  location: string;
+  latitude?: number;
+  longitude?: number;
+  city: string;
+  experienceLevel: string;
+  employmentType: string;
+  workFormat: string;
+  workSchedule: string;
+  salaryFrom?: number;
+  salaryTo?: number;
+  salaryPeriod: string;
+  salaryType: string;
+  paymentFrequency: string;
+  skills: string[];
+  languages: string[];
+}
+
+export interface UpdateVacancyApplicationStatusRequest {
+  applicationId: string;
+  status: VacancyApplicationStatus;
 }
 
 // Review Types
@@ -261,6 +382,12 @@ export interface WorkerProfile {
   completedJobs: number;
   joinedAt: string;
   reviews: Review[];
+  workerType?: 'daily_worker' | 'professional' | 'job_seeker';
+  // Поля для job_seeker
+  education?: Education[];
+  skills?: string[];
+  workExperience?: WorkExperience[];
+  specializations?: { id: string; isPrimary: boolean }[];
 }
 
 // City Types

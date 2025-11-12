@@ -41,6 +41,8 @@ import { supabase } from '../../services/supabaseClient';
 import { Order, User } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { useCustomerTranslation, useWorkerTranslation } from '../../hooks/useTranslation';
+import { useRequireAuth } from '../../hooks/useRequireAuth';
+import { AuthRequiredModal } from '../../components/auth/AuthRequiredModal';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48; // 24px margin on each side
@@ -220,6 +222,9 @@ export const JobDetailsScreen: React.FC = () => {
   const { t: translate } = useTranslation();
   const t = useCustomerTranslation();
   const tWorker = useWorkerTranslation();
+  
+  // Hook для проверки авторизации
+  const { requireAuth, isAuthModalVisible, hideAuthModal } = useRequireAuth();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -389,24 +394,26 @@ export const JobDetailsScreen: React.FC = () => {
   const hasMapCoords = typeof effectiveLatitude === 'number' && typeof effectiveLongitude === 'number';
 
   const handleApplyToJob = async () => {
-    try {
-      const authState = authService.getAuthState();
-      if (!authState.isAuthenticated || !authState.user) {
-        Alert.alert(tWorker('general_error'), tWorker('login_required'));
-        return;
-      }
+    await requireAuth(async () => {
+      try {
+        const authState = authService.getAuthState();
+        if (!authState.isAuthenticated || !authState.user) {
+          // Это не должно произойти, так как requireAuth уже проверил
+          return;
+        }
 
-      if (!order) {
-        Alert.alert(tWorker('general_error'), tWorker('order_not_found'));
-        return;
-      }
+        if (!order) {
+          Alert.alert(tWorker('general_error'), tWorker('order_not_found'));
+          return;
+        }
 
-      // Показываем модалку с номером телефона заказчика
-      setCustomerPhoneModalVisible(true);
-    } catch (error) {
-      console.error('Ошибка при открытии формы отклика:', error);
-      Alert.alert(tWorker('general_error'), tWorker('general_error'));
-    }
+        // Показываем модалку с номером телефона заказчика
+        setCustomerPhoneModalVisible(true);
+      } catch (error) {
+        console.error('Ошибка при открытии формы отклика:', error);
+        Alert.alert(tWorker('general_error'), tWorker('general_error'));
+      }
+    });
   };
 
   const handleAcceptPrice = async () => {
@@ -842,6 +849,13 @@ export const JobDetailsScreen: React.FC = () => {
         onSubmit={handleSubmitProposal}
         originalPrice={order?.budget || 0}
         orderTitle={order?.title || ''}
+      />
+      
+      {/* Auth Required Modal */}
+      <AuthRequiredModal 
+        visible={isAuthModalVisible}
+        onClose={hideAuthModal}
+        message={tWorker('apply_to_order_auth_message')}
       />
     </SafeAreaView>
   );

@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { theme, getSpecializationIcon, getTranslatedSpecializationNameSingular } from '../../constants';
 import ProBadge from '../../../assets/pro_badge.svg';
+import CVBadge from '../../../assets/cv_badge.svg';
 import EyeIcon from '../../../assets/eye.svg';
 import { lightElevationStyles } from '../../utils/noShadowStyles';
 import { ProfessionalMaster } from '../../services/professionalMasterService';
@@ -61,10 +62,15 @@ export const ProfessionalMasterCard: React.FC<ProfessionalMasterCardProps> = ({
           <Text style={styles.name} numberOfLines={1}>
             {master.firstName} {master.lastName}
           </Text>
-          {/* Бейдж профессионального мастера - не показываем для daily_worker */}
-          {master.workerType !== 'daily_worker' && (
+          {/* Бейдж в зависимости от типа исполнителя */}
+          {master.workerType === 'professional' && (
             <View style={styles.proBadgeContainer}>
               <ProBadge width={44} height={18} />
+            </View>
+          )}
+          {master.workerType === 'job_seeker' && (
+            <View style={styles.proBadgeContainer}>
+              <CVBadge width={58} height={24} />
             </View>
           )}
         </View>

@@ -82,9 +82,9 @@ export const TabTooltip: React.FC<TabTooltipProps> = ({
 const styles = StyleSheet.create({
   tooltip: {
     position: 'absolute',
-    top: -60,
+    top: Platform.OS === 'android' ? -95 : -60,
     left: '50%',
-    marginLeft: -90,
+    marginLeft: -80,
     paddingHorizontal: 10,
     paddingVertical: 12,
     paddingRight: 28,
@@ -94,6 +94,7 @@ const styles = StyleSheet.create({
     minHeight: 50,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 9999, // Очень высокий z-index чтобы быть над всем
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -102,7 +103,7 @@ const styles = StyleSheet.create({
         shadowRadius: 3,
       },
       android: {
-        elevation: 3,
+        elevation: 10, // Увеличил elevation для Android
       },
     }),
   },

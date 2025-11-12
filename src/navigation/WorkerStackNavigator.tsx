@@ -1,7 +1,20 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { WorkerTabNavigator } from './WorkerTabNavigator';
-import { EditProfileScreen, JobDetailsScreen, NotificationsScreen, NotificationsListScreen, SupportScreen } from '../screens/worker';
+import { EditProfileScreen, JobDetailsScreen, NotificationsScreen, NotificationsListScreen, SupportScreen, VacancyDetailsScreen } from '../screens/worker';
+// Импортируем компоненты из customer для переиспользования
+import { 
+  OrderDetailsScreen, 
+  EditOrderScreen, 
+  ApplicantsListScreen, 
+  WorkerProfileScreen, 
+  ProfessionalMasterProfileScreen, 
+  JobSeekerProfileScreen,
+  ProfessionalMastersListScreen,
+  CategoriesScreen,
+  RatingScreen,
+  CreateOrderStepByStepScreen
+} from '../screens/customer';
 import { WorkerStackParamList } from '../types/navigation';
 import { DocumentWebViewScreen } from '../screens/shared';
 
@@ -12,6 +25,7 @@ export function WorkerStackNavigator() {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
+        contentStyle: { backgroundColor: '#F4F5FC' }, // Светло-синий фон
       }}
     >
       <Stack.Screen
@@ -21,6 +35,13 @@ export function WorkerStackNavigator() {
       <Stack.Screen
         name="JobDetails"
         component={JobDetailsScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="VacancyDetails"
+        component={VacancyDetailsScreen}
         options={{
           presentation: 'card',
         }}
@@ -49,6 +70,77 @@ export function WorkerStackNavigator() {
       <Stack.Screen
         name="Support"
         component={SupportScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      {/* Новые экраны для функционала заказчика (доступные исполнителям) */}
+      <Stack.Screen
+        name="OrderDetails"
+        component={OrderDetailsScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="EditOrder"
+        component={EditOrderScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="ApplicantsList"
+        component={ApplicantsListScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="WorkerProfile"
+        component={WorkerProfileScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="ProfessionalMasterProfile"
+        component={ProfessionalMasterProfileScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="JobSeekerProfile"
+        component={JobSeekerProfileScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="ProfessionalMastersList"
+        component={ProfessionalMastersListScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="Categories"
+        component={CategoriesScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="Rating"
+        component={RatingScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="CreateOrder"
+        component={CreateOrderStepByStepScreen}
         options={{
           presentation: 'card',
         }}

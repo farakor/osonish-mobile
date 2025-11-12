@@ -16,12 +16,13 @@ import { noElevationStyles } from '../../utils/noShadowStyles';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { orderService } from '../../services/orderService';
 import { authService } from '../../services/authService';
-import { supabase } from '../../services/supabaseClient';
 import { Order } from '../../types';
 import { ModernOrderCard } from '../../components/cards';
-import { useCustomerTranslation } from '../../hooks/useTranslation';
+import { VacancyCard } from '../../components/vacancy';
+import { useCustomerTranslation, useWorkerTranslation } from '../../hooks/useTranslation';
+import { OrderCardSkeleton } from '../../components/skeletons';
+import { useMyOrders } from '../../hooks/queries';
 
 // SVG иконка empty-state-completed-orders
 const emptyStateCompletedOrdersSvg = `<svg width="161" height="160" viewBox="0 0 161 160" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -91,37 +92,27 @@ type TabType = 'active' | 'completed';
 export const MyOrdersScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const t = useCustomerTranslation();
+  const tWorker = useWorkerTranslation();
 
-  const [allOrders, setAllOrders] = useState<Order[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('active');
+  
+  // НОВОЕ: Определяем роль пользователя
+  const authState = authService.getAuthState();
+  const isWorker = authState.user?.role === 'worker';
 
-  // Функция для загрузки всех заказов пользователя
-  const loadOrders = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const orders = await orderService.getCustomerOrders();
-      setAllOrders(orders);
-    } catch (error) {
-      console.error('Ошибка загрузки заказов:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  // ✨ React Query - автоматическое кэширование и управление состоянием
+  const { data: allOrders = [], isLoading, refetch, isRefetching } = useMyOrders();
 
   // Функция для обновления списка (pull-to-refresh)
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await loadOrders();
-    setRefreshing(false);
-  }, [loadOrders]);
+    await refetch();
+  }, [refetch]);
 
-  // Загружаем заказы при первом открытии и при фокусе на экране
+  // Перезагружаем данные при фокусе на экране
   useFocusEffect(
     useCallback(() => {
-      loadOrders();
-    }, [loadOrders])
+      refetch();
+    }, [refetch])
   );
 
   // Real-time обновления для заказов пользователя
@@ -298,12 +289,31 @@ export const MyOrdersScreen: React.FC = () => {
     });
 
   const renderOrder = ({ item }: { item: Order }) => (
-    <ModernOrderCard
-      order={item}
-      onPress={() => navigation.navigate('OrderDetails', { orderId: item.id })}
-      showApplicantsCount={true}
-      showCreateTime={true}
-    />
+    item.type === 'vacancy' ? (
+      <VacancyCard
+        vacancy={item}
+        onPress={() => {
+          if (item.type === 'vacancy') {
+            navigation.navigate('VacancyDetailsCustomer', { vacancyId: item.id });
+          } else {
+            navigation.navigate('OrderDetails', { orderId: item.id });
+          }
+        }}
+      />
+    ) : (
+      <ModernOrderCard
+        order={item}
+        onPress={() => {
+          if (item.type === 'vacancy') {
+            navigation.navigate('VacancyDetailsCustomer', { vacancyId: item.id });
+          } else {
+            navigation.navigate('OrderDetails', { orderId: item.id });
+          }
+        }}
+        showApplicantsCount={true}
+        showCreateTime={true}
+      />
+    )
   );
 
   return (
@@ -313,15 +323,20 @@ export const MyOrdersScreen: React.FC = () => {
         <View style={[styles.contentHeader, { paddingTop: theme.spacing.xl + getAndroidStatusBarHeight() }]}>
           <Text style={styles.title}>{t('my_orders_title')}</Text>
           <Text style={styles.subtitle}>{t('my_orders_subtitle')}</Text>
+          
+          {/* НОВОЕ: Подсказка для исполнителей */}
+          {isWorker && (
+            <View style={styles.workerHintContainer}>
+              <Text style={styles.workerHintText}>
+                💼 {tWorker('orders_created_by_you')}
+              </Text>
+            </View>
+          )}
         </View>
 
-        {/* Tabs */}
-        <View style={styles.tabs}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.tabsContent}
-          >
+        {/* Tabs - Pill Style */}
+        <View style={styles.tabsContainer}>
+          <View style={styles.tabs}>
             <TouchableOpacity
               style={[styles.tab, activeTab === 'active' && styles.activeTab]}
               onPress={() => setActiveTab('active')}
@@ -338,14 +353,18 @@ export const MyOrdersScreen: React.FC = () => {
                 {t('orders_tab_completed')}
               </Text>
             </TouchableOpacity>
-          </ScrollView>
+          </View>
         </View>
 
         {/* Orders List */}
         {isLoading && allOrders.length === 0 ? (
-          <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>{t('loading_my_orders')}</Text>
-          </View>
+          <FlatList
+            data={[1, 2, 3, 4, 5]}
+            renderItem={() => <OrderCardSkeleton />}
+            keyExtractor={(item) => `skeleton-${item}`}
+            contentContainerStyle={styles.ordersList}
+            showsVerticalScrollIndicator={false}
+          />
         ) : filteredOrders.length > 0 ? (
           <FlatList
             data={filteredOrders}
@@ -354,13 +373,21 @@ export const MyOrdersScreen: React.FC = () => {
             contentContainerStyle={styles.ordersList}
             showsVerticalScrollIndicator={false}
             refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                colors={[theme.colors.primary]}
-                tintColor={theme.colors.primary}
-              />
+              <RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />
             }
+            // Оптимизация производительности - виртуализация
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={10}
+            updateCellsBatchingPeriod={50}
+            initialNumToRender={10}
+            windowSize={10}
+            // Оптимизация высоты элементов
+            getItemLayout={(data, index) => ({
+              length: 180, // Примерная высота карточки заказа
+              offset: 180 * index,
+              index,
+            })}
+            onEndReachedThreshold={0.5}
           />
         ) : (
           <View style={styles.emptyState}>
@@ -370,7 +397,7 @@ export const MyOrdersScreen: React.FC = () => {
             </Text>
             <Text style={styles.emptyStateText}>
               {activeTab === 'active'
-                ? t('no_active_orders_description_empty')
+                ? (isWorker ? tWorker('no_created_orders_hint') : t('no_active_orders_description_empty'))
                 : t('no_completed_orders_text')
               }
             </Text>
@@ -384,11 +411,11 @@ export const MyOrdersScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F4F5FC',
   },
   content: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F4F5FC',
   },
   contentHeader: {
     paddingHorizontal: theme.spacing.lg,
@@ -404,25 +431,40 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.lg,
     color: theme.colors.text.secondary,
   },
-  tabs: {
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+  tabsContainer: {
+    paddingHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.md,
   },
-  tabsContent: {
-    paddingHorizontal: theme.spacing.lg,
+  tabs: {
     flexDirection: 'row',
-    gap: theme.spacing.xl,
+    backgroundColor: theme.colors.background,
+    borderRadius: 12,
+    padding: 8,
+    gap: 6,
   },
   tab: {
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.xs,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-    marginBottom: -1,
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    marginVertical: 2,
   },
   activeTab: {
-    borderBottomColor: theme.colors.primary,
+    backgroundColor: theme.colors.white,
+    ...Platform.select({
+      ios: {
+        shadowColor: theme.colors.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   tabText: {
     fontSize: theme.fonts.sizes.md,
@@ -568,5 +610,21 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.secondary,
     textAlign: 'center',
+  },
+  workerHintContainer: {
+    marginTop: theme.spacing.md,
+    backgroundColor: `${theme.colors.primary}10`,
+    borderLeftWidth: 3,
+    borderLeftColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.sm,
+  },
+  workerHintText: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.primary,
+    fontWeight: '500',
+  },
+  loadingMoreContainer: {
+    paddingVertical: theme.spacing.md,
   },
 }); 

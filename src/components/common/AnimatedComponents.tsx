@@ -360,13 +360,30 @@ const AnimatedCategoryItem: React.FC<{
 
 // Статичная сетка категорий без анимации
 export const AnimatedCategoryGrid: React.FC<{
-  categories: Array<{ key: string; label: string; emoji: string }>;
-  selectedCategory: string;
-  onSelectCategory: (category: string) => void;
-  isActive: boolean;
+  categories?: Array<{ key: string; label: string; emoji: string }>;
+  selectedCategory?: string;
+  onSelectCategory?: (category: string) => void;
+  isActive?: boolean;
   resetKey?: string | number;
   isSmallScreen?: boolean;
-}> = ({ categories, selectedCategory, onSelectCategory, isActive, resetKey = '', isSmallScreen = false }) => {
+  children?: React.ReactNode;
+}> = ({ categories, selectedCategory, onSelectCategory, isActive = true, resetKey = '', isSmallScreen = false, children }) => {
+  // Если передаются дети, просто рендерим их в сетке
+  if (children) {
+    return (
+      <View style={[styles.categoriesGrid, isSmallScreen && styles.categoriesGridSmall]}>
+        <View style={styles.categoryRow}>
+          {children}
+        </View>
+      </View>
+    );
+  }
+
+  // Проверяем, что categories определен и не пустой
+  if (!categories || categories.length === 0) {
+    return null;
+  }
+
   // Разбиваем категории на строки по 3 элемента
   const rows = [];
   for (let i = 0; i < categories.length; i += 3) {
@@ -381,8 +398,8 @@ export const AnimatedCategoryGrid: React.FC<{
             <AnimatedCategoryItem
               key={`${cat.key}-${resetKey}`}
               category={cat}
-              selectedCategory={selectedCategory}
-              onSelectCategory={onSelectCategory}
+              selectedCategory={selectedCategory || ''}
+              onSelectCategory={onSelectCategory || (() => {})}
               isActive={isActive}
               delay={0} // Убираем задержки
               resetKey={resetKey}

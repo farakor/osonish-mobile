@@ -21,11 +21,12 @@ import { HeaderWithBack, AnimatedIcon } from '../../components/common';
 // Импортируем анимированные иконки
 const WorkerAnimation = require('../../../assets/worker.json');
 const LaborSafetyAnimation = require('../../../assets/labor-safety.json');
+const OfficeWorkerAnimation = require('../../../assets/office-worker.json');
 
 const { height: screenHeight } = Dimensions.get('window');
 const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
 
-type WorkerType = 'daily_worker' | 'professional';
+type WorkerType = 'daily_worker' | 'professional' | 'job_seeker';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const WorkerTypeSelectionScreen: React.FC = () => {
@@ -69,6 +70,9 @@ export const WorkerTypeSelectionScreen: React.FC = () => {
       if (selectedType === 'professional') {
         // Переходим к выбору специализаций
         navigation.navigate('SpecializationSelection');
+      } else if (selectedType === 'job_seeker') {
+        // Переходим к step-by-step экрану заполнения резюме
+        navigation.navigate('JobSeekerInfoStepByStep');
       } else {
         // Переходим к выбору города (как обычно)
         navigation.navigate('CitySelection', { role: 'worker', workerType: 'daily_worker' });
@@ -109,8 +113,8 @@ export const WorkerTypeSelectionScreen: React.FC = () => {
       <View style={styles.iconContainer}>
         <AnimatedIcon
           source={animationSource}
-          width={isSmallScreen ? 45 : 60}
-          height={isSmallScreen ? 45 : 60}
+          width={isSmallScreen ? 35 : 45}
+          height={isSmallScreen ? 35 : 45}
           loop={true}
           autoPlay={false}
           speed={0.8}
@@ -159,6 +163,15 @@ export const WorkerTypeSelectionScreen: React.FC = () => {
             isSelected={selectedType === 'professional'}
             onPress={() => handleTypeSelect('professional')}
           />
+
+          <TypeCard
+            type="job_seeker"
+            title={t('auth.job_seeker_title')}
+            description={t('auth.job_seeker_description')}
+            animationSource={OfficeWorkerAnimation}
+            isSelected={selectedType === 'job_seeker'}
+            onPress={() => handleTypeSelect('job_seeker')}
+          />
         </View>
 
         <TouchableOpacity
@@ -205,13 +218,14 @@ const styles = StyleSheet.create({
     lineHeight: isSmallScreen ? 18 : 22,
   },
   typesContainer: {
-    gap: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
+    gap: isSmallScreen ? 8 : 10,
     marginBottom: isSmallScreen ? theme.spacing.xl : theme.spacing.xxl,
   },
   typeCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
+    paddingVertical: isSmallScreen ? 12 : 14,
+    paddingHorizontal: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
     alignItems: 'center',
     position: 'relative',
     ...borderButtonStyles,
@@ -223,29 +237,29 @@ const styles = StyleSheet.create({
     ...noElevationStyles,
   },
   iconContainer: {
-    width: isSmallScreen ? 80 : 100,
-    height: isSmallScreen ? 80 : 100,
+    width: isSmallScreen ? 50 : 60,
+    height: isSmallScreen ? 50 : 60,
     backgroundColor: 'transparent',
-    borderRadius: isSmallScreen ? 40 : 50,
+    borderRadius: isSmallScreen ? 25 : 30,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: isSmallScreen ? theme.spacing.xs : theme.spacing.sm,
+    marginBottom: 4,
   },
   typeTitle: {
-    fontSize: isSmallScreen ? 16 : 18,
+    fontSize: isSmallScreen ? 14 : 15,
     fontWeight: '600',
     color: '#1A1A1A',
-    marginBottom: theme.spacing.sm,
+    marginBottom: 4,
     textAlign: 'center',
   },
   typeTitleSelected: {
     color: theme.colors.primary,
   },
   typeDescription: {
-    fontSize: 14,
+    fontSize: isSmallScreen ? 11 : 12,
     color: '#8E8E93',
     textAlign: 'center',
-    lineHeight: isSmallScreen ? 18 : 20,
+    lineHeight: isSmallScreen ? 14 : 16,
   },
   typeDescriptionSelected: {
     color: '#1A1A1A',

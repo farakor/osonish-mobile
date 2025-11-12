@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 import { AppNavigator } from './src/navigation';
 import { OrdersProvider } from './src/hooks';
 import { LanguageProvider } from './src/contexts/LanguageContext';
+import { QueryProvider } from './src/providers/QueryProvider';
 
 // Инициализация i18n
 import './src/i18n';
@@ -86,17 +87,21 @@ export default function App() {
   }, []);
 
   return (
-    <SafeAreaProvider>
-      <LanguageProvider>
-        <OrdersProvider>
-          <StatusBar
-            style="dark"
-            translucent={Platform.OS === 'android'}
-            backgroundColor="transparent"
-          />
-          <AppNavigator />
-        </OrdersProvider>
-      </LanguageProvider>
-    </SafeAreaProvider>
+    <View style={{ flex: 1, backgroundColor: '#F4F5FC' }}>
+      <SafeAreaProvider>
+        <QueryProvider>
+          <LanguageProvider>
+            <OrdersProvider>
+              <StatusBar
+                style="dark"
+                translucent={Platform.OS === 'android'}
+                backgroundColor="transparent"
+              />
+              <AppNavigator />
+            </OrdersProvider>
+          </LanguageProvider>
+        </QueryProvider>
+      </SafeAreaProvider>
+    </View>
   );
 }

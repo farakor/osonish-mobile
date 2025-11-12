@@ -189,6 +189,7 @@ export const AnimatedTabScreenWithDirection: React.FC<{
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    // Убрали backgroundColor чтобы фон наследовался от дочернего компонента
+    // Это позволяет экранам устанавливать свой собственный фон
   },
 });

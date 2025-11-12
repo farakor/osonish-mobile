@@ -42,7 +42,8 @@ import { getSpecializationIcon, getTranslatedSpecializationName, getSpecializati
 import { supabase } from '../../services/supabaseClient';
 import { Order, Applicant, User } from '../../types';
 import { useTranslation } from 'react-i18next';
-import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
+import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation, useWorkerTranslation } from '../../hooks/useTranslation';
+import { OrderDetailsSkeleton } from '../../components/skeletons';
 
 // SVG иконка empty-state-no-applications
 const emptyStateNoApplicationsSvg = `<svg width="161" height="160" viewBox="0 0 161 160" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -298,14 +299,19 @@ export const OrderDetailsScreen: React.FC = () => {
   const t = useCustomerTranslation();
   const tError = useErrorsTranslation();
   const tCommon = useCommonTranslation();
-
-
+  const tWorker = useWorkerTranslation();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [applicantsLoading, setApplicantsLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [orderCustomer, setOrderCustomer] = useState<User | null>(null); // Владелец заказа
+  
+  // НОВОЕ: Определяем контекст просмотра
+  const isMyOrder = order?.customerId === currentUser?.id;
+  const isWorker = currentUser?.role === 'worker';
+  const viewingAsCustomer = isMyOrder; // Просматриваем как заказчик (владелец заказа)
 
   // Анимация для sticky header
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -326,8 +332,8 @@ export const OrderDetailsScreen: React.FC = () => {
 
   // Функция для проверки, можно ли показывать кнопку "Завершить"
   const canShowCompleteButton = (order: Order | null): boolean => {
-    // Кнопка "Завершить" всегда видна для заказов со статусом "in_progress"
-    return order?.status === 'in_progress';
+    // Кнопка "Завершить" видна только для своих заказов со статусом "in_progress"
+    return isMyOrder && order?.status === 'in_progress';
   };
 
   // Загружаем заказ по ID
@@ -342,6 +348,32 @@ export const OrderDetailsScreen: React.FC = () => {
         const authState = authService.getAuthState();
         if (authState.user) {
           setCurrentUser(authState.user);
+        }
+
+        // Загружаем информацию о владельце заказа (заказчике)
+        if (orderData && orderData.customerId) {
+          try {
+            const { data: customerData, error: customerError } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', orderData.customerId)
+              .single();
+            
+            if (customerData && !customerError) {
+              setOrderCustomer({
+                id: customerData.id,
+                phone: customerData.phone,
+                firstName: customerData.first_name,
+                lastName: customerData.last_name,
+                role: customerData.role,
+                profileImage: customerData.profile_image,
+                city: customerData.city,
+                createdAt: customerData.created_at
+              });
+            }
+          } catch (error) {
+            console.error('Ошибка загрузки данных заказчика:', error);
+          }
         }
 
         // Увеличиваем счетчик просмотров заказа
@@ -410,6 +442,12 @@ export const OrderDetailsScreen: React.FC = () => {
   const loadApplicantsData = useCallback(async () => {
     if (!orderId) return;
 
+    // Загружаем отклики только для своих заказов
+    if (!isMyOrder) {
+      console.log('[OrderDetailsScreen] Пропускаем загрузку откликов - это не мой заказ');
+      return;
+    }
+
     try {
       setApplicantsLoading(true);
       const filteredApplicants = await orderService.getFilteredApplicantsForOrder(orderId);
@@ -429,7 +467,7 @@ export const OrderDetailsScreen: React.FC = () => {
     } finally {
       setApplicantsLoading(false);
     }
-  }, [orderId]);
+  }, [orderId, isMyOrder]);
 
   // Обновляем данные при возврате на экран
   useFocusEffect(
@@ -543,6 +581,15 @@ export const OrderDetailsScreen: React.FC = () => {
   const handleEditOrder = () => {
     if (!order) return;
 
+    // Проверяем, что заказ принадлежит текущему пользователю
+    if (!isMyOrder) {
+      Alert.alert(
+        tError('error'),
+        t('cannot_edit_other_user_order')
+      );
+      return;
+    }
+
     // Проверяем, что заказ можно редактировать
     if (!['new', 'response_received'].includes(order.status)) {
       Alert.alert(
@@ -558,6 +605,15 @@ export const OrderDetailsScreen: React.FC = () => {
 
   const handleCancelOrder = () => {
     if (!order) return;
+
+    // Проверяем, что заказ принадлежит текущему пользователю
+    if (!isMyOrder) {
+      Alert.alert(
+        tError('error'),
+        t('cannot_cancel_other_user_order')
+      );
+      return;
+    }
 
     // Проверяем, что заказ можно отменить
     if (!['new', 'response_received'].includes(order.status)) {
@@ -796,8 +852,8 @@ export const OrderDetailsScreen: React.FC = () => {
 
     const items: DropdownMenuItem[] = [];
 
-    // Показываем кнопки редактирования и отмены только для заказов со статусом 'new' или 'response_received'
-    if (['new', 'response_received'].includes(order.status)) {
+    // Показываем кнопки редактирования и отмены только для СВОИХ заказов со статусом 'new' или 'response_received'
+    if (isMyOrder && ['new', 'response_received'].includes(order.status)) {
       items.push({
         id: 'edit',
         title: t('edit'),
@@ -817,6 +873,15 @@ export const OrderDetailsScreen: React.FC = () => {
 
   const handleCompleteOrder = async () => {
     if (!order || isCompletingOrder) return;
+
+    // Проверяем, что заказ принадлежит текущему пользователю
+    if (!isMyOrder) {
+      Alert.alert(
+        tError('error'),
+        t('cannot_complete_other_user_order')
+      );
+      return;
+    }
 
     Alert.alert(
       t('complete_order'),
@@ -1086,14 +1151,7 @@ export const OrderDetailsScreen: React.FC = () => {
 
   // Состояния загрузки и ошибок
   if (isLoading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <HeaderWithBack />
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>{t('loading_order')}</Text>
-        </View>
-      </SafeAreaView>
-    );
+    return <OrderDetailsSkeleton />;
   }
 
   if (!order) {
@@ -1172,16 +1230,18 @@ export const OrderDetailsScreen: React.FC = () => {
           <HeaderWithBack
             rightComponent={
               <View style={styles.headerRightContainer}>
-                {/* Кнопка "Повторить заказ" всегда видна */}
-                <TouchableOpacity
-                  style={styles.repeatButton}
-                  onPress={handleRepeatOrder}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.repeatButtonText}>
-                    {t('repeat_order')}
-                  </Text>
-                </TouchableOpacity>
+                {/* Кнопка "Повторить заказ" видна только для своих заказов */}
+                {isMyOrder && (
+                  <TouchableOpacity
+                    style={styles.repeatButton}
+                    onPress={handleRepeatOrder}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.repeatButtonText}>
+                      {t('repeat_order')}
+                    </Text>
+                  </TouchableOpacity>
+                )}
 
                 {canShowCompleteButton(order) && (
                   <TouchableOpacity
@@ -1212,8 +1272,8 @@ export const OrderDetailsScreen: React.FC = () => {
           <View style={styles.profileSection}>
             <View style={styles.profileContainer}>
               <View style={styles.avatarContainer}>
-                {currentUser?.profileImage ? (
-                  <Image source={{ uri: currentUser.profileImage }} style={styles.avatar} />
+                {orderCustomer?.profileImage ? (
+                  <Image source={{ uri: orderCustomer.profileImage }} style={styles.avatar} />
                 ) : (
                   <View style={styles.avatarPlaceholder}>
                     <NoImagePlaceholder width={48} height={48} />
@@ -1222,7 +1282,7 @@ export const OrderDetailsScreen: React.FC = () => {
               </View>
               <View style={styles.profileInfo}>
                 <Text style={styles.profileName}>
-                  {currentUser ? `${currentUser.lastName} ${currentUser.firstName}` : t('user')}
+                  {orderCustomer ? `${orderCustomer.lastName} ${orderCustomer.firstName}` : t('user')}
                 </Text>
                 <Text style={styles.profileRole}>{t('customer')}</Text>
               </View>
@@ -1238,10 +1298,21 @@ export const OrderDetailsScreen: React.FC = () => {
           {/* Order Title */}
           <View style={styles.titleSection}>
             <Text style={styles.orderTitle}>{order.title}</Text>
+            
+            {/* НОВОЕ: Индикатор контекста для исполнителей */}
+            {isWorker && isMyOrder && (
+              <View style={styles.contextBadgeContainer}>
+                <View style={styles.contextBadge}>
+                  <Text style={styles.contextBadgeText}>
+                    💼 {tWorker('viewing_as_customer')}
+                  </Text>
+                </View>
+              </View>
+            )}
           </View>
 
           {/* Отклики - перемещен после названия заказа */}
-          {applicants.length > 0 ? (
+          {isMyOrder && applicants.length > 0 ? (
             <View style={styles.applicantsSection}>
               <View style={styles.applicantsHeader}>
                 <Text style={styles.applicantsTitle}>{t('applicants_count', { count: applicants.length })}</Text>
@@ -1271,8 +1342,8 @@ export const OrderDetailsScreen: React.FC = () => {
                 showsVerticalScrollIndicator={false}
               />
             </View>
-          ) : (
-            /* Если откликов нет */
+          ) : isMyOrder && applicants.length === 0 ? (
+            /* Если откликов нет - показываем только для своих заказов */
             <View style={styles.noApplicantsSection}>
               <SvgXml xml={emptyStateNoApplicationsSvg} style={styles.noApplicantsIcon} />
               <Text style={styles.noApplicantsTitle}>{t('no_applicants_title')}</Text>
@@ -1280,7 +1351,7 @@ export const OrderDetailsScreen: React.FC = () => {
                 {t('no_applicants_text')}
               </Text>
             </View>
-          )}
+          ) : null}
 
           {/* Image Gallery */}
           {order.photos && order.photos.length > 0 && (
@@ -2864,5 +2935,22 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.bold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.md,
+  },
+  // НОВЫЕ СТИЛИ: Индикатор контекста для исполнителей
+  contextBadgeContainer: {
+    marginTop: theme.spacing.md,
+  },
+  contextBadge: {
+    backgroundColor: `${theme.colors.primary}10`,
+    borderLeftWidth: 3,
+    borderLeftColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.sm,
+    alignSelf: 'flex-start',
+  },
+  contextBadgeText: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.primary,
+    fontWeight: '500',
   },
 }); 

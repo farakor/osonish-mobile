@@ -11,7 +11,13 @@ import {
   WorkerJobsScreen,
   WorkerApplicationsScreen,
   WorkerProfileScreen,
+  VacanciesScreen,
 } from '../screens/worker';
+// Импортируем компоненты из customer для переиспользования
+import {
+  CategoriesScreen,
+  MyOrdersScreen,
+} from '../screens/customer';
 import {
   AnimatedTabIcon,
   AnimatedTabLabel,
@@ -19,15 +25,22 @@ import {
   withAnimatedTabScreen,
   TabTooltip,
 } from '../components/common';
+import { FloatingTabBar } from '../components/navigation';
 import HomeIcon from '../../assets/home-02.svg';
 import FileIcon from '../../assets/file-02.svg';
 import ProfileIcon from '../../assets/user-01.svg';
+import CategoryIcon from '../../assets/card-icons/category.svg';
+import MyOrdersIcon from '../../assets/file-02.svg';
+import VacancyIcon from '../../assets/cv_badge.svg';
 
 const Tab = createBottomTabNavigator<WorkerTabParamList>();
 
 // Создаем анимированные версии экранов
 const AnimatedWorkerJobsScreen = withAnimatedTabScreen(WorkerJobsScreen);
+const AnimatedVacanciesScreen = withAnimatedTabScreen(VacanciesScreen);
+const AnimatedCategoriesScreen = withAnimatedTabScreen(CategoriesScreen);
 const AnimatedWorkerApplicationsScreen = withAnimatedTabScreen(WorkerApplicationsScreen);
+const AnimatedMyOrdersScreen = withAnimatedTabScreen(MyOrdersScreen);
 const AnimatedWorkerProfileScreen = withAnimatedTabScreen(WorkerProfileScreen);
 
 export function WorkerTabNavigator() {
@@ -42,56 +55,140 @@ export function WorkerTabNavigator() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: '#1a1a1a',
+        tabBarInactiveTintColor: '#666',
         tabBarStyle: {
-          backgroundColor: '#fff',
+          position: 'absolute',
+          backgroundColor: 'transparent',
           borderTopWidth: 0,
-          // Легкая тень для меню бара
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-          elevation: 8,
-          paddingTop: theme.spacing.sm,
-          justifyContent: 'center',
-          ...tabBarStyle, // Применяем стили с учетом платформы в конце
+          elevation: 0,
+          shadowOpacity: 0,
         },
-        tabBarLabelStyle: {
-          fontSize: theme.fonts.sizes.sm,
-          fontWeight: theme.fonts.weights.medium,
-          marginBottom: 0,
-          marginTop: theme.spacing.xs,
-        },
-        tabBarIconStyle: {
-          marginBottom: 0,
-        },
-        // Отключаем ripple эффект на Android
-        tabBarButton: Platform.OS === 'android' ? (props: any) => (
-          <TouchableOpacity
-            {...props}
-            activeOpacity={0.8}
-            style={[props.style, { overflow: 'hidden' }]}
-          />
-        ) : undefined,
+        tabBarBackground: () => <View style={{ flex: 1 }} />,
+        // Светло-синий фон для всех экранов табов
+        sceneStyle: { backgroundColor: '#F4F5FC' },
       }}
+      tabBar={(props) => (
+        <FloatingTabBar>
+          {props.state.routes.map((route, index) => {
+            const { options } = props.descriptors[route.key];
+            const isFocused = props.state.index === index;
+
+            const onPress = () => {
+              const event = props.navigation.emit({
+                type: 'tabPress',
+                target: route.key,
+                canPreventDefault: true,
+              });
+
+              if (!isFocused && !event.defaultPrevented) {
+                props.navigation.navigate(route.name);
+              }
+            };
+
+            // Обычные табы
+            return (
+              <TouchableOpacity
+                key={route.key}
+                accessibilityRole="button"
+                accessibilityState={isFocused ? { selected: true } : {}}
+                accessibilityLabel={options.tabBarAccessibilityLabel}
+                testID={options.tabBarTestID}
+                onPress={onPress}
+                style={styles.tabButton}
+                activeOpacity={0.7}
+              >
+                <View style={styles.tabContent}>
+                  {options.tabBarIcon && options.tabBarIcon({
+                    focused: isFocused,
+                    color: isFocused ? theme.colors.primary : '#666',
+                    size: 24,
+                  })}
+                  {/* Badge для Applications tab */}
+                  {route.name === 'Applications' && acceptedCount > 0 && (
+                    <>
+                      <View style={styles.badge}>
+                        <Text style={styles.badgeText}>
+                          {acceptedCount > 99 ? '99+' : acceptedCount}
+                        </Text>
+                      </View>
+                      <TabTooltip
+                        visible={!isFocused && showTooltip}
+                        text={tWorker('accepted_applications_tooltip', { count: acceptedCount })}
+                        color="#E10000"
+                        onDismiss={dismissTooltip}
+                      />
+                    </>
+                  )}
+                  {options.tabBarLabel && typeof options.tabBarLabel === 'function' && (
+                    options.tabBarLabel({
+                      focused: isFocused,
+                      color: isFocused ? theme.colors.primary : '#666',
+                      position: 'below-icon',
+                      children: route.name,
+                    })
+                  )}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </FloatingTabBar>
+      )}
     >
       <Tab.Screen
         name="Jobs"
         component={AnimatedWorkerJobsScreen}
         options={{
           tabBarLabel: ({ focused, color }) => (
-            <AnimatedTabLabel focused={focused} color={color}>
-              <Text style={{ color, fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.medium }}>
-                {t('jobs')}
-              </Text>
-            </AnimatedTabLabel>
+            <Text style={[styles.tabLabel, { color }]}>
+              {t('jobs')}
+            </Text>
           ),
           tabBarIcon: ({ color, size, focused }) => (
             <AnimatedTabIcon focused={focused} color={color}>
               <HomeIcon
                 width={25}
                 height={25}
-                color={focused ? color : '#1a1a1a'}
+                color={color}
+              />
+            </AnimatedTabIcon>
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Vacancies"
+        component={AnimatedVacanciesScreen}
+        options={{
+          tabBarLabel: ({ focused, color }) => (
+            <Text style={[styles.tabLabel, { color }]}>
+              {t('vacancies')}
+            </Text>
+          ),
+          tabBarIcon: ({ color, size, focused }) => (
+            <AnimatedTabIcon focused={focused} color={color}>
+              <VacancyIcon
+                width={25}
+                height={25}
+                color={color}
+              />
+            </AnimatedTabIcon>
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Categories"
+        component={AnimatedCategoriesScreen}
+        options={{
+          tabBarLabel: ({ focused, color }) => (
+            <Text style={[styles.tabLabel, { color }]}>
+              {t('categories')}
+            </Text>
+          ),
+          tabBarIcon: ({ color, size, focused }) => (
+            <AnimatedTabIcon focused={focused} color={color}>
+              <CategoryIcon
+                width={25}
+                height={25}
+                color={color}
               />
             </AnimatedTabIcon>
           ),
@@ -102,37 +199,38 @@ export function WorkerTabNavigator() {
         component={AnimatedWorkerApplicationsScreen}
         options={{
           tabBarLabel: ({ focused, color }) => (
-            <AnimatedTabLabel focused={focused} color={color}>
-              <Text style={{ color, fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.medium }}>
-                {t('applications')}
-              </Text>
-            </AnimatedTabLabel>
+            <Text style={[styles.tabLabel, { color }]}>
+              {t('applications')}
+            </Text>
           ),
           tabBarIcon: ({ color, size, focused }) => (
-            <View>
-              <AnimatedTabIcon focused={focused} color={color}>
-                <FileIcon
-                  width={25}
-                  height={25}
-                  color={focused ? color : '#1a1a1a'}
-                />
-              </AnimatedTabIcon>
-              {acceptedCount > 0 && (
-                <>
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>
-                      {acceptedCount > 99 ? '99+' : acceptedCount}
-                    </Text>
-                  </View>
-                  <TabTooltip
-                    visible={!focused && showTooltip}
-                    text={tWorker('accepted_applications_tooltip', { count: acceptedCount })}
-                    color="#E10000"
-                    onDismiss={dismissTooltip}
-                  />
-                </>
-              )}
-            </View>
+            <AnimatedTabIcon focused={focused} color={color}>
+              <FileIcon
+                width={25}
+                height={25}
+                color={color}
+              />
+            </AnimatedTabIcon>
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="MyOrders"
+        component={AnimatedMyOrdersScreen}
+        options={{
+          tabBarLabel: ({ focused, color }) => (
+            <Text style={[styles.tabLabel, { color }]}>
+              {tWorker('my_orders')}
+            </Text>
+          ),
+          tabBarIcon: ({ color, size, focused }) => (
+            <AnimatedTabIcon focused={focused} color={color}>
+              <MyOrdersIcon
+                width={25}
+                height={25}
+                color={color}
+              />
+            </AnimatedTabIcon>
           ),
         }}
       />
@@ -141,18 +239,16 @@ export function WorkerTabNavigator() {
         component={AnimatedWorkerProfileScreen}
         options={{
           tabBarLabel: ({ focused, color }) => (
-            <AnimatedTabLabel focused={focused} color={color}>
-              <Text style={{ color, fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.medium }}>
-                {t('profile')}
-              </Text>
-            </AnimatedTabLabel>
+            <Text style={[styles.tabLabel, { color }]}>
+              {t('profile')}
+            </Text>
           ),
           tabBarIcon: ({ color, size, focused }) => (
             <AnimatedTabIcon focused={focused} color={color}>
               <ProfileIcon
                 width={25}
                 height={25}
-                color={focused ? color : '#1a1a1a'}
+                color={color}
               />
             </AnimatedTabIcon>
           ),
@@ -163,6 +259,22 @@ export function WorkerTabNavigator() {
 }
 
 const styles = StyleSheet.create({
+  tabButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+  },
+  tabContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  tabLabel: {
+    fontSize: 11,
+    fontWeight: theme.fonts.weights.medium as any,
+    marginTop: 4,
+  },
   badge: {
     position: 'absolute',
     top: -4,
@@ -176,6 +288,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     borderWidth: 2,
     borderColor: '#fff',
+    zIndex: 10,
   },
   badgeText: {
     color: '#fff',

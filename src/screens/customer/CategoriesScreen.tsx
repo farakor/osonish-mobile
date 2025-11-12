@@ -119,11 +119,11 @@ export const CategoriesScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F4F5FC',
   },
   content: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F4F5FC',
   },
   header: {
     flexDirection: 'row',
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F4F5FC',
   },
   backButton: {
     width: 40,

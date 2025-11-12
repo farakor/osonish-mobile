@@ -61,3 +61,6 @@ export { AnimatedIcon } from './AnimatedIcon';
 export { TestModal } from './TestModal';
 export { TabTooltip } from './TabTooltip';
 export { CategoryIcon } from './CategoryIcon';
+export { FloatingCreateButton } from './FloatingCreateButton';
+export { SortModal } from './SortModal';
+export type { SortOption } from './SortModal';

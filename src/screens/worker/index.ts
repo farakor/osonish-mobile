@@ -3,6 +3,8 @@ export { WorkerApplicationsScreen } from './WorkerApplicationsScreen';
 export { WorkerProfileScreen } from './WorkerProfileScreen';
 export { EditProfileScreen } from './EditProfileScreen';
 export { JobDetailsScreen } from './JobDetailsScreen';
+export { VacanciesScreen } from './VacanciesScreen';
+export { VacancyDetailsScreen } from './VacancyDetailsScreen';
 export { NotificationsScreen } from './NotificationsScreen';
 export { NotificationsListScreen } from './NotificationsListScreen';
 export { SupportScreen } from './SupportScreen'; 

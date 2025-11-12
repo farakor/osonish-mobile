@@ -2,7 +2,7 @@ import { supabase } from './supabaseClient';
 import { User, Specialization } from '../types';
 
 export interface ProfessionalMaster extends User {
-  workerType: 'professional' | 'daily_worker';
+  workerType: 'professional' | 'daily_worker' | 'job_seeker';
   aboutMe?: string;
   specializations: Specialization[];
   workPhotos?: string[];
@@ -17,6 +17,7 @@ export interface GetMastersParams {
   limit?: number;
   offset?: number;
   includeDailyWorkers?: boolean;
+  includeJobSeekers?: boolean;
 }
 
 class ProfessionalMasterService {
@@ -31,10 +32,13 @@ class ProfessionalMasterService {
         limit = 20,
         offset = 0,
         includeDailyWorkers = true,
+        includeJobSeekers = true,
       } = params;
 
       // Определяем типы работников для выборки
-      const workerTypes = includeDailyWorkers ? ['professional', 'daily_worker'] : ['professional'];
+      const workerTypes: string[] = ['professional'];
+      if (includeDailyWorkers) workerTypes.push('daily_worker');
+      if (includeJobSeekers) workerTypes.push('job_seeker');
 
       // Загружаем профессиональных мастеров и работников на день (фильтрацию делаем на клиенте)
       let query = supabase
@@ -70,8 +74,9 @@ class ProfessionalMasterService {
           Array.isArray(user.specializations) &&
           user.specializations.length > 0;
         
-        // Для daily_worker фотографии работ не обязательны (если они включены в выборку)
-        if (user.worker_type === 'daily_worker' && includeDailyWorkers) {
+        // Для daily_worker и job_seeker фотографии работ не обязательны
+        if ((user.worker_type === 'daily_worker' && includeDailyWorkers) || 
+            (user.worker_type === 'job_seeker' && includeJobSeekers)) {
           return hasSpecializations;
         }
         
@@ -97,6 +102,37 @@ class ProfessionalMasterService {
       const mastersWithStats = await Promise.all(
         filteredData.map(async (user) => {
           const stats = await this.getMasterStats(user.id);
+          
+          // Парсим work_experience если это строка
+          let parsedWorkExperience = user.work_experience || [];
+          if (typeof user.work_experience === 'string') {
+            try {
+              parsedWorkExperience = JSON.parse(user.work_experience);
+            } catch (error) {
+              parsedWorkExperience = [];
+            }
+          }
+
+          // Парсим education если это строка
+          let parsedEducation = user.education || [];
+          if (typeof user.education === 'string') {
+            try {
+              parsedEducation = JSON.parse(user.education);
+            } catch (error) {
+              parsedEducation = [];
+            }
+          }
+
+          // Парсим skills если это строка
+          let parsedSkills = user.skills || [];
+          if (typeof user.skills === 'string') {
+            try {
+              parsedSkills = JSON.parse(user.skills);
+            } catch (error) {
+              parsedSkills = [];
+            }
+          }
+
           return {
             ...user,
             firstName: user.first_name,
@@ -113,6 +149,12 @@ class ProfessionalMasterService {
             specializations: user.specializations || [],
             workPhotos: user.work_photos || [],
             profileViewsCount: user.profile_views_count || 0,
+            // Поля для job_seeker
+            education: parsedEducation,
+            skills: parsedSkills,
+            workExperience: parsedWorkExperience,
+            willingToRelocate: user.willing_to_relocate,
+            desiredSalary: user.desired_salary,
             averageRating: stats.averageRating,
             totalReviews: stats.totalReviews,
             completedJobs: stats.completedJobs,
@@ -136,7 +178,7 @@ class ProfessionalMasterService {
         .from('users')
         .select('*')
         .eq('id', masterId)
-        .in('worker_type', ['professional', 'daily_worker'])
+        .in('worker_type', ['professional', 'daily_worker', 'job_seeker'])
         .single();
 
       if (error || !data) {
@@ -144,9 +186,55 @@ class ProfessionalMasterService {
         return null;
       }
 
+      console.log('[ProfessionalMasterService] Сырые данные из БД:', {
+        id: data.id,
+        worker_type: data.worker_type,
+        education: data.education,
+        work_experience: data.work_experience,
+        skills: data.skills,
+        willing_to_relocate: data.willing_to_relocate,
+        desired_salary: data.desired_salary,
+      });
+
       const stats = await this.getMasterStats(masterId);
 
-      return {
+      // Парсим work_experience если это строка
+      let parsedWorkExperience = data.work_experience || [];
+      if (typeof data.work_experience === 'string') {
+        try {
+          parsedWorkExperience = JSON.parse(data.work_experience);
+          console.log('[ProfessionalMasterService] work_experience распарсен из строки:', parsedWorkExperience);
+        } catch (error) {
+          console.error('[ProfessionalMasterService] Ошибка парсинга work_experience:', error);
+          parsedWorkExperience = [];
+        }
+      }
+
+      // Парсим education если это строка
+      let parsedEducation = data.education || [];
+      if (typeof data.education === 'string') {
+        try {
+          parsedEducation = JSON.parse(data.education);
+          console.log('[ProfessionalMasterService] education распарсен из строки:', parsedEducation);
+        } catch (error) {
+          console.error('[ProfessionalMasterService] Ошибка парсинга education:', error);
+          parsedEducation = [];
+        }
+      }
+
+      // Парсим skills если это строка
+      let parsedSkills = data.skills || [];
+      if (typeof data.skills === 'string') {
+        try {
+          parsedSkills = JSON.parse(data.skills);
+          console.log('[ProfessionalMasterService] skills распарсен из строки:', parsedSkills);
+        } catch (error) {
+          console.error('[ProfessionalMasterService] Ошибка парсинга skills:', error);
+          parsedSkills = [];
+        }
+      }
+
+      const result = {
         ...data,
         firstName: data.first_name,
         lastName: data.last_name,
@@ -162,10 +250,26 @@ class ProfessionalMasterService {
         specializations: data.specializations || [],
         workPhotos: data.work_photos || [],
         profileViewsCount: data.profile_views_count || 0,
+        // Поля для job_seeker
+        education: parsedEducation,
+        skills: parsedSkills,
+        workExperience: parsedWorkExperience,
+        willingToRelocate: data.willing_to_relocate,
+        desiredSalary: data.desired_salary,
         averageRating: stats.averageRating,
         totalReviews: stats.totalReviews,
         completedJobs: stats.completedJobs,
       } as ProfessionalMaster;
+
+      console.log('[ProfessionalMasterService] Обработанные данные:', {
+        id: result.id,
+        workerType: result.workerType,
+        education: result.education,
+        workExperience: result.workExperience,
+        skills: result.skills,
+      });
+
+      return result;
     } catch (error) {
       console.error('Ошибка в getMasterById:', error);
       return null;
@@ -223,10 +327,12 @@ class ProfessionalMasterService {
   /**
    * Получить рандомный список мастеров из разных специализаций
    */
-  async getRandomMasters(city?: string, limit: number = 10, includeDailyWorkers: boolean = false): Promise<ProfessionalMaster[]> {
+  async getRandomMasters(city?: string, limit: number = 10, includeDailyWorkers: boolean = false, includeJobSeekers: boolean = true): Promise<ProfessionalMaster[]> {
     try {
       // Определяем типы работников для выборки
-      const workerTypes = includeDailyWorkers ? ['professional', 'daily_worker'] : ['professional'];
+      const workerTypes: string[] = ['professional'];
+      if (includeDailyWorkers) workerTypes.push('daily_worker');
+      if (includeJobSeekers) workerTypes.push('job_seeker');
       
       // DEBUG: Проверяем всех профессиональных мастеров и работников на день без фильтров
       const { data: allProfessionals } = await supabase
@@ -276,10 +382,11 @@ class ProfessionalMasterService {
           Array.isArray(user.specializations) &&
           user.specializations.length > 0;
 
-        // Для daily_worker фотографии работ не обязательны (если они включены в выборку)
-        if (user.worker_type === 'daily_worker' && includeDailyWorkers) {
+        // Для daily_worker и job_seeker фотографии работ не обязательны
+        if ((user.worker_type === 'daily_worker' && includeDailyWorkers) ||
+            (user.worker_type === 'job_seeker' && includeJobSeekers)) {
           if (!hasSpecializations) {
-            console.log(`[ProfessionalMasterService] Пропущен daily_worker ${user.first_name} ${user.last_name}:`, {
+            console.log(`[ProfessionalMasterService] Пропущен ${user.worker_type} ${user.first_name} ${user.last_name}:`, {
               hasSpecializations,
               specializationsValue: user.specializations,
             });
@@ -363,7 +470,7 @@ class ProfessionalMasterService {
         .from('users')
         .select('*')
         .eq('role', 'worker')
-        .in('worker_type', ['professional', 'daily_worker'])
+        .in('worker_type', ['professional', 'daily_worker', 'job_seeker'])
         .not('specializations', 'is', null);
 
       if (city) {

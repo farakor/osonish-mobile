@@ -36,6 +36,7 @@ interface ModernOrderCardProps {
   actionButton?: React.ReactNode;
   userLocation?: LocationCoords; // Местоположение пользователя для расчета дистанции
   workerView?: boolean; // Режим отображения для исполнителей
+  currentUserId?: string; // ID текущего пользователя для определения своих заказов
 }
 
 export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
@@ -46,6 +47,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
   actionButton,
   userLocation,
   workerView = false,
+  currentUserId,
 }) => {
   const [isPressed, setIsPressed] = useState(false);
   const t = useCustomerTranslation();
@@ -118,6 +120,14 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
     const locationData = getLocationData();
     return locationData.hasDistance ? locationData.distance : null;
   };
+
+  // Проверяем, является ли заказ моим
+  const isMyOrder = currentUserId && order.customerId === currentUserId;
+
+  // Логирование для отладки
+  if (isMyOrder) {
+    console.log(`[ModernOrderCard] Мой заказ ${order.id}: pendingApplicantsCount=${order.pendingApplicantsCount}, показываем бейдж=${!workerView && (order.pendingApplicantsCount || 0) > 0}`);
+  }
 
   return (
     <TouchableOpacity
@@ -234,6 +244,12 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
           <View style={styles.priceContainer}>
             <Text style={styles.priceText}>{formatBudget(order.budget)}</Text>
           </View>
+          {/* Бейдж "Мой заказ" справа внизу */}
+          {isMyOrder && (
+            <View style={styles.myOrderBadge}>
+              <Text style={styles.myOrderBadgeText}>{t('my_order_badge')}</Text>
+            </View>
+          )}
           {actionButton && (
             <View style={styles.actionContainer}>
               {actionButton}
@@ -268,16 +284,6 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
     borderRadius: 12,
     padding: theme.spacing.lg,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 2,
-    borderColor: '#F6F7F9',
     // Отключаем системные эффекты нажатия на Android
     ...Platform.select({
       android: {
@@ -294,11 +300,6 @@ const styles = StyleSheet.create({
     // рамка в основном зеленом цвете
     borderColor: theme.colors.primary,
     borderWidth: 0.5,
-    // легкий glow в зеленом цвете
-    shadowColor: '#10B981',
-    shadowOpacity: 0.14,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 0 },
   },
   header: {
     flexDirection: 'row',
@@ -458,6 +459,21 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.lg,
     fontWeight: theme.fonts.weights.bold,
     color: theme.colors.primary,
+  },
+  myOrderBadge: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  myOrderBadgeText: {
+    fontSize: 10,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   actionContainer: {
     marginLeft: theme.spacing.md,

@@ -53,6 +53,7 @@ export const CustomerProfileScreen: React.FC = () => {
   const navigation = useNavigation();
   const t = useCustomerTranslation();
   const tError = useErrorsTranslation();
+  
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [webViewModal, setWebViewModal] = useState<{
@@ -87,6 +88,7 @@ export const CustomerProfileScreen: React.FC = () => {
   useFocusEffect(
     React.useCallback(() => {
       console.log('[CustomerProfile] 🔄 useFocusEffect: перезагружаем профиль');
+      
       setIsScreenFocused(true);
       loadUserProfile();
       loadCustomerStats();
@@ -249,11 +251,14 @@ export const CustomerProfileScreen: React.FC = () => {
           onPress: async () => {
             try {
               await authService.logout();
-              console.log('Logout successful');
-              // Переходим к экрану авторизации
-              navigation.navigate('Auth' as never);
+              console.log('[CustomerProfile] ✅ Выход выполнен успешно');
+              // Переходим на главный экран в гостевом режиме
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'CustomerTabs' }],
+              });
             } catch (error) {
-              console.error('Ошибка выхода:', error);
+              console.error('[CustomerProfile] ❌ Ошибка выхода:', error);
               Alert.alert(tError('error'), t('logout_error'));
             }
           }
@@ -293,7 +298,11 @@ export const CustomerProfileScreen: React.FC = () => {
               text: t('ok'),
               onPress: () => {
                 setDeleteAccountModal(false);
-                navigation.navigate('Auth' as never);
+                // Переходим на главный экран в гостевом режиме
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'CustomerTabs' }],
+                });
               }
             }
           ]
@@ -337,7 +346,7 @@ export const CustomerProfileScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+      <StatusBar barStyle="dark-content" backgroundColor="#F4F5FC" />
       <SafeAreaView style={styles.content} edges={['top', 'left', 'right']}>
         {/* Custom Header */}
         <View style={[styles.contentHeader, { paddingTop: theme.spacing.lg + getAndroidStatusBarHeight() }]}>
@@ -548,10 +557,11 @@ export const CustomerProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F4F5FC',
   },
   content: {
     flex: 1,
+    backgroundColor: '#F4F5FC',
   },
   contentHeader: {
     paddingHorizontal: theme.spacing.lg,

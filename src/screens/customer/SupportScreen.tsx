@@ -52,7 +52,7 @@ export const SupportScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={getSafeAreaViewWithWhiteBackground(insets)}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F4F5FC" />
 
       <HeaderWithBack title={t('support')} />
 

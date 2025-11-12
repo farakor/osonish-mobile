@@ -16,6 +16,8 @@ import {
   WorkerTypeSelectionScreen,
   SpecializationSelectionScreen,
   ProfessionalAboutMeScreen,
+  JobSeekerInfoScreen,
+  JobSeekerInfoStepByStepScreen,
   CitySelectionScreen,
   LoadingScreen,
   LanguageSelectionScreen
@@ -28,11 +30,42 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function AppNavigator() {
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      theme={{
+        dark: false,
+        colors: {
+          primary: '#679B00',
+          background: '#F4F5FC', // Светло-синий фон для всего приложения
+          card: '#F4F5FC',
+          text: '#000000',
+          border: '#E5E5EA',
+          notification: '#FF3B30',
+        },
+        fonts: {
+          regular: {
+            fontFamily: 'System',
+            fontWeight: '400',
+          },
+          medium: {
+            fontFamily: 'System',
+            fontWeight: '500',
+          },
+          bold: {
+            fontFamily: 'System',
+            fontWeight: '700',
+          },
+          heavy: {
+            fontFamily: 'System',
+            fontWeight: '900',
+          },
+        },
+      }}
+    >
       <Stack.Navigator
         initialRouteName="Splash"
         screenOptions={{
           headerShown: false,
+          contentStyle: { backgroundColor: '#F4F5FC' }, // Светло-синий фон для экранов
         }}
       >
         <Stack.Screen
@@ -82,6 +115,14 @@ export function AppNavigator() {
         <Stack.Screen
           name="ProfessionalAboutMe"
           component={ProfessionalAboutMeScreen}
+        />
+        <Stack.Screen
+          name="JobSeekerInfo"
+          component={JobSeekerInfoScreen}
+        />
+        <Stack.Screen
+          name="JobSeekerInfoStepByStep"
+          component={JobSeekerInfoStepByStepScreen}
         />
         <Stack.Screen
           name="CitySelection"

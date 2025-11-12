@@ -218,7 +218,7 @@ export const getSafeAreaViewWithWhiteBackground = (insets: ReturnType<typeof use
   if (Platform.OS === 'android') {
     return {
       flex: 1,
-      backgroundColor: '#F8F9FA', // основной фон
+      backgroundColor: '#F4F5FC', // основной фон
       // Добавляем белую область внизу для navigation bar
       paddingBottom: 0, // убираем padding, используем отдельный View
     };
@@ -227,7 +227,7 @@ export const getSafeAreaViewWithWhiteBackground = (insets: ReturnType<typeof use
   // На iOS стандартный SafeAreaView
   return {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F4F5FC',
   };
 };
 

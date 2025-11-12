@@ -14,6 +14,7 @@ import {
   ScrollView,
   FlatList,
   Linking,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';;
 import Animated, {
@@ -38,7 +39,7 @@ import { mediaService } from '../../services/mediaService';
 import { locationService, LocationCoords } from '../../services/locationService';
 import { CreateOrderRequest } from '../../types';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { CustomerTabParamList } from '../../types/navigation';
+import { CustomerStackParamList } from '../../types/navigation';
 import {
   AnimatedProgressBar,
   AnimatedStepContainer,
@@ -52,8 +53,12 @@ import {
 } from '../../components/common';
 import { useTranslation } from 'react-i18next';
 import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
-import { SPECIALIZATIONS, getTranslatedSpecializationName } from '../../constants/specializations';
+import { SPECIALIZATIONS, getTranslatedSpecializationName, PARENT_CATEGORIES, getSubcategoriesByParentId } from '../../constants/specializations';
 import { CategoryIcon } from '../../components/common/CategoryIcon';
+import ChevronDownIcon from '../../../assets/chevron-down.svg';
+import ChevronUpIcon from '../../../assets/chevron-up.svg';
+import { useRequireAuth } from '../../hooks/useRequireAuth';
+import { AuthRequiredModal } from '../../components/auth/AuthRequiredModal';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -63,7 +68,7 @@ const isSmallScreen = Platform.OS === 'android' && screenHeight < 1080;
 // Расчет ширины карточки специализации (3 колонки)
 const specializationCardWidth = (screenWidth - theme.spacing.lg * 4 - theme.spacing.sm * 3) / 4;
 
-type CreateOrderRouteProp = RouteProp<CustomerTabParamList, 'CreateOrder'>;
+type CreateOrderRouteProp = RouteProp<CustomerStackParamList, 'CreateOrder'>;
 
 // Логирование для отладки
 console.log('[CreateOrderStepByStep] Screen dimensions:', {
@@ -123,9 +128,9 @@ const StepCounter: React.FC<{ currentStep: number; totalSteps: number; tCustomer
 };
 
 // Функция для получения оптимизированных отступов навигации
-const getNavigationPadding = (insets: ReturnType<typeof usePlatformSafeAreaInsets>) => ({
+const getNavigationPadding = (insets: ReturnType<typeof usePlatformSafeAreaInsets>, isKeyboardVisible: boolean) => ({
   paddingTop: theme.spacing.md,
-  paddingBottom: theme.spacing.md,
+  paddingBottom: isKeyboardVisible ? theme.spacing.md : Math.max(insets.bottom, theme.spacing.lg), // Убираем дополнительный отступ когда клавиатура открыта
 });
 
 
@@ -152,14 +157,42 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<CreateOrderRouteProp>();
   const { i18n } = useTranslation();
+  
+  // Hook для проверки авторизации
+  const { requireAuth, isAuthModalVisible, hideAuthModal, checkAuth } = useRequireAuth();
 
   // Получаем параметры для повторения заказа
   const { repeatOrderData, startFromDateStep } = route.params || {};
+  
+  // Проверка авторизации при монтировании компонента
+  useEffect(() => {
+    if (!checkAuth()) {
+      Alert.alert(
+        tError('error'),
+        tCustomer('create_order_requires_auth'),
+        [
+          {
+            text: tCommon('cancel'),
+            onPress: () => navigation.goBack(),
+            style: 'cancel',
+          },
+          {
+            text: tCustomer('login_or_register'),
+            onPress: () => {
+              navigation.goBack();
+              navigation.navigate('Auth' as never);
+            },
+          },
+        ]
+      );
+    }
+  }, []);
 
   const [currentStep, setCurrentStep] = useState(startFromDateStep ? 8 : 1);
   const [title, setTitle] = useState(repeatOrderData?.title || '');
   const [description, setDescription] = useState(repeatOrderData?.description || '');
   const [specializationId, setSpecializationId] = useState<string>('');
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [budget, setBudget] = useState(repeatOrderData?.budget ? repeatOrderData.budget.toString() : '');
   const [workersCount, setWorkersCount] = useState(repeatOrderData?.workersNeeded ? repeatOrderData.workersNeeded.toString() : '1');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -204,8 +237,28 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
   const [transportPaid, setTransportPaid] = useState(repeatOrderData?.transportPaid || false);
   const [mealIncluded, setMealIncluded] = useState(repeatOrderData?.mealIncluded || false);
   const [mealPaid, setMealPaid] = useState(repeatOrderData?.mealPaid || false);
+  
+  // Состояние клавиатуры
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
   const totalSteps = 10;
+
+  // Отслеживание состояния клавиатуры
+  useEffect(() => {
+    const keyboardWillShow = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setIsKeyboardVisible(true)
+    );
+    const keyboardWillHide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setIsKeyboardVisible(false)
+    );
+
+    return () => {
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
+    };
+  }, []);
 
   // Отладка изменений location
   useEffect(() => {
@@ -782,6 +835,23 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
     }
   };
 
+  // Функции для работы с раскрытыми категориями
+  const toggleCategory = (categoryId: string) => {
+    setExpandedCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(categoryId)) {
+        newSet.delete(categoryId);
+      } else {
+        newSet.add(categoryId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSpecializationSelect = (specId: string) => {
+    setSpecializationId(specId);
+  };
+
   const renderStep = () => {
     switch (currentStep) {
       case 1:
@@ -836,36 +906,103 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                   <Text style={styles.stepSubtitle}>{tCustomer('step2_specialization_subtitle')}</Text>
                 </AnimatedField>
 
-                {/* Сетка специализаций */}
-                <AnimatedField isActive={currentStep === 2} delay={200} resetKey={`${animationResetKey}-step-2-grid`}>
-                  <View style={styles.specializationsGrid}>
-                    {SPECIALIZATIONS.filter(spec => !spec.isParent).map((spec) => (
-                      <TouchableOpacity
-                        key={spec.id}
-                        style={[
-                          styles.specializationCard,
-                          specializationId === spec.id && styles.specializationCardSelected,
-                        ]}
-                        onPress={() => setSpecializationId(spec.id)}
-                        activeOpacity={0.8}
-                      >
+                {/* Список специализаций с выпадающими подкатегориями */}
+                <AnimatedField isActive={currentStep === 2} delay={200} resetKey={`${animationResetKey}-step-2-list`}>
+                  <View style={styles.specializationsList}>
+                    {/* Специальная категория "Работа на 1 день" */}
+                    <TouchableOpacity
+                      style={[
+                        styles.specializationListItem,
+                        specializationId === 'one_day_job' && styles.specializationListItemSelected,
+                      ]}
+                      onPress={() => handleSpecializationSelect('one_day_job')}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.specializationListItemContent}>
                         <CategoryIcon
-                          icon={spec.icon}
-                          iconComponent={spec.iconComponent}
-                          size={32}
-                          style={styles.specializationIconWrapper}
+                          icon="📅"
+                          size={24}
+                          style={styles.specializationListIcon}
                         />
-                        <Text 
-                          style={[
-                            styles.specializationName,
-                            specializationId === spec.id && styles.specializationNameSelected,
-                          ]}
-                          numberOfLines={2}
-                        >
-                          {getTranslatedSpecializationName(spec.id, t)}
+                        <Text style={[
+                          styles.specializationListText,
+                          specializationId === 'one_day_job' && styles.specializationListTextSelected,
+                        ]}>
+                          {getTranslatedSpecializationName('one_day_job', t)}
                         </Text>
-                      </TouchableOpacity>
-                    ))}
+                      </View>
+                    </TouchableOpacity>
+
+                    {/* Родительские категории с подкатегориями */}
+                    {PARENT_CATEGORIES.map((category) => {
+                      const subcategories = getSubcategoriesByParentId(category.id);
+                      const isExpanded = expandedCategories.has(category.id);
+                      
+                      return (
+                        <View key={category.id} style={styles.categoryContainer}>
+                          {/* Родительская категория */}
+                          <TouchableOpacity
+                            style={styles.parentCategoryItem}
+                            onPress={() => toggleCategory(category.id)}
+                            activeOpacity={0.7}
+                          >
+                            <View style={styles.parentCategoryContent}>
+                              <CategoryIcon
+                                icon={category.icon}
+                                iconComponent={category.iconComponent}
+                                size={24}
+                                style={styles.parentCategoryIcon}
+                              />
+                              <Text style={styles.parentCategoryText}>
+                                {getTranslatedSpecializationName(category.id, t)}
+                              </Text>
+                            </View>
+                            <View style={styles.chevronIcon}>
+                              {isExpanded ? (
+                                <ChevronUpIcon width={20} height={20} stroke={theme.colors.text.secondary} />
+                              ) : (
+                                <ChevronDownIcon width={20} height={20} stroke={theme.colors.text.secondary} />
+                              )}
+                            </View>
+                          </TouchableOpacity>
+
+                          {/* Подкатегории */}
+                          {isExpanded && subcategories.length > 0 && (
+                            <View style={styles.subcategoriesContainer}>
+                              {subcategories.map((subcategory) => (
+                                <TouchableOpacity
+                                  key={subcategory.id}
+                                  style={[
+                                    styles.subcategoryItem,
+                                    specializationId === subcategory.id && styles.subcategoryItemSelected,
+                                  ]}
+                                  onPress={() => handleSpecializationSelect(subcategory.id)}
+                                  activeOpacity={0.7}
+                                >
+                                  <View style={styles.subcategoryContent}>
+                                    <CategoryIcon
+                                      icon={subcategory.icon}
+                                      iconComponent={subcategory.iconComponent}
+                                      size={20}
+                                      style={styles.subcategoryIcon}
+                                    />
+                                    <Text style={[
+                                      styles.subcategoryText,
+                                      specializationId === subcategory.id && styles.subcategoryTextSelected,
+                                    ]}>
+                                      {getTranslatedSpecializationName(subcategory.id, t)}
+                                    </Text>
+                                  </View>
+                                  {specializationId === subcategory.id && (
+                                    <View style={styles.selectedIndicator} />
+                                  )}
+                                </TouchableOpacity>
+                              ))}
+                            </View>
+                          )}
+                        </View>
+                      );
+                    })}
                   </View>
                 </AnimatedField>
 
@@ -1318,7 +1455,7 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           </View>
 
           {/* Navigation */}
-          <View style={[styles.navigation, getNavigationPadding(insets)]}>
+          <View style={[styles.navigation, getNavigationPadding(insets, isKeyboardVisible)]}>
             {currentStep > 1 && (
               <AnimatedNavigationButton
                 variant="secondary"
@@ -1456,6 +1593,13 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
           )}
         </KeyboardAvoidingView>
       </SafeAreaView>
+      
+      {/* Auth Required Modal */}
+      <AuthRequiredModal 
+        visible={isAuthModalVisible}
+        onClose={hideAuthModal}
+        message={tCustomer('create_order_auth_message')}
+      />
     </View>
   );
 };
@@ -1940,12 +2084,133 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     backgroundColor: 'transparent',
   },
-  // Стили для сетки специализаций (3 колонки)
+  // Стили для сетки специализаций (3 колонки) - УСТАРЕЛО
+  // Используется новый стиль списка специализаций (см. ниже)
   specializationsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     paddingHorizontal: theme.spacing.lg,
     gap: theme.spacing.sm, // 8px между карточками
+  },
+  // Новые стили для списка специализаций с выпадающими подкатегориями
+  specializationsList: {
+    paddingHorizontal: theme.spacing.sm, // Минимальные отступы для максимальной ширины списка
+    marginTop: theme.spacing.md,
+  },
+  specializationListItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: theme.colors.white,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    ...lightElevationStyles,
+  },
+  specializationListItemSelected: {
+    borderColor: theme.colors.primary,
+    borderWidth: 2,
+    backgroundColor: theme.colors.primary + '10',
+  },
+  specializationListItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  specializationListIcon: {
+    marginRight: theme.spacing.md,
+  },
+  specializationListText: {
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.medium,
+    color: theme.colors.text.primary,
+  },
+  specializationListTextSelected: {
+    color: theme.colors.primary,
+    fontWeight: theme.fonts.weights.semiBold,
+  },
+  // Стили для родительских категорий
+  categoryContainer: {
+    marginBottom: theme.spacing.sm,
+  },
+  parentCategoryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: theme.colors.background,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  parentCategoryContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  parentCategoryIcon: {
+    marginRight: theme.spacing.md,
+  },
+  parentCategoryText: {
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.text.primary,
+    flex: 1,
+  },
+  chevronIcon: {
+    marginLeft: theme.spacing.sm,
+  },
+  // Стили для подкатегорий
+  subcategoriesContainer: {
+    marginTop: theme.spacing.xs,
+    marginLeft: theme.spacing.md,
+    paddingLeft: theme.spacing.md,
+    borderLeftWidth: 2,
+    borderLeftColor: theme.colors.border,
+  },
+  subcategoryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: theme.colors.white,
+    padding: theme.spacing.sm + 4,
+    paddingLeft: theme.spacing.md,
+    borderRadius: theme.borderRadius.sm,
+    marginBottom: theme.spacing.xs,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  subcategoryItemSelected: {
+    borderColor: theme.colors.primary,
+    borderWidth: 2,
+    backgroundColor: theme.colors.primary + '08',
+  },
+  subcategoryContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  subcategoryIcon: {
+    marginRight: theme.spacing.sm,
+  },
+  subcategoryText: {
+    fontSize: theme.fonts.sizes.sm,
+    fontWeight: theme.fonts.weights.medium,
+    color: theme.colors.text.primary,
+    flex: 1,
+  },
+  subcategoryTextSelected: {
+    color: theme.colors.primary,
+    fontWeight: theme.fonts.weights.semiBold,
+  },
+  selectedIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: theme.colors.primary,
+    marginLeft: theme.spacing.sm,
   },
   specializationCard: {
     width: specializationCardWidth,

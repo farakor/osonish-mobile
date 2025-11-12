@@ -649,6 +649,30 @@ class AuthService {
       if (workPhotosUrls) {
         insertData.work_photos = workPhotosUrls;
       }
+      
+      // Добавляем поля для ищущих вакансию (новая структура)
+      if (userData.education) {
+        insertData.education = userData.education;
+      }
+      if (userData.skills) {
+        insertData.skills = userData.skills;
+      }
+      if (userData.workExperience) {
+        insertData.work_experience = userData.workExperience;
+      }
+      if (userData.willingToRelocate !== undefined) {
+        insertData.willing_to_relocate = userData.willingToRelocate;
+      }
+      if (userData.desiredSalary !== undefined) {
+        insertData.desired_salary = userData.desiredSalary;
+      }
+
+      console.log('[AuthService] Данные для вставки в БД (job_seeker):', {
+        worker_type: insertData.worker_type,
+        education: insertData.education,
+        skills: insertData.skills,
+        work_experience: insertData.work_experience,
+      });
 
       // Создаем пользователя в Supabase
       const { data, error } = await supabase
@@ -684,6 +708,10 @@ class AuthService {
         specializations: data.specializations,
         workPhotos: data.work_photos,
         profileViewsCount: data.profile_views_count || 0,
+        // Поля для ищущих вакансию (новая структура)
+        education: data.education,
+        skills: data.skills,
+        workExperience: data.work_experience,
       };
 
       // Устанавливаем состояние авторизации

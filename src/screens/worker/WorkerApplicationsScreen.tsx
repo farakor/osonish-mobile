@@ -78,6 +78,7 @@ const mapApplicationStatusToOrderStatus = (applicationStatus: ApplicationStatus)
 const convertApplicationToOrder = (application: WorkerApplication): Order => {
   return {
     id: application.orderId,
+    type: application.orderType || 'daily', // Добавляем тип заказа
     title: application.orderTitle,
     description: application.orderDescription,
     category: application.orderCategory,
@@ -132,7 +133,13 @@ const ApplicationCard: React.FC<{
   return (
     <ModernOrderCard
       order={order}
-      onPress={() => navigation.navigate('JobDetails', { orderId: application.orderId })}
+      onPress={() => {
+        if (order.type === 'vacancy') {
+          navigation.navigate('VacancyDetails', { vacancyId: application.orderId });
+        } else {
+          navigation.navigate('JobDetails', { orderId: application.orderId });
+        }
+      }}
       showApplicantsCount={false}
       showCreateTime={false}
       actionButton={getActionButton()}
@@ -329,16 +336,17 @@ export const WorkerApplicationsScreen: React.FC = () => {
           </Text>
         </View>
 
-        {/* Tabs */}
+        {/* Tabs - Pill Style */}
         <View style={styles.tabsContainer}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.tabs}
-            contentContainerStyle={styles.tabsContent}
-          >
-            {statusFilters.map(renderStatusFilter)}
-          </ScrollView>
+          <View style={styles.tabsWrapper}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.tabsContent}
+            >
+              {statusFilters.map(renderStatusFilter)}
+            </ScrollView>
+          </View>
         </View>
 
         <FlatList
@@ -379,11 +387,11 @@ export const WorkerApplicationsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F4F5FC',
   },
   content: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F4F5FC',
   },
   contentHeader: {
     paddingHorizontal: theme.spacing.lg,
@@ -401,34 +409,51 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   tabsContainer: {
+    paddingHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
   },
-  tabs: {
-    paddingHorizontal: theme.spacing.lg,
+  tabsWrapper: {
+    backgroundColor: theme.colors.background,
+    borderRadius: 12,
+    padding: 8,
+    overflow: 'visible',
   },
   tabsContent: {
-    paddingRight: theme.spacing.lg,
+    paddingHorizontal: 2,
+    gap: 6,
   },
   tab: {
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: 10,
     paddingHorizontal: theme.spacing.md,
     alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-    minWidth: 120,
-    marginRight: theme.spacing.sm,
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    borderRadius: 8,
+    minWidth: 110,
+    marginVertical: 2,
   },
   activeTab: {
-    borderBottomColor: theme.colors.primary,
+    backgroundColor: theme.colors.white,
+    ...Platform.select({
+      ios: {
+        shadowColor: theme.colors.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   tabText: {
-    fontSize: theme.fonts.sizes.md,
+    fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
-    fontWeight: theme.fonts.weights.medium,
+    fontWeight: '500',
   },
   activeTabText: {
     color: theme.colors.primary,
-    fontWeight: theme.fonts.weights.semiBold,
+    fontWeight: '600',
   },
   applicationsList: {
     flex: 1,
