@@ -24,6 +24,26 @@ export const SalaryInputFields: React.FC<SalaryInputFieldsProps> = ({
   onChangeSalaryPeriod,
   onChangeSalaryType,
 }) => {
+  // Функция для форматирования числа с разделителями тысяч
+  const formatSalary = (value: string): string => {
+    // Удаляем все пробелы и нечисловые символы
+    const numericValue = value.replace(/\D/g, '');
+    if (!numericValue) return '';
+    // Форматируем число с пробелами между тысячами
+    return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  };
+
+  // Обработчики с форматированием
+  const handleSalaryFromChange = (text: string) => {
+    const formatted = formatSalary(text);
+    onChangeSalaryFrom(formatted);
+  };
+
+  const handleSalaryToChange = (text: string) => {
+    const formatted = formatSalary(text);
+    onChangeSalaryTo(formatted);
+  };
+
   return (
     <View style={styles.container}>
       {/* Диапазон зарплаты */}
@@ -35,9 +55,9 @@ export const SalaryInputFields: React.FC<SalaryInputFieldsProps> = ({
             <TextInput
               style={styles.input}
               value={salaryFrom}
-              onChangeText={onChangeSalaryFrom}
+              onChangeText={handleSalaryFromChange}
               keyboardType="numeric"
-              placeholder="0"
+              placeholder="1 000 000"
               placeholderTextColor="#9CA3AF"
             />
           </View>
@@ -47,9 +67,9 @@ export const SalaryInputFields: React.FC<SalaryInputFieldsProps> = ({
             <TextInput
               style={styles.input}
               value={salaryTo}
-              onChangeText={onChangeSalaryTo}
+              onChangeText={handleSalaryToChange}
               keyboardType="numeric"
-              placeholder="0"
+              placeholder="5 000 000"
               placeholderTextColor="#9CA3AF"
             />
           </View>

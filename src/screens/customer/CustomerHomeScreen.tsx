@@ -297,9 +297,11 @@ export const CustomerHomeScreen: React.FC = () => {
   const handleOrderPress = (order: any) => {
     // Переходим к экрану деталей заказа или вакансии в зависимости от типа
     if (order.type === 'vacancy') {
-      navigation.navigate('VacancyDetailsCustomer', { vacancyId: order.id });
+      // Для вакансий используем экран исполнителя (VacancyDetails), чтобы можно было откликнуться
+      navigation.navigate('VacancyDetails', { vacancyId: order.id });
     } else {
-      navigation.navigate('OrderDetails', { orderId: order.id });
+      // Для заказов используем экран исполнителя (JobDetails), чтобы можно было откликнуться
+      navigation.navigate('JobDetails', { orderId: order.id });
     }
   };
 
@@ -416,6 +418,7 @@ export const CustomerHomeScreen: React.FC = () => {
                       key={order.id}
                       vacancy={order}
                       onPress={() => handleOrderPress(order)}
+                      currentUserId={userId}
                     />
                   ) : (
                     <ModernOrderCard

@@ -44,21 +44,26 @@ export const SkillsMultiSelect: React.FC<SkillsMultiSelectProps> = ({
     onSkillsChange(safeSelectedSkills.filter((s) => s !== skill));
   };
 
+  // Получаем пользовательские навыки (не из стандартного списка)
+  const customSkills = safeSelectedSkills.filter(
+    (skill) => !COMMON_SKILLS.includes(skill)
+  );
+
   return (
     <View style={styles.container}>
-      {/* Выбранные навыки */}
-      {safeSelectedSkills.length > 0 && (
-        <View style={styles.selectedContainer}>
-          <Text style={styles.selectedTitle}>Выбранные навыки:</Text>
-          <View style={styles.selectedSkills}>
-            {safeSelectedSkills.map((skill) => (
+      {/* Ваши навыки (пользовательские) */}
+      {customSkills.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Ваши навыки</Text>
+          <View style={styles.skillsGrid}>
+            {customSkills.map((skill) => (
               <TouchableOpacity
                 key={skill}
-                style={styles.selectedSkill}
+                style={styles.customSkillChip}
                 onPress={() => removeSkill(skill)}
                 activeOpacity={0.7}
               >
-                <Text style={styles.selectedSkillText}>{skill}</Text>
+                <Text style={styles.customSkillText}>{skill}</Text>
                 <Text style={styles.removeIcon}>×</Text>
               </TouchableOpacity>
             ))}
@@ -178,39 +183,6 @@ const styles = StyleSheet.create({
   container: {
     gap: 20,
   },
-  selectedContainer: {
-    gap: 8,
-  },
-  selectedTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.colors.text,
-  },
-  selectedSkills: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  selectedSkill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    paddingLeft: 12,
-    paddingRight: 8,
-    backgroundColor: theme.colors.primary,
-    borderRadius: 20,
-  },
-  selectedSkillText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: theme.colors.white,
-  },
-  removeIcon: {
-    fontSize: 20,
-    color: theme.colors.white,
-    fontWeight: 'bold',
-  },
   section: {
     gap: 12,
   },
@@ -218,6 +190,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: theme.colors.text,
+  },
+  customSkillChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingLeft: 16,
+    paddingRight: 12,
+    backgroundColor: theme.colors.primary,
+    borderRadius: 20,
+  },
+  customSkillText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: theme.colors.white,
+  },
+  removeIcon: {
+    fontSize: 18,
+    color: theme.colors.white,
+    fontWeight: 'bold',
+    lineHeight: 18,
   },
   skillsGrid: {
     flexDirection: 'row',

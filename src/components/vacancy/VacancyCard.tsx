@@ -9,13 +9,26 @@ import {
   getSalaryPeriodLabel,
 } from '../../constants/vacancyOptions';
 import { getCityName } from '../../utils/cityUtils';
+import { getTranslatedSpecializationName, getSpecializationById } from '../../constants/specializations';
+import { MarkerPinIcon } from '../common/MarkerPinIcon';
+import { CalendarDateIcon } from '../common/CalendarDateIcon';
+import { HourglassIcon } from '../common/HourglassIcon';
+import { BuildingIcon } from '../common/BuildingIcon';
+import { EyeIcon } from '../common/EyeIcon';
+import { CategoryIcon } from '../common/CategoryIcon';
+import { useCustomerTranslation } from '../../hooks/useTranslation';
+import { useTranslation } from 'react-i18next';
 
 interface VacancyCardProps {
   vacancy: Order;
   onPress: () => void;
+  currentUserId?: string; // ID текущего пользователя для определения своих вакансий
 }
 
-export const VacancyCard: React.FC<VacancyCardProps> = ({ vacancy, onPress }) => {
+export const VacancyCard: React.FC<VacancyCardProps> = ({ vacancy, onPress, currentUserId }) => {
+  const tCustomer = useCustomerTranslation();
+  const { t } = useTranslation();
+  
   const formatSalary = () => {
     if (vacancy.salaryFrom && vacancy.salaryTo) {
       const period = vacancy.salaryPeriod ? getSalaryPeriodLabel(vacancy.salaryPeriod) : '';
@@ -29,6 +42,9 @@ export const VacancyCard: React.FC<VacancyCardProps> = ({ vacancy, onPress }) =>
   };
 
   const cityName = vacancy.city ? getCityName(vacancy.city) : null;
+  
+  // Проверяем, является ли вакансия моей
+  const isMyVacancy = currentUserId && vacancy.customerId === currentUserId;
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
@@ -37,19 +53,40 @@ export const VacancyCard: React.FC<VacancyCardProps> = ({ vacancy, onPress }) =>
           {vacancy.jobTitle || vacancy.title}
         </Text>
         <Text style={styles.salary}>{formatSalary()}</Text>
+        {vacancy.customerUserType === 'company' && vacancy.customerCompanyName && (
+          <Text style={styles.companyName} numberOfLines={1}>
+            {vacancy.customerCompanyName}
+          </Text>
+        )}
       </View>
 
       <View style={styles.details}>
+        {vacancy.specializationId && t && (() => {
+          const spec = getSpecializationById(vacancy.specializationId);
+          return spec && (
+            <View style={styles.detailItem}>
+              <CategoryIcon
+                icon={spec.icon}
+                iconComponent={spec.iconComponent}
+                size={16}
+              />
+              <Text style={styles.detailText}>
+                {getTranslatedSpecializationName(vacancy.specializationId, t)}
+              </Text>
+            </View>
+          );
+        })()}
+        
         {cityName && (
           <View style={styles.detailItem}>
-            <Text style={styles.detailIcon}>📍</Text>
+            <MarkerPinIcon size={16} color="#6B7280" />
             <Text style={styles.detailText}>{cityName}</Text>
           </View>
         )}
         
         {vacancy.experienceLevel && (
           <View style={styles.detailItem}>
-            <Text style={styles.detailIcon}>💼</Text>
+            <CalendarDateIcon size={16} color="#6B7280" />
             <Text style={styles.detailText}>
               {getExperienceLevelLabel(vacancy.experienceLevel)}
             </Text>
@@ -58,7 +95,7 @@ export const VacancyCard: React.FC<VacancyCardProps> = ({ vacancy, onPress }) =>
         
         {vacancy.employmentType && (
           <View style={styles.detailItem}>
-            <Text style={styles.detailIcon}>⏰</Text>
+            <HourglassIcon size={16} color="#6B7280" />
             <Text style={styles.detailText}>
               {getEmploymentTypeLabel(vacancy.employmentType)}
             </Text>
@@ -67,7 +104,7 @@ export const VacancyCard: React.FC<VacancyCardProps> = ({ vacancy, onPress }) =>
         
         {vacancy.workFormat && (
           <View style={styles.detailItem}>
-            <Text style={styles.detailIcon}>🏢</Text>
+            <BuildingIcon size={16} color="#6B7280" />
             <Text style={styles.detailText}>
               {getWorkFormatLabel(vacancy.workFormat)}
             </Text>
@@ -103,9 +140,20 @@ export const VacancyCard: React.FC<VacancyCardProps> = ({ vacancy, onPress }) =>
             month: 'short',
           })}
         </Text>
-        {vacancy.viewsCount !== undefined && vacancy.viewsCount > 0 && (
-          <Text style={styles.views}>👁 {vacancy.viewsCount}</Text>
-        )}
+        <View style={styles.footerRight}>
+          {vacancy.viewsCount !== undefined && vacancy.viewsCount !== null && (
+            <View style={styles.viewsContainer}>
+              <EyeIcon size={14} color="#9CA3AF" />
+              <Text style={styles.views}>{vacancy.viewsCount}</Text>
+            </View>
+          )}
+          {/* Бейдж "Моя вакансия" */}
+          {isMyVacancy && (
+            <View style={styles.myVacancyBadge}>
+              <Text style={styles.myVacancyBadgeText}>{tCustomer('my_vacancy_badge')}</Text>
+            </View>
+          )}
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -137,6 +185,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: theme.colors.primary,
+  },
+  companyName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B7280',
+    marginTop: 4,
   },
   details: {
     flexDirection: 'row',
@@ -191,9 +245,34 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9CA3AF',
   },
+  footerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  viewsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   views: {
     fontSize: 12,
     color: '#9CA3AF',
+  },
+  myVacancyBadge: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  myVacancyBadgeText: {
+    fontSize: 10,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });
 

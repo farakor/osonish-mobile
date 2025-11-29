@@ -37,6 +37,7 @@ import ImageIcon from '../../../assets/image-03.svg';
 import { orderService } from '../../services/orderService';
 import { mediaService } from '../../services/mediaService';
 import { locationService, LocationCoords } from '../../services/locationService';
+import { authService } from '../../services/authService';
 import { CreateOrderRequest } from '../../types';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
@@ -934,75 +935,86 @@ export const CreateOrderStepByStepScreen: React.FC = () => {
                     </TouchableOpacity>
 
                     {/* Родительские категории с подкатегориями */}
-                    {PARENT_CATEGORIES.map((category) => {
-                      const subcategories = getSubcategoriesByParentId(category.id);
-                      const isExpanded = expandedCategories.has(category.id);
+                    {(() => {
+                      // Получаем роль пользователя
+                      const authState = authService.getAuthState();
+                      const userRole = authState.user?.role;
                       
-                      return (
-                        <View key={category.id} style={styles.categoryContainer}>
-                          {/* Родительская категория */}
-                          <TouchableOpacity
-                            style={styles.parentCategoryItem}
-                            onPress={() => toggleCategory(category.id)}
-                            activeOpacity={0.7}
-                          >
-                            <View style={styles.parentCategoryContent}>
-                              <CategoryIcon
-                                icon={category.icon}
-                                iconComponent={category.iconComponent}
-                                size={24}
-                                style={styles.parentCategoryIcon}
-                              />
-                              <Text style={styles.parentCategoryText}>
-                                {getTranslatedSpecializationName(category.id, t)}
-                              </Text>
-                            </View>
-                            <View style={styles.chevronIcon}>
-                              {isExpanded ? (
-                                <ChevronUpIcon width={20} height={20} stroke={theme.colors.text.secondary} />
-                              ) : (
-                                <ChevronDownIcon width={20} height={20} stroke={theme.colors.text.secondary} />
-                              )}
-                            </View>
-                          </TouchableOpacity>
+                      // Если пользователь - исполнитель, показываем только "Ремонт и строительство"
+                      const categoriesToShow = userRole === 'worker'
+                        ? PARENT_CATEGORIES.filter(cat => cat.id === 'repair_construction')
+                        : PARENT_CATEGORIES;
+                      
+                      return categoriesToShow.map((category) => {
+                        const subcategories = getSubcategoriesByParentId(category.id);
+                        const isExpanded = expandedCategories.has(category.id);
+                        
+                        return (
+                          <View key={category.id} style={styles.categoryContainer}>
+                            {/* Родительская категория */}
+                            <TouchableOpacity
+                              style={styles.parentCategoryItem}
+                              onPress={() => toggleCategory(category.id)}
+                              activeOpacity={0.7}
+                            >
+                              <View style={styles.parentCategoryContent}>
+                                <CategoryIcon
+                                  icon={category.icon}
+                                  iconComponent={category.iconComponent}
+                                  size={24}
+                                  style={styles.parentCategoryIcon}
+                                />
+                                <Text style={styles.parentCategoryText}>
+                                  {getTranslatedSpecializationName(category.id, t)}
+                                </Text>
+                              </View>
+                              <View style={styles.chevronIcon}>
+                                {isExpanded ? (
+                                  <ChevronUpIcon width={20} height={20} stroke={theme.colors.text.secondary} />
+                                ) : (
+                                  <ChevronDownIcon width={20} height={20} stroke={theme.colors.text.secondary} />
+                                )}
+                              </View>
+                            </TouchableOpacity>
 
-                          {/* Подкатегории */}
-                          {isExpanded && subcategories.length > 0 && (
-                            <View style={styles.subcategoriesContainer}>
-                              {subcategories.map((subcategory) => (
-                                <TouchableOpacity
-                                  key={subcategory.id}
-                                  style={[
-                                    styles.subcategoryItem,
-                                    specializationId === subcategory.id && styles.subcategoryItemSelected,
-                                  ]}
-                                  onPress={() => handleSpecializationSelect(subcategory.id)}
-                                  activeOpacity={0.7}
-                                >
-                                  <View style={styles.subcategoryContent}>
-                                    <CategoryIcon
-                                      icon={subcategory.icon}
-                                      iconComponent={subcategory.iconComponent}
-                                      size={20}
-                                      style={styles.subcategoryIcon}
-                                    />
-                                    <Text style={[
-                                      styles.subcategoryText,
-                                      specializationId === subcategory.id && styles.subcategoryTextSelected,
-                                    ]}>
-                                      {getTranslatedSpecializationName(subcategory.id, t)}
-                                    </Text>
-                                  </View>
-                                  {specializationId === subcategory.id && (
-                                    <View style={styles.selectedIndicator} />
-                                  )}
-                                </TouchableOpacity>
-                              ))}
-                            </View>
-                          )}
-                        </View>
-                      );
-                    })}
+                            {/* Подкатегории */}
+                            {isExpanded && subcategories.length > 0 && (
+                              <View style={styles.subcategoriesContainer}>
+                                {subcategories.map((subcategory) => (
+                                  <TouchableOpacity
+                                    key={subcategory.id}
+                                    style={[
+                                      styles.subcategoryItem,
+                                      specializationId === subcategory.id && styles.subcategoryItemSelected,
+                                    ]}
+                                    onPress={() => handleSpecializationSelect(subcategory.id)}
+                                    activeOpacity={0.7}
+                                  >
+                                    <View style={styles.subcategoryContent}>
+                                      <CategoryIcon
+                                        icon={subcategory.icon}
+                                        iconComponent={subcategory.iconComponent}
+                                        size={20}
+                                        style={styles.subcategoryIcon}
+                                      />
+                                      <Text style={[
+                                        styles.subcategoryText,
+                                        specializationId === subcategory.id && styles.subcategoryTextSelected,
+                                      ]}>
+                                        {getTranslatedSpecializationName(subcategory.id, t)}
+                                      </Text>
+                                    </View>
+                                    {specializationId === subcategory.id && (
+                                      <View style={styles.selectedIndicator} />
+                                    )}
+                                  </TouchableOpacity>
+                                ))}
+                              </View>
+                            )}
+                          </View>
+                        );
+                      });
+                    })()}
                   </View>
                 </AnimatedField>
 
@@ -1638,6 +1650,7 @@ const styles = StyleSheet.create({
   },
   stepContent: {
     flex: 1,
+    paddingHorizontal: theme.spacing.lg,
     paddingTop: isSmallScreen ? theme.spacing.md : theme.spacing.xl,
     paddingBottom: isSmallScreen ? theme.spacing.lg : 0, // Уменьшенный отступ для маленьких экранов
   },
@@ -1694,11 +1707,7 @@ const styles = StyleSheet.create({
     fontSize: isSmallScreen ? theme.fonts.sizes.md : theme.fonts.sizes.lg,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
-    marginBottom: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
-  },
-  categoriesGrid: {
-    paddingVertical: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
-    paddingHorizontal: theme.spacing.md,
+    marginBottom: isSmallScreen ? theme.fonts.sizes.md : theme.spacing.lg,
   },
   workersContainer: {
     flexDirection: 'row',

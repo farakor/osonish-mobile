@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,12 +8,15 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
-import { HeaderWithBack } from '../../components/common';
+import { HeaderWithBack, OrderLocationMap } from '../../components/common';
 import { VacancyApplicationCard } from '../../components/vacancy';
+import { getTranslatedSpecializationName, getSpecializationById } from '../../constants/specializations';
+import { CategoryIcon } from '../../components/common/CategoryIcon';
 import {
   useVacancyDetails,
   useVacancyApplications,
@@ -31,6 +34,16 @@ import {
 } from '../../constants/vacancyOptions';
 import { getCityName } from '../../utils/cityUtils';
 import { VacancyApplication } from '../../types';
+import { MarkerPinIcon } from '../../components/common/MarkerPinIcon';
+import { CalendarDateIcon } from '../../components/common/CalendarDateIcon';
+import { HourglassIcon } from '../../components/common/HourglassIcon';
+import { BuildingIcon } from '../../components/common/BuildingIcon';
+import { ClockIcon } from '../../components/common/ClockIcon';
+import { BankNoteIcon } from '../../components/common/BankNoteIcon';
+import { vacancyService } from '../../services/vacancyService';
+import { authService } from '../../services/authService';
+import { useTranslation } from 'react-i18next';
+import PencilIcon from '../../../assets/pencil-02.svg';
 
 type VacancyDetailsCustomerRouteProp = RouteProp<
   { VacancyDetailsCustomer: { vacancyId: string } },
@@ -38,15 +51,34 @@ type VacancyDetailsCustomerRouteProp = RouteProp<
 >;
 
 export const VacancyDetailsCustomerScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const route = useRoute<VacancyDetailsCustomerRouteProp>();
   const { vacancyId } = route.params;
+  const { t } = useTranslation();
 
   const { data: vacancy, isLoading } = useVacancyDetails(vacancyId);
   const { data: applications = [], refetch: refetchApplications } = useVacancyApplications(vacancyId);
   const updateStatusMutation = useUpdateVacancyApplicationStatus();
 
   const [selectedTab, setSelectedTab] = useState<'info' | 'applications'>('info');
+
+  // Проверяем, является ли текущий пользователь создателем вакансии
+  const authState = authService.getAuthState();
+  const isVacancyOwner = vacancy && authState.user && vacancy.customerId === authState.user.id;
+
+  // Увеличиваем счетчик просмотров при открытии вакансии (только для владельца в первый раз)
+  useEffect(() => {
+    if (vacancy) {
+      // Владелец вакансии тоже может просматривать свою вакансию, но это не увеличивает счетчик
+      // Однако для статистики мы все равно можем его увеличивать
+      vacancyService.incrementVacancyViews(vacancyId);
+    }
+  }, [vacancyId, vacancy]);
+
+  const handleViewResume = (application: VacancyApplication) => {
+    // Переходим к экрану резюме кандидата
+    navigation.navigate('ApplicantResume', { applicantId: application.applicantId });
+  };
 
   const handleAcceptApplication = async (application: VacancyApplication) => {
     Alert.alert(
@@ -101,10 +133,32 @@ export const VacancyDetailsCustomerScreen: React.FC = () => {
     );
   };
 
+  const handleEditVacancy = () => {
+    if (!vacancy) return;
+
+    // Проверяем, что вакансия принадлежит текущему пользователю
+    if (!isVacancyOwner) {
+      Alert.alert('Ошибка', 'Вы не можете редактировать чужую вакансию');
+      return;
+    }
+
+    // Проверяем, что вакансию можно редактировать
+    if (vacancy.status !== 'new') {
+      Alert.alert(
+        'Редактирование невозможно',
+        'Вакансию можно редактировать только со статусом "Новая"'
+      );
+      return;
+    }
+
+    // Переходим на экран редактирования вакансии
+    navigation.navigate('EditVacancy', { vacancyId: vacancy.id });
+  };
+
   if (isLoading || !vacancy) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
-        <HeaderWithBack title="Моя вакансия" />
+        <HeaderWithBack title="Вакансия" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
         </View>
@@ -125,60 +179,131 @@ export const VacancyDetailsCustomerScreen: React.FC = () => {
   const acceptedApplications = applications.filter((app) => app.status === 'accepted');
   const rejectedApplications = applications.filter((app) => app.status === 'rejected');
 
+  // Компонент кнопки редактирования для header
+  const renderEditButton = () => {
+    if (!isVacancyOwner || vacancy.status !== 'new') {
+      return null;
+    }
+
+    return (
+      <TouchableOpacity
+        style={styles.headerEditButton}
+        onPress={handleEditVacancy}
+        activeOpacity={0.7}
+      >
+        <PencilIcon width={20} height={20} stroke={theme.colors.primary} />
+      </TouchableOpacity>
+    );
+  };
+
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <HeaderWithBack title="Моя вакансия" />
+    <>
+      <StatusBar 
+        barStyle="dark-content" 
+        backgroundColor="#FFFFFF"
+      />
+      <SafeAreaView style={styles.topContainer} edges={['top']}>
+        <HeaderWithBack 
+          title="Вакансия" 
+          backgroundColor="#FFFFFF"
+          rightComponent={renderEditButton()}
+        />
 
-      {/* Табы */}
-      <View style={styles.tabs}>
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'info' && styles.tabActive]}
-          onPress={() => setSelectedTab('info')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.tabText, selectedTab === 'info' && styles.tabTextActive]}>
-            Информация
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'applications' && styles.tabActive]}
-          onPress={() => setSelectedTab('applications')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.tabText, selectedTab === 'applications' && styles.tabTextActive]}>
-            Отклики {applications.length > 0 && `(${applications.length})`}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {/* Табы - показываем только для владельца вакансии */}
+      {isVacancyOwner && (
+        <View style={styles.tabs}>
+          <TouchableOpacity
+            style={[styles.tab, selectedTab === 'info' && styles.tabActive]}
+            onPress={() => setSelectedTab('info')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.tabText, selectedTab === 'info' && styles.tabTextActive]}>
+              Информация
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, selectedTab === 'applications' && styles.tabActive]}
+            onPress={() => setSelectedTab('applications')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.tabText, selectedTab === 'applications' && styles.tabTextActive]}>
+              Отклики {applications.length > 0 && `(${applications.length})`}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      </SafeAreaView>
+      
+      <SafeAreaView style={styles.container} edges={['bottom']}>
 
-      {selectedTab === 'info' ? (
+      {(selectedTab === 'info' || !isVacancyOwner) ? (
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
           {/* Заголовок и зарплата */}
           <View style={styles.header}>
             <Text style={styles.title}>{vacancy.jobTitle || vacancy.title}</Text>
             <Text style={styles.salary}>{formatSalary()}</Text>
+            {vacancy.customerUserType === 'company' && vacancy.customerCompanyName && (
+              <Text style={styles.companyName}>{vacancy.customerCompanyName}</Text>
+            )}
           </View>
+
+          {/* Карта с адресом */}
+          {vacancy.location && vacancy.latitude && vacancy.longitude && (
+            <View style={styles.section}>
+              <OrderLocationMap
+                latitude={vacancy.latitude}
+                longitude={vacancy.longitude}
+                address={vacancy.location}
+                title="Место работы"
+                containerStyle={{ marginHorizontal: 0, marginBottom: 0 }}
+              />
+            </View>
+          )}
+
+          {/* Адрес без карты (если нет координат) */}
+          {vacancy.location && (!vacancy.latitude || !vacancy.longitude) && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Адрес</Text>
+              <Text style={styles.locationText}>{vacancy.location}</Text>
+            </View>
+          )}
 
           {/* Основная информация */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Основная информация</Text>
 
-            {vacancy.city && <InfoRow icon="📍" label="Город" value={getCityName(vacancy.city)} />}
+            {vacancy.specializationId && t && (() => {
+              const spec = getSpecializationById(vacancy.specializationId);
+              return spec && (
+                <InfoRow 
+                  icon={
+                    <CategoryIcon
+                      icon={spec.icon}
+                      iconComponent={spec.iconComponent}
+                      size={16}
+                    />
+                  } 
+                  label="Специализация" 
+                  value={getTranslatedSpecializationName(vacancy.specializationId, t)} 
+                />
+              );
+            })()}
+            {vacancy.city && <InfoRow icon={<MarkerPinIcon size={16} color="#6B7280" />} label="Город" value={getCityName(vacancy.city)} />}
             {vacancy.experienceLevel && (
-              <InfoRow icon="💼" label="Опыт" value={getExperienceLevelLabel(vacancy.experienceLevel)} />
+              <InfoRow icon={<CalendarDateIcon size={16} color="#6B7280" />} label="Опыт" value={getExperienceLevelLabel(vacancy.experienceLevel)} />
             )}
             {vacancy.employmentType && (
-              <InfoRow icon="⏰" label="Занятость" value={getEmploymentTypeLabel(vacancy.employmentType)} />
+              <InfoRow icon={<HourglassIcon size={16} color="#6B7280" />} label="Занятость" value={getEmploymentTypeLabel(vacancy.employmentType)} />
             )}
             {vacancy.workFormat && (
-              <InfoRow icon="🏢" label="Формат" value={getWorkFormatLabel(vacancy.workFormat)} />
+              <InfoRow icon={<BuildingIcon size={16} color="#6B7280" />} label="Формат" value={getWorkFormatLabel(vacancy.workFormat)} />
             )}
             {vacancy.workSchedule && (
-              <InfoRow icon="📅" label="График" value={getWorkScheduleLabel(vacancy.workSchedule)} />
+              <InfoRow icon={<ClockIcon size={16} color="#6B7280" />} label="График" value={getWorkScheduleLabel(vacancy.workSchedule)} />
             )}
             {vacancy.paymentFrequency && (
               <InfoRow
-                icon="💰"
+                icon={<BankNoteIcon size={16} color="#6B7280" />}
                 label="Выплаты"
                 value={getPaymentFrequencyLabel(vacancy.paymentFrequency)}
               />
@@ -221,17 +346,9 @@ export const VacancyDetailsCustomerScreen: React.FC = () => {
             </View>
           )}
 
-          {/* Адрес */}
-          {vacancy.location && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Адрес</Text>
-              <Text style={styles.locationText}>{vacancy.location}</Text>
-            </View>
-          )}
-
           <View style={styles.bottomSpacer} />
         </ScrollView>
-      ) : (
+      ) : isVacancyOwner ? (
         <View style={styles.applicationsContainer}>
           {/* Статистика */}
           <View style={styles.statsContainer}>
@@ -265,6 +382,7 @@ export const VacancyDetailsCustomerScreen: React.FC = () => {
                 <VacancyApplicationCard
                   application={item}
                   showActions={item.status === 'pending'}
+                  onViewResume={() => handleViewResume(item)}
                   onAccept={() => handleAcceptApplication(item)}
                   onReject={() => handleRejectApplication(item)}
                 />
@@ -273,16 +391,21 @@ export const VacancyDetailsCustomerScreen: React.FC = () => {
             />
           )}
         </View>
-      )}
+      ) : null}
     </SafeAreaView>
+    </>
   );
 };
 
 // Компонент для строки информации
-const InfoRow: React.FC<{ icon: string; label: string; value: string }> = ({ icon, label, value }) => (
+const InfoRow: React.FC<{ icon: string | React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
   <View style={styles.infoRow}>
     <View style={styles.infoLabel}>
-      <Text style={styles.infoIcon}>{icon}</Text>
+      {typeof icon === 'string' ? (
+        <Text style={styles.infoIcon}>{icon}</Text>
+      ) : (
+        <View style={styles.infoIconContainer}>{icon}</View>
+      )}
       <Text style={styles.infoLabelText}>{label}:</Text>
     </View>
     <Text style={styles.infoValue}>{value}</Text>
@@ -290,6 +413,9 @@ const InfoRow: React.FC<{ icon: string; label: string; value: string }> = ({ ico
 );
 
 const styles = StyleSheet.create({
+  topContainer: {
+    backgroundColor: '#FFFFFF',
+  },
   container: {
     flex: 1,
     backgroundColor: '#F4F5FC',
@@ -353,6 +479,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.primary,
   },
+  companyName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#6B7280',
+    marginTop: 8,
+  },
   section: {
     backgroundColor: theme.colors.white,
     borderRadius: 16,
@@ -385,6 +517,9 @@ const styles = StyleSheet.create({
   },
   infoIcon: {
     fontSize: 16,
+    marginRight: 8,
+  },
+  infoIconContainer: {
     marginRight: 8,
   },
   infoLabelText: {
@@ -497,6 +632,19 @@ const styles = StyleSheet.create({
   applicationsList: {
     padding: 16,
     paddingBottom: 100,
+  },
+  headerEditButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });
 

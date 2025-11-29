@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import LottieView from 'lottie-react-native';
 import { theme } from '../../constants';
 import type { RootStackParamList } from '../../types';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +38,7 @@ export const AuthRequiredModal: React.FC<AuthRequiredModalProps> = ({
   const navigation = useNavigation<NavigationProp>();
   const { t } = useTranslation();
   const slideAnim = useRef(new Animated.Value(screenHeight)).current;
+  const lottieRef = useRef<LottieView>(null);
 
   useEffect(() => {
     if (visible) {
@@ -47,6 +49,8 @@ export const AuthRequiredModal: React.FC<AuthRequiredModalProps> = ({
         tension: 65,
         friction: 11,
       }).start();
+      // Запускаем Lottie анимацию
+      lottieRef.current?.play();
     } else {
       // Анимация исчезновения вниз
       Animated.timing(slideAnim, {
@@ -94,7 +98,13 @@ export const AuthRequiredModal: React.FC<AuthRequiredModalProps> = ({
             <View style={styles.content}>
               {/* Иконка */}
               <View style={styles.iconContainer}>
-                <Text style={styles.iconText}>🔐</Text>
+                <LottieView
+                  ref={lottieRef}
+                  source={require('../../../assets/login.json')}
+                  style={styles.lottieAnimation}
+                  loop={true}
+                  autoPlay={false}
+                />
               </View>
 
               {/* Заголовок */}
@@ -179,9 +189,14 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     marginBottom: 16,
+    width: 120,
+    height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  iconText: {
-    fontSize: 56,
+  lottieAnimation: {
+    width: 120,
+    height: 120,
   },
   title: {
     fontSize: 24,

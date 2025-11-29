@@ -1285,6 +1285,9 @@ export const OrderDetailsScreen: React.FC = () => {
                   {orderCustomer ? `${orderCustomer.lastName} ${orderCustomer.firstName}` : t('user')}
                 </Text>
                 <Text style={styles.profileRole}>{t('customer')}</Text>
+                {orderCustomer?.userType === 'company' && orderCustomer?.companyName && (
+                  <Text style={styles.companyName}>{orderCustomer.companyName}</Text>
+                )}
               </View>
               <View style={styles.priceContainer}>
                 <Text style={styles.orderPrice}>{formatBudget(order.budget)} {t('sum_currency')}</Text>
@@ -1360,52 +1363,72 @@ export const OrderDetailsScreen: React.FC = () => {
             </View>
           )}
 
-          {/* Info Grid */}
+          {/* Info Grid - Компактный дизайн */}
           <View style={styles.infoSection}>
-            <View style={styles.infoGrid}>
-              {/* Верхний ряд: Специализация/Категория и Дата */}
-              <View style={styles.infoCard}>
-                <View style={styles.infoIcon}>
+            <View style={styles.infoCard}>
+              {/* Категория/Специализация */}
+              <View style={styles.infoRow}>
+                <View style={styles.infoIconLeft}>
                   {order.specializationId ? (
                     <CategoryIconComponent
                       icon={getSpecializationIcon(order.specializationId)}
                       iconComponent={getSpecializationIconComponent(order.specializationId)}
-                      size={22}
+                      size={20}
                     />
                   ) : (
                     <LottieView
                       source={getCategoryAnimation(order.category || 'other')}
-                      style={styles.categoryLottieIcon}
+                      style={styles.categoryLottieIconSmall}
                       autoPlay={false}
                       loop={false}
                       progress={0.5}
                     />
                   )}
                 </View>
-                <Text style={styles.infoValue}>
+                <Text style={styles.infoText}>
                   {order.specializationId 
                     ? getTranslatedSpecializationName(order.specializationId, translate)
                     : getCategoryLabel(order.category || 'other', translate)}
                 </Text>
               </View>
 
-              <View style={styles.infoCard}>
-                <View style={styles.infoIcon}>
-                  <CalendarIcon width={22} height={22} color="#679B00" />
+              {/* Дата */}
+              <View style={styles.infoRow}>
+                <View style={styles.infoIconLeft}>
+                  <CalendarIcon width={20} height={20} color="#679B00" />
                 </View>
-                <Text style={styles.infoValue}>{formatDate(order.serviceDate)}</Text>
+                <Text style={styles.infoText}>{formatDate(order.serviceDate)}</Text>
               </View>
 
-              {/* Нижний ряд: Адрес на всю ширину */}
-              <View style={styles.infoCardFullWidth}>
-                <View style={styles.infoIcon}>
-                  <LocationIcon width={22} height={22} color="#679B00" />
+              {/* Адрес */}
+              <View style={[styles.infoRow, styles.infoRowLast]}>
+                <View style={styles.infoIconLeft}>
+                  <LocationIcon width={20} height={20} color="#679B00" />
                 </View>
-                <Text style={styles.infoValue}>{order.location}</Text>
+                <Text style={[styles.infoText, styles.infoTextAddress]}>{order.location}</Text>
               </View>
             </View>
           </View>
 
+          {/* Details Section */}
+          {order.description && (
+            <View style={styles.detailsSection}>
+              <View style={styles.detailsCard}>
+                <Text style={styles.detailsTitle}>{t('details')}</Text>
+                <Text style={styles.detailsText}>{order.description}</Text>
+              </View>
+            </View>
+          )}
+
+          {/* Location Map Section */}
+          {order.latitude && order.longitude && (
+            <OrderLocationMap
+              latitude={order.latitude}
+              longitude={order.longitude}
+              address={order.location}
+              title={t('where_to_go')}
+            />
+          )}
 
           {/* Amenities Section */}
           <View style={styles.amenitiesSection}>
@@ -1432,22 +1455,6 @@ export const OrderDetailsScreen: React.FC = () => {
               </View>
             </View>
           </View>
-
-          {/* Details Section */}
-          <View style={styles.detailsSection}>
-            <Text style={styles.detailsTitle}>{t('details')}</Text>
-            <Text style={styles.detailsText}>{order.description}</Text>
-          </View>
-
-          {/* Location Map Section */}
-          {order.latitude && order.longitude && (
-            <OrderLocationMap
-              latitude={order.latitude}
-              longitude={order.longitude}
-              address={order.location}
-              title={t('where_to_go')}
-            />
-          )}
         </Animated.ScrollView>
 
       </View>
@@ -1515,7 +1522,7 @@ export const OrderDetailsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#F4F5FC',
   },
   loadingContainer: {
     flex: 1,
@@ -1557,14 +1564,24 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weights.medium,
   },
 
-  // Profile Section
+  // Profile Section (с белым фоном и тенью как в VacancyDetailsScreen)
   profileSection: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    paddingHorizontal: 16,
+    paddingVertical: 0,
+    marginBottom: 0,
   },
   profileContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: theme.colors.white,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   avatarContainer: {
     marginRight: theme.spacing.md,
@@ -1594,6 +1611,12 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.sm,
     color: theme.colors.text.secondary,
   },
+  companyName: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#6B7280',
+    marginTop: 2,
+  },
   priceContainer: {
     alignItems: 'flex-end',
   },
@@ -1607,17 +1630,24 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
 
-  // Title Section
+  // Title Section (с белым фоном и тенью как в VacancyDetailsScreen)
   titleSection: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.lg,
+    paddingHorizontal: 16,
+    marginBottom: 16,
   },
   orderTitle: {
-    fontSize: theme.fonts.sizes.xxl,
-    fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.text.primary,
+    fontSize: 24,
+    fontWeight: '700',
+    color: theme.colors.text,
     lineHeight: 32,
-    marginBottom: theme.spacing.md,
+    backgroundColor: theme.colors.white,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 
 
@@ -1703,82 +1733,95 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.6)',
   },
 
-  // Info Section
+  // Info Section (с белым фоном и тенями как в VacancyDetailsScreen)
+  // Info Section - Компактный дизайн
   infoSection: {
-    paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
-  },
-  infoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.md, // Одинаковые отступы между карточками
+    paddingHorizontal: 16,
+    marginBottom: 16,
   },
   infoCard: {
-    flex: 1, // Используем flex для равномерного распределения
-    backgroundColor: '#F6F7F9',
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    alignItems: 'center',
-  },
-  infoCardFullWidth: {
-    flexBasis: '100%', // Карточка на всю ширину
-    backgroundColor: '#F6F7F9',
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    alignItems: 'center',
-  },
-  infoIcon: {
-    width: 32,
-    height: 32,
+    backgroundColor: theme.colors.white,
     borderRadius: 16,
-    backgroundColor: theme.colors.background,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  infoRowLast: {
+    borderBottomWidth: 0,
+  },
+  infoIconLeft: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F0F7FF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: theme.spacing.xs,
+    marginRight: 12,
   },
-  categoryLottieIcon: {
-    width: 22,
-    height: 22,
+  categoryLottieIconSmall: {
+    width: 20,
+    height: 20,
   },
-  specializationEmoji: {
-    fontSize: 22,
-  },
-  iconText: {
-    fontSize: 16,
-  },
-
-
-  infoValue: {
-    fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.semiBold,
+  infoText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
     color: theme.colors.text.primary,
-    textAlign: 'center',
+    lineHeight: 20,
+  },
+  infoTextAddress: {
+    fontWeight: '500',
   },
 
-  // Details Section
+  // Details Section (с белым фоном и тенями как в VacancyDetailsScreen)
   detailsSection: {
-    paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  detailsCard: {
+    backgroundColor: theme.colors.white,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   detailsTitle: {
-    fontSize: theme.fonts.sizes.lg,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
+    fontSize: 18,
+    fontWeight: '700',
+    color: theme.colors.text,
+    marginBottom: 16,
   },
   detailsText: {
-    fontSize: theme.fonts.sizes.md,
-    color: theme.colors.text.secondary,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 24,
+    color: theme.colors.text,
   },
 
-  // Applicants Section
+  // Applicants Section (с белым фоном и тенями как в VacancyDetailsScreen)
   applicantsSection: {
-    backgroundColor: '#F6F7F9',
-    marginHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
+    backgroundColor: theme.colors.white,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   applicantsHeader: {
     flexDirection: 'column',
@@ -1893,21 +1936,30 @@ const styles = StyleSheet.create({
     paddingTop: theme.spacing.xl,
   },
 
-  // Новые современные стили для откликов
+  // Новые современные стили для откликов (с белым фоном и тенями как в VacancyDetailsScreen)
   modernApplicantCard: {
-    backgroundColor: '#F6F7F9',
+    backgroundColor: theme.colors.white,
     borderRadius: 16,
     marginBottom: theme.spacing.lg,
     overflow: 'hidden',
-    elevation: 0, shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, borderWidth: 2, borderColor: '#679B00',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 0,
+    borderColor: 'transparent',
   },
   modernAcceptedCard: {
-    borderColor: '#679B00', borderWidth: 2, backgroundColor: '#F6F7F9',
+    borderColor: '#679B00',
+    borderWidth: 2,
+    backgroundColor: theme.colors.white,
   },
   modernRejectedCard: {
     opacity: 0.7,
-    backgroundColor: '#F6F7F9',
-    borderColor: '#679B00', borderWidth: 2,
+    backgroundColor: theme.colors.white,
+    borderColor: 'transparent',
+    borderWidth: 0,
   },
   modernStatusBarAccepted: {
     height: 4,
@@ -2645,11 +2697,16 @@ const styles = StyleSheet.create({
   },
   noApplicantsSection: {
     backgroundColor: theme.colors.white,
-    marginHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 16,
+    padding: 20,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   noApplicantsIcon: {
     width: 80,
@@ -2693,7 +2750,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: theme.spacing.lg, // Обычный отступ снизу
+    paddingBottom: 100, // Увеличенный отступ снизу для комфортного просмотра
   },
   fixedBottomSection: {
     position: 'absolute',
@@ -2893,12 +2950,21 @@ const styles = StyleSheet.create({
   // Amenities Section Styles
   amenitiesSection: {
     backgroundColor: theme.colors.white,
-    marginHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    borderWidth: 2,
-    borderColor: '#F6F7F9',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: theme.colors.text,
+    marginBottom: 16,
   },
   amenitiesContainer: {
     gap: theme.spacing.md,

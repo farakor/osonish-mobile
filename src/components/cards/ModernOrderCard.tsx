@@ -173,6 +173,11 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
               <Text style={styles.dateUnderCategory} numberOfLines={1} ellipsizeMode="tail">
                 {formatDate(order.serviceDate)}
               </Text>
+              {order.customerUserType === 'company' && order.customerCompanyName && (
+                <Text style={styles.companyName} numberOfLines={1} ellipsizeMode="tail">
+                  {order.customerCompanyName}
+                </Text>
+              )}
             </View>
           </View>
           <View style={styles.rightColumn}>
@@ -344,6 +349,13 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.sm,
     fontWeight: theme.fonts.weights.regular,
     color: DETAIL_ICON_COLOR,
+    marginTop: 2,
+    flexShrink: 1,
+  },
+  companyName: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#6B7280',
     marginTop: 2,
     flexShrink: 1,
   },

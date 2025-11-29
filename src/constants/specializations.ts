@@ -20,13 +20,209 @@ import WelderIcon from '../../assets/cats/welder.svg';
 import RooftileIcon from '../../assets/cats/rooftile.svg';
 import TileIcon from '../../assets/cats/tile.svg';
 import CalendarOneDayIcon from '../../assets/cats/calendar-one-day.svg';
+import MiniCarIcon from '../../assets/cats/mini-car.svg';
+import WorkerIcon from '../../assets/cats/worker.svg';
+import HandHoldingWrenchIcon from '../../assets/cats/hand-holding-wrench.svg';
+import WorkerMasterIcon from '../../assets/cats/worker-master.svg';
+import FundManagerIcon from '../../assets/cats/fund-manager.svg';
+import AdministrativeAssistantIcon from '../../assets/cats/administrative-assistant.svg';
+import ShieldIcon from '../../assets/cats/shield.svg';
+import CeoIcon from '../../assets/cats/ceo.svg';
+import DrillingProcessIcon from '../../assets/cats/drilling-process.svg';
+import WaitressIcon from '../../assets/cats/waitress.svg';
+import GroceryIcon from '../../assets/cats/grocery.svg';
+import WebDeveloperIcon from '../../assets/cats/web-developer.svg';
+import PaintingIcon from '../../assets/cats/painting.svg';
+import MarketingIcon from '../../assets/cats/marketing.svg';
+import MedicineIcon from '../../assets/cats/medicine.svg';
+import ScienceBookIcon from '../../assets/cats/science-book.svg';
+import SalesPipelineIcon from '../../assets/cats/sales-pipeline.svg';
+import ServiceToolsIcon from '../../assets/cats/service-tools.svg';
+import DeliveryManIcon from '../../assets/cats/delivery-man.svg';
+import ShoppingBagIcon from '../../assets/cats/shopping-bag.svg';
+import GrowingSeedIcon from '../../assets/cats/growing-seed.svg';
+import WeightliftingIcon from '../../assets/cats/weightlifting.svg';
+import ConsultingIcon from '../../assets/cats/consulting.svg';
+import InsuranceIcon from '../../assets/cats/insurance.svg';
+import DeliveryTruckIcon from '../../assets/cats/delivery-truck.svg';
+import HotelRatingBuildingStarsIcon from '../../assets/cats/hotel-rating-building-stars.svg';
+import HrIcon from '../../assets/cats/hr.svg';
+import FinancingIcon from '../../assets/cats/financing.svg';
+import JusticeIcon from '../../assets/cats/justice.svg';
+import MoreIcon from '../../assets/cats/more.svg';
+import ExternalSalesmanIcon from '../../assets/cats/external-salesman.svg';
+import FilesIcon from '../../assets/cats/files.svg';
+import DeliveryCourierIcon from '../../assets/cats/delivery-courier.svg';
+import ManagerIcon from '../../assets/cats/manager.svg';
+import CustomerServiceIcon from '../../assets/cats/customer-service.svg';
+import WorkIcon from '../../assets/cats/work.svg';
+import TranslatorIcon from '../../assets/cats/translator.svg';
+import SecretaryIcon from '../../assets/cats/secretary.svg';
+import SecurityGuardIcon from '../../assets/cats/security-guard.svg';
+import PersonalDataIcon from '../../assets/cats/personal-data.svg';
+import PoliceIcon from '../../assets/cats/police.svg';
+import ProgrammerIcon from '../../assets/cats/programmer.svg';
+import MarketingAgentIcon from '../../assets/cats/marketing-agent.svg';
+import CareerIcon from '../../assets/cats/career.svg';
+import LawyerManIcon from '../../assets/cats/lawyer-man.svg';
+import FinanceIcon from '../../assets/cats/finance.svg';
+import ProductionAssistantIcon from '../../assets/cats/production-assistant.svg';
+import ManagementConsultingIcon from '../../assets/cats/management-consulting.svg';
+import OutcomeIcon from '../../assets/cats/outcome.svg';
+import LogisticsAssistantIcon from '../../assets/cats/logistics-assistant.svg';
+import SalesPromoterIcon from '../../assets/cats/sales-promoter.svg';
+import JobInterviewIcon from '../../assets/cats/job-interview.svg';
+import EnterpriseIcon from '../../assets/cats/enterprise.svg';
+import StrategicConsultingIcon from '../../assets/cats/strategic-consulting.svg';
+import SelfEmployedIcon from '../../assets/cats/self-employed.svg';
+import SurveyorIcon from '../../assets/cats/surveyor.svg';
+import GeologistIcon from '../../assets/cats/geologist.svg';
+import ResearcherIcon from '../../assets/cats/researcher.svg';
+import Worker2Icon from '../../assets/cats/worker-2.svg';
+import ScientistIcon from '../../assets/cats/scientist.svg';
+import MentorIcon from '../../assets/cats/mentor.svg';
+import HumanResourcesIcon from '../../assets/cats/human-resources.svg';
+import DriverIcon from '../../assets/cats/driver.svg';
+import DaycareIcon from '../../assets/cats/daycare.svg';
+import DustIcon from '../../assets/cats/dust.svg';
+import BartenderIcon from '../../assets/cats/bartender.svg';
+import CleaningCartIcon from '../../assets/cats/cleaning-cart.svg';
+import ShoppingIcon from '../../assets/cats/shopping.svg';
+import TaskIcon from '../../assets/cats/task.svg';
+import BarChartIcon from '../../assets/cats/bar-chart.svg';
+import BackendIcon from '../../assets/cats/backend.svg';
+import PieChartIcon from '../../assets/cats/pie-chart.svg';
+import PhotoGalleryIcon from '../../assets/cats/photo-gallery.svg';
+import DocumentIcon from '../../assets/cats/document.svg';
+import VideogameIcon from '../../assets/cats/videogame.svg';
+import VirtualLabIcon from '../../assets/cats/virtual-lab.svg';
+import DesignIcon from '../../assets/cats/design.svg';
+import AssortmentIcon from '../../assets/cats/assortment.svg';
+import ChequeIcon from '../../assets/cats/cheque.svg';
+import Programmer2Icon from '../../assets/cats/programmer-2.svg';
+import AnalyticsIcon from '../../assets/cats/analytics.svg';
+import TeamworkIcon from '../../assets/cats/teamwork.svg';
+import EmployeeIcon from '../../assets/cats/employee.svg';
+import ProjectIcon from '../../assets/cats/project.svg';
+import NetworkIcon from '../../assets/cats/network.svg';
+import LaptopIcon from '../../assets/cats/laptop.svg';
+import PerformanceIcon from '../../assets/cats/performance.svg';
+import GearsIcon from '../../assets/cats/gears.svg';
+import CustomerService2Icon from '../../assets/cats/customer-service-2.svg';
+import TesterIcon from '../../assets/cats/tester.svg';
+import ContentCreatorIcon from '../../assets/cats/content-creator.svg';
+import ActorIcon from '../../assets/cats/actor.svg';
+import CameramanIcon from '../../assets/cats/cameraman.svg';
+import ArtistIcon from '../../assets/cats/artist.svg';
+import ReporterIcon from '../../assets/cats/reporter.svg';
+import BlogIcon from '../../assets/cats/blog.svg';
+import MovieIcon from '../../assets/cats/movie.svg';
+import DirectorChairIcon from '../../assets/cats/director-chair.svg';
+import PhotographerIcon from '../../assets/cats/photographer.svg';
+import EventManagementIcon from '../../assets/cats/event-management.svg';
+import AdvertisingIcon from '../../assets/cats/advertising.svg';
+import ContentMarketingIcon from '../../assets/cats/content-marketing.svg';
+import StatisticsIcon from '../../assets/cats/statistics.svg';
+import PhoneAdIcon from '../../assets/cats/phone-ad.svg';
+import SalesEnablementIcon from '../../assets/cats/sales-enablement.svg';
+import HandshakeIcon from '../../assets/cats/handshake.svg';
+import MegaphoneIcon from '../../assets/cats/megaphone.svg';
+import AdsIcon from '../../assets/cats/ads.svg';
+import FileDeliveryIcon from '../../assets/cats/file-delivery.svg';
+import VeterinarianIcon from '../../assets/cats/veterinarian.svg';
+import DoctorIcon from '../../assets/cats/doctor.svg';
+import Doctor2Icon from '../../assets/cats/doctor-2.svg';
+import PharmacistIcon from '../../assets/cats/pharmacist.svg';
+import NursingTechnicianIcon from '../../assets/cats/nursing-technician.svg';
+import DoctorsOfficeIcon from '../../assets/cats/doctors-office.svg';
+import CertificateAuthorityIcon from '../../assets/cats/certificate-authority.svg';
+import DrugResearchIcon from '../../assets/cats/drug-research.svg';
+import PresentationIcon from '../../assets/cats/presentation.svg';
+import OpenBookGearIcon from '../../assets/cats/open-book-gear.svg';
+import ObservationIcon from '../../assets/cats/observation.svg';
+import TeacherIcon from '../../assets/cats/teacher.svg';
+import EstateAgentIcon from '../../assets/cats/estate-agent.svg';
+import WorkExperienceIcon from '../../assets/cats/work-experience.svg';
+import CashierIcon from '../../assets/cats/cashier.svg';
+import SalesPipeline1Icon from '../../assets/cats/sales-pipeline-1.svg';
+import CreditScoreIcon from '../../assets/cats/credit-score.svg';
+import Support24Icon from '../../assets/cats/support-24.svg';
+import FinancialConsultationIcon from '../../assets/cats/financial-consultation.svg';
+import InfoIcon from '../../assets/cats/info.svg';
+import CollaboratorIcon from '../../assets/cats/collaborator.svg';
+import ProtectionIcon from '../../assets/cats/protection.svg';
+import Shopping2Icon from '../../assets/cats/shopping-2.svg';
+import BusinessDevelopmentIcon from '../../assets/cats/business-development.svg';
+import QualityControlIcon from '../../assets/cats/quality-control.svg';
+import LaborSafetyIcon from '../../assets/cats/labor-safety.svg';
+import HelmetIcon from '../../assets/cats/helmet.svg';
+import HandsWrenchIcon from '../../assets/cats/hands-wrench.svg';
+import HandHoldingLightningIcon from '../../assets/cats/hand-holding-lightning.svg';
+import ElectricPower2Icon from '../../assets/cats/electric-power-2.svg';
+import EqualizerIcon from '../../assets/cats/equalizer.svg';
+import RepairIcon from '../../assets/cats/repair.svg';
+import ArcadeMachineIcon from '../../assets/cats/arcade-machine.svg';
+import MeasureIcon from '../../assets/cats/measure.svg';
+import MechanicIcon from '../../assets/cats/mechanic.svg';
+import ConveyorBeltIcon from '../../assets/cats/conveyor-belt.svg';
+import Printing3DIcon from '../../assets/cats/3d-printing.svg';
+import TechnicalServiceIcon from '../../assets/cats/technical-service.svg';
+import LaserIcon from '../../assets/cats/laser.svg';
+import SewingMachineIcon from '../../assets/cats/sewing-machine.svg';
+import PanelIcon from '../../assets/cats/panel.svg';
+import Repair3Icon from '../../assets/cats/repair-3.svg';
+import CartIcon from '../../assets/cats/cart.svg';
+import PainterIcon from '../../assets/cats/painter.svg';
+import ToolboxIcon from '../../assets/cats/toolbox.svg';
+import MultitaskingIcon from '../../assets/cats/multitasking.svg';
+import PackageIcon from '../../assets/cats/package.svg';
+import Manager2Icon from '../../assets/cats/manager-2.svg';
+import BossIcon from '../../assets/cats/boss.svg';
+import InventoryIcon from '../../assets/cats/inventory.svg';
+import WomanLeaderIcon from '../../assets/cats/woman-leader.svg';
+import BoxIcon from '../../assets/cats/box.svg';
+import GrowingPlantIcon from '../../assets/cats/growing-plant.svg';
+import SpeciesIcon from '../../assets/cats/species.svg';
+import TractorIcon from '../../assets/cats/tractor.svg';
+import CleansingIcon from '../../assets/cats/cleansing.svg';
+import MassageIcon from '../../assets/cats/massage.svg';
+import NailPolishIcon from '../../assets/cats/nail-polish.svg';
+import HairStylingIcon from '../../assets/cats/hair-styling.svg';
+import MuscleIcon from '../../assets/cats/muscle.svg';
+import StrategyIcon from '../../assets/cats/strategy.svg';
+import Analytics2Icon from '../../assets/cats/analytics-2.svg';
+import ProjectManagementIcon from '../../assets/cats/project-management.svg';
+import SearchIcon from '../../assets/cats/search.svg';
+import StewardessIcon from '../../assets/cats/stewardess.svg';
+import OperatorIcon from '../../assets/cats/operator.svg';
+import ContainerIcon from '../../assets/cats/container.svg';
+import WarehouseIcon from '../../assets/cats/warehouse.svg';
+import TourGuideIcon from '../../assets/cats/tour-guide.svg';
+import Manager3Icon from '../../assets/cats/manager-3.svg';
+import RefereeIcon from '../../assets/cats/referee.svg';
+import ChefIcon from '../../assets/cats/chef.svg';
+import WomanIcon from '../../assets/cats/woman.svg';
+import CashbackIcon from '../../assets/cats/cashback.svg';
+import LeadershipIcon from '../../assets/cats/leadership.svg';
+import Hr2Icon from '../../assets/cats/hr-2.svg';
+import ChooseIcon from '../../assets/cats/choose.svg';
+import AuditDocumentIcon from '../../assets/cats/audit-document.svg';
+import TaxIcon from '../../assets/cats/tax.svg';
+import MoneyBagIcon from '../../assets/cats/money-bag.svg';
+import PlanningIcon from '../../assets/cats/planning.svg';
+import BondIcon from '../../assets/cats/bond.svg';
+import MoneyIcon from '../../assets/cats/money.svg';
+import Financing2Icon from '../../assets/cats/financing-2.svg';
+import GrowthIcon from '../../assets/cats/growth.svg';
+import LawyerIcon from '../../assets/cats/lawyer.svg';
+import LawyerDayIcon from '../../assets/cats/lawyer-day.svg';
 
 export interface SpecializationOption {
   id: string;
   name: string;
   icon: string; // emoji иконка (используется если нет iconComponent)
   iconComponent?: React.ComponentType<any>; // SVG компонент (приоритет над emoji)
-  parentId?: string; // ID родительской категории (если это подкатегория)
+  parentIds?: string[]; // ID родительских категорий (если это подкатегория)
   isParent?: boolean; // Является ли это родительской категорией
 }
 
@@ -42,1795 +238,1501 @@ export const PARENT_CATEGORIES: SpecializationOption[] = [
     id: 'auto_business',
     name: 'Автомобильный бизнес',
     icon: '🚗',
+    iconComponent: MiniCarIcon,
     isParent: true,
   },
   {
     id: 'administrative_staff',
     name: 'Административный персонал',
     icon: '📋',
+    iconComponent: AdministrativeAssistantIcon,
     isParent: true,
   },
   {
     id: 'security',
     name: 'Безопасность',
     icon: '🛡️',
+    iconComponent: ShieldIcon,
     isParent: true,
   },
   {
     id: 'senior_management',
     name: 'Высший и средний менеджмент',
     icon: '👔',
+    iconComponent: CeoIcon,
     isParent: true,
   },
   {
     id: 'raw_materials_extraction',
     name: 'Добыча сырья',
     icon: '⛏️',
+    iconComponent: DrillingProcessIcon,
     isParent: true,
   },
   {
     id: 'household_service_staff',
     name: 'Домашний, обслуживающий персонал',
     icon: '🏠',
+    iconComponent: WaitressIcon,
     isParent: true,
   },
   {
     id: 'procurement',
     name: 'Закупки',
     icon: '📦',
+    iconComponent: GroceryIcon,
     isParent: true,
   },
   {
     id: 'information_technology',
     name: 'Информационные технологии',
     icon: '💻',
+    iconComponent: WebDeveloperIcon,
     isParent: true,
   },
   {
     id: 'arts_entertainment_media',
     name: 'Искусство, развлечения, массмедиа',
     icon: '🎭',
+    iconComponent: PaintingIcon,
     isParent: true,
   },
   {
     id: 'marketing_advertising_pr',
     name: 'Маркетинг, реклама, PR',
     icon: '📢',
+    iconComponent: MarketingIcon,
     isParent: true,
   },
   {
     id: 'medicine_pharma',
     name: 'Медицина, фармацевтика',
     icon: '⚕️',
+    iconComponent: MedicineIcon,
     isParent: true,
   },
   {
     id: 'science_education',
     name: 'Наука, образование',
     icon: '📚',
+    iconComponent: ScienceBookIcon,
     isParent: true,
   },
   {
     id: 'sales_customer_service',
     name: 'Продажи, обслуживание клиентов',
     icon: '💼',
+    iconComponent: SalesPipelineIcon,
     isParent: true,
   },
   {
     id: 'production_service',
     name: 'Производство, сервисное обслуживание',
     icon: '⚙️',
+    iconComponent: ServiceToolsIcon,
     isParent: true,
   },
   {
     id: 'working_personnel',
     name: 'Рабочий персонал',
     icon: '🔧',
+    iconComponent: DeliveryManIcon,
     isParent: true,
   },
   {
     id: 'retail',
     name: 'Розничная торговля',
     icon: '🛍️',
+    iconComponent: ShoppingBagIcon,
     isParent: true,
   },
   {
     id: 'agriculture',
     name: 'Сельское хозяйство',
     icon: '🌾',
+    iconComponent: GrowingSeedIcon,
     isParent: true,
   },
   {
     id: 'sports_fitness_beauty',
     name: 'Спортивные клубы, фитнес, салоны красоты',
     icon: '💪',
+    iconComponent: WeightliftingIcon,
     isParent: true,
   },
   {
     id: 'strategy_investment_consulting',
     name: 'Стратегия, инвестиции, консалтинг',
     icon: '📈',
+    iconComponent: ConsultingIcon,
     isParent: true,
   },
   {
     id: 'insurance',
     name: 'Страхование',
     icon: '🛡️',
+    iconComponent: InsuranceIcon,
     isParent: true,
   },
   {
     id: 'transport_logistics',
     name: 'Транспорт, логистика, перевозки',
     icon: '🚚',
+    iconComponent: DeliveryTruckIcon,
     isParent: true,
   },
   {
     id: 'tourism_hotels_restaurants',
     name: 'Туризм, гостиницы, рестораны',
     icon: '🏨',
+    iconComponent: HotelRatingBuildingStarsIcon,
     isParent: true,
   },
   {
     id: 'hr_training',
     name: 'Управление персоналом, тренинги',
     icon: '👥',
+    iconComponent: HrIcon,
     isParent: true,
   },
   {
     id: 'finance_accounting',
     name: 'Финансы, бухгалтерия',
     icon: '💰',
+    iconComponent: FinancingIcon,
     isParent: true,
   },
   {
     id: 'legal',
     name: 'Юристы',
     icon: '⚖️',
+    iconComponent: JusticeIcon,
     isParent: true,
   },
   {
     id: 'other',
     name: 'Другое',
     icon: '📋',
+    iconComponent: MoreIcon,
     isParent: true,
   },
 ];
 
 export const SPECIALIZATIONS: SpecializationOption[] = [
-  {
+{
     id: 'one_day_job',
     name: 'Работа на 1 день',
     icon: '📅',
     iconComponent: CalendarOneDayIcon,
   },
-  {
+{
     id: 'brigades',
     name: 'Бригады',
     icon: '👷',
     iconComponent: ManagementIcon,
-    parentId: 'repair_construction',
+    parentIds: ['repair_construction'],
   },
   {
     id: 'plumber',
     name: 'Сантехники',
     icon: '🔧',
     iconComponent: FaucetIcon,
-    parentId: 'repair_construction',
+    parentIds: ['repair_construction'],
   },
-  {
+{
     id: 'electrician',
     name: 'Электрики',
     icon: '⚡',
     iconComponent: ElectricPowerIcon,
-    parentId: 'repair_construction',
+    parentIds: ['repair_construction'],
   },
-  {
+{
     id: 'painter',
     name: 'Маляр-Штукатур',
     icon: '🎨',
     iconComponent: PaintRollerIcon,
-    parentId: 'repair_construction',
+    parentIds: ['repair_construction'],
   },
-  {
+{
     id: 'boiler_installation',
     name: 'Установка котлов',
     icon: '🔥',
     iconComponent: GasKotelIcon,
-    parentId: 'repair_construction',
+    parentIds: ['repair_construction'],
   },
-  {
+{
     id: 'gas_electric_stoves',
     name: 'Газовые и электроплиты',
     icon: '🍳',
     iconComponent: GasStoveIcon,
-    parentId: 'repair_construction',
+    parentIds: ['repair_construction'],
   },
-  {
+{
     id: 'carpenter',
     name: 'Плотники',
     icon: '🪚',
     iconComponent: SawIcon,
-    parentId: 'repair_construction',
+    parentIds: ['repair_construction'],
   },
-  {
+{
     id: 'gardener',
     name: 'Садовник',
     icon: '🌱',
     iconComponent: GardeningIcon,
-    parentId: 'repair_construction',
+    parentIds: ['repair_construction'],
   },
-  {
+{
     id: 'air_conditioner',
     name: 'Кондиционеры',
     icon: '❄️',
     iconComponent: AirConditionerIcon,
-    parentId: 'repair_construction',
+    parentIds: ['repair_construction'],
   },
-  {
+{
     id: 'washing_machine',
     name: 'Стиральные машины',
     icon: '🧺',
     iconComponent: LaundryIcon,
-    parentId: 'repair_construction',
+    parentIds: ['repair_construction'],
   },
-  {
+{
     id: 'turnkey_renovation',
     name: 'Ремонт под ключ',
     icon: '🏠',
     iconComponent: RenovationIcon,
-    parentId: 'repair_construction',
+    parentIds: ['repair_construction'],
   },
-  {
+{
     id: 'lock_repair',
     name: 'Ремонт замков',
     icon: '🔐',
     iconComponent: PadlockIcon,
-    parentId: 'repair_construction',
+    parentIds: ['repair_construction'],
   },
-  {
+{
     id: 'refrigerator',
     name: 'Холодильники',
     icon: '🧊',
     iconComponent: SmartRefrigeratorIcon,
-    parentId: 'repair_construction',
+    parentIds: ['repair_construction'],
   },
-  {
+{
     id: 'doors',
     name: 'Двери',
     icon: '🚪',
     iconComponent: DoorIcon,
-    parentId: 'repair_construction',
+    parentIds: ['repair_construction'],
   },
-  {
+{
     id: 'plastic_windows',
     name: 'Пластиковые окна',
     icon: '🪟',
     iconComponent: WindowIcon,
-    parentId: 'repair_construction',
+    parentIds: ['repair_construction'],
   },
-  {
+{
     id: 'bricklaying',
     name: 'Кладка кирпича',
     icon: '🧱',
     iconComponent: ConstructionIcon,
-    parentId: 'repair_construction',
+    parentIds: ['repair_construction'],
   },
-  {
+{
     id: 'custom_furniture',
     name: 'Мебель на заказ',
     icon: '🪑',
     iconComponent: BedIcon,
-    parentId: 'repair_construction',
+    parentIds: ['repair_construction'],
   },
-  {
+{
     id: 'welder',
     name: 'Сварщики',
     icon: '🔨',
     iconComponent: WelderIcon,
-    parentId: 'repair_construction',
+    parentIds: ['repair_construction'],
   },
-  {
+{
     id: 'roofer',
     name: 'Кровельщики',
     icon: '🏗️',
     iconComponent: RooftileIcon,
-    parentId: 'repair_construction',
+    parentIds: ['repair_construction'],
   },
-  {
+{
     id: 'tiler',
     name: 'Плиточники',
     icon: '🟦',
     iconComponent: TileIcon,
-    parentId: 'repair_construction',
+    parentIds: ['repair_construction'],
   },
-  {
+{
     id: 'car_washer',
     name: 'Автомойщик',
     icon: '🚿',
-    parentId: 'auto_business',
+    iconComponent: WorkerIcon,
+    parentIds: ['auto_business'],
   },
-  {
+{
     id: 'auto_mechanic',
     name: 'Автослесарь, автомеханик',
     icon: '🔧',
-    parentId: 'auto_business',
+    iconComponent: Repair3Icon,
+    parentIds: ['auto_business', 'working_personnel'],
   },
-  {
+{
     id: 'service_advisor',
     name: 'Мастер-приемщик',
     icon: '📋',
-    parentId: 'auto_business',
+    iconComponent: WorkerMasterIcon,
+    parentIds: ['auto_business'],
   },
-  {
+{
     id: 'sales_manager',
     name: 'Менеджер по продажам, менеджер по работе с клиентами',
     icon: '💼',
-    parentId: 'auto_business',
+    iconComponent: FundManagerIcon,
+    parentIds: ['auto_business', 'marketing_advertising_pr', 'sales_customer_service', 'sports_fitness_beauty'],
   },
-  {
+{
     id: 'administrator',
     name: 'Администратор',
     icon: '👔',
-    parentId: 'administrative_staff',
+    iconComponent: ExternalSalesmanIcon,
+    parentIds: ['administrative_staff', 'household_service_staff', 'medicine_pharma', 'sports_fitness_beauty', 'tourism_hotels_restaurants'],
   },
   {
     id: 'records_clerk',
     name: 'Делопроизводитель, архивариус',
     icon: '📁',
-    parentId: 'administrative_staff',
+    iconComponent: FilesIcon,
+    parentIds: ['administrative_staff'],
   },
-  {
+{
     id: 'courier',
     name: 'Курьер',
     icon: '📦',
-    parentId: 'administrative_staff',
+    iconComponent: DeliveryCourierIcon,
+    parentIds: ['administrative_staff', 'household_service_staff', 'transport_logistics'],
   },
-  {
+{
     id: 'facility_manager',
     name: 'Менеджер/руководитель АХО',
     icon: '🏢',
-    parentId: 'administrative_staff',
+    iconComponent: ManagerIcon,
+    parentIds: ['administrative_staff', 'tourism_hotels_restaurants'],
   },
-  {
+{
     id: 'data_operator',
     name: 'Оператор ПК, оператор базы данных',
     icon: '💻',
-    parentId: 'administrative_staff',
+    iconComponent: CustomerServiceIcon,
+    parentIds: ['administrative_staff'],
   },
-  {
+{
     id: 'office_manager',
     name: 'Офис-менеджер',
     icon: '🗂️',
-    parentId: 'administrative_staff',
+    iconComponent: WorkIcon,
+    parentIds: ['administrative_staff'],
   },
-  {
+{
     id: 'translator',
     name: 'Переводчик',
     icon: '🌐',
-    parentId: 'administrative_staff',
+    iconComponent: TranslatorIcon,
+    parentIds: ['administrative_staff'],
   },
-  {
+{
     id: 'secretary',
     name: 'Секретарь, помощник руководителя, ассистент',
     icon: '📝',
-    parentId: 'administrative_staff',
+    iconComponent: SecretaryIcon,
+    parentIds: ['administrative_staff'],
   },
-  {
+{
     id: 'security_guard',
     name: 'Охранник',
     icon: '🛡️',
-    parentId: 'security',
+    iconComponent: SecurityGuardIcon,
+    parentIds: ['security', 'household_service_staff'],
   },
-  {
+{
     id: 'security_it_specialist',
     name: 'Специалист по информационной безопасности',
     icon: '🔒',
-    parentId: 'security',
+    iconComponent: PersonalDataIcon,
+    parentIds: ['security', 'information_technology'],
   },
-  {
+{
     id: 'security_service_specialist',
     name: 'Специалист службы безопасности',
     icon: '👮',
-    parentId: 'security',
+    iconComponent: PoliceIcon,
+    parentIds: ['security'],
   },
-  {
+{
     id: 'ceo',
     name: 'Генеральный директор, исполнительный директор (CEO)',
     icon: '🎯',
-    parentId: 'senior_management',
+    iconComponent: CeoIcon,
+    parentIds: ['senior_management'],
   },
-  {
+{
     id: 'cio',
     name: 'Директор по информационным технологиям (CIO)',
     icon: '💻',
-    parentId: 'senior_management',
+    iconComponent: ProgrammerIcon,
+    parentIds: ['senior_management', 'information_technology'],
   },
-  {
+{
     id: 'cmo',
     name: 'Директор по маркетингу и PR (CMO)',
     icon: '📢',
-    parentId: 'senior_management',
+    iconComponent: MarketingAgentIcon,
+    parentIds: ['senior_management', 'marketing_advertising_pr'],
   },
-  {
+{
     id: 'hrd',
     name: 'Директор по персоналу (HRD)',
     icon: '👥',
-    parentId: 'senior_management',
+    iconComponent: CareerIcon,
+    parentIds: ['senior_management', 'hr_training'],
   },
-  {
+{
     id: 'clo',
     name: 'Директор юридического департамента (CLO)',
     icon: '⚖️',
-    parentId: 'senior_management',
+    iconComponent: LawyerManIcon,
+    parentIds: ['senior_management', 'legal'],
   },
-  {
+{
     id: 'cco',
     name: 'Коммерческий директор (CCO)',
     icon: '💰',
-    parentId: 'senior_management',
+    iconComponent: FinanceIcon,
+    parentIds: ['senior_management', 'sales_customer_service'],
   },
-  {
+{
     id: 'production_manager',
     name: 'Начальник производства',
     icon: '🏭',
-    parentId: 'senior_management',
+    iconComponent: ProductionAssistantIcon,
+    parentIds: ['senior_management', 'production_service'],
   },
-  {
+{
     id: 'coo',
     name: 'Операционный директор (COO)',
     icon: '⚙️',
-    parentId: 'senior_management',
+    iconComponent: ManagementConsultingIcon,
+    parentIds: ['senior_management'],
   },
-  {
+{
     id: 'analytics_head',
     name: 'Руководитель отдела аналитики',
     icon: '📊',
-    parentId: 'senior_management',
+    iconComponent: OutcomeIcon,
+    parentIds: ['senior_management', 'information_technology'],
   },
-  {
+{
     id: 'senior_logistics_head',
     name: 'Руководитель отдела логистики',
     icon: '🚚',
-    parentId: 'senior_management',
+    iconComponent: LogisticsAssistantIcon,
+    parentIds: ['senior_management', 'transport_logistics'],
   },
-  {
+{
     id: 'marketing_head',
     name: 'Руководитель отдела маркетинга и рекламы',
     icon: '📈',
-    parentId: 'senior_management',
+    iconComponent: SalesPromoterIcon,
+    parentIds: ['senior_management', 'marketing_advertising_pr'],
   },
-  {
+{
     id: 'senior_hr_head',
     name: 'Руководитель отдела персонала',
     icon: '👔',
-    parentId: 'senior_management',
+    iconComponent: JobInterviewIcon,
+    parentIds: ['senior_management', 'hr_training'],
   },
-  {
+{
     id: 'branch_manager',
     name: 'Руководитель филиала',
     icon: '🏢',
-    parentId: 'senior_management',
+    iconComponent: EnterpriseIcon,
+    parentIds: ['senior_management', 'sales_customer_service'],
   },
-  {
+{
     id: 'cto',
     name: 'Технический директор (CTO)',
     icon: '🔧',
-    parentId: 'senior_management',
+    iconComponent: StrategicConsultingIcon,
+    parentIds: ['senior_management', 'information_technology'],
   },
-  {
+{
     id: 'senior_cfo',
     name: 'Финансовый директор (CFO)',
     icon: '💵',
-    parentId: 'senior_management',
+    iconComponent: SelfEmployedIcon,
+    parentIds: ['senior_management', 'finance_accounting'],
   },
-  {
+{
     id: 'geodesist',
     name: 'Геодезист',
     icon: '🗺️',
-    parentId: 'raw_materials_extraction',
+    iconComponent: SurveyorIcon,
+    parentIds: ['raw_materials_extraction'],
   },
-  {
+{
     id: 'geologist',
     name: 'Геолог',
     icon: '🪨',
-    parentId: 'raw_materials_extraction',
+    iconComponent: GeologistIcon,
+    parentIds: ['raw_materials_extraction'],
   },
-  {
+{
     id: 'laboratory_assistant',
     name: 'Лаборант',
     icon: '🧪',
-    parentId: 'raw_materials_extraction',
+    iconComponent: ResearcherIcon,
+    parentIds: ['raw_materials_extraction', 'medicine_pharma', 'science_education', 'production_service'],
   },
-  {
+{
     id: 'machinist',
     name: 'Машинист',
     icon: '🚜',
-    parentId: 'raw_materials_extraction',
+    iconComponent: Worker2Icon,
+    parentIds: ['raw_materials_extraction', 'production_service', 'working_personnel', 'agriculture', 'transport_logistics'],
   },
-  {
+{
     id: 'research_specialist',
     name: 'Научный специалист, исследователь',
     icon: '🔬',
-    parentId: 'raw_materials_extraction',
+    iconComponent: ScientistIcon,
+    parentIds: ['raw_materials_extraction', 'medicine_pharma', 'science_education', 'production_service'],
   },
-  {
+{
     id: 'shift_supervisor',
     name: 'Начальник смены, мастер участка',
     icon: '👷',
-    parentId: 'raw_materials_extraction',
+    iconComponent: MentorIcon,
+    parentIds: ['raw_materials_extraction', 'production_service'],
   },
-  {
+{
     id: 'technologist',
     name: 'Технолог',
     icon: '⚗️',
-    parentId: 'raw_materials_extraction',
+    iconComponent: HumanResourcesIcon,
+    parentIds: ['raw_materials_extraction', 'production_service', 'agriculture'],
   },
-  {
-    id: 'household_administrator',
-    name: 'Администратор',
-    icon: '👨‍💼',
-    parentId: 'household_service_staff',
-  },
-  {
+{
     id: 'driver',
     name: 'Водитель',
     icon: '🚗',
-    parentId: 'household_service_staff',
+    iconComponent: DriverIcon,
+    parentIds: ['household_service_staff', 'working_personnel', 'transport_logistics'],
   },
-  {
+{
     id: 'nanny',
     name: 'Воспитатель, няня',
     icon: '👶',
-    parentId: 'household_service_staff',
+    iconComponent: DaycareIcon,
+    parentIds: ['household_service_staff', 'science_education'],
   },
-  {
+{
     id: 'janitor',
     name: 'Дворник',
     icon: '🧹',
-    parentId: 'household_service_staff',
+    iconComponent: DustIcon,
+    parentIds: ['household_service_staff'],
   },
-  {
-    id: 'household_courier',
-    name: 'Курьер',
-    icon: '📦',
-    parentId: 'household_service_staff',
-  },
-  {
+{
     id: 'waiter',
     name: 'Официант, бармен, бариста',
     icon: '☕',
-    parentId: 'household_service_staff',
+    iconComponent: BartenderIcon,
+    parentIds: ['household_service_staff', 'tourism_hotels_restaurants'],
   },
-  {
-    id: 'household_security',
-    name: 'Охранник',
-    icon: '🛡️',
-    parentId: 'household_service_staff',
-  },
-  {
+{
     id: 'cleaner',
     name: 'Уборщица, уборщик',
     icon: '🧽',
-    parentId: 'household_service_staff',
+    iconComponent: CleaningCartIcon,
+    parentIds: ['household_service_staff', 'tourism_hotels_restaurants'],
   },
-  {
+{
     id: 'procurement_manager',
     name: 'Менеджер по закупкам',
     icon: '🛒',
-    parentId: 'procurement',
+    iconComponent: ShoppingIcon,
+    parentIds: ['procurement'],
   },
-  {
+{
     id: 'tender_specialist',
     name: 'Специалист по тендерам',
     icon: '📋',
-    parentId: 'procurement',
+    iconComponent: TaskIcon,
+    parentIds: ['procurement'],
   },
-  {
+{
     id: 'bi_analyst',
     name: 'BI-аналитик, аналитик данных',
     icon: '📊',
-    parentId: 'information_technology',
+    iconComponent: BarChartIcon,
+    parentIds: ['information_technology'],
   },
-  {
+{
     id: 'devops_engineer',
     name: 'DevOps-инженер',
     icon: '🔧',
-    parentId: 'information_technology',
+    iconComponent: BackendIcon,
+    parentIds: ['information_technology'],
   },
-  {
+{
     id: 'it_analyst',
     name: 'Аналитик',
     icon: '📈',
-    parentId: 'information_technology',
+    iconComponent: PieChartIcon,
+    parentIds: ['information_technology', 'marketing_advertising_pr', 'sales_customer_service', 'strategy_investment_consulting'],
   },
-  {
+{
     id: 'art_director',
     name: 'Арт-директор, креативный директор',
     icon: '🎨',
-    parentId: 'information_technology',
+    iconComponent: PhotoGalleryIcon,
+    parentIds: ['information_technology', 'arts_entertainment_media', 'marketing_advertising_pr'],
   },
-  {
+{
     id: 'business_analyst',
     name: 'Бизнес-аналитик',
     icon: '💼',
-    parentId: 'information_technology',
+    iconComponent: DocumentIcon,
+    parentIds: ['information_technology', 'strategy_investment_consulting'],
   },
-  {
+{
     id: 'game_designer',
     name: 'Гейм-дизайнер',
     icon: '🎮',
-    parentId: 'information_technology',
+    iconComponent: VideogameIcon,
+    parentIds: ['information_technology', 'arts_entertainment_media'],
   },
-  {
+{
     id: 'data_scientist',
     name: 'Дата-сайентист',
     icon: '🔬',
-    parentId: 'information_technology',
+    iconComponent: VirtualLabIcon,
+    parentIds: ['information_technology'],
   },
-  {
+{
     id: 'designer',
     name: 'Дизайнер, художник',
     icon: '🖌️',
-    parentId: 'information_technology',
+    iconComponent: DesignIcon,
+    parentIds: ['information_technology', 'arts_entertainment_media', 'marketing_advertising_pr'],
   },
-  {
-    id: 'it_cio',
-    name: 'Директор по информационным технологиям (CIO)',
-    icon: '💻',
-    parentId: 'information_technology',
-  },
-  {
+{
     id: 'product_manager',
     name: 'Менеджер продукта',
     icon: '📱',
-    parentId: 'information_technology',
+    iconComponent: AssortmentIcon,
+    parentIds: ['information_technology'],
   },
-  {
+{
     id: 'methodologist',
     name: 'Методолог',
     icon: '📚',
-    parentId: 'information_technology',
+    iconComponent: ChequeIcon,
+    parentIds: ['information_technology', 'finance_accounting'],
   },
-  {
+{
     id: 'software_developer',
     name: 'Программист, разработчик',
     icon: '👨‍💻',
-    parentId: 'information_technology',
+    iconComponent: Programmer2Icon,
+    parentIds: ['information_technology'],
   },
-  {
+{
     id: 'product_analyst',
     name: 'Продуктовый аналитик',
     icon: '📊',
-    parentId: 'information_technology',
+    iconComponent: AnalyticsIcon,
+    parentIds: ['information_technology'],
   },
-  {
+{
     id: 'dev_team_lead',
     name: 'Руководитель группы разработки',
     icon: '👥',
-    parentId: 'information_technology',
+    iconComponent: TeamworkIcon,
+    parentIds: ['information_technology'],
   },
-  {
-    id: 'it_analytics_head',
-    name: 'Руководитель отдела аналитики',
-    icon: '📊',
-    parentId: 'information_technology',
-  },
-  {
+{
     id: 'project_manager',
     name: 'Руководитель проектов',
     icon: '📋',
-    parentId: 'information_technology',
+    iconComponent: ProjectIcon,
+    parentIds: ['information_technology', 'strategy_investment_consulting'],
   },
-  {
+{
     id: 'network_engineer',
     name: 'Сетевой инженер',
     icon: '🌐',
-    parentId: 'information_technology',
+    iconComponent: NetworkIcon,
+    parentIds: ['information_technology'],
   },
-  {
+{
     id: 'system_administrator',
     name: 'Системный администратор',
     icon: '🖥️',
-    parentId: 'information_technology',
+    iconComponent: LaptopIcon,
+    parentIds: ['information_technology'],
   },
-  {
+{
     id: 'system_analyst',
     name: 'Системный аналитик',
     icon: '🔍',
-    parentId: 'information_technology',
+    iconComponent: PerformanceIcon,
+    parentIds: ['information_technology'],
   },
-  {
+{
     id: 'system_engineer',
     name: 'Системный инженер',
     icon: '⚙️',
-    parentId: 'information_technology',
+    iconComponent: GearsIcon,
+    parentIds: ['information_technology'],
   },
-  {
-    id: 'it_security_specialist',
-    name: 'Специалист по информационной безопасности',
-    icon: '🔒',
-    parentId: 'information_technology',
-  },
-  {
+{
     id: 'tech_support',
     name: 'Специалист технической поддержки',
     icon: '🛠️',
-    parentId: 'information_technology',
+    iconComponent: CustomerService2Icon,
+    parentIds: ['information_technology', 'sales_customer_service'],
   },
-  {
+{
     id: 'qa_tester',
     name: 'Тестировщик',
     icon: '🧪',
-    parentId: 'information_technology',
+    iconComponent: TesterIcon,
+    parentIds: ['information_technology'],
   },
-  {
-    id: 'it_cto',
-    name: 'Технический директор (CTO)',
-    icon: '🔧',
-    parentId: 'information_technology',
-  },
-  {
+{
     id: 'technical_writer',
     name: 'Технический писатель',
     icon: '📝',
-    parentId: 'information_technology',
+    iconComponent: ContentCreatorIcon,
+    parentIds: ['information_technology'],
   },
-  {
-    id: 'arts_art_director',
-    name: 'Арт-директор, креативный директор',
-    icon: '🎨',
-    parentId: 'arts_entertainment_media',
-  },
-  {
+{
     id: 'artist_actor',
     name: 'Артист, актер, аниматор',
     icon: '🎭',
-    parentId: 'arts_entertainment_media',
+    iconComponent: ActorIcon,
+    parentIds: ['arts_entertainment_media'],
   },
-  {
+{
     id: 'videographer',
     name: 'Видеооператор, видеомонтажер',
     icon: '🎬',
-    parentId: 'arts_entertainment_media',
+    iconComponent: CameramanIcon,
+    parentIds: ['arts_entertainment_media'],
   },
-  {
-    id: 'arts_game_designer',
-    name: 'Гейм-дизайнер',
-    icon: '🎮',
-    parentId: 'arts_entertainment_media',
-  },
-  {
-    id: 'arts_designer',
-    name: 'Дизайнер, художник',
-    icon: '🖌️',
-    parentId: 'arts_entertainment_media',
-  },
-  {
+{
     id: 'journalist',
     name: 'Журналист, корреспондент',
     icon: '📰',
-    parentId: 'arts_entertainment_media',
+    iconComponent: ReporterIcon,
+    parentIds: ['arts_entertainment_media'],
   },
-  {
+{
     id: 'copywriter',
     name: 'Копирайтер, редактор, корректор',
     icon: '✍️',
-    parentId: 'arts_entertainment_media',
+    iconComponent: BlogIcon,
+    parentIds: ['arts_entertainment_media', 'marketing_advertising_pr'],
   },
-  {
+{
     id: 'producer',
     name: 'Продюсер',
     icon: '🎥',
-    parentId: 'arts_entertainment_media',
+    iconComponent: MovieIcon,
+    parentIds: ['arts_entertainment_media'],
   },
-  {
+{
     id: 'director',
     name: 'Режиссер, сценарист',
     icon: '🎬',
-    parentId: 'arts_entertainment_media',
+    iconComponent: DirectorChairIcon,
+    parentIds: ['arts_entertainment_media'],
   },
-  {
+{
     id: 'photographer',
     name: 'Фотограф, ретушер',
     icon: '📷',
-    parentId: 'arts_entertainment_media',
+    iconComponent: PhotographerIcon,
+    parentIds: ['arts_entertainment_media'],
   },
-  {
+{
     id: 'event_manager',
     name: 'Event-менеджер',
     icon: '🎉',
-    parentId: 'marketing_advertising_pr',
+    iconComponent: EventManagementIcon,
+    parentIds: ['marketing_advertising_pr'],
   },
-  {
+{
     id: 'pr_manager',
     name: 'PR-менеджер',
     icon: '📣',
-    parentId: 'marketing_advertising_pr',
+    iconComponent: AdvertisingIcon,
+    parentIds: ['marketing_advertising_pr'],
   },
-  {
+{
     id: 'smm_manager',
     name: 'SMM-менеджер, контент-менеджер',
     icon: '📱',
-    parentId: 'marketing_advertising_pr',
+    iconComponent: ContentMarketingIcon,
+    parentIds: ['marketing_advertising_pr'],
   },
-  {
-    id: 'marketing_analyst',
-    name: 'Аналитик',
-    icon: '📊',
-    parentId: 'marketing_advertising_pr',
-  },
-  {
-    id: 'marketing_art_director',
-    name: 'Арт-директор, креативный директор',
-    icon: '🎨',
-    parentId: 'marketing_advertising_pr',
-  },
-  {
-    id: 'marketing_designer',
-    name: 'Дизайнер, художник',
-    icon: '🖌️',
-    parentId: 'marketing_advertising_pr',
-  },
-  {
-    id: 'marketing_cmo',
-    name: 'Директор по маркетингу и PR (CMO)',
-    icon: '📢',
-    parentId: 'marketing_advertising_pr',
-  },
-  {
-    id: 'marketing_copywriter',
-    name: 'Копирайтер, редактор, корректор',
-    icon: '✍️',
-    parentId: 'marketing_advertising_pr',
-  },
-  {
+{
     id: 'marketing_analytics_specialist',
     name: 'Маркетолог-аналитик',
     icon: '📈',
-    parentId: 'marketing_advertising_pr',
+    iconComponent: StatisticsIcon,
+    parentIds: ['marketing_advertising_pr'],
   },
-  {
+{
     id: 'marketing_manager',
     name: 'Менеджер по маркетингу, интернет-маркетолог',
     icon: '💼',
-    parentId: 'marketing_advertising_pr',
+    iconComponent: PhoneAdIcon,
+    parentIds: ['marketing_advertising_pr'],
   },
-  {
-    id: 'marketing_sales_manager',
-    name: 'Менеджер по продажам, менеджер по работе с клиентами',
-    icon: '🤝',
-    parentId: 'marketing_advertising_pr',
-  },
-  {
+{
     id: 'partner_manager',
     name: 'Менеджер по работе с партнерами',
     icon: '🤝',
-    parentId: 'marketing_advertising_pr',
+    iconComponent: HandshakeIcon,
+    parentIds: ['marketing_advertising_pr', 'sales_customer_service'],
   },
-  {
+{
     id: 'promoter',
     name: 'Промоутер',
     icon: '📢',
-    parentId: 'marketing_advertising_pr',
+    iconComponent: MegaphoneIcon,
+    parentIds: ['marketing_advertising_pr', 'retail'],
   },
-  {
-    id: 'marketing_department_head',
-    name: 'Руководитель отдела маркетинга и рекламы',
-    icon: '👔',
-    parentId: 'marketing_advertising_pr',
-  },
-  {
-    id: 'medical_administrator',
-    name: 'Администратор',
-    icon: '📋',
-    parentId: 'medicine_pharma',
-  },
-  {
+{
     id: 'medical_assistant',
     name: 'Ассистент врача',
     icon: '👨‍⚕️',
-    parentId: 'medicine_pharma',
+    iconComponent: FileDeliveryIcon,
+    parentIds: ['medicine_pharma'],
   },
-  {
+{
     id: 'veterinarian',
     name: 'Ветеринарный врач',
     icon: '🐾',
-    parentId: 'medicine_pharma',
+    iconComponent: VeterinarianIcon,
+    parentIds: ['medicine_pharma', 'agriculture'],
   },
-  {
+{
     id: 'doctor',
     name: 'Врач',
     icon: '👨‍⚕️',
-    parentId: 'medicine_pharma',
+    iconComponent: DoctorIcon,
+    parentIds: ['medicine_pharma'],
   },
-  {
+{
     id: 'chief_doctor',
     name: 'Главный врач, заведующий отделением',
     icon: '🩺',
-    parentId: 'medicine_pharma',
+    iconComponent: Doctor2Icon,
+    parentIds: ['medicine_pharma'],
   },
-  {
+{
     id: 'pharmacy_manager',
     name: 'Заведующий аптекой',
     icon: '💊',
-    parentId: 'medicine_pharma',
+    iconComponent: PharmacistIcon,
+    parentIds: ['medicine_pharma'],
   },
-  {
-    id: 'medical_laboratory_assistant',
-    name: 'Лаборант',
-    icon: '🧪',
-    parentId: 'medicine_pharma',
-  },
-  {
+{
     id: 'nurse',
     name: 'Медицинская сестра, медицинский брат',
     icon: '👩‍⚕️',
-    parentId: 'medicine_pharma',
+    iconComponent: NursingTechnicianIcon,
+    parentIds: ['medicine_pharma'],
   },
-  {
+{
     id: 'medical_rep',
     name: 'Медицинский представитель',
     icon: '💼',
-    parentId: 'medicine_pharma',
+    iconComponent: DoctorsOfficeIcon,
+    parentIds: ['medicine_pharma'],
   },
-  {
-    id: 'medical_researcher',
-    name: 'Научный специалист, исследователь',
-    icon: '🔬',
-    parentId: 'medicine_pharma',
-  },
-  {
+{
     id: 'certification_specialist',
     name: 'Специалист по сертификации',
     icon: '📜',
-    parentId: 'medicine_pharma',
+    iconComponent: CertificateAuthorityIcon,
+    parentIds: ['medicine_pharma', 'sales_customer_service', 'production_service'],
   },
-  {
+{
     id: 'pharmacist',
     name: 'Фармацевт-провизор',
     icon: '💊',
-    parentId: 'medicine_pharma',
+    iconComponent: DrugResearchIcon,
+    parentIds: ['medicine_pharma'],
   },
-  {
+{
     id: 'business_trainer',
     name: 'Бизнес-тренер',
     icon: '📊',
-    parentId: 'science_education',
+    iconComponent: PresentationIcon,
+    parentIds: ['science_education', 'hr_training'],
   },
-  {
-    id: 'educator_nanny',
-    name: 'Воспитатель, няня',
-    icon: '👶',
-    parentId: 'science_education',
-  },
-  {
-    id: 'science_laboratory_assistant',
-    name: 'Лаборант',
-    icon: '🧪',
-    parentId: 'science_education',
-  },
-  {
+{
     id: 'education_methodologist',
     name: 'Методист',
     icon: '📝',
-    parentId: 'science_education',
+    iconComponent: OpenBookGearIcon,
+    parentIds: ['science_education'],
   },
-  {
-    id: 'science_researcher',
-    name: 'Научный специалист, исследователь',
-    icon: '🔬',
-    parentId: 'science_education',
-  },
-  {
+{
     id: 'psychologist',
     name: 'Психолог',
     icon: '🧠',
-    parentId: 'science_education',
+    iconComponent: ObservationIcon,
+    parentIds: ['science_education'],
   },
-  {
+{
     id: 'teacher',
     name: 'Учитель, преподаватель, педагог',
     icon: '👨‍🏫',
-    parentId: 'science_education',
+    iconComponent: TeacherIcon,
+    parentIds: ['science_education'],
   },
-  {
+{
     id: 'real_estate_agent',
     name: 'Агент по недвижимости',
     icon: '🏢',
-    parentId: 'sales_customer_service',
+    iconComponent: EstateAgentIcon,
+    parentIds: ['sales_customer_service'],
   },
-  {
-    id: 'sales_analyst',
-    name: 'Аналитик',
-    icon: '📊',
-    parentId: 'sales_customer_service',
-  },
-  {
+{
     id: 'broker',
     name: 'Брокер',
     icon: '💹',
-    parentId: 'sales_customer_service',
+    iconComponent: WorkExperienceIcon,
+    parentIds: ['sales_customer_service', 'finance_accounting'],
   },
-  {
+{
     id: 'cashier',
     name: 'Кассир-операционист',
     icon: '💵',
-    parentId: 'sales_customer_service',
+    iconComponent: CashierIcon,
+    parentIds: ['sales_customer_service'],
   },
-  {
-    id: 'sales_cco',
-    name: 'Коммерческий директор (CCO)',
-    icon: '👔',
-    parentId: 'sales_customer_service',
-  },
-  {
+{
     id: 'sales_coordinator',
     name: 'Координатор отдела продаж',
     icon: '📋',
-    parentId: 'sales_customer_service',
+    iconComponent: SalesPipeline1Icon,
+    parentIds: ['sales_customer_service'],
   },
-  {
+{
     id: 'credit_specialist',
     name: 'Кредитный специалист',
     icon: '💳',
-    parentId: 'sales_customer_service',
+    iconComponent: CreditScoreIcon,
+    parentIds: ['sales_customer_service', 'finance_accounting'],
   },
-  {
-    id: 'sales_client_manager',
-    name: 'Менеджер по продажам, менеджер по работе с клиентами',
-    icon: '🤝',
-    parentId: 'sales_customer_service',
-  },
-  {
-    id: 'sales_partner_manager',
-    name: 'Менеджер по работе с партнерами',
-    icon: '🤝',
-    parentId: 'sales_customer_service',
-  },
-  {
+{
     id: 'call_center_operator',
     name: 'Оператор call-центра, специалист контактного центра',
     icon: '📞',
-    parentId: 'sales_customer_service',
+    iconComponent: Support24Icon,
+    parentIds: ['sales_customer_service'],
   },
-  {
+{
     id: 'sales_consultant',
     name: 'Продавец-консультант, продавец-кассир',
     icon: '🛒',
-    parentId: 'sales_customer_service',
+    iconComponent: FinancialConsultationIcon,
+    parentIds: ['sales_customer_service', 'retail'],
   },
-  {
+{
     id: 'customer_service_head',
     name: 'Руководитель отдела клиентского обслуживания',
     icon: '👔',
-    parentId: 'sales_customer_service',
+    iconComponent: InfoIcon,
+    parentIds: ['sales_customer_service'],
   },
-  {
+{
     id: 'sales_head',
     name: 'Руководитель отдела продаж',
     icon: '👔',
-    parentId: 'sales_customer_service',
+    iconComponent: CollaboratorIcon,
+    parentIds: ['sales_customer_service'],
   },
-  {
-    id: 'sales_branch_manager',
-    name: 'Руководитель филиала',
-    icon: '🏢',
-    parentId: 'sales_customer_service',
-  },
-  {
-    id: 'sales_certification_specialist',
-    name: 'Специалист по сертификации',
-    icon: '📜',
-    parentId: 'sales_customer_service',
-  },
-  {
-    id: 'sales_tech_support',
-    name: 'Специалист технической поддержки',
-    icon: '🛠️',
-    parentId: 'sales_customer_service',
-  },
-  {
+{
     id: 'insurance_agent',
     name: 'Страховой агент',
     icon: '🛡️',
-    parentId: 'sales_customer_service',
+    iconComponent: ProtectionIcon,
+    parentIds: ['sales_customer_service', 'insurance'],
   },
-  {
+{
     id: 'sales_representative',
     name: 'Торговый представитель',
     icon: '💼',
-    parentId: 'sales_customer_service',
+    iconComponent: Shopping2Icon,
+    parentIds: ['sales_customer_service'],
   },
-  {
+{
     id: 'commissioning_engineer',
     name: 'Инженер ПНР',
     icon: '🔧',
-    parentId: 'production_service',
+    iconComponent: BusinessDevelopmentIcon,
+    parentIds: ['production_service'],
   },
-  {
+{
     id: 'quality_engineer',
     name: 'Инженер по качеству',
     icon: '✅',
-    parentId: 'production_service',
+    iconComponent: QualityControlIcon,
+    parentIds: ['production_service'],
   },
-  {
+{
     id: 'safety_engineer',
     name: 'Инженер по охране труда и технике безопасности, инженер-эколог',
     icon: '🛡️',
-    parentId: 'production_service',
+    iconComponent: LaborSafetyIcon,
+    parentIds: ['production_service'],
   },
-  {
+{
     id: 'operation_engineer',
     name: 'Инженер по эксплуатации',
     icon: '⚙️',
-    parentId: 'production_service',
+    iconComponent: HelmetIcon,
+    parentIds: ['production_service'],
   },
-  {
+{
     id: 'design_engineer',
     name: 'Инженер-конструктор, инженер-проектировщик',
     icon: '📐',
-    parentId: 'production_service',
+    iconComponent: HandsWrenchIcon,
+    parentIds: ['production_service'],
   },
-  {
+{
     id: 'electronic_engineer',
     name: 'Инженер-электроник, инженер-электронщик',
     icon: '🔌',
-    parentId: 'production_service',
+    iconComponent: ElectricPower2Icon,
+    parentIds: ['production_service'],
   },
-  {
+{
     id: 'electrical_engineer',
     name: 'Инженер-энергетик, инженер-электрик',
     icon: '⚡',
-    parentId: 'production_service',
+    iconComponent: HandHoldingLightningIcon,
+    parentIds: ['production_service'],
   },
-  {
+{
     id: 'quality_controller',
     name: 'Контролёр ОТК',
     icon: '🔍',
-    parentId: 'production_service',
+    iconComponent: EqualizerIcon,
+    parentIds: ['production_service'],
   },
-  {
-    id: 'production_laboratory_assistant',
-    name: 'Лаборант',
-    icon: '🧪',
-    parentId: 'production_service',
-  },
-  {
+{
     id: 'equipment_repair_master',
     name: 'Мастер по ремонту оборудования, техники',
     icon: '🔧',
-    parentId: 'production_service',
+    iconComponent: RepairIcon,
+    parentIds: ['production_service'],
   },
-  {
-    id: 'production_machinist',
-    name: 'Машинист',
-    icon: '🚂',
-    parentId: 'production_service',
-  },
-  {
+{
     id: 'metrologist',
     name: 'Метролог',
     icon: '📏',
-    parentId: 'production_service',
+    iconComponent: MeasureIcon,
+    parentIds: ['production_service'],
   },
-  {
+{
     id: 'production_mechanic',
     name: 'Механик',
     icon: '🔧',
-    parentId: 'production_service',
+    iconComponent: MechanicIcon,
+    parentIds: ['production_service', 'working_personnel'],
   },
-  {
-    id: 'production_researcher',
-    name: 'Научный специалист, исследователь',
-    icon: '🔬',
-    parentId: 'production_service',
-  },
-  {
-    id: 'production_chief',
-    name: 'Начальник производства',
-    icon: '👔',
-    parentId: 'production_service',
-  },
-  {
-    id: 'production_shift_supervisor',
-    name: 'Начальник смены, мастер участка',
-    icon: '👷',
-    parentId: 'production_service',
-  },
-  {
+{
     id: 'production_line_operator',
     name: 'Оператор производственной линии',
     icon: '🏭',
-    parentId: 'production_service',
+    iconComponent: ConveyorBeltIcon,
+    parentIds: ['production_service', 'working_personnel'],
   },
-  {
+{
     id: 'cnc_operator',
     name: 'Оператор станков с ЧПУ',
     icon: '🖥️',
-    parentId: 'production_service',
+    iconComponent: Printing3DIcon,
+    parentIds: ['production_service', 'working_personnel'],
   },
-  {
+{
     id: 'production_welder',
     name: 'Сварщик',
     icon: '🔥',
-    parentId: 'production_service',
+    iconComponent: WelderIcon,
+    parentIds: ['production_service', 'working_personnel'],
   },
-  {
+{
     id: 'service_engineer',
     name: 'Сервисный инженер, инженер-механик',
     icon: '🔧',
-    parentId: 'production_service',
+    iconComponent: TechnicalServiceIcon,
+    parentIds: ['production_service', 'working_personnel', 'agriculture'],
   },
-  {
+{
     id: 'production_locksmith',
     name: 'Слесарь, сантехник',
     icon: '🔧',
-    parentId: 'production_service',
+    iconComponent: FaucetIcon,
+    parentIds: ['production_service', 'working_personnel'],
   },
-  {
-    id: 'production_certification_specialist',
-    name: 'Специалист по сертификации',
-    icon: '📜',
-    parentId: 'production_service',
-  },
-  {
-    id: 'production_technologist',
-    name: 'Технолог',
-    icon: '⚗️',
-    parentId: 'production_service',
-  },
-  {
+{
     id: 'turner_milling_machine_operator',
     name: 'Токарь, фрезеровщик, шлифовщик',
     icon: '⚙️',
-    parentId: 'production_service',
+    iconComponent: LaserIcon,
+    parentIds: ['production_service', 'working_personnel'],
   },
-  {
+{
     id: 'seamstress',
     name: 'Швея, портной, закройщик',
     icon: '🧵',
-    parentId: 'production_service',
+    iconComponent: SewingMachineIcon,
+    parentIds: ['production_service'],
   },
-  {
+{
     id: 'production_electrician',
     name: 'Электромонтажник',
     icon: '⚡',
-    parentId: 'production_service',
+    iconComponent: PanelIcon,
+    parentIds: ['production_service', 'working_personnel'],
   },
-  {
-    id: 'worker_auto_mechanic',
-    name: 'Автослесарь, автомеханик',
-    icon: '🚗',
-    parentId: 'working_personnel',
-  },
-  {
-    id: 'worker_driver',
-    name: 'Водитель',
-    icon: '🚗',
-    parentId: 'working_personnel',
-  },
-  {
+{
     id: 'loader',
     name: 'Грузчик',
     icon: '📦',
-    parentId: 'working_personnel',
+    iconComponent: DeliveryManIcon,
+    parentIds: ['working_personnel', 'transport_logistics'],
   },
-  {
+{
     id: 'storekeeper',
     name: 'Кладовщик',
     icon: '📦',
-    parentId: 'working_personnel',
+    iconComponent: CartIcon,
+    parentIds: ['working_personnel', 'transport_logistics'],
   },
-  {
+{
     id: 'worker_painter',
     name: 'Маляр, штукатур',
     icon: '🎨',
-    parentId: 'working_personnel',
+    iconComponent: PainterIcon,
+    parentIds: ['working_personnel'],
   },
-  {
-    id: 'worker_machinist',
-    name: 'Машинист',
-    icon: '🚂',
-    parentId: 'working_personnel',
-  },
-  {
-    id: 'worker_mechanic',
-    name: 'Механик',
-    icon: '🔧',
-    parentId: 'working_personnel',
-  },
-  {
+{
     id: 'assembler',
     name: 'Монтажник',
     icon: '🔧',
-    parentId: 'working_personnel',
+    iconComponent: ToolboxIcon,
+    parentIds: ['working_personnel'],
   },
-  {
-    id: 'worker_production_line_operator',
-    name: 'Оператор производственной линии',
-    icon: '🏭',
-    parentId: 'working_personnel',
-  },
-  {
-    id: 'worker_cnc_operator',
-    name: 'Оператор станков с ЧПУ',
-    icon: '🖥️',
-    parentId: 'working_personnel',
-  },
-  {
+{
     id: 'general_worker',
     name: 'Разнорабочий',
     icon: '👷',
-    parentId: 'working_personnel',
+    iconComponent: MultitaskingIcon,
+    parentIds: ['working_personnel'],
   },
-  {
-    id: 'worker_welder',
-    name: 'Сварщик',
-    icon: '🔥',
-    parentId: 'working_personnel',
-  },
-  {
-    id: 'worker_service_engineer',
-    name: 'Сервисный инженер, инженер-механик',
-    icon: '🔧',
-    parentId: 'working_personnel',
-  },
-  {
-    id: 'worker_locksmith',
-    name: 'Слесарь, сантехник',
-    icon: '🔧',
-    parentId: 'working_personnel',
-  },
-  {
-    id: 'worker_turner',
-    name: 'Токарь, фрезеровщик, шлифовщик',
-    icon: '⚙️',
-    parentId: 'working_personnel',
-  },
-  {
+{
     id: 'packer',
     name: 'Упаковщик, комплектовщик',
     icon: '📦',
-    parentId: 'working_personnel',
+    iconComponent: PackageIcon,
+    parentIds: ['working_personnel', 'transport_logistics'],
   },
-  {
-    id: 'worker_electrician',
-    name: 'Электромонтажник',
-    icon: '⚡',
-    parentId: 'working_personnel',
-  },
-  {
+{
     id: 'store_administrator',
     name: 'Администратор магазина, администратор торгового зала',
     icon: '🏪',
-    parentId: 'retail',
+    iconComponent: Manager2Icon,
+    parentIds: ['retail'],
   },
-  {
+{
     id: 'store_director',
     name: 'Директор магазина, директор сети магазинов',
     icon: '👔',
-    parentId: 'retail',
+    iconComponent: BossIcon,
+    parentIds: ['retail'],
   },
-  {
+{
     id: 'merchandiser',
     name: 'Мерчандайзер',
     icon: '📊',
-    parentId: 'retail',
+    iconComponent: InventoryIcon,
+    parentIds: ['retail'],
   },
-  {
-    id: 'retail_sales_consultant',
-    name: 'Продавец-консультант, продавец-кассир',
-    icon: '🛒',
-    parentId: 'retail',
-  },
-  {
-    id: 'retail_promoter',
-    name: 'Промоутер',
-    icon: '📢',
-    parentId: 'retail',
-  },
-  {
+{
     id: 'supervisor',
     name: 'Супервайзер',
     icon: '👁️',
-    parentId: 'retail',
+    iconComponent: WomanLeaderIcon,
+    parentIds: ['retail'],
   },
-  {
+{
     id: 'merchandising_specialist',
     name: 'Товаровед',
     icon: '📋',
-    parentId: 'retail',
+    iconComponent: BoxIcon,
+    parentIds: ['retail'],
   },
-  {
+{
     id: 'agronomist',
     name: 'Агроном',
     icon: '🌱',
-    parentId: 'agriculture',
+    iconComponent: GrowingPlantIcon,
+    parentIds: ['agriculture'],
   },
-  {
-    id: 'agriculture_veterinarian',
-    name: 'Ветеринарный врач',
-    icon: '🐾',
-    parentId: 'agriculture',
-  },
-  {
+{
     id: 'zootechnician',
     name: 'Зоотехник',
     icon: '🐄',
-    parentId: 'agriculture',
+    iconComponent: SpeciesIcon,
+    parentIds: ['agriculture'],
   },
-  {
-    id: 'agriculture_machinist',
-    name: 'Машинист',
-    icon: '🚜',
-    parentId: 'agriculture',
-  },
-  {
-    id: 'agriculture_service_engineer',
-    name: 'Сервисный инженер, инженер-механик',
-    icon: '🔧',
-    parentId: 'agriculture',
-  },
-  {
-    id: 'agriculture_technologist',
-    name: 'Технолог',
-    icon: '⚗️',
-    parentId: 'agriculture',
-  },
-  {
-    id: 'sports_administrator',
-    name: 'Администратор',
-    icon: '📋',
-    parentId: 'sports_fitness_beauty',
-  },
-  {
+{
     id: 'cosmetologist',
     name: 'Косметолог',
     icon: '💆',
-    parentId: 'sports_fitness_beauty',
+    iconComponent: CleansingIcon,
+    parentIds: ['sports_fitness_beauty'],
   },
-  {
+{
     id: 'massage_therapist',
     name: 'Массажист',
     icon: '💆',
-    parentId: 'sports_fitness_beauty',
+    iconComponent: MassageIcon,
+    parentIds: ['sports_fitness_beauty'],
   },
-  {
+{
     id: 'nail_technician',
     name: 'Мастер ногтевого сервиса',
     icon: '💅',
-    parentId: 'sports_fitness_beauty',
+    iconComponent: NailPolishIcon,
+    parentIds: ['sports_fitness_beauty'],
   },
-  {
-    id: 'sports_sales_manager',
-    name: 'Менеджер по продажам, менеджер по работе с клиентами',
-    icon: '🤝',
-    parentId: 'sports_fitness_beauty',
-  },
-  {
+{
     id: 'hairdresser',
     name: 'Парикмахер',
     icon: '💇',
-    parentId: 'sports_fitness_beauty',
+    iconComponent: HairStylingIcon,
+    parentIds: ['sports_fitness_beauty'],
   },
-  {
+{
     id: 'fitness_trainer',
     name: 'Фитнес-тренер, инструктор тренажерного зала',
     icon: '🏋️',
-    parentId: 'sports_fitness_beauty',
+    iconComponent: MuscleIcon,
+    parentIds: ['sports_fitness_beauty'],
   },
-  {
-    id: 'strategy_analyst',
-    name: 'Аналитик',
-    icon: '📊',
-    parentId: 'strategy_investment_consulting',
-  },
-  {
-    id: 'strategy_business_analyst',
-    name: 'Бизнес-аналитик',
-    icon: '📈',
-    parentId: 'strategy_investment_consulting',
-  },
-  {
+{
     id: 'strategy_consultant',
     name: 'Менеджер/консультант по стратегии',
     icon: '💼',
-    parentId: 'strategy_investment_consulting',
+    iconComponent: StrategyIcon,
+    parentIds: ['strategy_investment_consulting'],
   },
-  {
-    id: 'strategy_project_manager',
-    name: 'Руководитель проектов',
-    icon: '📋',
-    parentId: 'strategy_investment_consulting',
-  },
-  {
+{
     id: 'financial_analyst',
     name: 'Финансовый аналитик, инвестиционный аналитик',
     icon: '💹',
-    parentId: 'strategy_investment_consulting',
+    iconComponent: Analytics2Icon,
+    parentIds: ['strategy_investment_consulting', 'finance_accounting'],
   },
-  {
+{
     id: 'underwriter',
     name: 'Андеррайтер',
     icon: '📝',
-    parentId: 'insurance',
+    iconComponent: ProjectManagementIcon,
+    parentIds: ['insurance'],
   },
-  {
+{
     id: 'appraiser',
     name: 'Оценщик',
     icon: '📊',
-    parentId: 'insurance',
+    iconComponent: SearchIcon,
+    parentIds: ['insurance'],
   },
-  {
-    id: 'insurance_insurance_agent',
-    name: 'Страховой агент',
-    icon: '🛡️',
-    parentId: 'insurance',
-  },
-  {
+{
     id: 'flight_attendant',
     name: 'Бортпроводник',
     icon: '✈️',
-    parentId: 'transport_logistics',
+    iconComponent: StewardessIcon,
+    parentIds: ['transport_logistics'],
   },
-  {
-    id: 'transport_driver',
-    name: 'Водитель',
-    icon: '🚗',
-    parentId: 'transport_logistics',
-  },
-  {
-    id: 'transport_loader',
-    name: 'Грузчик',
-    icon: '📦',
-    parentId: 'transport_logistics',
-  },
-  {
+{
     id: 'dispatcher',
     name: 'Диспетчер',
     icon: '📞',
-    parentId: 'transport_logistics',
+    iconComponent: OperatorIcon,
+    parentIds: ['transport_logistics'],
   },
-  {
-    id: 'transport_storekeeper',
-    name: 'Кладовщик',
-    icon: '📦',
-    parentId: 'transport_logistics',
-  },
-  {
-    id: 'transport_courier',
-    name: 'Курьер',
-    icon: '🚴',
-    parentId: 'transport_logistics',
-  },
-  {
-    id: 'transport_machinist',
-    name: 'Машинист',
-    icon: '🚂',
-    parentId: 'transport_logistics',
-  },
-  {
+{
     id: 'logistics_manager',
     name: 'Менеджер по логистике, менеджер по ВЭД',
     icon: '📋',
-    parentId: 'transport_logistics',
+    iconComponent: ContainerIcon,
+    parentIds: ['transport_logistics'],
   },
-  {
+{
     id: 'warehouse_manager',
     name: 'Начальник склада',
     icon: '🏢',
-    parentId: 'transport_logistics',
+    iconComponent: WarehouseIcon,
+    parentIds: ['transport_logistics'],
   },
-  {
-    id: 'logistics_head',
-    name: 'Руководитель отдела логистики',
-    icon: '👔',
-    parentId: 'transport_logistics',
-  },
-  {
-    id: 'transport_packer',
-    name: 'Упаковщик, комплектовщик',
-    icon: '📦',
-    parentId: 'transport_logistics',
-  },
-  {
-    id: 'tourism_administrator',
-    name: 'Администратор',
-    icon: '📋',
-    parentId: 'tourism_hotels_restaurants',
-  },
-  {
+{
     id: 'tourism_manager',
     name: 'Менеджер по туризму',
     icon: '🗺️',
-    parentId: 'tourism_hotels_restaurants',
+    iconComponent: TourGuideIcon,
+    parentIds: ['tourism_hotels_restaurants'],
   },
-  {
+{
     id: 'restaurant_manager',
     name: 'Менеджер ресторана',
     icon: '🍽️',
-    parentId: 'tourism_hotels_restaurants',
+    iconComponent: RefereeIcon,
+    parentIds: ['tourism_hotels_restaurants'],
   },
-  {
-    id: 'tourism_facility_manager',
-    name: 'Менеджер/руководитель АХО',
-    icon: '🏢',
-    parentId: 'tourism_hotels_restaurants',
-  },
-  {
-    id: 'tourism_waiter',
-    name: 'Официант, бармен, бариста',
-    icon: '☕',
-    parentId: 'tourism_hotels_restaurants',
-  },
-  {
+{
     id: 'chef',
     name: 'Повар, пекарь, кондитер',
     icon: '👨‍🍳',
-    parentId: 'tourism_hotels_restaurants',
+    iconComponent: ChefIcon,
+    parentIds: ['tourism_hotels_restaurants'],
   },
-  {
-    id: 'tourism_cleaner',
-    name: 'Уборщица, уборщик',
-    icon: '🧹',
-    parentId: 'tourism_hotels_restaurants',
-  },
-  {
+{
     id: 'hostess',
     name: 'Хостес',
     icon: '💁',
-    parentId: 'tourism_hotels_restaurants',
+    iconComponent: WomanIcon,
+    parentIds: ['tourism_hotels_restaurants'],
   },
-  {
-    id: 'hr_business_trainer',
-    name: 'Бизнес-тренер',
-    icon: '📊',
-    parentId: 'hr_training',
-  },
-  {
-    id: 'hr_hrd',
-    name: 'Директор по персоналу (HRD)',
-    icon: '👔',
-    parentId: 'hr_training',
-  },
-  {
+{
     id: 'compensation_manager',
     name: 'Менеджер по компенсациям и льготам',
     icon: '💰',
-    parentId: 'hr_training',
+    iconComponent: CashbackIcon,
+    parentIds: ['hr_training'],
   },
-  {
+{
     id: 'hr_manager',
     name: 'Менеджер по персоналу',
     icon: '👥',
-    parentId: 'hr_training',
+    iconComponent: LeadershipIcon,
+    parentIds: ['hr_training'],
   },
-  {
-    id: 'hr_head',
-    name: 'Руководитель отдела персонала',
-    icon: '👔',
-    parentId: 'hr_training',
-  },
-  {
+{
     id: 'hr_specialist',
     name: 'Специалист по кадрам',
     icon: '📋',
-    parentId: 'hr_training',
+    iconComponent: Hr2Icon,
+    parentIds: ['hr_training'],
   },
-  {
+{
     id: 'recruiter',
     name: 'Специалист по подбору персонала',
     icon: '🔍',
-    parentId: 'hr_training',
+    iconComponent: ChooseIcon,
+    parentIds: ['hr_training'],
   },
-  {
+{
     id: 'auditor',
     name: 'Аудитор',
     icon: '🔍',
-    parentId: 'finance_accounting',
+    iconComponent: AuditDocumentIcon,
+    parentIds: ['finance_accounting'],
   },
-  {
-    id: 'finance_broker',
-    name: 'Брокер',
-    icon: '💹',
-    parentId: 'finance_accounting',
-  },
-  {
+{
     id: 'accountant',
     name: 'Бухгалтер',
     icon: '💼',
-    parentId: 'finance_accounting',
+    iconComponent: TaxIcon,
+    parentIds: ['finance_accounting'],
   },
-  {
+{
     id: 'treasurer',
     name: 'Казначей',
     icon: '💰',
-    parentId: 'finance_accounting',
+    iconComponent: MoneyBagIcon,
+    parentIds: ['finance_accounting'],
   },
-  {
+{
     id: 'compliance_manager',
     name: 'Комплаенс-менеджер',
     icon: '📋',
-    parentId: 'finance_accounting',
+    iconComponent: PlanningIcon,
+    parentIds: ['finance_accounting', 'legal'],
   },
-  {
-    id: 'finance_credit_specialist',
-    name: 'Кредитный специалист',
-    icon: '💳',
-    parentId: 'finance_accounting',
-  },
-  {
-    id: 'finance_methodologist',
-    name: 'Методолог',
-    icon: '📝',
-    parentId: 'finance_accounting',
-  },
-  {
+{
     id: 'debt_collector',
     name: 'Специалист по взысканию задолженности',
     icon: '💸',
-    parentId: 'finance_accounting',
+    iconComponent: BondIcon,
+    parentIds: ['finance_accounting'],
   },
-  {
-    id: 'finance_financial_analyst',
-    name: 'Финансовый аналитик, инвестиционный аналитик',
-    icon: '💹',
-    parentId: 'finance_accounting',
-  },
-  {
-    id: 'cfo',
-    name: 'Финансовый директор (CFO)',
-    icon: '👔',
-    parentId: 'finance_accounting',
-  },
-  {
+{
     id: 'financial_controller',
     name: 'Финансовый контролер',
     icon: '📊',
-    parentId: 'finance_accounting',
+    iconComponent: MoneyIcon,
+    parentIds: ['finance_accounting'],
   },
-  {
+{
     id: 'financial_manager',
     name: 'Финансовый менеджер',
     icon: '💼',
-    parentId: 'finance_accounting',
+    iconComponent: Financing2Icon,
+    parentIds: ['finance_accounting'],
   },
-  {
+{
     id: 'economist',
     name: 'Экономист',
     icon: '📈',
-    parentId: 'finance_accounting',
+    iconComponent: GrowthIcon,
+    parentIds: ['finance_accounting'],
   },
-  {
-    id: 'legal_clo',
-    name: 'Директор юридического департамента (CLO)',
-    icon: '👔',
-    parentId: 'legal',
-  },
-  {
-    id: 'legal_compliance_manager',
-    name: 'Комплаенс-менеджер',
-    icon: '📋',
-    parentId: 'legal',
-  },
-  {
+{
     id: 'legal_counsel',
     name: 'Юрисконсульт',
     icon: '⚖️',
-    parentId: 'legal',
+    iconComponent: LawyerIcon,
+    parentIds: ['legal'],
   },
-  {
+{
     id: 'lawyer',
     name: 'Юрист',
     icon: '⚖️',
-    parentId: 'legal',
+    iconComponent: LawyerDayIcon,
+    parentIds: ['legal'],
   },
-  {
+{
     id: 'other_category',
     name: 'Другое',
     icon: '📋',
-    parentId: 'other',
-  },
+    parentIds: ['other'],
+  }
 ];
 
 // Получить специализацию по ID
@@ -1845,12 +1747,12 @@ export const getSpecializationById = (id: string): SpecializationOption | undefi
 
 // Получить подкатегории по родительскому ID
 export const getSubcategoriesByParentId = (parentId: string): SpecializationOption[] => {
-  return SPECIALIZATIONS.filter(spec => spec.parentId === parentId);
+  return SPECIALIZATIONS.filter(spec => spec.parentIds?.includes(parentId));
 };
 
 // Получить категории верхнего уровня (родительские + без родителя)
 export const getTopLevelCategories = (): SpecializationOption[] => {
-  const topLevelSpecs = SPECIALIZATIONS.filter(spec => !spec.parentId);
+  const topLevelSpecs = SPECIALIZATIONS.filter(spec => !spec.parentIds || spec.parentIds.length === 0);
   // Сначала показываем топ-уровневые специализации, затем родительские категории
   return [...topLevelSpecs, ...PARENT_CATEGORIES];
 };

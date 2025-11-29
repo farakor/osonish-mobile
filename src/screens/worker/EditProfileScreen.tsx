@@ -23,10 +23,11 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import { HeaderWithBack, PlusIcon, CategoryIcon } from '../../components/common';
 import { authService } from '../../services/authService';
-import { User, Specialization } from '../../types';
+import { User, Specialization, Education, WorkExperience } from '../../types';
 import { useWorkerTranslation } from '../../hooks/useTranslation';
 import { SPECIALIZATIONS, getSpecializationById, getTranslatedSpecializationName, getTranslatedSpecializationNameSingular } from '../../constants/specializations';
 import { mediaService } from '../../services/mediaService';
+import RemoveIcon from '../../../assets/remove.svg';
 
 const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
 
@@ -61,6 +62,14 @@ export const EditProfileScreen: React.FC = () => {
   const [workPhotos, setWorkPhotos] = useState<string[]>([]);
   const [showSpecializationModal, setShowSpecializationModal] = useState(false);
 
+  // Поля для job_seeker
+  const [education, setEducation] = useState<Education[]>([]);
+  const [skills, setSkills] = useState<string[]>([]);
+  const [newSkill, setNewSkill] = useState('');
+  const [workExperience, setWorkExperience] = useState<WorkExperience[]>([]);
+  const [desiredSalary, setDesiredSalary] = useState('');
+  const [willingToRelocate, setWillingToRelocate] = useState(false);
+
   useEffect(() => {
     loadUserProfile();
   }, []);
@@ -85,6 +94,23 @@ export const EditProfileScreen: React.FC = () => {
           setAboutMe(userData.aboutMe || '');
           setSpecializations(userData.specializations || []);
           setWorkPhotos(userData.workPhotos || []);
+        }
+
+        // Поля для job_seeker
+        if (userData.workerType === 'job_seeker') {
+          console.log('[EditProfile] 📝 Загружаем данные job_seeker:', {
+            education: userData.education,
+            skills: userData.skills,
+            workExperience: userData.workExperience,
+            specializations: userData.specializations,
+          });
+          setAboutMe(userData.aboutMe || '');
+          setEducation(userData.education || []);
+          setSkills(userData.skills || []);
+          setWorkExperience(userData.workExperience || []);
+          setDesiredSalary(userData.desiredSalary ? userData.desiredSalary.toString() : '');
+          setWillingToRelocate(userData.willingToRelocate || false);
+          setSpecializations(userData.specializations || []);
         }
       } else {
         Alert.alert(tWorker('general_error'), tWorker('user_not_authorized'));
@@ -322,6 +348,17 @@ export const EditProfileScreen: React.FC = () => {
         }
       }
 
+      // Если это job_seeker, добавляем поля резюме
+      if (user.workerType === 'job_seeker') {
+        updatedData.aboutMe = aboutMe.trim();
+        updatedData.education = education;
+        updatedData.skills = skills;
+        updatedData.workExperience = workExperience;
+        updatedData.desiredSalary = desiredSalary ? parseInt(desiredSalary.replace(/\s/g, '')) : undefined;
+        updatedData.willingToRelocate = willingToRelocate;
+        updatedData.specializations = specializations;
+      }
+
       const result = await authService.updateProfile(updatedData);
 
       if (result.success && result.user) {
@@ -388,6 +425,18 @@ export const EditProfileScreen: React.FC = () => {
         JSON.stringify(workPhotos) !== JSON.stringify(user.workPhotos || []);
 
       return basicChanges || professionalChanges;
+    }
+
+    // Проверяем изменения для job_seeker
+    if (user.workerType === 'job_seeker') {
+      const jobSeekerChanges =
+        JSON.stringify(education) !== JSON.stringify(user.education || []) ||
+        JSON.stringify(skills) !== JSON.stringify(user.skills || []) ||
+        JSON.stringify(workExperience) !== JSON.stringify(user.workExperience || []) ||
+        desiredSalary !== (user.desiredSalary ? user.desiredSalary.toString() : '') ||
+        willingToRelocate !== (user.willingToRelocate || false);
+
+      return basicChanges || jobSeekerChanges;
     }
 
     return basicChanges;
@@ -569,6 +618,7 @@ export const EditProfileScreen: React.FC = () => {
                           style={styles.specChipIconWrapper}
                         />
                         <Text
+                          numberOfLines={0}
                           style={[
                             styles.specChipText,
                             spec.isPrimary && styles.specChipTextPrimary,
@@ -628,6 +678,334 @@ export const EditProfileScreen: React.FC = () => {
               </View>
             </>
           )}
+
+          {/* Job Seeker Section */}
+          {user.workerType === 'job_seeker' && (
+            <>
+              {/* Заголовок секции */}
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionHeaderTitle}>📝 Резюме</Text>
+                <Text style={styles.sectionHeaderSubtitle}>Заполните информацию о себе</Text>
+              </View>
+
+              {/* О себе - карточка */}
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>👤 О себе</Text>
+                <Text style={styles.cardHint}>
+                  Расскажите о себе, своем опыте и профессиональных качествах
+                </Text>
+                <TextInput
+                  style={styles.textArea}
+                  value={aboutMe}
+                  onChangeText={setAboutMe}
+                  placeholder="Например: Ответственный специалист с опытом работы в сфере..."
+                  placeholderTextColor="#C7C7CC"
+                  multiline
+                  numberOfLines={6}
+                  maxLength={500}
+                  textAlignVertical="top"
+                />
+                <Text style={styles.charCounter}>
+                  {aboutMe.length} / 500
+                </Text>
+              </View>
+
+              {/* Желаемая зарплата и готовность к переезду - карточка */}
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>💼 Пожелания к работе</Text>
+                
+                <Text style={styles.label}>Желаемая зарплата</Text>
+                <TextInput
+                  style={styles.input}
+                  value={desiredSalary}
+                  onChangeText={(text) => {
+                    const numbers = text.replace(/\D/g, '');
+                    setDesiredSalary(numbers.replace(/\B(?=(\d{3})+(?!\d))/g, ' '));
+                  }}
+                  placeholder="5 000 000"
+                  placeholderTextColor="#C7C7CC"
+                  keyboardType="numeric"
+                />
+                <Text style={styles.hint}>Укажите желаемую зарплату в сумах</Text>
+
+                {/* Готовность к переезду */}
+                <TouchableOpacity
+                  style={[styles.checkboxContainer, { marginTop: 16, paddingVertical: 0 }]}
+                  onPress={() => setWillingToRelocate(!willingToRelocate)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.checkbox, willingToRelocate && styles.checkboxChecked]}>
+                    {willingToRelocate && <Text style={styles.checkboxIcon}>✓</Text>}
+                  </View>
+                  <Text style={styles.checkboxLabel}>Готов к переездам</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Образование - карточка */}
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>🎓 Образование ({education.length})</Text>
+                {education.map((edu, index) => (
+                  <View key={index} style={styles.resumeEditItem}>
+                    <TextInput
+                      style={styles.input}
+                      value={edu.institution}
+                      onChangeText={(text) => {
+                        const newEducation = [...education];
+                        newEducation[index].institution = text;
+                        setEducation(newEducation);
+                      }}
+                      placeholder="Название учебного заведения"
+                      placeholderTextColor="#C7C7CC"
+                    />
+                    <TextInput
+                      style={[styles.input, { marginTop: 8 }]}
+                      value={edu.degree}
+                      onChangeText={(text) => {
+                        const newEducation = [...education];
+                        newEducation[index].degree = text;
+                        setEducation(newEducation);
+                      }}
+                      placeholder="Степень/специальность"
+                      placeholderTextColor="#C7C7CC"
+                    />
+                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                      <TextInput
+                        style={[styles.input, { flex: 1 }]}
+                        value={edu.yearStart}
+                        onChangeText={(text) => {
+                          const newEducation = [...education];
+                          newEducation[index].yearStart = text;
+                          setEducation(newEducation);
+                        }}
+                        placeholder="Год начала"
+                        placeholderTextColor="#C7C7CC"
+                        keyboardType="numeric"
+                        maxLength={4}
+                      />
+                      <TextInput
+                        style={[styles.input, { flex: 1 }]}
+                        value={edu.yearEnd}
+                        onChangeText={(text) => {
+                          const newEducation = [...education];
+                          newEducation[index].yearEnd = text;
+                          setEducation(newEducation);
+                        }}
+                        placeholder="Год окончания"
+                        placeholderTextColor="#C7C7CC"
+                        keyboardType="numeric"
+                        maxLength={4}
+                      />
+                    </View>
+                    <TouchableOpacity
+                      style={styles.removeButton}
+                      onPress={() => setEducation(education.filter((_, i) => i !== index))}
+                    >
+                      <Text style={styles.removeButtonText}>Удалить</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+                <TouchableOpacity
+                  style={styles.addButton}
+                  onPress={() => setEducation([...education, { institution: '', degree: '', yearStart: '', yearEnd: '' }])}
+                >
+                  <Text style={styles.addButtonIcon}>+</Text>
+                  <Text style={styles.addButtonText}>Добавить образование</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Опыт работы - карточка */}
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>💼 Опыт работы ({workExperience.length})</Text>
+                {workExperience.map((exp, index) => (
+                  <View key={index} style={styles.resumeEditItem}>
+                    <TextInput
+                      style={styles.input}
+                      value={exp.company}
+                      onChangeText={(text) => {
+                        const newExperience = [...workExperience];
+                        newExperience[index].company = text;
+                        setWorkExperience(newExperience);
+                      }}
+                      placeholder="Название компании"
+                      placeholderTextColor="#C7C7CC"
+                    />
+                    <TextInput
+                      style={[styles.input, { marginTop: 8 }]}
+                      value={exp.position}
+                      onChangeText={(text) => {
+                        const newExperience = [...workExperience];
+                        newExperience[index].position = text;
+                        setWorkExperience(newExperience);
+                      }}
+                      placeholder="Должность"
+                      placeholderTextColor="#C7C7CC"
+                    />
+                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                      <TextInput
+                        style={[styles.input, { flex: 1 }]}
+                        value={exp.yearStart}
+                        onChangeText={(text) => {
+                          const newExperience = [...workExperience];
+                          newExperience[index].yearStart = text;
+                          setWorkExperience(newExperience);
+                        }}
+                        placeholder="Год начала"
+                        placeholderTextColor="#C7C7CC"
+                        keyboardType="numeric"
+                        maxLength={4}
+                      />
+                      <TextInput
+                        style={[styles.input, { flex: 1 }]}
+                        value={exp.yearEnd}
+                        onChangeText={(text) => {
+                          const newExperience = [...workExperience];
+                          newExperience[index].yearEnd = text;
+                          setWorkExperience(newExperience);
+                        }}
+                        placeholder="Год окончания"
+                        placeholderTextColor="#C7C7CC"
+                        keyboardType="numeric"
+                        maxLength={4}
+                      />
+                    </View>
+                    <TextInput
+                      style={[styles.textArea, { marginTop: 8 }]}
+                      value={exp.description}
+                      onChangeText={(text) => {
+                        const newExperience = [...workExperience];
+                        newExperience[index].description = text;
+                        setWorkExperience(newExperience);
+                      }}
+                      placeholder="Описание обязанностей (опционально)"
+                      placeholderTextColor="#C7C7CC"
+                      multiline
+                      numberOfLines={3}
+                    />
+                    <TouchableOpacity
+                      style={styles.removeButton}
+                      onPress={() => setWorkExperience(workExperience.filter((_, i) => i !== index))}
+                    >
+                      <Text style={styles.removeButtonText}>Удалить</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+                <TouchableOpacity
+                  style={styles.addButton}
+                  onPress={() => setWorkExperience([...workExperience, { company: '', position: '', yearStart: '', yearEnd: '', description: '' }])}
+                >
+                  <Text style={styles.addButtonIcon}>+</Text>
+                  <Text style={styles.addButtonText}>Добавить опыт работы</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Навыки - карточка */}
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>⚡ Навыки ({skills.length})</Text>
+                <View style={styles.skillsContainer}>
+                  {skills.map((skill, index) => (
+                    <View key={index} style={styles.skillChip}>
+                      <Text style={styles.skillChipText}>{skill}</Text>
+                      <TouchableOpacity
+                        onPress={() => setSkills(skills.filter((_, i) => i !== index))}
+                      >
+                        <Text style={styles.skillChipRemove}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+                <View style={styles.skillInputContainer}>
+                  <TextInput
+                    style={styles.skillInput}
+                    value={newSkill}
+                    onChangeText={setNewSkill}
+                    placeholder="Введите навык"
+                    placeholderTextColor="#C7C7CC"
+                    onSubmitEditing={() => {
+                      const skill = newSkill.trim();
+                      if (skill && !skills.includes(skill)) {
+                        setSkills([...skills, skill]);
+                        setNewSkill('');
+                      }
+                    }}
+                  />
+                  <TouchableOpacity
+                    style={styles.addSkillButtonInside}
+                    onPress={() => {
+                      const skill = newSkill.trim();
+                      if (skill && !skills.includes(skill)) {
+                        setSkills([...skills, skill]);
+                        setNewSkill('');
+                      }
+                    }}
+                  >
+                    <Text style={styles.addSkillButtonText}>+</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.hint}>Добавьте навыки, которыми владеете</Text>
+              </View>
+
+              {/* Специализации - карточка */}
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>🎯 Специализации ({specializations.length})</Text>
+                <Text style={styles.cardHint}>
+                  Выберите интересующие вас специализации. Первая будет основной.
+                </Text>
+                <View style={styles.specializationsContainer}>
+                  {specializations.map((spec, index) => {
+                    const specializationData = getSpecializationById(spec.id);
+                    return (
+                      <View
+                        key={`spec-${spec.id}-${index}`}
+                        style={[
+                          styles.specChip,
+                          spec.isPrimary && styles.specChipPrimary,
+                        ]}
+                      >
+                        <TouchableOpacity
+                          style={styles.specChipContent}
+                          onPress={() => setPrimarySpecialization(spec.id)}
+                          activeOpacity={0.7}
+                        >
+                          <CategoryIcon
+                            icon={specializationData?.icon || '🔨'}
+                            iconComponent={specializationData?.iconComponent}
+                            size={16}
+                            style={styles.specChipIconWrapper}
+                          />
+                          <Text
+                            numberOfLines={0}
+                            style={[
+                              styles.specChipText,
+                              spec.isPrimary && styles.specChipTextPrimary,
+                            ]}
+                          >
+                            {getTranslatedSpecializationNameSingular(spec.id, t)}
+                          </Text>
+                          {spec.isPrimary && (
+                            <Text style={styles.specChipStar}>★</Text>
+                          )}
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.specChipRemoveButton}
+                          onPress={() => toggleSpecialization(spec.id)}
+                          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        >
+                          <RemoveIcon width={12} height={12} />
+                        </TouchableOpacity>
+                      </View>
+                    );
+                  })}
+                  <TouchableOpacity
+                    style={styles.addSpecButton}
+                    onPress={() => setShowSpecializationModal(true)}
+                  >
+                    <Text style={styles.addSpecIcon}>+</Text>
+                    <Text style={styles.addSpecText}>Добавить специализацию</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </>
+          )}
         </View>
       </ScrollView>
 
@@ -673,7 +1051,7 @@ export const EditProfileScreen: React.FC = () => {
       )}
 
       {/* Модальное окно выбора специализаций */}
-      {showSpecializationModal && isProfessional && (
+      {showSpecializationModal && (isProfessional || user.workerType === 'job_seeker') && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -826,6 +1204,45 @@ const styles = StyleSheet.create({
   inputGroup: {
     marginBottom: isSmallScreenUtil() ? 12 : 20,
   },
+  // Карточки для job_seeker
+  sectionHeader: {
+    marginTop: 24,
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+  sectionHeaderTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: 4,
+  },
+  sectionHeaderSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: 8,
+  },
+  cardHint: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 16,
+    lineHeight: 20,
+  },
   label: {
     fontSize: isSmallScreenUtil() ? 14 : 16,
     fontWeight: '700',
@@ -974,10 +1391,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    paddingHorizontal: 12,
+    paddingLeft: 12,
+    paddingRight: 8,
     paddingVertical: 8,
     borderWidth: 1,
     borderColor: '#D5D7DA',
+    maxWidth: '100%',
+  },
+  specChipContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexGrow: 1,
+    flexShrink: 1,
   },
   specChipPrimary: {
     backgroundColor: '#679B00',
@@ -985,11 +1410,13 @@ const styles = StyleSheet.create({
   },
   specChipIconWrapper: {
     marginRight: 6,
+    flexShrink: 0,
   },
   specChipText: {
     fontSize: 14,
     color: '#1A1A1A',
     fontWeight: '500',
+    flex: 1,
   },
   specChipTextPrimary: {
     color: '#FFFFFF',
@@ -998,6 +1425,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FFD700',
     marginLeft: 4,
+    flexShrink: 0,
+  },
+  specChipRemoveButton: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 4,
+    flexShrink: 0,
   },
   addSpecButton: {
     flexDirection: 'row',
@@ -1159,5 +1595,137 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+
+  // Job Seeker Styles
+  resumeEditItem: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  removeButton: {
+    backgroundColor: '#FF3B30',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  removeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#679B00',
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    paddingVertical: 8,
+    marginTop: 8,
+  },
+  addButtonIcon: {
+    fontSize: 24,
+    color: '#679B00',
+    marginRight: 8,
+    fontWeight: 'bold',
+  },
+  addButtonText: {
+    color: '#679B00',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  skillsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 12,
+  },
+  skillChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(103, 155, 0, 0.15)',
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  skillChipText: {
+    fontSize: 14,
+    color: '#679B00',
+    fontWeight: '500',
+    marginRight: 6,
+  },
+  skillChipRemove: {
+    fontSize: 16,
+    color: '#679B00',
+    fontWeight: 'bold',
+  },
+  skillInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#D5D7DA',
+    marginTop: 8,
+    paddingRight: 4,
+  },
+  skillInput: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#1A1A1A',
+  },
+  addSkillButtonInside: {
+    width: 40,
+    height: 40,
+    backgroundColor: '#679B00',
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addSkillButtonText: {
+    fontSize: 24,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#D5D7DA',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  checkboxChecked: {
+    backgroundColor: '#679B00',
+    borderColor: '#679B00',
+  },
+  checkboxIcon: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  checkboxLabel: {
+    fontSize: 16,
+    color: '#1A1A1A',
+    fontWeight: '500',
   },
 }); 

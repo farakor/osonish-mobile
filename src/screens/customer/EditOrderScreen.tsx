@@ -549,18 +549,21 @@ export const EditOrderScreen: React.FC = () => {
           {/* Категория */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t('category_section')}</Text>
-            <View style={styles.categoriesGrid}>
+            <View style={styles.categoriesList}>
               {categories.map((cat) => (
                 <TouchableOpacity
                   key={cat.key}
                   style={[
-                    styles.categoryCard,
-                    category === cat.key && styles.categoryCardSelected,
+                    styles.categoryListItem,
+                    category === cat.key && styles.categoryListItemSelected,
                   ]}
                   onPress={() => setCategory(cat.key)}
-                  activeOpacity={0.8}
+                  activeOpacity={0.7}
                 >
-                  <View style={styles.categoryIconContainer}>
+                  <View style={[
+                    styles.categoryIconContainer,
+                    category === cat.key && styles.categoryIconContainerSelected,
+                  ]}>
                     <LottieView
                       source={getCategoryAnimation(cat.key)}
                       style={styles.categoryLottieIcon}
@@ -569,14 +572,21 @@ export const EditOrderScreen: React.FC = () => {
                       speed={0.8}
                     />
                   </View>
-                  <Text
-                    style={[
-                      styles.categoryLabel,
-                      category === cat.key && styles.categoryLabelSelected,
-                    ]}
-                  >
-                    {cat.label}
-                  </Text>
+                  <View style={styles.categoryContent}>
+                    <Text
+                      style={[
+                        styles.categoryLabel,
+                        category === cat.key && styles.categoryLabelSelected,
+                      ]}
+                    >
+                      {cat.label}
+                    </Text>
+                  </View>
+                  {category === cat.key && (
+                    <View style={styles.categoryCheckmark}>
+                      <Text style={styles.checkmarkText}>✓</Text>
+                    </View>
+                  )}
                 </TouchableOpacity>
               ))}
             </View>
@@ -848,44 +858,64 @@ const styles = StyleSheet.create({
     height: 100,
     textAlignVertical: 'top',
   },
-  categoriesGrid: {
+  categoriesList: {
+    gap: theme.spacing.xs,
+  },
+  categoryListItem: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.sm,
-  },
-  categoryCard: {
-    flex: 1,
-    minWidth: '30%',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
     alignItems: 'center',
-    borderWidth: 0, borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.sm,
+    minHeight: 60,
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
-  categoryCardSelected: {
-    backgroundColor: theme.colors.primary + '20',
+  categoryListItemSelected: {
+    backgroundColor: theme.colors.primary + '15',
     borderColor: theme.colors.primary,
   },
   categoryIconContainer: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: theme.spacing.xs,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 10,
+    marginRight: theme.spacing.sm,
+  },
+  categoryIconContainerSelected: {
+    backgroundColor: theme.colors.primary + '20',
   },
   categoryLottieIcon: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
+  },
+  categoryContent: {
+    flex: 1,
   },
   categoryLabel: {
-    fontSize: theme.fonts.sizes.sm,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
     fontWeight: theme.fonts.weights.medium,
-    textAlign: 'center',
   },
   categoryLabelSelected: {
     color: theme.colors.primary,
     fontWeight: theme.fonts.weights.semiBold,
+  },
+  categoryCheckmark: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: theme.spacing.xs,
+  },
+  checkmarkText: {
+    color: theme.colors.white,
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   locationButton: {
     backgroundColor: theme.colors.primary + '20',

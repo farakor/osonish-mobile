@@ -112,8 +112,6 @@ export function CreateVacancyStepByStepScreen() {
   const [descriptionFocused, setDescriptionFocused] = useState(false);
   const [locationFocused, setLocationFocused] = useState(false);
 
-  const progress = currentStep / TOTAL_STEPS;
-
   // Определяем категории для вакансий (исключаем "Работа на 1 день")
   const vacancyParentCategories = PARENT_CATEGORIES.filter(
     (cat) => cat.id !== 'one_day_job'
@@ -341,8 +339,8 @@ export function CreateVacancyStepByStepScreen() {
         employmentType,
         workFormat,
         workSchedule,
-        salaryFrom: salaryFrom ? parseFloat(salaryFrom) : undefined,
-        salaryTo: salaryTo ? parseFloat(salaryTo) : undefined,
+        salaryFrom: salaryFrom ? parseFloat(salaryFrom.replace(/\s/g, '')) : undefined,
+        salaryTo: salaryTo ? parseFloat(salaryTo.replace(/\s/g, '')) : undefined,
         salaryPeriod,
         salaryType,
         paymentFrequency,
@@ -761,7 +759,7 @@ export function CreateVacancyStepByStepScreen() {
 
               <AnimatedField isActive={currentStep === 10} delay={200} resetKey={`${animationResetKey}-step-10`}>
                 <PaymentFrequencySelector
-                  selectedValue={paymentFrequency}
+                  selectedFrequency={paymentFrequency}
                   onSelect={setPaymentFrequency}
                 />
               </AnimatedField>
@@ -873,7 +871,7 @@ export function CreateVacancyStepByStepScreen() {
             }
           />
 
-          <AnimatedProgressBar progress={progress} total={TOTAL_STEPS} />
+          <AnimatedProgressBar progress={currentStep} total={TOTAL_STEPS} />
 
           <View style={styles.mainContent}>
             <ScrollView
@@ -955,7 +953,7 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     flexGrow: 1,
-    paddingHorizontal: isSmallScreen ? theme.spacing.md : theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.xl,
   },
   stepCounterContainer: {

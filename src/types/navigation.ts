@@ -11,6 +11,7 @@ export type RootStackParamList = {
   SmsVerification: { phone: string };
   ProfileInfo: { phone: string };
   RoleSelection: undefined;
+  UserTypeSelection: undefined; // Новый экран выбора типа пользователя
   WorkerTypeSelection: undefined; // Новый экран выбора типа исполнителя
   SpecializationSelection: undefined; // Новый экран выбора специализаций
   ProfessionalAboutMe: undefined; // Новый экран "О себе" для профмастеров
@@ -41,11 +42,15 @@ export type CustomerStackParamList = {
   } | undefined;
   OrderDetails: { orderId: string };
   VacancyDetailsCustomer: { vacancyId: string }; // Детали вакансии для работодателя
+  VacancyDetails: { vacancyId: string }; // Детали вакансии для исполнителя (доступно гостям)
+  JobDetails: { orderId: string }; // Детали заказа для исполнителя (доступно гостям)
   EditOrder: { orderId: string };
+  EditVacancy: { vacancyId: string }; // Редактирование вакансии
   ApplicantsList: { orderId: string; currentUser?: User };
   WorkerProfile: { workerId: string; workerName: string };
   ProfessionalMasterProfile: { masterId: string }; // Новый экран профиля профмастера
   JobSeekerProfile: { masterId: string }; // Экран резюме job_seeker
+  ApplicantResume: { applicantId: string }; // Экран резюме кандидата (для откликов на вакансию)
   ProfessionalMastersList: { specializationId?: string }; // Новый экран списка профмастеров
   Categories: { parentCategoryId?: string }; // Экран всех категорий с возможностью показа подкатегорий
   Rating: { orderId: string; acceptedWorkers: Applicant[] };
@@ -89,6 +94,7 @@ export type WorkerStackParamList = {
   Notifications: undefined;
   NotificationsList: undefined;
   Support: undefined;
+  MyOrders: undefined; // Мои созданные заказы (перенесено из TabParamList)
   // Новые экраны для функционала заказчика (доступные исполнителям)
   OrderDetails: { orderId: string }; // Детали заказа, созданного исполнителем
   EditOrder: { orderId: string }; // Редактирование заказа
@@ -124,6 +130,5 @@ export type WorkerTabParamList = {
   Vacancies: undefined; // Вакансии (новое)
   Categories: { parentCategoryId?: string }; // Категории мастеров (новое)
   Applications: { initialStatus?: 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled' } | undefined; // Мои отклики
-  MyOrders: undefined; // Мои созданные заказы (новое)
   Profile: undefined; // Профиль
 };

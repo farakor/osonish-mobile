@@ -621,16 +621,16 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
   },
   progressTrack: {
-    height: 6,
+    height: 8,
     backgroundColor: theme.colors.border,
-    borderRadius: 3,
+    borderRadius: 4,
     overflow: 'hidden',
     position: 'relative',
   },
   progressFill: {
     height: '100%',
     backgroundColor: theme.colors.primary,
-    borderRadius: 3,
+    borderRadius: 4,
   },
   progressGlow: {
     position: 'absolute',
@@ -638,7 +638,7 @@ const styles = StyleSheet.create({
     left: 0,
     height: '100%',
     backgroundColor: theme.colors.primary,
-    borderRadius: 3,
+    borderRadius: 4,
     shadowColor: theme.colors.primary,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
@@ -647,7 +647,6 @@ const styles = StyleSheet.create({
   },
   stepContainer: {
     flex: 1,
-    paddingHorizontal: theme.spacing.lg,
   },
   categoryCard: {
     backgroundColor: '#FFFFFF',

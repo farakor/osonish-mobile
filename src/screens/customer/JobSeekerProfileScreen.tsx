@@ -32,6 +32,7 @@ import { ProfessionalMasterProfileSkeleton } from '../../components/skeletons';
 import { useRequireAuth } from '../../hooks/useRequireAuth';
 import { AuthRequiredModal } from '../../components/auth/AuthRequiredModal';
 import { useTranslation, useCustomerTranslation, useAuthTranslation } from '../../hooks/useTranslation';
+import { getCityName } from '../../utils/cityUtils';
 
 type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
 type ScreenRouteProp = RouteProp<CustomerStackParamList, 'JobSeekerProfile'>;
@@ -219,12 +220,20 @@ export const JobSeekerProfileScreen: React.FC = () => {
               {master.city && (
                 <View style={styles.locationRow}>
                   <Text style={styles.locationIcon}>📍</Text>
-                  <Text style={styles.locationText}>{master.city}</Text>
+                  <Text style={styles.locationText}>{getCityName(master.city)}</Text>
                 </View>
               )}
             </View>
           </View>
         </View>
+
+        {/* О себе */}
+        {master.aboutMe && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>👤 О себе</Text>
+            <Text style={styles.aboutText}>{master.aboutMe}</Text>
+          </View>
+        )}
 
         {/* Дополнительная информация: зарплата и готовность к переезду */}
         {(master.desiredSalary || master.willingToRelocate) && (
@@ -556,6 +565,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#111827',
     marginBottom: 16,
+  },
+  aboutText: {
+    fontSize: 15,
+    color: '#4B5563',
+    lineHeight: 22,
   },
   
   // Пожелания к работе

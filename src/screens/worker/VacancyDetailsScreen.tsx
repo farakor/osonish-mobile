@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,8 +13,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { theme } from '../../constants';
-import { HeaderWithBack } from '../../components/common';
+import { HeaderWithBack, OrderLocationMap } from '../../components/common';
 import { useVacancyDetails, useHasAppliedToVacancy, useApplyToVacancy } from '../../hooks/queries/useVacancyQueries';
+import { useRequireAuth } from '../../hooks/useRequireAuth';
+import { AuthRequiredModal } from '../../components/auth/AuthRequiredModal';
+import { authService } from '../../services/authService';
 import {
   getExperienceLevelLabel,
   getEmploymentTypeLabel,
@@ -26,20 +29,69 @@ import {
   getLanguageLabel,
 } from '../../constants/vacancyOptions';
 import { getCityName } from '../../utils/cityUtils';
+import { getTranslatedSpecializationName, getSpecializationById } from '../../constants/specializations';
+import { CategoryIcon } from '../../components/common/CategoryIcon';
+import { MarkerPinIcon } from '../../components/common/MarkerPinIcon';
+import { CalendarDateIcon } from '../../components/common/CalendarDateIcon';
+import { HourglassIcon } from '../../components/common/HourglassIcon';
+import { BuildingIcon } from '../../components/common/BuildingIcon';
+import { ClockIcon } from '../../components/common/ClockIcon';
+import { BankNoteIcon } from '../../components/common/BankNoteIcon';
+import { vacancyService } from '../../services/vacancyService';
+import { useTranslation } from 'react-i18next';
 
 type VacancyDetailsRouteProp = RouteProp<{ VacancyDetails: { vacancyId: string } }, 'VacancyDetails'>;
 
 export const VacancyDetailsScreen: React.FC = () => {
+  console.log('[VacancyDetailsScreen] 🚀 Компонент загружен!');
+  
   const navigation = useNavigation();
   const route = useRoute<VacancyDetailsRouteProp>();
   const { vacancyId } = route.params;
+  const { t } = useTranslation();
+  
+  console.log('[VacancyDetailsScreen] 📝 vacancyId:', vacancyId);
   
   const { data: vacancy, isLoading } = useVacancyDetails(vacancyId);
-  const { data: hasApplied } = useHasAppliedToVacancy(vacancyId);
   const applyMutation = useApplyToVacancy();
+  const { requireAuth, isAuthModalVisible, hideAuthModal } = useRequireAuth();
+
+  // Проверяем авторизацию
+  const authState = authService.getAuthState();
+  const isAuthenticated = authState.isAuthenticated;
+  const currentUserId = authState.user?.id;
+  
+  console.log('[VacancyDetailsScreen] 🔐 isAuthenticated:', isAuthenticated);
+  console.log('[VacancyDetailsScreen] 👤 currentUserId:', currentUserId);
+  
+  // Используем хук только для авторизованных пользователей
+  const { data: hasApplied } = useHasAppliedToVacancy(vacancyId);
+  
+  // Для неавторизованных всегда false
+  const userHasApplied = isAuthenticated ? hasApplied : false;
+  
+  // Проверяем, является ли текущий пользователь автором вакансии
+  const isMyVacancy = currentUserId && vacancy?.customerId === currentUserId;
 
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
+
+  // Логирование для отладки
+  useEffect(() => {
+    console.log('[VacancyDetails] ============ DEBUG START ============');
+    console.log('[VacancyDetails] isAuthenticated:', isAuthenticated);
+    console.log('[VacancyDetails] hasApplied:', hasApplied);
+    console.log('[VacancyDetails] userHasApplied:', userHasApplied);
+    console.log('[VacancyDetails] vacancyId:', vacancyId);
+    console.log('[VacancyDetails] ============ DEBUG END ============');
+  }, [isAuthenticated, hasApplied, userHasApplied, vacancyId]);
+
+  // Увеличиваем счетчик просмотров при открытии вакансии
+  useEffect(() => {
+    if (vacancy) {
+      vacancyService.incrementVacancyViews(vacancyId);
+    }
+  }, [vacancyId, vacancy]);
 
   const handleApply = async () => {
     const result = await applyMutation.mutateAsync({
@@ -57,6 +109,7 @@ export const VacancyDetailsScreen: React.FC = () => {
   };
 
   if (isLoading || !vacancy) {
+    console.log('[VacancyDetailsScreen] ⏳ Загрузка... isLoading:', isLoading, 'vacancy:', !!vacancy);
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <HeaderWithBack title="Детали вакансии" />
@@ -66,6 +119,9 @@ export const VacancyDetailsScreen: React.FC = () => {
       </SafeAreaView>
     );
   }
+
+  console.log('[VacancyDetailsScreen] ✅ Данные загружены, отображаем вакансию');
+  console.log('[VacancyDetailsScreen] 📊 userHasApplied:', userHasApplied);
 
   const formatSalary = () => {
     if (vacancy.salaryFrom && vacancy.salaryTo) {
@@ -85,29 +141,69 @@ export const VacancyDetailsScreen: React.FC = () => {
         <View style={styles.header}>
           <Text style={styles.title}>{vacancy.jobTitle || vacancy.title}</Text>
           <Text style={styles.salary}>{formatSalary()}</Text>
+          {vacancy.customerUserType === 'company' && vacancy.customerCompanyName && (
+            <Text style={styles.companyName}>{vacancy.customerCompanyName}</Text>
+          )}
         </View>
+
+        {/* Карта с адресом */}
+        {vacancy.location && vacancy.latitude && vacancy.longitude && (
+          <View style={styles.section}>
+            <OrderLocationMap
+              latitude={vacancy.latitude}
+              longitude={vacancy.longitude}
+              address={vacancy.location}
+              title="Место работы"
+              containerStyle={{ marginHorizontal: 0, marginBottom: 0 }}
+            />
+          </View>
+        )}
+
+        {/* Адрес без карты (если нет координат) */}
+        {vacancy.location && (!vacancy.latitude || !vacancy.longitude) && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Адрес</Text>
+            <Text style={styles.locationText}>{vacancy.location}</Text>
+          </View>
+        )}
 
         {/* Основная информация */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Основная информация</Text>
           
+          {vacancy.specializationId && t && (() => {
+            const spec = getSpecializationById(vacancy.specializationId);
+            return spec && (
+              <InfoRow 
+                icon={
+                  <CategoryIcon
+                    icon={spec.icon}
+                    iconComponent={spec.iconComponent}
+                    size={16}
+                  />
+                } 
+                label="Специализация" 
+                value={getTranslatedSpecializationName(vacancy.specializationId, t)} 
+              />
+            );
+          })()}
           {vacancy.city && (
-            <InfoRow icon="📍" label="Город" value={getCityName(vacancy.city)} />
+            <InfoRow icon={<MarkerPinIcon size={16} color="#6B7280" />} label="Город" value={getCityName(vacancy.city)} />
           )}
           {vacancy.experienceLevel && (
-            <InfoRow icon="💼" label="Опыт" value={getExperienceLevelLabel(vacancy.experienceLevel)} />
+            <InfoRow icon={<CalendarDateIcon size={16} color="#6B7280" />} label="Опыт" value={getExperienceLevelLabel(vacancy.experienceLevel)} />
           )}
           {vacancy.employmentType && (
-            <InfoRow icon="⏰" label="Занятость" value={getEmploymentTypeLabel(vacancy.employmentType)} />
+            <InfoRow icon={<HourglassIcon size={16} color="#6B7280" />} label="Занятость" value={getEmploymentTypeLabel(vacancy.employmentType)} />
           )}
           {vacancy.workFormat && (
-            <InfoRow icon="🏢" label="Формат" value={getWorkFormatLabel(vacancy.workFormat)} />
+            <InfoRow icon={<BuildingIcon size={16} color="#6B7280" />} label="Формат" value={getWorkFormatLabel(vacancy.workFormat)} />
           )}
           {vacancy.workSchedule && (
-            <InfoRow icon="📅" label="График" value={getWorkScheduleLabel(vacancy.workSchedule)} />
+            <InfoRow icon={<ClockIcon size={16} color="#6B7280" />} label="График" value={getWorkScheduleLabel(vacancy.workSchedule)} />
           )}
           {vacancy.paymentFrequency && (
-            <InfoRow icon="💰" label="Выплаты" value={getPaymentFrequencyLabel(vacancy.paymentFrequency)} />
+            <InfoRow icon={<BankNoteIcon size={16} color="#6B7280" />} label="Выплаты" value={getPaymentFrequencyLabel(vacancy.paymentFrequency)} />
           )}
         </View>
 
@@ -147,37 +243,43 @@ export const VacancyDetailsScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Адрес */}
-        {vacancy.location && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Адрес</Text>
-            <Text style={styles.locationText}>{vacancy.location}</Text>
-          </View>
-        )}
-
         <View style={styles.bottomSpacer} />
       </ScrollView>
 
-      {/* Кнопка откликнуться */}
-      {!hasApplied && (
+      {/* DEBUG: Показываем состояние */}
+      {console.log('[VacancyDetails RENDER] userHasApplied:', userHasApplied, 'isAuthenticated:', isAuthenticated, 'hasApplied:', hasApplied, 'isMyVacancy:', isMyVacancy)}
+
+      {/* Кнопка откликнуться - показываем только если это не моя вакансия */}
+      {!isMyVacancy && (
         <View style={styles.footer}>
           <TouchableOpacity
-            style={styles.applyButton}
-            onPress={() => setShowApplyModal(true)}
+            style={[
+              styles.applyButton,
+              userHasApplied && styles.appliedBadge
+            ]}
+            onPress={() => {
+              if (userHasApplied) return;
+              console.log('[VacancyDetails] Button pressed! isAuthenticated:', isAuthenticated);
+              requireAuth(() => setShowApplyModal(true));
+            }}
             activeOpacity={0.8}
+            disabled={userHasApplied}
           >
-            <Text style={styles.applyButtonText}>Откликнуться на вакансию</Text>
+            <Text style={[
+              styles.applyButtonText,
+              userHasApplied && styles.appliedText
+            ]}>
+              {userHasApplied ? '✓ Вы откликнулись на эту вакансию' : 'Откликнуться на вакансию'}
+            </Text>
           </TouchableOpacity>
         </View>
       )}
 
-      {hasApplied && (
-        <View style={styles.footer}>
-          <View style={styles.appliedBadge}>
-            <Text style={styles.appliedText}>✓ Вы откликнулись на эту вакансию</Text>
-          </View>
-        </View>
-      )}
+      {/* Модальное окно для авторизации */}
+      <AuthRequiredModal
+        visible={isAuthModalVisible}
+        onClose={hideAuthModal}
+      />
 
       {/* Модальное окно для отклика */}
       <Modal
@@ -233,10 +335,14 @@ export const VacancyDetailsScreen: React.FC = () => {
 };
 
 // Компонент для строки информации
-const InfoRow: React.FC<{ icon: string; label: string; value: string }> = ({ icon, label, value }) => (
+const InfoRow: React.FC<{ icon: string | React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
   <View style={styles.infoRow}>
     <View style={styles.infoLabel}>
-      <Text style={styles.infoIcon}>{icon}</Text>
+      {typeof icon === 'string' ? (
+        <Text style={styles.infoIcon}>{icon}</Text>
+      ) : (
+        <View style={styles.infoIconContainer}>{icon}</View>
+      )}
       <Text style={styles.infoLabelText}>{label}:</Text>
     </View>
     <Text style={styles.infoValue}>{value}</Text>
@@ -281,6 +387,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.primary,
   },
+  companyName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#6B7280',
+    marginTop: 8,
+  },
   section: {
     backgroundColor: theme.colors.white,
     borderRadius: 16,
@@ -313,6 +425,9 @@ const styles = StyleSheet.create({
   },
   infoIcon: {
     fontSize: 16,
+    marginRight: 8,
+  },
+  infoIconContainer: {
     marginRight: 8,
   },
   infoLabelText: {

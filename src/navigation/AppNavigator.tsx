@@ -13,6 +13,7 @@ import {
   SmsVerificationScreen,
   ProfileInfoStepByStepScreen,
   RoleSelectionScreen,
+  UserTypeSelectionScreen,
   WorkerTypeSelectionScreen,
   SpecializationSelectionScreen,
   ProfessionalAboutMeScreen,
@@ -103,6 +104,10 @@ export function AppNavigator() {
         <Stack.Screen
           name="RoleSelection"
           component={RoleSelectionScreen}
+        />
+        <Stack.Screen
+          name="UserTypeSelection"
+          component={UserTypeSelectionScreen}
         />
         <Stack.Screen
           name="WorkerTypeSelection"

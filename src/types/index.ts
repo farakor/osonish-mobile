@@ -15,6 +15,9 @@ export interface User {
   isVerified: boolean;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
+  // Поля для типа пользователя и компании
+  userType?: 'individual' | 'company'; // Тип пользователя: физ. или юр. лицо
+  companyName?: string; // Название компании (только для юр. лиц)
   // Поля для профессиональных мастеров
   workerType?: 'daily_worker' | 'professional' | 'job_seeker';
   aboutMe?: string;
@@ -77,6 +80,9 @@ export interface RegisterRequest {
   profileImage?: string;
   role: 'customer' | 'worker';
   city?: string;
+  // Поля для типа пользователя и компании
+  userType?: 'individual' | 'company';
+  companyName?: string;
   // Поля для профессиональных мастеров
   workerType?: 'daily_worker' | 'professional' | 'job_seeker';
   aboutMe?: string;
@@ -124,6 +130,8 @@ export interface Order {
   status: OrderStatus;
   customerId: string;
   customerCity?: string; // Город заказчика
+  customerUserType?: 'individual' | 'company'; // Тип заказчика
+  customerCompanyName?: string; // Название компании заказчика
   applicantsCount: number;
   pendingApplicantsCount?: number; // Количество непринятых откликов (ожидающих рассмотрения)
   viewsCount?: number; // Количество просмотров заказа
@@ -210,6 +218,35 @@ export interface UpdateOrderRequest {
 }
 
 export interface UpdateOrderResponse {
+  success: boolean;
+  data?: Order;
+  error?: string;
+}
+
+// Update Vacancy Types
+export interface UpdateVacancyRequest {
+  vacancyId: string;
+  jobTitle?: string;
+  description?: string;
+  specializationId?: string;
+  location?: string;
+  latitude?: number;
+  longitude?: number;
+  city?: string;
+  experienceLevel?: string;
+  employmentType?: string;
+  workFormat?: string;
+  workSchedule?: string;
+  salaryFrom?: number;
+  salaryTo?: number;
+  salaryPeriod?: string;
+  salaryType?: string;
+  paymentFrequency?: string;
+  skills?: string[];
+  languages?: string[];
+}
+
+export interface UpdateVacancyResponse {
   success: boolean;
   data?: Order;
   error?: string;

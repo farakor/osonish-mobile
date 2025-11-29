@@ -74,8 +74,8 @@ export const RoleSelectionScreen: React.FC = () => {
       if (selectedRole === 'worker') {
         navigation.navigate('WorkerTypeSelection');
       } else {
-        // Для заказчика сразу переходим к выбору города
-        navigation.navigate('CitySelection', { role: selectedRole });
+        // Для заказчика переходим к выбору типа пользователя (физ./юр. лицо)
+        navigation.navigate('UserTypeSelection');
       }
     } catch (error) {
       console.error('Ошибка перехода к следующему шагу:', error);

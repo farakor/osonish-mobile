@@ -13,7 +13,8 @@ import {
   ProfessionalMastersListScreen,
   CategoriesScreen,
   RatingScreen,
-  CreateOrderStepByStepScreen
+  CreateOrderStepByStepScreen,
+  MyOrdersScreen
 } from '../screens/customer';
 import { WorkerStackParamList } from '../types/navigation';
 import { DocumentWebViewScreen } from '../screens/shared';
@@ -70,6 +71,14 @@ export function WorkerStackNavigator() {
       <Stack.Screen
         name="Support"
         component={SupportScreen}
+        options={{
+          presentation: 'card',
+        }}
+      />
+      {/* Экран Мои заказы (перенесен из TabNavigator) */}
+      <Stack.Screen
+        name="MyOrders"
+        component={MyOrdersScreen}
         options={{
           presentation: 'card',
         }}

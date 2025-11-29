@@ -175,8 +175,14 @@ export const NotificationsListScreen: React.FC = () => {
     }
 
     // Обработка навигации в зависимости от типа уведомления
-    if (notification.data?.orderId) {
-      (navigation as any).navigate('OrderDetails', { orderId: notification.data.orderId });
+    const notificationType = notification.data?.type || notification.notificationType;
+    
+    if (notificationType === 'new_vacancy_application' || notification.data?.vacancy_id) {
+      // Навигация к деталям вакансии работодателя
+      (navigation as any).navigate('VacancyDetailsCustomer', { vacancyId: notification.data?.vacancy_id });
+    } else if (notification.data?.orderId || notification.data?.order_id) {
+      // Навигация к деталям заказа
+      (navigation as any).navigate('OrderDetails', { orderId: notification.data?.orderId || notification.data?.order_id });
     }
   }, [navigation]);
 

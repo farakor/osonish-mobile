@@ -5,6 +5,8 @@ import {
   CreateVacancyApplicationRequest,
   CreateVacancyRequest,
   UpdateVacancyApplicationStatusRequest,
+  UpdateVacancyRequest,
+  UpdateVacancyResponse,
   VacancyApplicationStatus,
   Order,
   CreateOrderResponse,
@@ -54,6 +56,14 @@ export class VacancyService {
         return {
           success: false,
           error: 'Пользователь не авторизован'
+        };
+      }
+
+      // Проверяем, что только заказчики могут создавать вакансии
+      if (authState.user.role !== 'customer') {
+        return {
+          success: false,
+          error: 'Только заказчики могут создавать вакансии'
         };
       }
 
@@ -135,13 +145,159 @@ export class VacancyService {
   }
 
   /**
+   * Обновление вакансии
+   */
+  async updateVacancy(request: UpdateVacancyRequest): Promise<UpdateVacancyResponse> {
+    try {
+      console.log('[VacancyService] 🔨 Обновление вакансии:', request.vacancyId);
+      console.log('[VacancyService] 🕒 Время обновления:', new Date().toISOString());
+
+      const authState = authService.getAuthState();
+      if (!authState.isAuthenticated || !authState.user) {
+        return {
+          success: false,
+          error: 'Пользователь не авторизован'
+        };
+      }
+
+      // Проверяем, что вакансия принадлежит текущему пользователю
+      const { data: existingVacancy, error: fetchError } = await supabase
+        .from('orders')
+        .select('customer_id, status, type')
+        .eq('id', request.vacancyId)
+        .eq('type', 'vacancy')
+        .single();
+
+      if (fetchError || !existingVacancy) {
+        console.error('[VacancyService] Вакансия не найдена:', fetchError);
+        return {
+          success: false,
+          error: 'Вакансия не найдена'
+        };
+      }
+
+      if (existingVacancy.customer_id !== authState.user.id) {
+        console.error('[VacancyService] Вакансия не принадлежит пользователю');
+        return {
+          success: false,
+          error: 'У вас нет прав на редактирование этой вакансии'
+        };
+      }
+
+      // Проверяем, что вакансию можно редактировать (только новые вакансии)
+      if (existingVacancy.status !== 'new') {
+        console.error('[VacancyService] Вакансию нельзя редактировать в текущем статусе:', existingVacancy.status);
+        return {
+          success: false,
+          error: 'Вакансию нельзя редактировать в текущем статусе'
+        };
+      }
+
+      // Подготавливаем данные для обновления
+      const updateData: any = {
+        updated_at: new Date().toISOString()
+      };
+
+      if (request.jobTitle !== undefined) {
+        updateData.job_title = request.jobTitle;
+        updateData.title = request.jobTitle; // Синхронизируем с title
+      }
+      if (request.description !== undefined) {
+        updateData.description = request.description;
+      }
+      if (request.specializationId !== undefined) {
+        updateData.specialization_id = request.specializationId;
+      }
+      if (request.location !== undefined) {
+        updateData.location = request.location;
+      }
+      if (request.latitude !== undefined) {
+        updateData.latitude = request.latitude;
+      }
+      if (request.longitude !== undefined) {
+        updateData.longitude = request.longitude;
+      }
+      if (request.city !== undefined) {
+        updateData.city = request.city;
+      }
+      if (request.experienceLevel !== undefined) {
+        updateData.experience_level = request.experienceLevel;
+      }
+      if (request.employmentType !== undefined) {
+        updateData.employment_type = request.employmentType;
+      }
+      if (request.workFormat !== undefined) {
+        updateData.work_format = request.workFormat;
+      }
+      if (request.workSchedule !== undefined) {
+        updateData.work_schedule = request.workSchedule;
+      }
+      if (request.salaryFrom !== undefined) {
+        updateData.salary_from = request.salaryFrom;
+      }
+      if (request.salaryTo !== undefined) {
+        updateData.salary_to = request.salaryTo;
+      }
+      if (request.salaryPeriod !== undefined) {
+        updateData.salary_period = request.salaryPeriod;
+      }
+      if (request.salaryType !== undefined) {
+        updateData.salary_type = request.salaryType;
+      }
+      if (request.paymentFrequency !== undefined) {
+        updateData.payment_frequency = request.paymentFrequency;
+      }
+      if (request.skills !== undefined) {
+        updateData.skills = request.skills;
+      }
+      if (request.languages !== undefined) {
+        updateData.languages = request.languages;
+      }
+
+      console.log('[VacancyService] 📝 Данные для обновления:', updateData);
+
+      // Обновляем вакансию в базе данных
+      const { data, error } = await supabase
+        .from('orders')
+        .update(updateData)
+        .eq('id', request.vacancyId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('[VacancyService] ❌ Ошибка обновления вакансии:', error);
+        return {
+          success: false,
+          error: 'Не удалось обновить вакансию'
+        };
+      }
+
+      console.log('[VacancyService] ✅ Вакансия успешно обновлена');
+      return {
+        success: true,
+        data: this.mapOrderFromDatabase(data)
+      };
+
+    } catch (error) {
+      console.error('[VacancyService] ❌ Критическая ошибка обновления вакансии:', error);
+      return {
+        success: false,
+        error: 'Произошла ошибка при обновлении вакансии'
+      };
+    }
+  }
+
+  /**
    * Получить все вакансии
    */
   async getVacancies(): Promise<Order[]> {
     try {
       const { data, error } = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+          *,
+          customer:users!customer_id(city, user_type, company_name)
+        `)
         .eq('type', 'vacancy')
         .eq('status', 'new')
         .order('created_at', { ascending: false });
@@ -165,7 +321,10 @@ export class VacancyService {
     try {
       const { data, error } = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+          *,
+          customer:users!customer_id(city, user_type, company_name)
+        `)
         .eq('id', vacancyId)
         .eq('type', 'vacancy')
         .single();
@@ -192,6 +351,17 @@ export class VacancyService {
         return {
           success: false,
           error: 'Пользователь не авторизован',
+        };
+      }
+
+      // Получаем информацию о вакансии
+      const vacancy = await this.getVacancyById(request.vacancyId);
+      
+      // Проверяем, не является ли пользователь автором вакансии
+      if (vacancy && vacancy.customerId === authState.user.id) {
+        return {
+          success: false,
+          error: 'Вы не можете откликнуться на свою собственную вакансию',
         };
       }
 
@@ -411,7 +581,9 @@ export class VacancyService {
       photos: data.photos || [],
       status: data.status,
       customerId: data.customer_id,
-      customerCity: data.customer_city,
+      customerCity: data.customer_city || data.customer?.city,
+      customerUserType: data.customer?.user_type as 'individual' | 'company' || undefined,
+      customerCompanyName: data.customer?.company_name || undefined,
       applicantsCount: data.applicants_count || 0,
       pendingApplicantsCount: data.pending_applicants_count || 0,
       viewsCount: data.views_count || 0,
@@ -442,6 +614,101 @@ export class VacancyService {
    */
   private mapOrdersFromDatabase(data: any[]): Order[] {
     return data.map((item) => this.mapOrderFromDatabase(item));
+  }
+
+  /**
+   * Увеличить счетчик просмотров вакансии
+   */
+  async incrementVacancyViews(vacancyId: string): Promise<void> {
+    try {
+      const { error } = await supabase.rpc('increment_order_views', {
+        order_id_param: vacancyId
+      });
+
+      if (error) {
+        console.error('[VacancyService] Ошибка увеличения счетчика просмотров вакансии:', error);
+      } else {
+        console.log(`[VacancyService] Просмотр вакансии ${vacancyId} зарегистрирован`);
+      }
+    } catch (error) {
+      console.error('[VacancyService] Ошибка в incrementVacancyViews:', error);
+    }
+  }
+
+  /**
+   * Завершить (закрыть) вакансию
+   */
+  async closeVacancy(vacancyId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const authState = authService.getAuthState();
+      if (!authState.isAuthenticated || !authState.user) {
+        return {
+          success: false,
+          error: 'Пользователь не авторизован'
+        };
+      }
+
+      // Проверяем, что вакансия принадлежит текущему пользователю
+      const { data: existingVacancy, error: fetchError } = await supabase
+        .from('orders')
+        .select('customer_id, status, type')
+        .eq('id', vacancyId)
+        .eq('type', 'vacancy')
+        .single();
+
+      if (fetchError || !existingVacancy) {
+        console.error('[VacancyService] Вакансия не найдена:', fetchError);
+        return {
+          success: false,
+          error: 'Вакансия не найдена'
+        };
+      }
+
+      if (existingVacancy.customer_id !== authState.user.id) {
+        return {
+          success: false,
+          error: 'У вас нет прав на завершение этой вакансии'
+        };
+      }
+
+      // Проверяем, что вакансия еще не завершена
+      if (existingVacancy.status === 'completed' || existingVacancy.status === 'cancelled') {
+        return {
+          success: false,
+          error: 'Вакансия уже завершена'
+        };
+      }
+
+      // Обновляем статус вакансии на "completed"
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+          status: 'completed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', vacancyId)
+        .eq('type', 'vacancy');
+
+      if (updateError) {
+        console.error('[VacancyService] ❌ Ошибка завершения вакансии:', updateError);
+        return {
+          success: false,
+          error: 'Не удалось завершить вакансию'
+        };
+      }
+
+      console.log('[VacancyService] ✅ Вакансия успешно завершена');
+      return {
+        success: true
+      };
+
+    } catch (error) {
+      console.error('[VacancyService] ❌ Критическая ошибка завершения вакансии:', error);
+      return {
+        success: false,
+        error: 'Произошла ошибка при завершении вакансии'
+      };
+    }
   }
 }
 

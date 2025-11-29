@@ -168,6 +168,49 @@ class AuthService {
       }
 
       console.log('[AuthService] 📊 Данные из БД - profile_views_count:', data.profile_views_count, 'workerType:', data.worker_type);
+      console.log('[AuthService] 📊 Job Seeker поля:', {
+        education: data.education,
+        skills: data.skills,
+        work_experience: data.work_experience,
+        willing_to_relocate: data.willing_to_relocate,
+        desired_salary: data.desired_salary,
+      });
+
+      // Парсим work_experience если это строка
+      let parsedWorkExperience = data.work_experience || [];
+      if (typeof data.work_experience === 'string') {
+        try {
+          parsedWorkExperience = JSON.parse(data.work_experience);
+          console.log('[AuthService] ✅ work_experience распарсен из строки');
+        } catch (error) {
+          console.error('[AuthService] ❌ Ошибка парсинга work_experience:', error);
+          parsedWorkExperience = [];
+        }
+      }
+
+      // Парсим education если это строка
+      let parsedEducation = data.education || [];
+      if (typeof data.education === 'string') {
+        try {
+          parsedEducation = JSON.parse(data.education);
+          console.log('[AuthService] ✅ education распарсен из строки');
+        } catch (error) {
+          console.error('[AuthService] ❌ Ошибка парсинга education:', error);
+          parsedEducation = [];
+        }
+      }
+
+      // Парсим skills если это строка
+      let parsedSkills = data.skills || [];
+      if (typeof data.skills === 'string') {
+        try {
+          parsedSkills = JSON.parse(data.skills);
+          console.log('[AuthService] ✅ skills распарсен из строки');
+        } catch (error) {
+          console.error('[AuthService] ❌ Ошибка парсинга skills:', error);
+          parsedSkills = [];
+        }
+      }
 
       return {
         id: data.id,
@@ -183,11 +226,19 @@ class AuthService {
         isVerified: data.is_verified || false,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
+        userType: data.user_type as 'individual' | 'company',
+        companyName: data.company_name,
         workerType: data.worker_type,
         aboutMe: data.about_me,
         specializations: data.specializations,
         workPhotos: data.work_photos,
         profileViewsCount: data.profile_views_count || 0,
+        // Поля для job_seeker - используем распарсенные данные
+        education: parsedEducation,
+        skills: parsedSkills,
+        workExperience: parsedWorkExperience,
+        willingToRelocate: data.willing_to_relocate,
+        desiredSalary: data.desired_salary,
       };
     } catch (error) {
       console.error(`[AuthService] Ошибка загрузки пользователя ${userId}:`, error);
@@ -380,6 +431,8 @@ class AuthService {
         isVerified: data.is_verified || false,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
+        userType: data.user_type as 'individual' | 'company',
+        companyName: data.company_name,
         workerType: data.worker_type,
         aboutMe: data.about_me,
         specializations: data.specializations,
@@ -634,6 +687,8 @@ class AuthService {
         profile_image: profileImageUrl || null,
         preferred_language: currentLanguage,
         is_verified: true,
+        user_type: userData.userType || 'individual',
+        company_name: userData.companyName || null,
       };
 
       // Добавляем поля для профессиональных мастеров
@@ -689,6 +744,48 @@ class AuthService {
         };
       }
 
+      console.log('[AuthService] ✅ Пользователь создан, данные из БД:', {
+        education: data.education,
+        skills: data.skills,
+        work_experience: data.work_experience,
+      });
+
+      // Парсим work_experience если это строка
+      let parsedWorkExperience = data.work_experience || [];
+      if (typeof data.work_experience === 'string') {
+        try {
+          parsedWorkExperience = JSON.parse(data.work_experience);
+          console.log('[AuthService] ✅ work_experience распарсен из строки при создании');
+        } catch (error) {
+          console.error('[AuthService] ❌ Ошибка парсинга work_experience:', error);
+          parsedWorkExperience = [];
+        }
+      }
+
+      // Парсим education если это строка
+      let parsedEducation = data.education || [];
+      if (typeof data.education === 'string') {
+        try {
+          parsedEducation = JSON.parse(data.education);
+          console.log('[AuthService] ✅ education распарсен из строки при создании');
+        } catch (error) {
+          console.error('[AuthService] ❌ Ошибка парсинга education:', error);
+          parsedEducation = [];
+        }
+      }
+
+      // Парсим skills если это строка
+      let parsedSkills = data.skills || [];
+      if (typeof data.skills === 'string') {
+        try {
+          parsedSkills = JSON.parse(data.skills);
+          console.log('[AuthService] ✅ skills распарсен из строки при создании');
+        } catch (error) {
+          console.error('[AuthService] ❌ Ошибка парсинга skills:', error);
+          parsedSkills = [];
+        }
+      }
+
       const newUser: User = {
         id: data.id,
         phone: data.phone,
@@ -708,10 +805,12 @@ class AuthService {
         specializations: data.specializations,
         workPhotos: data.work_photos,
         profileViewsCount: data.profile_views_count || 0,
-        // Поля для ищущих вакансию (новая структура)
-        education: data.education,
-        skills: data.skills,
-        workExperience: data.work_experience,
+        // Поля для ищущих вакансию - используем распарсенные данные
+        education: parsedEducation,
+        skills: parsedSkills,
+        workExperience: parsedWorkExperience,
+        willingToRelocate: data.willing_to_relocate,
+        desiredSalary: data.desired_salary,
       };
 
       // Устанавливаем состояние авторизации
@@ -918,6 +1017,31 @@ class AuthService {
         updateData.worker_type = updates.workerType;
       }
 
+      // Добавляем поля для job_seeker, если они есть
+      if (updates.education !== undefined) {
+        updateData.education = updates.education;
+      }
+      if (updates.skills !== undefined) {
+        updateData.skills = updates.skills;
+      }
+      if (updates.workExperience !== undefined) {
+        updateData.work_experience = updates.workExperience;
+      }
+      if (updates.desiredSalary !== undefined) {
+        updateData.desired_salary = updates.desiredSalary;
+      }
+      if (updates.willingToRelocate !== undefined) {
+        updateData.willing_to_relocate = updates.willingToRelocate;
+      }
+
+      console.log('[AuthService] 📝 Обновление профиля:', {
+        worker_type: updateData.worker_type,
+        education: updateData.education,
+        skills: updateData.skills,
+        work_experience: updateData.work_experience,
+        desired_salary: updateData.desired_salary,
+      });
+
       // Обновляем в Supabase
       const { data, error } = await supabase
         .from('users')
@@ -932,6 +1056,48 @@ class AuthService {
           success: false,
           error: 'Не удалось обновить профиль'
         };
+      }
+
+      console.log('[AuthService] ✅ Профиль обновлен в БД, данные из БД:', {
+        education: data.education,
+        skills: data.skills,
+        work_experience: data.work_experience,
+      });
+
+      // Парсим work_experience если это строка
+      let parsedWorkExperience = data.work_experience || [];
+      if (typeof data.work_experience === 'string') {
+        try {
+          parsedWorkExperience = JSON.parse(data.work_experience);
+          console.log('[AuthService] ✅ work_experience распарсен из строки при обновлении');
+        } catch (error) {
+          console.error('[AuthService] ❌ Ошибка парсинга work_experience:', error);
+          parsedWorkExperience = [];
+        }
+      }
+
+      // Парсим education если это строка
+      let parsedEducation = data.education || [];
+      if (typeof data.education === 'string') {
+        try {
+          parsedEducation = JSON.parse(data.education);
+          console.log('[AuthService] ✅ education распарсен из строки при обновлении');
+        } catch (error) {
+          console.error('[AuthService] ❌ Ошибка парсинга education:', error);
+          parsedEducation = [];
+        }
+      }
+
+      // Парсим skills если это строка
+      let parsedSkills = data.skills || [];
+      if (typeof data.skills === 'string') {
+        try {
+          parsedSkills = JSON.parse(data.skills);
+          console.log('[AuthService] ✅ skills распарсен из строки при обновлении');
+        } catch (error) {
+          console.error('[AuthService] ❌ Ошибка парсинга skills:', error);
+          parsedSkills = [];
+        }
       }
 
       // Обновляем локальное состояние
@@ -955,6 +1121,12 @@ class AuthService {
         specializations: data.specializations,
         workPhotos: data.work_photos,
         profileViewsCount: data.profile_views_count || 0,
+        // Добавляем поля для job_seeker - используем распарсенные данные
+        education: parsedEducation,
+        skills: parsedSkills,
+        workExperience: parsedWorkExperience,
+        willingToRelocate: data.willing_to_relocate,
+        desiredSalary: data.desired_salary,
       };
 
       this.authState = {

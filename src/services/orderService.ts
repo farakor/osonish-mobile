@@ -91,6 +91,14 @@ export class OrderService {
         };
       }
 
+      // Проверяем, что только заказчики могут создавать заказы
+      if (authState.user.role !== 'customer') {
+        return {
+          success: false,
+          error: 'Только заказчики могут создавать заказы'
+        };
+      }
+
       const orderId = this.generateOrderId();
       console.log('[OrderService] 🆔 Сгенерированный ID заказа:', orderId);
       const currentTime = new Date().toISOString();
@@ -547,7 +555,7 @@ export class OrderService {
         .from('orders')
         .select(`
           *,
-          customer:users!customer_id(city)
+          customer:users!customer_id(city, user_type, company_name)
         `)
         .eq('customer_id', authState.user.id)
         .order('created_at', { ascending: false });
@@ -586,6 +594,8 @@ export class OrderService {
             status: item.status as 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled',
             customerId: item.customer_id,
             customerCity: item.customer?.city || undefined,
+            customerUserType: item.customer?.user_type as 'individual' | 'company' || undefined,
+            customerCompanyName: item.customer?.company_name || undefined,
             applicantsCount: item.applicants_count,
             pendingApplicantsCount: pendingCount || 0,
             viewsCount: item.views_count || 0,
@@ -718,7 +728,7 @@ export class OrderService {
         .from('orders')
         .select(`
           *,
-          customer:users!customer_id(city)
+          customer:users!customer_id(city, user_type, company_name)
         `)
         .in('status', ['new', 'response_received'])
         .order('created_at', { ascending: false });
@@ -745,6 +755,8 @@ export class OrderService {
         status: item.status as 'new' | 'response_received' | 'in_progress' | 'completed' | 'cancelled',
         customerId: item.customer_id,
         customerCity: item.customer?.city || undefined,
+        customerUserType: item.customer?.user_type as 'individual' | 'company' || undefined,
+        customerCompanyName: item.customer?.company_name || undefined,
         applicantsCount: item.applicants_count,
         viewsCount: item.views_count || 0,
         // Дополнительные удобства

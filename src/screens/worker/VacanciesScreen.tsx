@@ -15,11 +15,16 @@ import { VacancyCard } from '../../components/vacancy';
 import { useVacancies } from '../../hooks/queries/useVacancyQueries';
 import { HeaderWithBack } from '../../components/common';
 import { Order } from '../../types';
+import { authService } from '../../services/authService';
 
 export const VacanciesScreen: React.FC = () => {
   const navigation = useNavigation();
   const { data: vacancies, isLoading, refetch, isRefreshing } = useVacancies();
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Получаем ID текущего пользователя
+  const authState = authService.getAuthState();
+  const currentUserId = authState.user?.id;
 
   const handleVacancyPress = (vacancy: Order) => {
     navigation.navigate('VacancyDetails' as never, { vacancyId: vacancy.id } as never);
@@ -65,7 +70,11 @@ export const VacanciesScreen: React.FC = () => {
         data={filteredVacancies}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <VacancyCard vacancy={item} onPress={() => handleVacancyPress(item)} />
+          <VacancyCard 
+            vacancy={item} 
+            onPress={() => handleVacancyPress(item)}
+            currentUserId={currentUserId}
+          />
         )}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={renderEmptyState}

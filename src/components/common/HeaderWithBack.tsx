@@ -19,6 +19,7 @@ interface HeaderWithBackProps {
   backAction?: () => void;
   rightComponent?: React.ReactNode; // новый параметр для произвольного компонента справа
   showBackButton?: boolean; // новый параметр для управления видимостью кнопки назад
+  backgroundColor?: string; // цвет фона хедера
 }
 
 // Функция для получения высоты статусбара только на Android
@@ -32,7 +33,8 @@ export const HeaderWithBack: React.FC<HeaderWithBackProps> = ({
   dropdownMenu,
   backAction,
   rightComponent,
-  showBackButton = true
+  showBackButton = true,
+  backgroundColor
 }) => {
   const navigation = useNavigation();
 
@@ -45,7 +47,7 @@ export const HeaderWithBack: React.FC<HeaderWithBackProps> = ({
   };
 
   return (
-    <View style={[styles.header, { paddingTop: theme.spacing.md + getAndroidStatusBarHeight() }]}>
+    <View style={[styles.header, { paddingTop: theme.spacing.md + getAndroidStatusBarHeight() }, backgroundColor ? { backgroundColor } : undefined]}>
       {showBackButton ? (
         <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
           <ArrowBackIcon width={20} height={20} stroke={theme.colors.text.primary} />
@@ -106,9 +108,13 @@ const styles = StyleSheet.create({
   },
 
   headerTitle: {
-    fontSize: theme.fonts.sizes.lg,
+    fontSize: theme.fonts.sizes.xl,
     fontWeight: theme.fonts.weights.semiBold,
     color: theme.colors.text.primary,
+    flex: 1,
+    textAlign: 'center',
+    paddingHorizontal: theme.spacing.sm,
+    lineHeight: 24,
   },
   rightActionText: {
     fontSize: theme.fonts.sizes.md,

@@ -16,7 +16,6 @@ import {
 // Импортируем компоненты из customer для переиспользования
 import {
   CategoriesScreen,
-  MyOrdersScreen,
 } from '../screens/customer';
 import {
   AnimatedTabIcon,
@@ -30,8 +29,7 @@ import HomeIcon from '../../assets/home-02.svg';
 import FileIcon from '../../assets/file-02.svg';
 import ProfileIcon from '../../assets/user-01.svg';
 import CategoryIcon from '../../assets/card-icons/category.svg';
-import MyOrdersIcon from '../../assets/file-02.svg';
-import VacancyIcon from '../../assets/cv_badge.svg';
+import VacancyIcon from '../../assets/vaccancy-icon.svg';
 
 const Tab = createBottomTabNavigator<WorkerTabParamList>();
 
@@ -40,7 +38,6 @@ const AnimatedWorkerJobsScreen = withAnimatedTabScreen(WorkerJobsScreen);
 const AnimatedVacanciesScreen = withAnimatedTabScreen(VacanciesScreen);
 const AnimatedCategoriesScreen = withAnimatedTabScreen(CategoriesScreen);
 const AnimatedWorkerApplicationsScreen = withAnimatedTabScreen(WorkerApplicationsScreen);
-const AnimatedMyOrdersScreen = withAnimatedTabScreen(MyOrdersScreen);
 const AnimatedWorkerProfileScreen = withAnimatedTabScreen(WorkerProfileScreen);
 
 export function WorkerTabNavigator() {
@@ -206,26 +203,6 @@ export function WorkerTabNavigator() {
           tabBarIcon: ({ color, size, focused }) => (
             <AnimatedTabIcon focused={focused} color={color}>
               <FileIcon
-                width={25}
-                height={25}
-                color={color}
-              />
-            </AnimatedTabIcon>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="MyOrders"
-        component={AnimatedMyOrdersScreen}
-        options={{
-          tabBarLabel: ({ focused, color }) => (
-            <Text style={[styles.tabLabel, { color }]}>
-              {tWorker('my_orders')}
-            </Text>
-          ),
-          tabBarIcon: ({ color, size, focused }) => (
-            <AnimatedTabIcon focused={focused} color={color}>
-              <MyOrdersIcon
                 width={25}
                 height={25}
                 color={color}

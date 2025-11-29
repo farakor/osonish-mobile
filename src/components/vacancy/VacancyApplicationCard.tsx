@@ -8,6 +8,7 @@ interface VacancyApplicationCardProps {
   onPress?: () => void;
   onAccept?: () => void;
   onReject?: () => void;
+  onViewResume?: () => void;
   showActions?: boolean;
 }
 
@@ -16,6 +17,7 @@ export const VacancyApplicationCard: React.FC<VacancyApplicationCardProps> = ({
   onPress,
   onAccept,
   onReject,
+  onViewResume,
   showActions = false,
 }) => {
   const getStatusBadge = () => {
@@ -91,6 +93,17 @@ export const VacancyApplicationCard: React.FC<VacancyApplicationCardProps> = ({
             )}
           </View>
         </View>
+      )}
+
+      {/* Кнопка просмотра резюме - показываем всегда */}
+      {onViewResume && (
+        <TouchableOpacity
+          style={styles.viewResumeButton}
+          onPress={onViewResume}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.viewResumeButtonText}>📄 Просмотреть резюме</Text>
+        </TouchableOpacity>
       )}
 
       {showActions && application.status === 'pending' && onAccept && onReject && (
@@ -213,6 +226,22 @@ const styles = StyleSheet.create({
   skillText: {
     fontSize: 12,
     fontWeight: '500',
+    color: theme.colors.primary,
+  },
+  viewResumeButton: {
+    backgroundColor: '#F0F7FF',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  viewResumeButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
     color: theme.colors.primary,
   },
   actions: {

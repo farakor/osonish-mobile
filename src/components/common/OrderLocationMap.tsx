@@ -11,13 +11,15 @@ interface OrderLocationMapProps {
   longitude: number;
   address: string;
   title?: string;
+  containerStyle?: object;
 }
 
 export const OrderLocationMap: React.FC<OrderLocationMapProps> = ({
   latitude,
   longitude,
   address,
-  title = "Куда ехать"
+  title = "Куда ехать",
+  containerStyle,
 }) => {
   const t = useCustomerTranslation();
   const tError = useErrorsTranslation();
@@ -115,7 +117,7 @@ export const OrderLocationMap: React.FC<OrderLocationMapProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, containerStyle]}>
       {/* Заголовок без иконки */}
       <Text style={styles.title}>{title}</Text>
 
@@ -161,8 +163,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#1A1A1A',
+    fontWeight: '700',
+    color: theme.colors.text,
     marginBottom: 16,
   },
   mapSection: {

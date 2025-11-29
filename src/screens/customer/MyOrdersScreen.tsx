@@ -23,6 +23,7 @@ import { VacancyCard } from '../../components/vacancy';
 import { useCustomerTranslation, useWorkerTranslation } from '../../hooks/useTranslation';
 import { OrderCardSkeleton } from '../../components/skeletons';
 import { useMyOrders } from '../../hooks/queries';
+import { HeaderWithBack } from '../../components/common';
 
 // SVG иконка empty-state-completed-orders
 const emptyStateCompletedOrdersSvg = `<svg width="161" height="160" viewBox="0 0 161 160" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -99,6 +100,7 @@ export const MyOrdersScreen: React.FC = () => {
   // НОВОЕ: Определяем роль пользователя
   const authState = authService.getAuthState();
   const isWorker = authState.user?.role === 'worker';
+  const userId = authState.user?.id;
 
   // ✨ React Query - автоматическое кэширование и управление состоянием
   const { data: allOrders = [], isLoading, refetch, isRefetching } = useMyOrders();
@@ -299,6 +301,7 @@ export const MyOrdersScreen: React.FC = () => {
             navigation.navigate('OrderDetails', { orderId: item.id });
           }
         }}
+        currentUserId={userId}
       />
     ) : (
       <ModernOrderCard
@@ -319,20 +322,24 @@ export const MyOrdersScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.content} edges={['top', 'left', 'right']}>
-        {/* Content Header */}
-        <View style={[styles.contentHeader, { paddingTop: theme.spacing.xl + getAndroidStatusBarHeight() }]}>
-          <Text style={styles.title}>{t('my_orders_title')}</Text>
-          <Text style={styles.subtitle}>{t('my_orders_subtitle')}</Text>
-          
-          {/* НОВОЕ: Подсказка для исполнителей */}
-          {isWorker && (
-            <View style={styles.workerHintContainer}>
-              <Text style={styles.workerHintText}>
-                💼 {tWorker('orders_created_by_you')}
-              </Text>
-            </View>
-          )}
-        </View>
+        {/* Header - для исполнителей показываем HeaderWithBack */}
+        {isWorker ? (
+          <HeaderWithBack title={tWorker('my_orders')} />
+        ) : (
+          <View style={[styles.contentHeader, { paddingTop: theme.spacing.xl + getAndroidStatusBarHeight() }]}>
+            <Text style={styles.title}>{t('my_orders_title')}</Text>
+            <Text style={styles.subtitle}>{t('my_orders_subtitle')}</Text>
+          </View>
+        )}
+
+        {/* НОВОЕ: Подсказка для исполнителей */}
+        {isWorker && (
+          <View style={styles.workerHintContainer}>
+            <Text style={styles.workerHintText}>
+              💼 {tWorker('orders_created_by_you')}
+            </Text>
+          </View>
+        )}
 
         {/* Tabs - Pill Style */}
         <View style={styles.tabsContainer}>

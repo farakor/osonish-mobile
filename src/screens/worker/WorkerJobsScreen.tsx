@@ -302,6 +302,7 @@ export const WorkerJobsScreen: React.FC = () => {
                       key={order.id}
                       vacancy={order}
                       onPress={() => handleOrderPress(order)}
+                      currentUserId={userId}
                     />
                   ) : (
                     <ModernOrderCard
@@ -500,10 +501,7 @@ export const WorkerJobsScreen: React.FC = () => {
         </TouchableOpacity>
       </Modal>
 
-      {/* Floating Action Button */}
-      <FloatingCreateButton 
-        onPress={() => navigation.navigate('CreateOrder')}
-      />
+      {/* Floating Action Button удален для исполнителей */}
 
       {/* Sort Modal */}
       <SortModal

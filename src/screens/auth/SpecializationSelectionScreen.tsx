@@ -114,30 +114,45 @@ export const SpecializationSelectionScreen: React.FC = () => {
     return (
       <TouchableOpacity
         style={[
-          styles.specCard,
-          isSelected && styles.specCardSelected,
-          isPrimary && styles.specCardPrimary,
+          styles.specListItem,
+          isSelected && styles.specListItemSelected,
+          isPrimary && styles.specListItemPrimary,
         ]}
         onPress={() => handleSpecializationToggle(item)}
         onLongPress={() => isSelected && !isPrimary && handleSetPrimary(item.id)}
-        activeOpacity={0.8}
+        activeOpacity={0.7}
       >
-        <CategoryIcon
-          icon={item.icon}
-          iconComponent={item.iconComponent}
-          size={32}
-          style={styles.specIcon}
-        />
-        <Text
-          style={[
-            styles.specName,
-            isSelected && styles.specNameSelected,
-            isPrimary && styles.specNamePrimary,
-          ]}
-          numberOfLines={2}
-        >
-          {t(`categories.${item.id}`)}
-        </Text>
+        <View style={[
+          styles.specIconContainer,
+          isSelected && styles.specIconContainerSelected,
+          isPrimary && styles.specIconContainerPrimary,
+        ]}>
+          <CategoryIcon
+            icon={item.icon}
+            iconComponent={item.iconComponent}
+            size={28}
+            style={styles.specIcon}
+          />
+        </View>
+        
+        <View style={styles.specInfo}>
+          <Text
+            style={[
+              styles.specName,
+              isSelected && styles.specNameSelected,
+              isPrimary && styles.specNamePrimary,
+            ]}
+            numberOfLines={2}
+          >
+            {t(`categories.${item.id}`)}
+          </Text>
+          {isSelected && (
+            <Text style={[styles.specStatus, isPrimary && styles.specStatusPrimary]}>
+              {isPrimary ? '⭐ Основная' : '✓ Выбрана'}
+            </Text>
+          )}
+        </View>
+
         {isSelected && (
           <View style={[styles.badge, isPrimary && styles.badgePrimary]}>
             <Text style={styles.badgeText}>
@@ -191,10 +206,9 @@ export const SpecializationSelectionScreen: React.FC = () => {
           data={SPECIALIZATIONS.filter(spec => spec.id !== 'one_day_job' && !spec.isParent)}
           renderItem={renderSpecializationCard}
           keyExtractor={(item) => item.id}
-          numColumns={3}
-          contentContainerStyle={styles.specGrid}
+          contentContainerStyle={styles.specList}
           showsVerticalScrollIndicator={false}
-          columnWrapperStyle={styles.columnWrapper}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
         />
 
         <TouchableOpacity
@@ -219,8 +233,6 @@ export const SpecializationSelectionScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
-
-const cardWidth = (screenWidth - theme.spacing.lg * 2 - theme.spacing.sm * 2) / 3;
 
 const styles = StyleSheet.create({
   container: {
@@ -289,43 +301,59 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontWeight: '500',
   },
-  specGrid: {
+  specList: {
     paddingBottom: theme.spacing.xl,
   },
-  columnWrapper: {
-    justifyContent: 'space-between',
-    marginBottom: theme.spacing.sm,
+  separator: {
+    height: theme.spacing.xs,
   },
-  specCard: {
-    width: cardWidth,
-    aspectRatio: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: theme.spacing.sm,
+  specListItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: theme.spacing.sm,
+    minHeight: 64,
     ...borderButtonStyles,
   },
-  specCardSelected: {
+  specListItemSelected: {
     backgroundColor: `${theme.colors.primary}08`,
     borderWidth: 2,
     borderColor: theme.colors.primary,
     ...noElevationStyles,
   },
-  specCardPrimary: {
+  specListItemPrimary: {
     backgroundColor: `${theme.colors.primary}15`,
     borderWidth: 2,
     borderColor: theme.colors.primary,
   },
+  specIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#F8F9FA',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: theme.spacing.sm,
+  },
+  specIconContainerSelected: {
+    backgroundColor: `${theme.colors.primary}15`,
+  },
+  specIconContainerPrimary: {
+    backgroundColor: `${theme.colors.primary}20`,
+  },
   specIcon: {
-    marginBottom: theme.spacing.xs,
+    // Стили применяются из CategoryIcon
+  },
+  specInfo: {
+    flex: 1,
+    justifyContent: 'center',
   },
   specName: {
-    fontSize: 11,
+    fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
-    textAlign: 'center',
     fontWeight: '500',
+    lineHeight: 20,
   },
   specNameSelected: {
     color: theme.colors.primary,
@@ -335,23 +363,31 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontWeight: 'bold',
   },
+  specStatus: {
+    fontSize: 12,
+    color: theme.colors.primary,
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  specStatusPrimary: {
+    color: theme.colors.primary,
+    fontWeight: '600',
+  },
   badge: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 20,
-    height: 20,
+    width: 24,
+    height: 24,
     backgroundColor: theme.colors.primary,
-    borderRadius: 10,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    marginLeft: theme.spacing.xs,
   },
   badgePrimary: {
     backgroundColor: '#FFD700',
   },
   badgeText: {
     color: theme.colors.white,
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 'bold',
   },
   continueButton: {

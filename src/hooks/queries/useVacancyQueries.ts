@@ -115,3 +115,27 @@ export const useUpdateVacancyApplicationStatus = () => {
   });
 };
 
+/**
+ * Hook для завершения (закрытия) вакансии
+ */
+export const useCloseVacancy = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (vacancyId: string) => vacancyService.closeVacancy(vacancyId),
+    onSuccess: (_data, vacancyId) => {
+      // Инвалидируем кэш конкретной вакансии
+      queryClient.invalidateQueries({ queryKey: vacancyQueryKeys.detail(vacancyId) });
+      
+      // Инвалидируем список всех вакансий
+      queryClient.invalidateQueries({ queryKey: vacancyQueryKeys.list() });
+      
+      // Инвалидируем список заказов работодателя (вакансии тоже там)
+      queryClient.invalidateQueries({ queryKey: ['orders', 'my'] });
+      
+      // Инвалидируем доступные заказы
+      queryClient.invalidateQueries({ queryKey: ['orders', 'available'] });
+    },
+  });
+};
+

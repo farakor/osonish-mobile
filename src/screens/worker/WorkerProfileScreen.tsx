@@ -25,6 +25,7 @@ import LifeBuoyIcon from '../../../assets/life-buoy-02.svg';
 import LogOutIcon from '../../../assets/log-out-03.svg';
 import FileIcon from '../../../assets/file-05.svg';
 import FileShieldIcon from '../../../assets/file-shield-02.svg';
+import MyOrdersIcon from '../../../assets/file-02.svg';
 import { Ionicons } from '@expo/vector-icons';
 import { useWorkerTranslation, useErrorsTranslation, useAuthTranslation } from '../../hooks/useTranslation';
 import { WebViewModal, DeleteAccountModal } from '../../components/common';
@@ -128,6 +129,14 @@ export const WorkerProfileScreen: React.FC = () => {
         if (freshUser) {
           console.log('[WorkerProfile] ✅ Данные обновлены из базы');
           console.log('[WorkerProfile] 📱 profileImage:', freshUser.profileImage);
+          console.log('[WorkerProfile] 📝 Job Seeker данные:', {
+            workerType: freshUser.workerType,
+            education: freshUser.education,
+            skills: freshUser.skills,
+            workExperience: freshUser.workExperience,
+            desiredSalary: freshUser.desiredSalary,
+            willingToRelocate: freshUser.willingToRelocate,
+          });
           setUser(freshUser);
 
           // Обновляем локальное состояние authService
@@ -260,6 +269,47 @@ export const WorkerProfileScreen: React.FC = () => {
     return `${amount} ${tWorker('currency_sum')}`;
   };
 
+  // Функция для подсчета процента заполнения резюме
+  const calculateResumeProgress = (): number => {
+    if (!user || user.workerType !== 'job_seeker') return 0;
+    
+    let filledFields = 0;
+    const totalFields = 5; // Увеличили до 5 полей
+
+    // О себе
+    if (user.aboutMe && user.aboutMe.trim().length > 0) filledFields++;
+
+    // resumeText - НЕ используется в регистрации (убираем)
+    // Вместо этого проверяем education (образование)
+    if (user.education && user.education.length > 0) filledFields++;
+    
+    if (user.desiredSalary) filledFields++;
+    
+    // workExperience - это массив объектов WorkExperience[]
+    if (user.workExperience && user.workExperience.length > 0) filledFields++;
+    
+    if (user.skills && user.skills.length > 0) filledFields++;
+
+    console.log('[WorkerProfile] 📊 Расчет прогресса резюме:', {
+      workerType: user.workerType,
+      aboutMe: user.aboutMe,
+      aboutMeFilled: !!(user.aboutMe && user.aboutMe.trim().length > 0),
+      education: user.education,
+      educationFilled: user.education && user.education.length > 0,
+      desiredSalary: user.desiredSalary,
+      desiredSalaryFilled: !!user.desiredSalary,
+      workExperience: user.workExperience,
+      workExperienceFilled: user.workExperience && user.workExperience.length > 0,
+      skills: user.skills,
+      skillsFilled: user.skills && user.skills.length > 0,
+      filledFields,
+      totalFields,
+      progress: Math.round((filledFields / totalFields) * 100),
+    });
+
+    return Math.round((filledFields / totalFields) * 100);
+  };
+
   const getReviewsText = (count: number): string => {
     if (count === 1) {
       return tWorker('reviews_count_1');
@@ -307,6 +357,10 @@ export const WorkerProfileScreen: React.FC = () => {
 
   const handleSupport = () => {
     navigation.navigate('Support' as never);
+  };
+
+  const handleMyOrders = () => {
+    navigation.navigate('MyOrders' as never);
   };
 
 
@@ -552,47 +606,67 @@ export const WorkerProfileScreen: React.FC = () => {
           {/* Resume Section for Job Seekers */}
           {user?.workerType === 'job_seeker' && (
             <View style={styles.resumeSection}>
-              <Text style={styles.sectionTitle}>{t('auth.job_seeker_profile_title')}</Text>
+              <Text style={styles.sectionTitle}>{t('job_seeker_profile_title')}</Text>
               
-              {user.desiredSalary && (
-                <View style={styles.resumeItem}>
-                  <Text style={styles.resumeLabel}>{t('auth.salary_expectation')}</Text>
-                  <Text style={styles.resumeValue}>
-                    {user.desiredSalary.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} сум
-                  </Text>
-                </View>
-              )}
+              {/* Прогресс заполнения резюме */}
+              {(() => {
+                const progress = calculateResumeProgress();
+                const isComplete = progress === 100;
+                
+                return (
+                  <View style={styles.resumeProgressContainer}>
+                    {/* Заголовок и процент */}
+                    <View style={styles.progressHeader}>
+                      <Text style={styles.progressTitle}>
+                        {isComplete ? '✅ Резюме заполнено' : '📝 Заполните резюме'}
+                      </Text>
+                      <Text style={[styles.progressPercent, isComplete && styles.progressPercentComplete]}>
+                        {progress}%
+                      </Text>
+                    </View>
 
-              {user.workExperience && (
-                <View style={styles.resumeItem}>
-                  <Text style={styles.resumeLabel}>{t('auth.experience')}</Text>
-                  <Text style={styles.resumeValue}>{user.workExperience}</Text>
-                </View>
-              )}
+                    {/* Прогресс-бар */}
+                    <View style={styles.progressBarContainer}>
+                      <View 
+                        style={[
+                          styles.progressBarFill, 
+                          { width: `${progress}%` },
+                          isComplete && styles.progressBarFillComplete
+                        ]} 
+                      />
+                    </View>
 
-              {user.resumeText && (
-                <View style={styles.resumeItem}>
-                  <Text style={styles.resumeLabel}>{t('auth.resume_text_label')}</Text>
-                  <Text style={styles.resumeValue}>{user.resumeText}</Text>
-                </View>
-              )}
+                    {/* Мотивирующий текст */}
+                    {!isComplete && (
+                      <Text style={styles.progressMotivation}>
+                        {progress === 0 
+                          ? 'Заполните информацию о себе, образование, опыт работы, навыки и желаемую зарплату'
+                          : progress < 50
+                          ? 'Отличное начало! Добавьте оставшуюся информацию о себе'
+                          : 'Почти готово! Заполните оставшиеся поля для полного резюме'
+                        }
+                      </Text>
+                    )}
 
-              {user.skills && user.skills.length > 0 && (
-                <View style={styles.resumeItem}>
-                  <Text style={styles.resumeLabel}>{t('auth.my_skills')}</Text>
-                  <View style={styles.skillsContainer}>
-                    {user.skills.map((skill, index) => (
-                      <View key={index} style={styles.skillTag}>
-                        <Text style={styles.skillText}>{skill}</Text>
-                      </View>
-                    ))}
+                    {isComplete && (
+                      <Text style={styles.progressMotivation}>
+                        Отличная работа! Ваше резюме полностью заполнено 🎉
+                      </Text>
+                    )}
+
+                    {/* Кнопка для заполнения/редактирования */}
+                    <TouchableOpacity 
+                      style={styles.fillResumeButton}
+                      onPress={handleEditProfile}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.fillResumeButtonText}>
+                        Редактировать профиль
+                      </Text>
+                    </TouchableOpacity>
                   </View>
-                </View>
-              )}
-
-              {!user.resumeText && !user.desiredSalary && (
-                <Text style={styles.noResumeText}>{t('auth.no_resume')}</Text>
-              )}
+                );
+              })()}
             </View>
           )}
 
@@ -614,6 +688,16 @@ export const WorkerProfileScreen: React.FC = () => {
                   <NotificationMessageIcon width={20} height={20} />
                 </View>
                 <Text style={styles.menuText}>{tWorker('settings_and_notifications')}</Text>
+              </View>
+              <Text style={styles.menuArrow}>›</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.menuItem} onPress={handleMyOrders}>
+              <View style={styles.menuLeft}>
+                <View style={styles.menuIconContainer}>
+                  <MyOrdersIcon width={20} height={20} />
+                </View>
+                <Text style={styles.menuText}>{tWorker('my_orders')}</Text>
               </View>
               <Text style={styles.menuArrow}>›</Text>
             </TouchableOpacity>
@@ -1173,6 +1257,83 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     textAlign: 'center',
     fontStyle: 'italic',
+    marginTop: 8,
+  },
+
+  // Resume Progress Styles
+  resumeProgressContainer: {
+    marginTop: 20,
+    padding: 20,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  progressTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
+  },
+  progressPercent: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#679B00',
+  },
+  progressPercentComplete: {
+    color: '#10B981',
+  },
+  progressBarContainer: {
+    height: 8,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#679B00',
+    borderRadius: 4,
+    transition: 'width 0.3s ease',
+  },
+  progressBarFillComplete: {
+    backgroundColor: '#10B981',
+  },
+  progressMotivation: {
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  fillResumeButton: {
+    backgroundColor: '#679B00',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#679B00',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  fillResumeButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  progressCompleteMessage: {
+    fontSize: 14,
+    color: '#10B981',
+    textAlign: 'center',
+    fontWeight: '500',
     marginTop: 8,
   },
   
