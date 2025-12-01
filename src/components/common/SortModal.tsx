@@ -9,6 +9,9 @@ import {
 } from 'react-native';
 import { theme } from '../../constants';
 import { BlurView } from '@react-native-community/blur';
+import Calendar5Icon from '../../../assets/calendar-5.svg';
+import EyeArrowProgressIcon from '../../../assets/eye-arrow-progress.svg';
+import MoneyBillWaveIcon from '../../../assets/money-bill-wave.svg';
 
 export type SortOption = 'date' | 'views' | 'price';
 
@@ -116,7 +119,7 @@ export const SortModal: React.FC<SortModalProps> = ({
               >
                 <View style={styles.optionContent}>
                   <View style={styles.iconContainer}>
-                    <Text style={styles.optionIcon}>📅</Text>
+                    <Calendar5Icon width={24} height={24} />
                   </View>
                   <Text style={[
                     styles.optionText,
@@ -142,7 +145,7 @@ export const SortModal: React.FC<SortModalProps> = ({
               >
                 <View style={styles.optionContent}>
                   <View style={styles.iconContainer}>
-                    <Text style={styles.optionIcon}>👁️</Text>
+                    <EyeArrowProgressIcon width={24} height={24} />
                   </View>
                   <Text style={[
                     styles.optionText,
@@ -168,7 +171,7 @@ export const SortModal: React.FC<SortModalProps> = ({
               >
                 <View style={styles.optionContent}>
                   <View style={styles.iconContainer}>
-                    <Text style={styles.optionIcon}>💰</Text>
+                    <MoneyBillWaveIcon width={24} height={24} />
                   </View>
                   <Text style={[
                     styles.optionText,

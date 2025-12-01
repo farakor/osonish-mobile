@@ -564,6 +564,7 @@
     "call_worker_confirmation": "{{name}}ga {{phone}} raqamiga qo'ng'iroq qilasizmi?",
     "call": "Qo'ng'iroq qilish",
     "edit": "Tahrirlash",
+    "actions": "Harakatlar",
     "complete_order": "Buyurtmani tugatish",
     "complete_confirmation": "Haqiqatan ham bu buyurtmani tugatmoqchimisiz? Tugagandan keyin ijrochilar ishini baholashingiz kerak bo'ladi.",
     "complete": "Tugatish",

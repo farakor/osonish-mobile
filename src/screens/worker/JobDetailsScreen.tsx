@@ -45,7 +45,7 @@ import { useRequireAuth } from '../../hooks/useRequireAuth';
 import { AuthRequiredModal } from '../../components/auth/AuthRequiredModal';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = width - 48; // 24px margin on each side
+const CARD_WIDTH = width - 32; // 16px margin on each side
 
 type JobDetailsRouteProp = RouteProp<WorkerStackParamList, 'JobDetails'>;
 type NavigationProp = NativeStackNavigationProp<WorkerStackParamList>;
@@ -1000,7 +1000,7 @@ const styles = StyleSheet.create({
   // Gallery Section
   gallerySection: {
     marginBottom: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: 16,
   },
   galleryContainer: {
     position: 'relative',
@@ -1282,11 +1282,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: 'transparent',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    elevation: 0,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
 
   stickyTitleContainer: {

@@ -64,3 +64,5 @@ export { CategoryIcon } from './CategoryIcon';
 export { FloatingCreateButton } from './FloatingCreateButton';
 export { SortModal } from './SortModal';
 export type { SortOption } from './SortModal';
+export { ActionBottomSheet } from './ActionBottomSheet';
+export type { ActionBottomSheetItem } from './ActionBottomSheet';

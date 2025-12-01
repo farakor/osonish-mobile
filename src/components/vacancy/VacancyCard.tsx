@@ -70,7 +70,7 @@ export const VacancyCard: React.FC<VacancyCardProps> = ({ vacancy, onPress, curr
                 iconComponent={spec.iconComponent}
                 size={16}
               />
-              <Text style={styles.detailText}>
+              <Text style={styles.detailText} numberOfLines={1}>
                 {getTranslatedSpecializationName(vacancy.specializationId, t)}
               </Text>
             </View>
@@ -199,6 +199,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    flexShrink: 1,
+    maxWidth: '100%',
   },
   detailIcon: {
     fontSize: 14,
@@ -206,6 +208,7 @@ const styles = StyleSheet.create({
   detailText: {
     fontSize: 14,
     color: '#6B7280',
+    flexShrink: 1,
   },
   description: {
     fontSize: 14,

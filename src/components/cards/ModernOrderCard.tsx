@@ -274,7 +274,7 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
 const styles = StyleSheet.create({
   cardContainer: {
     marginHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
+    marginBottom: 12,
     // Полностью отключаем inner shadow на Android
     ...Platform.select({
       android: {

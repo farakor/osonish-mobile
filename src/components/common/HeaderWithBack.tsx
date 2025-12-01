@@ -104,7 +104,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    ...lightElevationStyles,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
 
   headerTitle: {

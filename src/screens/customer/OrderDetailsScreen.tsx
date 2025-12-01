@@ -31,9 +31,11 @@ import NoImagePlaceholder from '../../../assets/no-image-placeholder.svg';
 import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
 import CarIcon from '../../../assets/car-01.svg';
 import BankNoteIcon from '../../../assets/bank-note-01.svg';
+import BlogPencilIcon from '../../../assets/blog-pencil.svg';
+import DocumentCircleWrongIcon from '../../../assets/document-circle-wrong.svg';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import LottieView from 'lottie-react-native';
-import { HeaderWithBack, MediaViewer, OrderLocationMap, DropdownMenuItem, StatusBadge, DropdownMenu, StarIcon, CategoryIcon as CategoryIconComponent } from '../../components/common';
+import { HeaderWithBack, MediaViewer, OrderLocationMap, DropdownMenuItem, StatusBadge, DropdownMenu, StarIcon, CategoryIcon as CategoryIconComponent, ActionBottomSheet, ActionBottomSheetItem } from '../../components/common';
 import { orderService } from '../../services/orderService';
 import { getCategoryEmoji, getCategoryLabel } from '../../utils/categoryUtils';
 import { getCategoryAnimation } from '../../utils/categoryIconUtils';
@@ -120,7 +122,7 @@ const emptyStateNoApplicationsSvg = `<svg width="161" height="160" viewBox="0 0 
 </svg>`;
 
 const { width, height: screenHeight } = Dimensions.get('window');
-const CARD_WIDTH = width - 48; // 24px margin on each side
+const CARD_WIDTH = width - 32; // 16px margin on each side
 
 // Убираем определение Android - используем одинаковое меню для всех платформ
 
@@ -326,6 +328,9 @@ export const OrderDetailsScreen: React.FC = () => {
 
   // Состояния для завершения заказа
   const [isCompletingOrder, setIsCompletingOrder] = useState(false);
+
+  // Состояние для bottom sheet меню действий
+  const [isActionBottomSheetVisible, setIsActionBottomSheetVisible] = useState(false);
 
   // Анимация для карточек откликов
   const animatedCards = useRef<{ [key: string]: Animated.Value }>({}).current;
@@ -846,23 +851,25 @@ export const OrderDetailsScreen: React.FC = () => {
     );
   };
 
-  // Создаем элементы выпадающего меню
-  const getDropdownMenuItems = (): DropdownMenuItem[] => {
+  // Создаем элементы bottom sheet меню
+  const getActionBottomSheetItems = (): ActionBottomSheetItem[] => {
     if (!order) return [];
 
-    const items: DropdownMenuItem[] = [];
+    const items: ActionBottomSheetItem[] = [];
 
     // Показываем кнопки редактирования и отмены только для СВОИХ заказов со статусом 'new' или 'response_received'
     if (isMyOrder && ['new', 'response_received'].includes(order.status)) {
       items.push({
         id: 'edit',
         title: t('edit'),
+        icon: <BlogPencilIcon width={24} height={24} />,
         onPress: handleEditOrder,
       });
 
       items.push({
         id: 'cancel',
-        title: tCommon('cancel'),
+        title: t('cancel_order'),
+        icon: <DocumentCircleWrongIcon width={24} height={24} fill="#DC2626" />,
         color: '#DC2626',
         onPress: handleCancelOrder,
       });
@@ -1205,10 +1212,18 @@ export const OrderDetailsScreen: React.FC = () => {
                   {isCompletingOrder ? t('completing') : t('complete')}
                 </Text>
               </TouchableOpacity>
-            ) : getDropdownMenuItems().length > 0 ? (
-              <DropdownMenu
-                items={getDropdownMenuItems()}
-              />
+            ) : getActionBottomSheetItems().length > 0 ? (
+              <TouchableOpacity
+                style={styles.stickyBackButton}
+                onPress={() => setIsActionBottomSheetVisible(true)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.dotsContainer}>
+                  <View style={styles.dot} />
+                  <View style={styles.dot} />
+                  <View style={styles.dot} />
+                </View>
+              </TouchableOpacity>
             ) : null}
           </View>
         </View>
@@ -1257,10 +1272,18 @@ export const OrderDetailsScreen: React.FC = () => {
                     </Text>
                   </TouchableOpacity>
                 )}
-                {!canShowCompleteButton(order) && getDropdownMenuItems().length > 0 && (
-                  <DropdownMenu
-                    items={getDropdownMenuItems()}
-                  />
+                {!canShowCompleteButton(order) && getActionBottomSheetItems().length > 0 && (
+                  <TouchableOpacity
+                    style={styles.menuButton}
+                    onPress={() => setIsActionBottomSheetVisible(true)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.dotsContainer}>
+                      <View style={styles.dot} />
+                      <View style={styles.dot} />
+                      <View style={styles.dot} />
+                    </View>
+                  </TouchableOpacity>
                 )}
               </View>
             }
@@ -1514,6 +1537,13 @@ export const OrderDetailsScreen: React.FC = () => {
         </View>
       </Modal>
 
+      {/* Action Bottom Sheet */}
+      <ActionBottomSheet
+        visible={isActionBottomSheetVisible}
+        onClose={() => setIsActionBottomSheetVisible(false)}
+        items={getActionBottomSheetItems()}
+        title={t('actions')}
+      />
 
     </SafeAreaView>
   );
@@ -1648,7 +1678,7 @@ const styles = StyleSheet.create({
   // Gallery Section
   gallerySection: {
     marginBottom: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: 16,
   },
   galleryContainer: {
     position: 'relative',
@@ -2795,6 +2825,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   backButtonText: {
     fontSize: theme.fonts.sizes.xl,
@@ -2808,7 +2840,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
 
   stickyCompleteButton: {
@@ -2845,6 +2878,28 @@ const styles = StyleSheet.create({
   stickyRightContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  menuButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
+  },
+  dotsContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: theme.colors.text.primary,
   },
   stickyTitleContainer: {
     flex: 1,

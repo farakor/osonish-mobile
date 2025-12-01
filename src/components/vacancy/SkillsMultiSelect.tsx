@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,9 +7,14 @@ import {
   StyleSheet,
   FlatList,
   Modal,
+  Animated,
+  PanResponder,
+  Dimensions,
 } from 'react-native';
 import { theme } from '../../constants';
 import { COMMON_SKILLS } from '../../constants/vacancyOptions';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 interface SkillsMultiSelectProps {
   selectedSkills: string[];
@@ -22,6 +27,65 @@ export const SkillsMultiSelect: React.FC<SkillsMultiSelectProps> = ({
 }) => {
   const [customSkill, setCustomSkill] = useState('');
   const [showAllSkills, setShowAllSkills] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  
+  const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+
+  useEffect(() => {
+    if (showAllSkills) {
+      // Плавное появление bottom sheet снизу
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 65,
+        friction: 11,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      // Сбрасываем позицию для следующего открытия
+      slideAnim.setValue(SCREEN_HEIGHT);
+    }
+  }, [showAllSkills]);
+
+  const closeBottomSheet = () => {
+    Animated.timing(slideAnim, {
+      toValue: SCREEN_HEIGHT,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowAllSkills(false);
+    });
+  };
+
+  // PanResponder для обработки свайпа вниз
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Активируем только при свайпе вниз
+        return gestureState.dy > 5;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        // Перемещаем bottom sheet только вниз (не вверх)
+        if (gestureState.dy > 0) {
+          slideAnim.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        // Если свайп больше 100px или скорость больше 0.5 - закрываем
+        if (gestureState.dy > 100 || gestureState.vy > 0.5) {
+          closeBottomSheet();
+        } else {
+          // Возвращаем на место
+          Animated.spring(slideAnim, {
+            toValue: 0,
+            tension: 65,
+            friction: 11,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
 
   const safeSelectedSkills = selectedSkills || [];
 
@@ -110,12 +174,14 @@ export const SkillsMultiSelect: React.FC<SkillsMultiSelectProps> = ({
         <Text style={styles.sectionTitle}>Добавить свой навык</Text>
         <View style={styles.inputRow}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, isInputFocused && styles.inputFocused]}
             value={customSkill}
             onChangeText={setCustomSkill}
             placeholder="Введите навык"
             placeholderTextColor="#9CA3AF"
             onSubmitEditing={addCustomSkill}
+            onFocus={() => setIsInputFocused(true)}
+            onBlur={() => setIsInputFocused(false)}
           />
           <TouchableOpacity
             style={styles.addButton}
@@ -127,52 +193,80 @@ export const SkillsMultiSelect: React.FC<SkillsMultiSelectProps> = ({
         </View>
       </View>
 
-      {/* Модальное окно со всеми навыками */}
+      {/* Bottom Sheet со всеми навыками */}
       <Modal
         visible={showAllSkills}
-        animationType="slide"
-        transparent={false}
-        onRequestClose={() => setShowAllSkills(false)}
+        animationType="none"
+        transparent={true}
+        onRequestClose={closeBottomSheet}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Все навыки</Text>
-            <TouchableOpacity
-              onPress={() => setShowAllSkills(false)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.closeButton}>✕</Text>
-            </TouchableOpacity>
+        <View style={styles.bottomSheetOverlay}>
+          {/* Backdrop появляется мгновенно */}
+          <View style={styles.bottomSheetBackdrop}>
+            <TouchableOpacity 
+              style={StyleSheet.absoluteFill}
+              activeOpacity={1}
+              onPress={closeBottomSheet}
+            />
           </View>
-          <FlatList
-            data={COMMON_SKILLS}
-            keyExtractor={(item) => item}
-            contentContainerStyle={styles.modalList}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.modalSkill,
-                  safeSelectedSkills.includes(item) && styles.modalSkillSelected,
-                ]}
-                onPress={() => toggleSkill(item)}
-                activeOpacity={0.7}
-              >
-                <Text
-                  style={[
-                    styles.modalSkillText,
-                    safeSelectedSkills.includes(item) && styles.modalSkillTextSelected,
-                  ]}
+          
+          {/* Bottom Sheet плавно выезжает снизу */}
+          <Animated.View 
+            style={[
+              styles.bottomSheetContainer,
+              {
+                transform: [{ translateY: slideAnim }],
+              }
+            ]}
+          >
+            {/* Верхняя область для свайпа - ручка + заголовок */}
+            <View {...panResponder.panHandlers}>
+              {/* Ручка для свайпа */}
+              <View style={styles.bottomSheetHandleContainer}>
+                <View style={styles.bottomSheetHandle} />
+              </View>
+              
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Все навыки</Text>
+                <TouchableOpacity
+                  onPress={closeBottomSheet}
+                  activeOpacity={0.7}
                 >
-                  {item}
-                </Text>
-                {safeSelectedSkills.includes(item) && (
-                  <View style={styles.checkmark}>
-                    <Text style={styles.checkmarkText}>✓</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            )}
-          />
+                  <Text style={styles.closeButton}>✕</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            
+            <FlatList
+              data={COMMON_SKILLS}
+              keyExtractor={(item) => item}
+              contentContainerStyle={styles.modalList}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.modalSkill,
+                    safeSelectedSkills.includes(item) && styles.modalSkillSelected,
+                  ]}
+                  onPress={() => toggleSkill(item)}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.modalSkillText,
+                      safeSelectedSkills.includes(item) && styles.modalSkillTextSelected,
+                    ]}
+                  >
+                    {item}
+                  </Text>
+                  {safeSelectedSkills.includes(item) && (
+                    <View style={styles.checkmark}>
+                      <Text style={styles.checkmarkText}>✓</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              )}
+            />
+          </Animated.View>
         </View>
       </Modal>
     </View>
@@ -261,6 +355,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: theme.colors.text,
   },
+  inputFocused: {
+    borderColor: theme.colors.primary,
+    borderWidth: 2,
+    backgroundColor: '#F0F7FF',
+  },
   addButton: {
     width: 56,
     height: 56,
@@ -274,9 +373,30 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
     fontWeight: 'bold',
   },
-  modalContainer: {
+  bottomSheetOverlay: {
     flex: 1,
+    justifyContent: 'flex-end',
+  },
+  bottomSheetBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  bottomSheetContainer: {
+    height: '85%',
     backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    overflow: 'hidden',
+  },
+  bottomSheetHandleContainer: {
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  bottomSheetHandle: {
+    width: 40,
+    height: 5,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 3,
   },
   modalHeader: {
     flexDirection: 'row',
