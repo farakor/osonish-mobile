@@ -289,6 +289,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
     borderRadius: 12,
     padding: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
     // Отключаем системные эффекты нажатия на Android
     ...Platform.select({
       android: {
@@ -304,7 +306,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ECFDF5',
     // рамка в основном зеленом цвете
     borderColor: theme.colors.primary,
-    borderWidth: 0.5,
+    borderWidth: 1,
   },
   header: {
     flexDirection: 'row',

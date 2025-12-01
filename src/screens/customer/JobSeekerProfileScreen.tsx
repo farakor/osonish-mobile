@@ -427,7 +427,7 @@ export const JobSeekerProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   safeArea: {
     backgroundColor: '#FFFFFF',

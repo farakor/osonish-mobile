@@ -411,6 +411,39 @@ export const CustomerHomeScreen: React.FC = () => {
                     />
                   </TouchableOpacity>
                 </View>
+
+                {/* Response Notification Modal */}
+                {showResponseNotification && (
+                  <View style={styles.responseNotificationContainer}>
+                    <View style={styles.responseNotification}>
+                      <TouchableOpacity 
+                        style={styles.closeButton}
+                        onPress={handleCloseNotification}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.closeIcon}>✕</Text>
+                      </TouchableOpacity>
+                      
+                      <Text style={styles.notificationTitle}>
+                        {t('response_notification_title')}
+                      </Text>
+                      <Text style={styles.notificationMessage}>
+                        {t('response_notification_message')}
+                      </Text>
+                      
+                      <TouchableOpacity 
+                        style={styles.goToOrdersButton}
+                        onPress={handleGoToOrders}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.goToOrdersButtonText}>
+                          {t('go_to_orders')}
+                        </Text>
+                        <ArrowNarrowRight width={18} height={18} style={styles.buttonIcon} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
                 
                 {filteredOrders.map((order) => (
                   order.type === 'vacancy' ? (
@@ -431,39 +464,6 @@ export const CustomerHomeScreen: React.FC = () => {
                     />
                   )
                 ))}
-              </View>
-            )}
-
-            {/* Response Notification Modal */}
-            {showResponseNotification && (
-              <View style={styles.responseNotificationContainer}>
-                <View style={styles.responseNotification}>
-                  <TouchableOpacity 
-                    style={styles.closeButton}
-                    onPress={handleCloseNotification}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.closeIcon}>✕</Text>
-                  </TouchableOpacity>
-                  
-                  <Text style={styles.notificationTitle}>
-                    {t('response_notification_title')}
-                  </Text>
-                  <Text style={styles.notificationMessage}>
-                    {t('response_notification_message')}
-                  </Text>
-                  
-                  <TouchableOpacity 
-                    style={styles.goToOrdersButton}
-                    onPress={handleGoToOrders}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.goToOrdersButtonText}>
-                      {t('go_to_orders')}
-                    </Text>
-                    <ArrowNarrowRight width={18} height={18} style={styles.buttonIcon} />
-                  </TouchableOpacity>
-                </View>
               </View>
             )}
           </ScrollView>
@@ -749,17 +749,17 @@ export const CustomerHomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   content: {
     flex: 1,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   contentHeader: {
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -767,7 +767,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
     gap: theme.spacing.sm,
   },
   searchContainer: {
@@ -783,7 +783,7 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: '#DAE3EC',
     height: 48,
   },
   filterButton: {
@@ -828,11 +828,11 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   scrollContent: {
     paddingBottom: theme.spacing.xxl,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -855,7 +855,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: theme.colors.white,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: '#DAE3EC',
   },
   sortButtonText: {
     fontSize: theme.fonts.sizes.sm,
@@ -889,7 +889,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: theme.spacing.lg,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   loadingText: {
     fontSize: theme.fonts.sizes.md,
@@ -905,7 +905,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: '#DAE3EC',
   },
   notificationIcon: {
     opacity: 0.7,
@@ -929,7 +929,6 @@ const styles = StyleSheet.create({
   },
   responseNotificationContainer: {
     paddingHorizontal: theme.spacing.lg,
-    marginTop: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
   },
   responseNotification: {

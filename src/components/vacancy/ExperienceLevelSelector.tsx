@@ -4,14 +4,18 @@ import { theme } from '../../constants';
 import { EXPERIENCE_LEVELS } from '../../constants/vacancyOptions';
 
 interface ExperienceLevelSelectorProps {
+  value?: string; // Добавляем поддержку value
   selectedLevel?: string;
   onSelect: (levelId: string) => void;
 }
 
 export const ExperienceLevelSelector: React.FC<ExperienceLevelSelectorProps> = ({
+  value,
   selectedLevel,
   onSelect,
 }) => {
+  const currentValue = value || selectedLevel; // Используем value если есть, иначе selectedLevel
+  
   return (
     <View style={styles.container}>
       {EXPERIENCE_LEVELS.map((level) => (
@@ -19,7 +23,7 @@ export const ExperienceLevelSelector: React.FC<ExperienceLevelSelectorProps> = (
           key={level.id}
           style={[
             styles.option,
-            selectedLevel === level.id && styles.optionSelected,
+            currentValue === level.id && styles.optionSelected,
           ]}
           onPress={() => onSelect(level.id)}
           activeOpacity={0.7}
@@ -27,12 +31,12 @@ export const ExperienceLevelSelector: React.FC<ExperienceLevelSelectorProps> = (
           <Text
             style={[
               styles.optionText,
-              selectedLevel === level.id && styles.optionTextSelected,
+              currentValue === level.id && styles.optionTextSelected,
             ]}
           >
             {level.label}
           </Text>
-          {selectedLevel === level.id && (
+          {currentValue === level.id && (
             <View style={styles.checkmark}>
               <Text style={styles.checkmarkText}>✓</Text>
             </View>

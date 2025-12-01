@@ -105,7 +105,7 @@ export const WorkerProfileScreen: React.FC = () => {
       // Сбрасываем настройки статус-бара при фокусе на экран
       StatusBar.setBarStyle('dark-content', true);
       if (Platform.OS === 'android') {
-        StatusBar.setBackgroundColor('#F4F5FC', true);
+        StatusBar.setBackgroundColor('#FFFFFF', true);
       }
 
       return () => {
@@ -806,11 +806,11 @@ export const WorkerProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   content: {
     flex: 1,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   contentHeader: {
     paddingHorizontal: theme.spacing.lg,
@@ -1029,11 +1029,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 12,
     marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   menuLeft: {
     flexDirection: 'row',
@@ -1111,11 +1108,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#FFB800',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 12,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
     minHeight: 120,
     overflow: 'hidden',
   },
@@ -1185,11 +1179,8 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
     minHeight: 90,
   },
   statValue: {
@@ -1212,11 +1203,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   resumeItem: {
     marginBottom: 16,

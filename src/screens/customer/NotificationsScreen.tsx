@@ -98,7 +98,7 @@ export const NotificationsScreen: React.FC = () => {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#F4F5FC" />
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
         <HeaderWithBack title={t('settings_and_notifications')} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -110,7 +110,7 @@ export const NotificationsScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F5FC" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <HeaderWithBack title={t('settings_and_notifications')} />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -176,7 +176,7 @@ export const NotificationsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
 
 
@@ -203,7 +203,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: isSmallScreen() ? 16 : 20,
     paddingVertical: isSmallScreen() ? 16 : 20,
-    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
 
   // Switch specific styles
@@ -237,7 +238,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F8E9',
     borderRadius: 12,
     padding: isSmallScreen() ? 12 : 16,
-    borderWidth: 0, borderColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   infoIcon: {
     fontSize: 16,
@@ -260,7 +262,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 0, // Динамически устанавливается через getFixedBottomStyle
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
     // Убираем тени для чистого вида

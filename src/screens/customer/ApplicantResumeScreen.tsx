@@ -474,11 +474,11 @@ export const ApplicantResumeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   container: {
     flex: 1,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   safeArea: {
     backgroundColor: '#FFFFFF',
@@ -528,7 +528,7 @@ const styles = StyleSheet.create({
   },
   viewShotContainer: {
     flex: 1,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   scrollView: {
     flex: 1,

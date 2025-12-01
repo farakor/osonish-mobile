@@ -166,11 +166,8 @@ const styles = StyleSheet.create({
     padding: 16,
     marginHorizontal: theme.spacing.lg, // Отступы от краёв экрана
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   header: {
     marginBottom: 12,

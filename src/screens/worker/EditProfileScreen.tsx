@@ -472,7 +472,7 @@ export const EditProfileScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F5FC" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
       <HeaderWithBack title={tWorker('edit_profile_title')} />
 
@@ -1105,7 +1105,7 @@ export const EditProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   loadingContainer: {
     flex: 1,
@@ -1188,12 +1188,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderColor: '#DAE3EC',
   },
 
 
@@ -1225,11 +1220,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   cardTitle: {
     fontSize: 18,
@@ -1267,11 +1259,6 @@ const styles = StyleSheet.create({
   inputFocused: {
     borderColor: '#679B00',
     backgroundColor: '#F0F8FF',
-    shadowColor: '#679B00',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
   },
   inputDisabled: {
     color: '#8E8E93',
@@ -1299,7 +1286,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 0, // Динамически устанавливается через getFixedBottomStyle
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
     // Убираем тени для чистого вида

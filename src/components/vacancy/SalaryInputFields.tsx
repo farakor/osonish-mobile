@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { theme } from '../../constants';
 import { SALARY_PERIODS, SALARY_TYPES } from '../../constants/vacancyOptions';
@@ -24,6 +24,10 @@ export const SalaryInputFields: React.FC<SalaryInputFieldsProps> = ({
   onChangeSalaryPeriod,
   onChangeSalaryType,
 }) => {
+  // Состояния фокуса
+  const [salaryFromFocused, setSalaryFromFocused] = useState(false);
+  const [salaryToFocused, setSalaryToFocused] = useState(false);
+  
   // Функция для форматирования числа с разделителями тысяч
   const formatSalary = (value: string): string => {
     // Удаляем все пробелы и нечисловые символы
@@ -53,24 +57,28 @@ export const SalaryInputFields: React.FC<SalaryInputFieldsProps> = ({
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>От</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, salaryFromFocused && styles.inputFocused]}
               value={salaryFrom}
               onChangeText={handleSalaryFromChange}
               keyboardType="numeric"
               placeholder="1 000 000"
               placeholderTextColor="#9CA3AF"
+              onFocus={() => setSalaryFromFocused(true)}
+              onBlur={() => setSalaryFromFocused(false)}
             />
           </View>
           <Text style={styles.separator}>—</Text>
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>До</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, salaryToFocused && styles.inputFocused]}
               value={salaryTo}
               onChangeText={handleSalaryToChange}
               keyboardType="numeric"
               placeholder="5 000 000"
               placeholderTextColor="#9CA3AF"
+              onFocus={() => setSalaryToFocused(true)}
+              onBlur={() => setSalaryToFocused(false)}
             />
           </View>
         </View>
@@ -167,12 +175,17 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: theme.colors.white,
     borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
     padding: 16,
     fontSize: 16,
     fontWeight: '500',
     color: theme.colors.text,
+  },
+  inputFocused: {
+    borderColor: theme.colors.primary,
+    borderWidth: 2,
+    backgroundColor: '#F0F7FF',
   },
   separator: {
     fontSize: 20,
@@ -189,8 +202,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     backgroundColor: theme.colors.white,
     borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   periodOptionSelected: {
     borderColor: theme.colors.primary,
@@ -215,8 +228,8 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: theme.colors.white,
     borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   typeOptionSelected: {
     borderColor: theme.colors.primary,

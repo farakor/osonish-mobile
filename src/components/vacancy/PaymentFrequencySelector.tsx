@@ -4,14 +4,18 @@ import { theme } from '../../constants';
 import { PAYMENT_FREQUENCIES } from '../../constants/vacancyOptions';
 
 interface PaymentFrequencySelectorProps {
+  value?: string; // Добавляем поддержку value
   selectedFrequency?: string;
   onSelect: (frequencyId: string) => void;
 }
 
 export const PaymentFrequencySelector: React.FC<PaymentFrequencySelectorProps> = ({
+  value,
   selectedFrequency,
   onSelect,
 }) => {
+  const currentValue = value || selectedFrequency; // Используем value если есть, иначе selectedFrequency
+  
   return (
     <View style={styles.container}>
       {PAYMENT_FREQUENCIES.map((frequency) => (
@@ -19,7 +23,7 @@ export const PaymentFrequencySelector: React.FC<PaymentFrequencySelectorProps> =
           key={frequency.id}
           style={[
             styles.option,
-            selectedFrequency === frequency.id && styles.optionSelected,
+            currentValue === frequency.id && styles.optionSelected,
           ]}
           onPress={() => onSelect(frequency.id)}
           activeOpacity={0.7}
@@ -27,12 +31,12 @@ export const PaymentFrequencySelector: React.FC<PaymentFrequencySelectorProps> =
           <Text
             style={[
               styles.optionText,
-              selectedFrequency === frequency.id && styles.optionTextSelected,
+              currentValue === frequency.id && styles.optionTextSelected,
             ]}
           >
             {frequency.label}
           </Text>
-          {selectedFrequency === frequency.id && (
+          {currentValue === frequency.id && (
             <View style={styles.checkmark}>
               <Text style={styles.checkmarkText}>✓</Text>
             </View>

@@ -4,14 +4,18 @@ import { theme } from '../../constants';
 import { WORK_FORMATS } from '../../constants/vacancyOptions';
 
 interface WorkFormatSelectorProps {
+  value?: string; // Добавляем поддержку value
   selectedFormat?: string;
   onSelect: (formatId: string) => void;
 }
 
 export const WorkFormatSelector: React.FC<WorkFormatSelectorProps> = ({
+  value,
   selectedFormat,
   onSelect,
 }) => {
+  const currentValue = value || selectedFormat; // Используем value если есть, иначе selectedFormat
+  
   return (
     <View style={styles.container}>
       {WORK_FORMATS.map((format) => (
@@ -19,7 +23,7 @@ export const WorkFormatSelector: React.FC<WorkFormatSelectorProps> = ({
           key={format.id}
           style={[
             styles.option,
-            selectedFormat === format.id && styles.optionSelected,
+            currentValue === format.id && styles.optionSelected,
           ]}
           onPress={() => onSelect(format.id)}
           activeOpacity={0.7}
@@ -27,12 +31,12 @@ export const WorkFormatSelector: React.FC<WorkFormatSelectorProps> = ({
           <Text
             style={[
               styles.optionText,
-              selectedFormat === format.id && styles.optionTextSelected,
+              currentValue === format.id && styles.optionTextSelected,
             ]}
           >
             {format.label}
           </Text>
-          {selectedFormat === format.id && (
+          {currentValue === format.id && (
             <View style={styles.checkmark}>
               <Text style={styles.checkmarkText}>✓</Text>
             </View>

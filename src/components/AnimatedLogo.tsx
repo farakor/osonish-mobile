@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   svg: {
     alignSelf: 'center',

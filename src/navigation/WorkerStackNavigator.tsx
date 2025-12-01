@@ -26,7 +26,7 @@ export function WorkerStackNavigator() {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: '#F4F5FC' }, // Светло-синий фон
+        contentStyle: { backgroundColor: '#FFFFFF' }, // Светло-синий фон
       }}
     >
       <Stack.Screen

@@ -523,11 +523,11 @@ export const WorkerJobsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   content: {
     flex: 1,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
     gap: theme.spacing.sm,
   },
   searchContainer: {
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: '#DAE3EC',
     height: 48,
   },
   filterButton: {
@@ -579,7 +579,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: theme.spacing.xxl,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -602,7 +602,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: theme.colors.white,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: '#DAE3EC',
   },
   sortButtonText: {
     fontSize: theme.fonts.sizes.sm,
@@ -633,7 +633,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: theme.spacing.lg,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   loadingText: {
     fontSize: theme.fonts.sizes.md,
@@ -649,7 +649,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: '#DAE3EC',
   },
   notificationIcon: {
     opacity: 0.7,

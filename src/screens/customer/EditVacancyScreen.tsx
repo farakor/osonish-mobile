@@ -17,7 +17,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { CustomerStackParamList } from '../../types/navigation';
 import { HeaderWithBack } from '../../components/common';
 import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
-import { PARENT_CATEGORIES, getSubcategoriesByParentId, getTranslatedSpecializationName } from '../../constants/specializations';
+import { PARENT_CATEGORIES, getSubcategoriesByParentId, getTranslatedSpecializationName, SPECIALIZATIONS } from '../../constants/specializations';
 import { CategoryIcon } from '../../components/common/CategoryIcon';
 import { useTranslation } from 'react-i18next';
 import {
@@ -96,6 +96,13 @@ export function EditVacancyScreen() {
   const [selectedParentCategory, setSelectedParentCategory] = useState<string | null>(null);
   const [showSubcategories, setShowSubcategories] = useState(false);
   const [expandedSections, setExpandedSections] = useState<{ [key: string]: boolean }>({});
+  const [isSpecializationDropdownOpen, setIsSpecializationDropdownOpen] = useState(false);
+  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
+  
+  // Focus states для текстовых полей
+  const [jobTitleFocused, setJobTitleFocused] = useState(false);
+  const [descriptionFocused, setDescriptionFocused] = useState(false);
+  const [locationFocused, setLocationFocused] = useState(false);
 
   // Загружаем данные вакансии при монтировании компонента
   useEffect(() => {
@@ -387,109 +394,102 @@ export function EditVacancyScreen() {
             <Text style={styles.subtitle}>Внесите необходимые изменения</Text>
           </View>
 
-          {/* Название вакансии */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Название вакансии *</Text>
-            <TextInput
-              style={styles.input}
-              value={jobTitle}
-              onChangeText={setJobTitle}
-              placeholder="Например: Frontend-разработчик"
-              placeholderTextColor={theme.colors.text.secondary}
-            />
-          </View>
+          {/* ОСНОВНАЯ ИНФОРМАЦИЯ */}
+          <View style={styles.sectionGroup}>
+            <View style={styles.sectionGroupHeader}>
+              <Text style={styles.sectionGroupTitle}>📋 Основная информация</Text>
+            </View>
+
+            {/* Название вакансии */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Название вакансии *</Text>
+              <TextInput
+                style={[styles.input, jobTitleFocused && styles.inputFocused]}
+                value={jobTitle}
+                onChangeText={setJobTitle}
+                placeholder="Например: Frontend-разработчик"
+                placeholderTextColor={theme.colors.text.secondary}
+                onFocus={() => setJobTitleFocused(true)}
+                onBlur={() => setJobTitleFocused(false)}
+              />
+            </View>
 
           {/* Категория (Специализация) */}
           <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Специализация *</Text>
             <TouchableOpacity
-              style={styles.sectionHeader}
-              onPress={() => toggleSection('category')}
+              style={styles.dropdownButton}
+              onPress={() => setIsSpecializationDropdownOpen(!isSpecializationDropdownOpen)}
               activeOpacity={0.7}
             >
-              <Text style={styles.sectionTitle}>Специализация *</Text>
-              {expandedSections['category'] ? (
-                <ChevronUpIcon width={20} height={20} color={theme.colors.text.primary} />
+              <View style={styles.dropdownButtonContent}>
+                {specializationId ? (
+                  <>
+                    {(() => {
+                      const spec = SPECIALIZATIONS.find(s => s.id === specializationId);
+                      return spec ? (
+                        <>
+                          <CategoryIcon
+                            icon={spec.icon}
+                            iconComponent={spec.iconComponent}
+                            size={20}
+                            style={styles.dropdownIcon}
+                          />
+                          <Text style={styles.dropdownButtonText}>
+                            {getTranslatedSpecializationName(specializationId, t)}
+                          </Text>
+                        </>
+                      ) : (
+                        <Text style={styles.dropdownButtonPlaceholder}>Выберите специализацию</Text>
+                      );
+                    })()}
+                  </>
+                ) : (
+                  <Text style={styles.dropdownButtonPlaceholder}>Выберите специализацию</Text>
+                )}
+              </View>
+              {isSpecializationDropdownOpen ? (
+                <ChevronUpIcon width={20} height={20} color={theme.colors.text.secondary} />
               ) : (
-                <ChevronDownIcon width={20} height={20} color={theme.colors.text.primary} />
+                <ChevronDownIcon width={20} height={20} color={theme.colors.text.secondary} />
               )}
             </TouchableOpacity>
 
-            {expandedSections['category'] && (
-              <>
-                {!showSubcategories ? (
-                  <View style={styles.categoriesGrid}>
-                    {PARENT_CATEGORIES.map((cat) => (
-                      <TouchableOpacity
-                        key={cat.id}
-                        style={styles.categoryCard}
-                        onPress={() => {
-                          setSelectedParentCategory(cat.id);
-                          setShowSubcategories(true);
-                          setSpecializationId('');
-                        }}
-                        activeOpacity={0.7}
-                      >
-                        <CategoryIcon 
-                          icon={cat.icon} 
-                          iconComponent={cat.iconComponent}
-                          size={28} 
-                        />
-                        <Text style={styles.categoryLabel}>{getTranslatedSpecializationName(cat.id, t)}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                ) : (
-                  <View>
-                    <TouchableOpacity
-                      style={styles.backButton}
-                      onPress={() => {
-                        setShowSubcategories(false);
-                        setSelectedParentCategory(null);
-                      }}
-                      activeOpacity={0.7}
+            {isSpecializationDropdownOpen && (
+              <ScrollView style={styles.dropdownList} nestedScrollEnabled={true}>
+                {SPECIALIZATIONS.filter(spec => !spec.isParent).map((spec) => (
+                  <TouchableOpacity
+                    key={spec.id}
+                    style={[
+                      styles.dropdownItem,
+                      specializationId === spec.id && styles.dropdownItemSelected,
+                    ]}
+                    onPress={() => {
+                      setSpecializationId(spec.id);
+                      setIsSpecializationDropdownOpen(false);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <CategoryIcon
+                      icon={spec.icon}
+                      iconComponent={spec.iconComponent}
+                      size={20}
+                      style={styles.dropdownItemIcon}
+                    />
+                    <Text
+                      style={[
+                        styles.dropdownItemText,
+                        specializationId === spec.id && styles.dropdownItemTextSelected,
+                      ]}
                     >
-                      <Text style={styles.backButtonText}>← Назад к категориям</Text>
-                    </TouchableOpacity>
-
-                    <View style={styles.subcategoriesList}>
-                      {selectedParentCategory &&
-                        getSubcategoriesByParentId(selectedParentCategory).map((subcat) => (
-                          <TouchableOpacity
-                            key={subcat.id}
-                            style={[
-                              styles.subcategoryItem,
-                              specializationId === subcat.id && styles.subcategoryItemSelected,
-                            ]}
-                            onPress={() => setSpecializationId(subcat.id)}
-                            activeOpacity={0.7}
-                          >
-                            <View style={styles.subcategoryContent}>
-                              <CategoryIcon
-                                icon={subcat.icon}
-                                iconComponent={subcat.iconComponent}
-                                size={20}
-                                style={styles.subcategoryIcon}
-                              />
-                              <Text
-                                style={[
-                                  styles.subcategoryLabel,
-                                  specializationId === subcat.id && styles.subcategoryLabelSelected,
-                                ]}
-                              >
-                                {getTranslatedSpecializationName(subcat.id, t)}
-                              </Text>
-                            </View>
-                            {specializationId === subcat.id && (
-                              <View style={styles.checkmark}>
-                                <Text style={styles.checkmarkText}>✓</Text>
-                              </View>
-                            )}
-                          </TouchableOpacity>
-                        ))}
-                    </View>
-                  </View>
-                )}
-              </>
+                      {getTranslatedSpecializationName(spec.id, t)}
+                    </Text>
+                    {specializationId === spec.id && (
+                      <Text style={styles.dropdownItemCheck}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             )}
           </View>
 
@@ -497,7 +497,7 @@ export function EditVacancyScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Описание вакансии *</Text>
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[styles.input, styles.textArea, descriptionFocused && styles.inputFocused]}
               value={description}
               onChangeText={setDescription}
               placeholder="Опишите требования и обязанности..."
@@ -505,53 +505,79 @@ export function EditVacancyScreen() {
               multiline
               numberOfLines={6}
               textAlignVertical="top"
+              onFocus={() => setDescriptionFocused(true)}
+              onBlur={() => setDescriptionFocused(false)}
             />
+          </View>
+        </View>
+
+        {/* МЕСТОПОЛОЖЕНИЕ */}
+        <View style={styles.sectionGroup}>
+          <View style={styles.sectionGroupHeader}>
+            <Text style={styles.sectionGroupTitle}>📍 Местоположение</Text>
           </View>
 
           {/* Город */}
           <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Город *</Text>
             <TouchableOpacity
-              style={styles.sectionHeader}
-              onPress={() => toggleSection('city')}
+              style={styles.dropdownButton}
+              onPress={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
               activeOpacity={0.7}
             >
-              <Text style={styles.sectionTitle}>Город *</Text>
-              {expandedSections['city'] ? (
-                <ChevronUpIcon width={20} height={20} color={theme.colors.text.primary} />
+              <View style={styles.dropdownButtonContent}>
+                {city ? (
+                  <Text style={styles.dropdownButtonText}>
+                    {allCities.find(c => c.id === city)?.name || 'Выберите город'}
+                  </Text>
+                ) : (
+                  <Text style={styles.dropdownButtonPlaceholder}>Выберите город</Text>
+                )}
+              </View>
+              {isCityDropdownOpen ? (
+                <ChevronUpIcon width={20} height={20} color={theme.colors.text.secondary} />
               ) : (
-                <ChevronDownIcon width={20} height={20} color={theme.colors.text.primary} />
+                <ChevronDownIcon width={20} height={20} color={theme.colors.text.secondary} />
               )}
             </TouchableOpacity>
 
-            {expandedSections['city'] && (
-              <View style={styles.citiesList}>
+            {isCityDropdownOpen && (
+              <ScrollView style={styles.dropdownList} nestedScrollEnabled={true}>
                 {allCities.map((cityItem) => (
                   <TouchableOpacity
                     key={cityItem.id}
                     style={[
-                      styles.cityItem,
-                      city === cityItem.id && styles.cityItemSelected,
+                      styles.dropdownItem,
+                      city === cityItem.id && styles.dropdownItemSelected,
                     ]}
-                    onPress={() => setCity(cityItem.id)}
+                    onPress={() => {
+                      setCity(cityItem.id);
+                      setIsCityDropdownOpen(false);
+                    }}
                     activeOpacity={0.7}
                   >
                     <Text
                       style={[
-                        styles.cityLabel,
-                        city === cityItem.id && styles.cityLabelSelected,
+                        styles.dropdownItemText,
+                        city === cityItem.id && styles.dropdownItemTextSelected,
                       ]}
                     >
                       {cityItem.name}
                     </Text>
                     {city === cityItem.id && (
-                      <View style={styles.checkmark}>
-                        <Text style={styles.checkmarkText}>✓</Text>
-                      </View>
+                      <Text style={styles.dropdownItemCheck}>✓</Text>
                     )}
                   </TouchableOpacity>
                 ))}
-              </View>
+              </ScrollView>
             )}
+          </View>
+        </View>
+
+        {/* ТРЕБОВАНИЯ К КАНДИДАТУ */}
+        <View style={styles.sectionGroup}>
+          <View style={styles.sectionGroupHeader}>
+            <Text style={styles.sectionGroupTitle}>👤 Требования к кандидату</Text>
           </View>
 
           {/* Требуемый опыт */}
@@ -561,6 +587,25 @@ export function EditVacancyScreen() {
               value={experienceLevel}
               onSelect={setExperienceLevel}
             />
+          </View>
+
+          {/* Навыки */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Требуемые навыки</Text>
+            <SkillsMultiSelect selectedSkills={skills} onSkillsChange={setSkills} />
+          </View>
+
+          {/* Языки */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Требуемые языки</Text>
+            <LanguagesMultiSelect selectedLanguages={languages} onLanguagesChange={setLanguages} />
+          </View>
+        </View>
+
+        {/* УСЛОВИЯ РАБОТЫ */}
+        <View style={styles.sectionGroup}>
+          <View style={styles.sectionGroupHeader}>
+            <Text style={styles.sectionGroupTitle}>💼 Условия работы</Text>
           </View>
 
           {/* Тип занятости */}
@@ -588,11 +633,13 @@ export function EditVacancyScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Адрес *</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, locationFocused && styles.inputFocused]}
               value={location}
               onChangeText={setLocation}
               placeholder="Укажите адрес офиса"
               placeholderTextColor={theme.colors.text.secondary}
+              onFocus={() => setLocationFocused(true)}
+              onBlur={() => setLocationFocused(false)}
             />
             <TouchableOpacity
               style={[styles.locationButton, isGettingLocation && styles.locationButtonDisabled]}
@@ -605,10 +652,16 @@ export function EditVacancyScreen() {
               </Text>
             </TouchableOpacity>
           </View>
+        </View>
+
+        {/* ЗАРПЛАТА */}
+        <View style={styles.sectionGroup}>
+          <View style={styles.sectionGroupHeader}>
+            <Text style={styles.sectionGroupTitle}>💰 Зарплата</Text>
+          </View>
 
           {/* Зарплата */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Зарплата</Text>
             <SalaryInputFields
               salaryFrom={salaryFrom}
               salaryTo={salaryTo}
@@ -629,18 +682,7 @@ export function EditVacancyScreen() {
               onSelect={setPaymentFrequency}
             />
           </View>
-
-          {/* Навыки */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Требуемые навыки</Text>
-            <SkillsMultiSelect selectedSkills={skills} onSkillsChange={setSkills} />
-          </View>
-
-          {/* Языки */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Требуемые языки</Text>
-            <LanguagesMultiSelect selectedLanguages={languages} onLanguagesChange={setLanguages} />
-          </View>
+        </View>
         </View>
       </ScrollView>
 
@@ -713,7 +755,26 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   section: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: 20,
+  },
+  sectionGroup: {
+    marginBottom: 24,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
+  },
+  sectionGroupHeader: {
+    marginBottom: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8EEF4',
+  },
+  sectionGroupTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -735,7 +796,12 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#DAE3EC',
+  },
+  inputFocused: {
+    borderColor: theme.colors.primary,
+    borderWidth: 2,
+    backgroundColor: '#F0F7FF',
   },
   textArea: {
     height: 120,
@@ -866,6 +932,70 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontSize: theme.fonts.sizes.sm,
     fontWeight: theme.fonts.weights.medium,
+  },
+  dropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
+  },
+  dropdownButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  dropdownIcon: {
+    marginRight: 8,
+  },
+  dropdownButtonText: {
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.text.primary,
+    fontWeight: '500',
+  },
+  dropdownButtonPlaceholder: {
+    fontSize: theme.fonts.sizes.md,
+    color: theme.colors.text.secondary,
+  },
+  dropdownList: {
+    maxHeight: 300,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  dropdownItemSelected: {
+    backgroundColor: theme.colors.primary + '10',
+  },
+  dropdownItemIcon: {
+    marginRight: 12,
+  },
+  dropdownItemText: {
+    flex: 1,
+    fontSize: 14,
+    color: theme.colors.text.primary,
+  },
+  dropdownItemTextSelected: {
+    color: theme.colors.primary,
+    fontWeight: '600',
+  },
+  dropdownItemCheck: {
+    fontSize: 16,
+    color: theme.colors.primary,
+    fontWeight: 'bold',
   },
   bottomSection: {
     position: 'absolute',

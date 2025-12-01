@@ -51,7 +51,7 @@ export const SupportScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={getSafeAreaViewWithWhiteBackground(insets)}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F5FC" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
       <HeaderWithBack title={tWorker('support_title')} />
 
@@ -175,7 +175,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 16,
-    shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
 
   // Support specific styles

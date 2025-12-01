@@ -4,14 +4,18 @@ import { theme } from '../../constants';
 import { WORK_SCHEDULES } from '../../constants/vacancyOptions';
 
 interface WorkScheduleSelectorProps {
+  value?: string; // Добавляем поддержку value
   selectedSchedule?: string;
   onSelect: (scheduleId: string) => void;
 }
 
 export const WorkScheduleSelector: React.FC<WorkScheduleSelectorProps> = ({
+  value,
   selectedSchedule,
   onSelect,
 }) => {
+  const currentValue = value || selectedSchedule; // Используем value если есть, иначе selectedSchedule
+  
   return (
     <View style={styles.container}>
       {WORK_SCHEDULES.map((schedule) => (
@@ -19,7 +23,7 @@ export const WorkScheduleSelector: React.FC<WorkScheduleSelectorProps> = ({
           key={schedule.id}
           style={[
             styles.option,
-            selectedSchedule === schedule.id && styles.optionSelected,
+            currentValue === schedule.id && styles.optionSelected,
           ]}
           onPress={() => onSelect(schedule.id)}
           activeOpacity={0.7}
@@ -27,12 +31,12 @@ export const WorkScheduleSelector: React.FC<WorkScheduleSelectorProps> = ({
           <Text
             style={[
               styles.optionText,
-              selectedSchedule === schedule.id && styles.optionTextSelected,
+              currentValue === schedule.id && styles.optionTextSelected,
             ]}
           >
             {schedule.label}
           </Text>
-          {selectedSchedule === schedule.id && (
+          {currentValue === schedule.id && (
             <View style={styles.checkmark}>
               <Text style={styles.checkmarkText}>✓</Text>
             </View>

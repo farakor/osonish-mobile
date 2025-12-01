@@ -4,14 +4,18 @@ import { theme } from '../../constants';
 import { EMPLOYMENT_TYPES } from '../../constants/vacancyOptions';
 
 interface EmploymentTypeSelectorProps {
+  value?: string; // Добавляем поддержку value
   selectedType?: string;
   onSelect: (typeId: string) => void;
 }
 
 export const EmploymentTypeSelector: React.FC<EmploymentTypeSelectorProps> = ({
+  value,
   selectedType,
   onSelect,
 }) => {
+  const currentValue = value || selectedType; // Используем value если есть, иначе selectedType
+  
   return (
     <View style={styles.container}>
       {EMPLOYMENT_TYPES.map((type) => (
@@ -19,7 +23,7 @@ export const EmploymentTypeSelector: React.FC<EmploymentTypeSelectorProps> = ({
           key={type.id}
           style={[
             styles.option,
-            selectedType === type.id && styles.optionSelected,
+            currentValue === type.id && styles.optionSelected,
           ]}
           onPress={() => onSelect(type.id)}
           activeOpacity={0.7}
@@ -27,12 +31,12 @@ export const EmploymentTypeSelector: React.FC<EmploymentTypeSelectorProps> = ({
           <Text
             style={[
               styles.optionText,
-              selectedType === type.id && styles.optionTextSelected,
+              currentValue === type.id && styles.optionTextSelected,
             ]}
           >
             {type.label}
           </Text>
-          {selectedType === type.id && (
+          {currentValue === type.id && (
             <View style={styles.checkmark}>
               <Text style={styles.checkmarkText}>✓</Text>
             </View>

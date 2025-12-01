@@ -237,11 +237,15 @@ export const JobDetailsScreen: React.FC = () => {
   const [userLocation, setUserLocation] = useState<LocationCoords | null>(null);
   const [mapCoords, setMapCoords] = useState<LocationCoords | null>(null);
   const [isDateBusy, setIsDateBusy] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Анимация для sticky header
   const scrollY = useRef(new Animated.Value(0)).current;
   const HEADER_HEIGHT = 100;
   const STATUS_BAR_HEIGHT = StatusBar.currentHeight || 44; // 44 для iOS, currentHeight для Android
+
+  // Проверка, является ли текущий пользователь владельцем заказа
+  const isMyOrder = order?.customerId === currentUserId;
 
   // Загружаем заказ по ID
   useEffect(() => {
@@ -274,6 +278,8 @@ export const JobDetailsScreen: React.FC = () => {
         // Проверяем статус заявки пользователя (только для авторизованных)
         const authState = authService.getAuthState();
         if (authState.isAuthenticated && authState.user) {
+          setCurrentUserId(authState.user.id);
+          
           const applicationData = await orderService.getUserApplicationStatus(orderId);
           setHasApplied(applicationData.hasApplied);
           setApplicationStatus(applicationData.status || null);
@@ -286,6 +292,7 @@ export const JobDetailsScreen: React.FC = () => {
           }
         } else {
           // Для неавторизованных пользователей
+          setCurrentUserId(null);
           setHasApplied(false);
           setApplicationStatus(null);
           setIsDateBusy(false);
@@ -794,45 +801,47 @@ export const JobDetailsScreen: React.FC = () => {
           </View>
         </Animated.ScrollView>
 
-        {/* Fixed Bottom Section */}
-        <View style={[styles.fixedBottomSection, {
-          paddingTop: 16,
-          paddingBottom: Platform.OS === 'android' ? 16 : Math.max(insets.bottom, 16)
-        }]}>
-          {order.status === 'in_progress' && customer?.phone ? (
-            <TouchableOpacity
-              style={styles.callButtonAccepted}
-              onPress={handleCallCustomer}
-            >
-              <PhoneIcon width={24} height={24} />
-              <View style={styles.callButtonTextContainer}>
-                <Text style={styles.callButtonAcceptedText}>{tWorker('application_accepted')}</Text>
-                <Text style={styles.callButtonSubText}>{tWorker('call_customer')}</Text>
-              </View>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={[
-                styles.applyButton,
-                (hasApplied || isDateBusy) && styles.appliedButton
-              ]}
-              onPress={(hasApplied || isDateBusy) ? undefined : handleApplyToJob}
-              disabled={hasApplied || isDateBusy}
-            >
-              <Text style={[
-                styles.applyButtonText,
-                (hasApplied || isDateBusy) && styles.appliedButtonText
-              ]}>
-                {hasApplied
-                  ? getApplicationStatusText(applicationStatus)
-                  : isDateBusy
-                    ? tWorker('date_busy')
-                    : tWorker('apply_for_job')
-                }
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        {/* Fixed Bottom Section - не показываем, если это мой заказ */}
+        {!isMyOrder && (
+          <View style={[styles.fixedBottomSection, {
+            paddingTop: 16,
+            paddingBottom: Platform.OS === 'android' ? 16 : Math.max(insets.bottom, 16)
+          }]}>
+            {order.status === 'in_progress' && customer?.phone ? (
+              <TouchableOpacity
+                style={styles.callButtonAccepted}
+                onPress={handleCallCustomer}
+              >
+                <PhoneIcon width={24} height={24} />
+                <View style={styles.callButtonTextContainer}>
+                  <Text style={styles.callButtonAcceptedText}>{tWorker('application_accepted')}</Text>
+                  <Text style={styles.callButtonSubText}>{tWorker('call_customer')}</Text>
+                </View>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[
+                  styles.applyButton,
+                  (hasApplied || isDateBusy) && styles.appliedButton
+                ]}
+                onPress={(hasApplied || isDateBusy) ? undefined : handleApplyToJob}
+                disabled={hasApplied || isDateBusy}
+              >
+                <Text style={[
+                  styles.applyButtonText,
+                  (hasApplied || isDateBusy) && styles.appliedButtonText
+                ]}>
+                  {hasApplied
+                    ? getApplicationStatusText(applicationStatus)
+                    : isDateBusy
+                      ? tWorker('date_busy')
+                      : tWorker('apply_for_job')
+                  }
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
       </View>
 
       {/* Модалка с номером телефона заказчика */}
@@ -877,7 +886,7 @@ export const JobDetailsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   loadingContainer: {
     flex: 1,
@@ -930,11 +939,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   avatarContainer: {
     marginRight: theme.spacing.md,
@@ -987,11 +993,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
     borderRadius: 16,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
 
   // Gallery Section
@@ -1089,11 +1092,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
     borderRadius: 16,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   infoRow: {
     flexDirection: 'row',
@@ -1142,11 +1142,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
     borderRadius: 16,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   detailsTitle: {
     fontSize: 18,
@@ -1321,11 +1318,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 16,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   amenitiesContainer: {
     gap: theme.spacing.md,

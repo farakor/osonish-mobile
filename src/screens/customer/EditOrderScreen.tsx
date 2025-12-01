@@ -79,6 +79,9 @@ export const EditOrderScreen: React.FC = () => {
   const [descriptionFocused, setDescriptionFocused] = useState(false);
   const [locationFocused, setLocationFocused] = useState(false);
   const [budgetFocused, setBudgetFocused] = useState(false);
+  
+  // Состояние для раскрытия родительской категории "Ремонт и строительство"
+  const [expandedParentCategories, setExpandedParentCategories] = useState<string[]>([]);
 
   // Обработчик изменения бюджета с форматированием
   const handleBudgetChange = (text: string) => {
@@ -507,23 +510,29 @@ export const EditOrderScreen: React.FC = () => {
             <Text style={styles.subtitle}>{t('edit_subtitle')}</Text>
           </View>
 
-          {/* Название заказа */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('order_title_section')}</Text>
-            <TextInput
-              style={getInputStyle(titleFocused)}
-              value={title}
-              onChangeText={setTitle}
-              placeholder={t('title_placeholder')}
-              placeholderTextColor={theme.colors.text.secondary}
-              maxLength={theme.orderValidation.title.maxLength}
-              onFocus={() => setTitleFocused(true)}
-              onBlur={() => setTitleFocused(false)}
-            />
-            <Text style={styles.characterCount}>
-              {title.length}/{theme.orderValidation.title.maxLength}
-            </Text>
-          </View>
+          {/* ОСНОВНАЯ ИНФОРМАЦИЯ */}
+          <View style={styles.sectionGroup}>
+            <View style={styles.sectionGroupHeader}>
+              <Text style={styles.sectionGroupTitle}>📋 Основная информация</Text>
+            </View>
+
+            {/* Название заказа */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{t('order_title_section')}</Text>
+              <TextInput
+                style={getInputStyle(titleFocused)}
+                value={title}
+                onChangeText={setTitle}
+                placeholder={t('title_placeholder')}
+                placeholderTextColor={theme.colors.text.secondary}
+                maxLength={theme.orderValidation.title.maxLength}
+                onFocus={() => setTitleFocused(true)}
+                onBlur={() => setTitleFocused(false)}
+              />
+              <Text style={styles.characterCount}>
+                {title.length}/{theme.orderValidation.title.maxLength}
+              </Text>
+            </View>
 
           {/* Описание */}
           <View style={styles.section}>
@@ -550,46 +559,85 @@ export const EditOrderScreen: React.FC = () => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t('category_section')}</Text>
             <View style={styles.categoriesList}>
-              {categories.map((cat) => (
-                <TouchableOpacity
-                  key={cat.key}
-                  style={[
-                    styles.categoryListItem,
-                    category === cat.key && styles.categoryListItemSelected,
-                  ]}
-                  onPress={() => setCategory(cat.key)}
-                  activeOpacity={0.7}
-                >
-                  <View style={[
-                    styles.categoryIconContainer,
-                    category === cat.key && styles.categoryIconContainerSelected,
-                  ]}>
-                    <LottieView
-                      source={getCategoryAnimation(cat.key)}
-                      style={styles.categoryLottieIcon}
-                      autoPlay={category === cat.key}
-                      loop={true}
-                      speed={0.8}
-                    />
-                  </View>
-                  <View style={styles.categoryContent}>
-                    <Text
-                      style={[
-                        styles.categoryLabel,
-                        category === cat.key && styles.categoryLabelSelected,
-                      ]}
-                    >
-                      {cat.label}
-                    </Text>
-                  </View>
-                  {category === cat.key && (
-                    <View style={styles.categoryCheckmark}>
-                      <Text style={styles.checkmarkText}>✓</Text>
+              {categories.map((cat) => {
+                // Не отображаем подкатегории, если родительская категория не раскрыта
+                if (cat.parentId && !expandedParentCategories.includes(cat.parentId)) {
+                  return null;
+                }
+                
+                const IconComponent = cat.iconComponent;
+                const isExpanded = expandedParentCategories.includes(cat.key);
+                
+                return (
+                  <TouchableOpacity
+                    key={cat.key}
+                    style={[
+                      styles.categoryListItem,
+                      category === cat.key && styles.categoryListItemSelected,
+                      cat.parentId && styles.categoryListItemIndented, // Отступ для подкатегорий
+                    ]}
+                    onPress={() => {
+                      if (cat.isParent) {
+                        // Если это родительская категория, раскрываем/скрываем подкатегории
+                        setExpandedParentCategories(prev => 
+                          prev.includes(cat.key) 
+                            ? prev.filter(id => id !== cat.key)
+                            : [...prev, cat.key]
+                        );
+                      } else {
+                        // Если это обычная или подкатегория, выбираем её
+                        setCategory(cat.key);
+                      }
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[
+                      styles.categoryIconContainer,
+                      category === cat.key && styles.categoryIconContainerSelected,
+                    ]}>
+                      {IconComponent ? (
+                        <IconComponent 
+                          width={24} 
+                          height={24} 
+                          fill={category === cat.key ? theme.colors.primary : theme.colors.text.secondary}
+                        />
+                      ) : (
+                        <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
+                      )}
                     </View>
-                  )}
-                </TouchableOpacity>
-              ))}
+                    <View style={styles.categoryContent}>
+                      <Text
+                        style={[
+                          styles.categoryLabel,
+                          category === cat.key && styles.categoryLabelSelected,
+                        ]}
+                      >
+                        {cat.label}
+                      </Text>
+                    </View>
+                    {cat.isParent && (
+                      <View style={styles.categoryExpandIcon}>
+                        <Text style={styles.expandIconText}>
+                          {isExpanded ? '▲' : '▼'}
+                        </Text>
+                      </View>
+                    )}
+                    {!cat.isParent && category === cat.key && (
+                      <View style={styles.categoryCheckmark}>
+                        <Text style={styles.checkmarkText}>✓</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
+          </View>
+        </View>
+
+        {/* МЕСТОПОЛОЖЕНИЕ И УСЛОВИЯ */}
+        <View style={styles.sectionGroup}>
+          <View style={styles.sectionGroupHeader}>
+            <Text style={styles.sectionGroupTitle}>📍 Местоположение и условия</Text>
           </View>
 
           {/* Адрес */}
@@ -676,10 +724,16 @@ export const EditOrderScreen: React.FC = () => {
               Дату выполнения заказа нельзя изменить
             </Text>
           </View>
+        </View>
+
+        {/* МЕДИА ФАЙЛЫ */}
+        <View style={styles.sectionGroup}>
+          <View style={styles.sectionGroupHeader}>
+            <Text style={styles.sectionGroupTitle}>📸 Медиа файлы</Text>
+          </View>
 
           {/* Медиа файлы */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('media_section')}</Text>
             <Text style={styles.sectionSubtitle}>
               {t('media_section_subtitle')}
             </Text>
@@ -725,6 +779,7 @@ export const EditOrderScreen: React.FC = () => {
               <Text style={styles.errorText}>{mediaError}</Text>
             )}
           </View>
+        </View>
         </View>
       </ScrollView>
 
@@ -817,7 +872,26 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   section: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: 20,
+  },
+  sectionGroup: {
+    marginBottom: 24,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
+  },
+  sectionGroupHeader: {
+    marginBottom: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8EEF4',
+  },
+  sectionGroupTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: theme.colors.text.primary,
   },
   sectionTitle: {
     fontSize: 16,
@@ -838,7 +912,7 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#DAE3EC',
     shadowColor: 'transparent',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0,
@@ -848,6 +922,7 @@ const styles = StyleSheet.create({
   inputFocused: {
     borderColor: theme.colors.primary,
     borderWidth: 2,
+    backgroundColor: '#F0F7FF',
     shadowColor: 'transparent',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0,
@@ -870,6 +945,10 @@ const styles = StyleSheet.create({
     minHeight: 60,
     borderWidth: 2,
     borderColor: 'transparent',
+  },
+  categoryListItemIndented: {
+    marginLeft: theme.spacing.lg,
+    backgroundColor: theme.colors.background,
   },
   categoryListItemSelected: {
     backgroundColor: theme.colors.primary + '15',
@@ -911,6 +990,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: theme.spacing.xs,
+  },
+  categoryExpandIcon: {
+    marginLeft: 'auto',
+    paddingHorizontal: theme.spacing.sm,
+  },
+  expandIconText: {
+    color: theme.colors.text.secondary,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  categoryEmoji: {
+    fontSize: 20,
   },
   checkmarkText: {
     color: theme.colors.white,

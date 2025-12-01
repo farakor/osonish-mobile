@@ -36,8 +36,8 @@ export function AppNavigator() {
         dark: false,
         colors: {
           primary: '#679B00',
-          background: '#F4F5FC', // Светло-синий фон для всего приложения
-          card: '#F4F5FC',
+          background: '#FFFFFF', // Светло-синий фон для всего приложения
+          card: '#FFFFFF',
           text: '#000000',
           border: '#E5E5EA',
           notification: '#FF3B30',
@@ -66,7 +66,7 @@ export function AppNavigator() {
         initialRouteName="Splash"
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: '#F4F5FC' }, // Светло-синий фон для экранов
+          contentStyle: { backgroundColor: '#FFFFFF' }, // Светло-синий фон для экранов
         }}
       >
         <Stack.Screen

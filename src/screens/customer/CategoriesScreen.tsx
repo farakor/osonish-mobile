@@ -219,11 +219,11 @@ export const CategoriesScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   content: {
     flex: 1,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   backButton: {
     width: 40,
@@ -240,7 +240,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    ...lightElevationStyles,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   placeholder: {
     width: 40,
@@ -257,7 +258,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   searchInputWrapper: {
     flexDirection: 'row',
@@ -266,7 +267,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: theme.spacing.md,
     height: 48,
-    ...lightElevationStyles,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   searchIcon: {
     fontSize: 18,
@@ -304,7 +306,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: theme.spacing.sm,
     minHeight: 64,
-    ...lightElevationStyles,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   categoryIconContainer: {
     width: 48,

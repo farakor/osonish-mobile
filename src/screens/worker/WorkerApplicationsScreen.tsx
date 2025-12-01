@@ -387,11 +387,11 @@ export const WorkerApplicationsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   content: {
     flex: 1,
-    backgroundColor: '#F4F5FC',
+    backgroundColor: '#FFFFFF',
   },
   contentHeader: {
     paddingHorizontal: theme.spacing.lg,
@@ -417,6 +417,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 8,
     overflow: 'visible',
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   tabsContent: {
     paddingHorizontal: 2,
@@ -433,18 +435,7 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   activeTab: {
-    backgroundColor: theme.colors.white,
-    ...Platform.select({
-      ios: {
-        shadowColor: theme.colors.shadow,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    backgroundColor: '#679B00',
   },
   tabText: {
     fontSize: theme.fonts.sizes.sm,
@@ -452,7 +443,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   activeTabText: {
-    color: theme.colors.primary,
+    color: '#FFFFFF',
     fontWeight: '600',
   },
   applicationsList: {

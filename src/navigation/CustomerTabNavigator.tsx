@@ -85,7 +85,7 @@ export function CustomerTabNavigator() {
           },
           tabBarBackground: () => <View style={{ flex: 1 }} />,
           // Светло-синий фон для всех экранов табов
-          sceneStyle: { backgroundColor: '#F4F5FC' },
+          sceneStyle: { backgroundColor: '#FFFFFF' },
         }}
         tabBar={(props) => (
           <FloatingTabBar>
