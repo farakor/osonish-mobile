@@ -1058,7 +1058,8 @@ const styles = StyleSheet.create({
     fontWeight: '300',
   },
   logoutMenuItem: {
-    borderWidth: 0,
+    borderWidth: 1,
+    borderColor: '#FF3B30',
   },
   logoutText: {
     color: '#FF3B30', // Используем тот же цвет, что и для иконки

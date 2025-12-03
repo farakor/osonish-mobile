@@ -106,16 +106,74 @@ export function CreateVacancyStepByStepScreen() {
 
   // Category management states
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Focus states
   const [jobTitleFocused, setJobTitleFocused] = useState(false);
   const [descriptionFocused, setDescriptionFocused] = useState(false);
   const [locationFocused, setLocationFocused] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
 
   // Определяем категории для вакансий (исключаем "Работа на 1 день")
   const vacancyParentCategories = PARENT_CATEGORIES.filter(
     (cat) => cat.id !== 'one_day_job'
   );
+
+  // Фильтруем категории и подкатегории по поисковому запросу
+  const getFilteredCategories = () => {
+    if (!searchQuery.trim()) {
+      return vacancyParentCategories.map(category => ({
+        category,
+        subcategories: getSubcategoriesByParentId(category.id),
+        shouldExpand: false
+      }));
+    }
+
+    const query = searchQuery.toLowerCase();
+    const results: Array<{
+      category: typeof vacancyParentCategories[0];
+      subcategories: ReturnType<typeof getSubcategoriesByParentId>;
+      shouldExpand: boolean;
+    }> = [];
+
+    vacancyParentCategories.forEach(category => {
+      const subcategories = getSubcategoriesByParentId(category.id);
+      const categoryNameMatches = getTranslatedSpecializationName(category.id, t).toLowerCase().includes(query);
+      
+      // Фильтруем подкатегории по поисковому запросу
+      const filteredSubcategories = subcategories.filter(sub =>
+        getTranslatedSpecializationName(sub.id, t).toLowerCase().includes(query)
+      );
+
+      // Показываем категорию если:
+      // 1. Её имя совпадает с поиском, ИЛИ
+      // 2. Хотя бы одна подкатегория совпадает с поиском
+      if (categoryNameMatches || filteredSubcategories.length > 0) {
+        results.push({
+          category,
+          subcategories: filteredSubcategories,
+          shouldExpand: filteredSubcategories.length > 0 // Автоматически раскрываем если есть совпадения в подкатегориях
+        });
+      }
+    });
+
+    return results;
+  };
+
+  const filteredCategories = getFilteredCategories();
+
+  // Автоматически раскрываем категории при поиске
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const categoriesToExpand = new Set<string>();
+      filteredCategories.forEach(item => {
+        if (item.shouldExpand) {
+          categoriesToExpand.add(item.category.id);
+        }
+      });
+      setExpandedCategories(categoriesToExpand);
+    }
+  }, [searchQuery]);
 
   // Функции для работы с раскрытыми категориями
   const toggleCategory = (categoryId: string) => {
@@ -309,6 +367,10 @@ export function CreateVacancyStepByStepScreen() {
 
   const handleNext = () => {
     if (!validateCurrentStep()) return;
+    // Очищаем поле поиска при переходе со второго шага
+    if (currentStep === 2) {
+      setSearchQuery('');
+    }
     if (currentStep < TOTAL_STEPS) {
       setCurrentStep(currentStep + 1);
     } else {
@@ -317,6 +379,10 @@ export function CreateVacancyStepByStepScreen() {
   };
 
   const handleBack = () => {
+    // Очищаем поле поиска при возвращении на второй шаг или уходе с него
+    if (currentStep === 2 || currentStep === 3) {
+      setSearchQuery('');
+    }
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     } else {
@@ -445,78 +511,101 @@ export function CreateVacancyStepByStepScreen() {
                   <Text style={styles.stepSubtitle}>Выберите специализацию для вакансии</Text>
                 </AnimatedField>
 
+                <AnimatedField isActive={currentStep === 2} delay={175} resetKey={`${animationResetKey}-step-2-search`}>
+                  <View style={styles.searchContainer}>
+                    <TextInput
+                      style={getInputStyle(searchFocused)}
+                      value={searchQuery}
+                      onChangeText={setSearchQuery}
+                      placeholder="Поиск специализации..."
+                      placeholderTextColor={theme.colors.text.secondary}
+                      onFocus={() => setSearchFocused(true)}
+                      onBlur={() => setSearchFocused(false)}
+                    />
+                  </View>
+                </AnimatedField>
+
                 <AnimatedField isActive={currentStep === 2} delay={200} resetKey={`${animationResetKey}-step-2-list`}>
                   <View style={styles.specializationsList}>
-                    {/* Родительские категории с подкатегориями */}
-                    {vacancyParentCategories.map((category) => {
-                      const subcategories = getSubcategoriesByParentId(category.id);
-                      const isExpanded = expandedCategories.has(category.id);
-                      
-                      return (
-                        <View key={category.id} style={styles.categoryContainer}>
-                          {/* Родительская категория */}
-                          <TouchableOpacity
-                            style={styles.parentCategoryItem}
-                            onPress={() => toggleCategory(category.id)}
-                            activeOpacity={0.7}
-                          >
-                            <View style={styles.parentCategoryContent}>
-                              <CategoryIcon
-                                icon={category.icon}
-                                iconComponent={category.iconComponent}
-                                size={24}
-                                style={styles.parentCategoryIcon}
-                              />
-                              <Text style={styles.parentCategoryText}>
-                                {getTranslatedSpecializationName(category.id, t)}
-                              </Text>
-                            </View>
-                            <View style={styles.chevronIcon}>
-                              {isExpanded ? (
-                                <ChevronUpIcon width={20} height={20} stroke={theme.colors.text.secondary} />
-                              ) : (
-                                <ChevronDownIcon width={20} height={20} stroke={theme.colors.text.secondary} />
-                              )}
-                            </View>
-                          </TouchableOpacity>
+                    {filteredCategories.length > 0 ? (
+                      filteredCategories.map(({ category, subcategories }) => {
+                        const isExpanded = expandedCategories.has(category.id);
+                        
+                        return (
+                          <View key={category.id} style={styles.categoryContainer}>
+                            {/* Родительская категория */}
+                            <TouchableOpacity
+                              style={styles.parentCategoryItem}
+                              onPress={() => toggleCategory(category.id)}
+                              activeOpacity={0.7}
+                            >
+                              <View style={styles.parentCategoryContent}>
+                                <CategoryIcon
+                                  icon={category.icon}
+                                  iconComponent={category.iconComponent}
+                                  size={24}
+                                  style={styles.parentCategoryIcon}
+                                />
+                                <Text style={styles.parentCategoryText}>
+                                  {getTranslatedSpecializationName(category.id, t)}
+                                </Text>
+                              </View>
+                              <View style={styles.chevronIcon}>
+                                {isExpanded ? (
+                                  <ChevronUpIcon width={20} height={20} stroke={theme.colors.text.secondary} />
+                                ) : (
+                                  <ChevronDownIcon width={20} height={20} stroke={theme.colors.text.secondary} />
+                                )}
+                              </View>
+                            </TouchableOpacity>
 
-                          {/* Подкатегории */}
-                          {isExpanded && subcategories.length > 0 && (
-                            <View style={styles.subcategoriesContainer}>
-                              {subcategories.map((subcategory) => (
-                                <TouchableOpacity
-                                  key={subcategory.id}
-                                  style={[
-                                    styles.subcategoryItem,
-                                    specializationId === subcategory.id && styles.subcategoryItemSelected,
-                                  ]}
-                                  onPress={() => handleSpecializationSelect(subcategory.id)}
-                                  activeOpacity={0.7}
-                                >
-                                  <View style={styles.subcategoryContent}>
-                                    <CategoryIcon
-                                      icon={subcategory.icon}
-                                      iconComponent={subcategory.iconComponent}
-                                      size={20}
-                                      style={styles.subcategoryIcon}
-                                    />
-                                    <Text style={[
-                                      styles.subcategoryText,
-                                      specializationId === subcategory.id && styles.subcategoryTextSelected,
-                                    ]}>
-                                      {getTranslatedSpecializationName(subcategory.id, t)}
-                                    </Text>
-                                  </View>
-                                  {specializationId === subcategory.id && (
-                                    <View style={styles.selectedIndicator} />
-                                  )}
-                                </TouchableOpacity>
-                              ))}
-                            </View>
-                          )}
-                        </View>
-                      );
-                    })}
+                            {/* Подкатегории */}
+                            {isExpanded && subcategories.length > 0 && (
+                              <View style={styles.subcategoriesContainer}>
+                                {subcategories.map((subcategory) => (
+                                  <TouchableOpacity
+                                    key={subcategory.id}
+                                    style={[
+                                      styles.subcategoryItem,
+                                      specializationId === subcategory.id && styles.subcategoryItemSelected,
+                                    ]}
+                                    onPress={() => handleSpecializationSelect(subcategory.id)}
+                                    activeOpacity={0.7}
+                                  >
+                                    <View style={styles.subcategoryContent}>
+                                      <CategoryIcon
+                                        icon={subcategory.icon}
+                                        iconComponent={subcategory.iconComponent}
+                                        size={20}
+                                        style={styles.subcategoryIcon}
+                                      />
+                                      <Text style={[
+                                        styles.subcategoryText,
+                                        specializationId === subcategory.id && styles.subcategoryTextSelected,
+                                      ]}>
+                                        {getTranslatedSpecializationName(subcategory.id, t)}
+                                      </Text>
+                                    </View>
+                                    {specializationId === subcategory.id && (
+                                      <View style={styles.selectedIndicator} />
+                                    )}
+                                  </TouchableOpacity>
+                                ))}
+                              </View>
+                            )}
+                          </View>
+                        );
+                      })
+                    ) : (
+                      <View style={styles.emptySearchContainer}>
+                        <Text style={styles.emptySearchText}>
+                          Специализации не найдены
+                        </Text>
+                        <Text style={styles.emptySearchSubtext}>
+                          Попробуйте изменить поисковый запрос
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 </AnimatedField>
               </View>
@@ -1053,6 +1142,27 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
     fontSize: theme.fonts.sizes.sm,
     fontWeight: theme.fonts.weights.medium,
+  },
+  // Стили для поиска специализаций
+  searchContainer: {
+    marginBottom: theme.spacing.md,
+  },
+  emptySearchContainer: {
+    paddingVertical: theme.spacing.xxl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptySearchText: {
+    fontSize: theme.fonts.sizes.md,
+    fontWeight: theme.fonts.weights.semiBold,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+  emptySearchSubtext: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
   },
   // Стили для списка специализаций
   specializationsList: {

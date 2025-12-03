@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   FlatList,
   ActivityIndicator,
   RefreshControl,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -27,6 +26,8 @@ import { MasterCardSkeleton } from '../../components/skeletons';
 type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
 type ScreenRouteProp = RouteProp<CustomerStackParamList, 'ProfessionalMastersList'>;
 
+const PAGE_SIZE = 20;
+
 export const ProfessionalMastersListScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<ScreenRouteProp>();
@@ -36,39 +37,76 @@ export const ProfessionalMastersListScreen: React.FC = () => {
 
   const [masters, setMasters] = useState<ProfessionalMaster[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  
+  // Используем ref для отслеживания текущего offset, чтобы избежать race conditions
+  const offsetRef = useRef(0);
+  const isLoadingRef = useRef(false);
 
-  const loadMasters = useCallback(async () => {
+  const loadMasters = useCallback(async (reset: boolean = false) => {
+    // Предотвращаем параллельные загрузки
+    if (isLoadingRef.current && !reset) return;
+    
     try {
-      setIsLoading(true);
+      isLoadingRef.current = true;
+      
+      if (reset) {
+        setIsLoading(true);
+        offsetRef.current = 0;
+      } else {
+        setIsLoadingMore(true);
+      }
+
       const authState = authService.getAuthState();
       const userCity = authState.user?.city;
 
-      // Если специализация не указана (список "Все мастера"), не показываем дневных работников
-      const data = await professionalMasterService.getMasters({
+      const result = await professionalMasterService.getMastersWithPagination({
         specializationId,
         city: userCity,
-        limit: 50,
-        includeDailyWorkers: !!specializationId, // true если есть специализация, false если это список "Все"
+        limit: PAGE_SIZE,
+        offset: offsetRef.current,
+        includeDailyWorkers: !!specializationId,
+        includeJobSeekers: true,
       });
 
-      setMasters(data);
+      if (reset) {
+        setMasters(result.masters);
+      } else {
+        setMasters(prev => [...prev, ...result.masters]);
+      }
+      
+      setHasMore(result.hasMore);
+      setTotalCount(result.totalCount);
+      offsetRef.current += result.masters.length;
+
+      console.log(`[MastersList] Загружено: ${result.masters.length}, Всего в списке: ${reset ? result.masters.length : masters.length + result.masters.length}, Всего в БД: ${result.totalCount}, Есть ещё: ${result.hasMore}`);
     } catch (error) {
       console.error('Ошибка загрузки мастеров:', error);
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
+      isLoadingRef.current = false;
     }
-  }, [specializationId]);
+  }, [specializationId, masters.length]);
 
   useEffect(() => {
-    loadMasters();
-  }, [loadMasters]);
+    loadMasters(true);
+  }, [specializationId]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadMasters();
+    await loadMasters(true);
     setRefreshing(false);
   }, [loadMasters]);
+
+  const onEndReached = useCallback(() => {
+    if (!isLoadingMore && hasMore && !isLoading) {
+      loadMasters(false);
+    }
+  }, [isLoadingMore, hasMore, isLoading, loadMasters]);
 
   const handleMasterPress = (master: ProfessionalMaster) => {
     // Для job_seeker сразу открываем экран резюме
@@ -95,6 +133,29 @@ export const ProfessionalMastersListScreen: React.FC = () => {
     </View>
   );
 
+  const renderFooter = () => {
+    if (!isLoadingMore) return null;
+    
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color={theme.colors.primary} />
+        <Text style={styles.footerLoaderText}>Загрузка...</Text>
+      </View>
+    );
+  };
+
+  const renderListHeader = () => {
+    if (totalCount === 0 || isLoading) return null;
+    
+    return (
+      <View style={styles.listHeader}>
+        <Text style={styles.listHeaderText}>
+          Найдено: {totalCount} {getSpecialistWord(totalCount)}
+        </Text>
+      </View>
+    );
+  };
+
   const title = specializationId
     ? getTranslatedSpecializationName(specializationId, tCommon)
     : t('professional_masters_title');
@@ -119,7 +180,12 @@ export const ProfessionalMastersListScreen: React.FC = () => {
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmptyState}
-          // Оптимизация производительности - виртуализация
+          ListHeaderComponent={renderListHeader}
+          ListFooterComponent={renderFooter}
+          // Бесконечная прокрутка
+          onEndReached={onEndReached}
+          onEndReachedThreshold={0.5}
+          // Оптимизация производительности
           removeClippedSubviews={true}
           maxToRenderPerBatch={10}
           updateCellsBatchingPeriod={50}
@@ -127,7 +193,7 @@ export const ProfessionalMastersListScreen: React.FC = () => {
           windowSize={10}
           // Оптимизация высоты элементов
           getItemLayout={(data, index) => ({
-            length: 200, // Примерная высота карточки мастера
+            length: 200,
             offset: 200 * index,
             index,
           })}
@@ -145,6 +211,26 @@ export const ProfessionalMastersListScreen: React.FC = () => {
   );
 };
 
+// Вспомогательная функция для склонения слова "специалист"
+const getSpecialistWord = (count: number): string => {
+  const lastDigit = count % 10;
+  const lastTwoDigits = count % 100;
+
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
+    return 'специалистов';
+  }
+
+  if (lastDigit === 1) {
+    return 'специалист';
+  }
+
+  if (lastDigit >= 2 && lastDigit <= 4) {
+    return 'специалиста';
+  }
+
+  return 'специалистов';
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -156,8 +242,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listContainer: {
-    paddingTop: theme.spacing.md,
+    paddingTop: theme.spacing.sm,
     paddingBottom: theme.spacing.xl,
+  },
+  listHeader: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.sm,
+  },
+  listHeaderText: {
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
   },
   emptyState: {
     flex: 1,
@@ -178,6 +272,17 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 22,
+  },
+  footerLoader: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.lg,
+  },
+  footerLoaderText: {
+    marginLeft: theme.spacing.sm,
+    fontSize: theme.fonts.sizes.sm,
+    color: theme.colors.text.secondary,
   },
 });
 

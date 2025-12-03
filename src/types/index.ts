@@ -30,6 +30,11 @@ export interface User {
   workExperience?: WorkExperience[]; // Опыт работы
   willingToRelocate?: boolean; // Готов к переездам
   desiredSalary?: number; // Желаемая зарплата
+  // Дополнительные поля для резюме
+  gender?: 'male' | 'female'; // Пол
+  employmentTypes?: string[]; // Типы занятости (полная, частичная, проектная, стажировка)
+  workSchedules?: string[]; // Графики работы (удаленная, гибкий, полный день, сменный)
+  willingToTravel?: boolean; // Готовность к командировкам
 }
 
 // Education Types
@@ -94,6 +99,11 @@ export interface RegisterRequest {
   workExperience?: WorkExperience[];
   willingToRelocate?: boolean; // Готов к переездам
   desiredSalary?: number; // Желаемая зарплата
+  // Дополнительные поля для резюме
+  gender?: 'male' | 'female'; // Пол
+  employmentTypes?: string[]; // Типы занятости
+  workSchedules?: string[]; // Графики работы
+  willingToTravel?: boolean; // Готовность к командировкам
 }
 
 export interface AuthResponse {
@@ -425,6 +435,16 @@ export interface WorkerProfile {
   skills?: string[];
   workExperience?: WorkExperience[];
   specializations?: { id: string; isPrimary: boolean }[];
+  // Дополнительные поля для резюме
+  gender?: 'male' | 'female';
+  employmentTypes?: string[];
+  workSchedules?: string[];
+  willingToTravel?: boolean;
+  desiredSalary?: number;
+  willingToRelocate?: boolean;
+  city?: string;
+  birthDate?: string;
+  aboutMe?: string;
 }
 
 // City Types

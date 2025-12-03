@@ -56,6 +56,22 @@ const POPULAR_SKILLS = [
   'Быстрая обучаемость',
 ];
 
+// Типы занятости
+const EMPLOYMENT_TYPES = [
+  { id: 'full_time', label: 'Полная занятость' },
+  { id: 'part_time', label: 'Частичная занятость' },
+  { id: 'project', label: 'Проектная работа' },
+  { id: 'internship', label: 'Стажировка' },
+];
+
+// Графики работы
+const WORK_SCHEDULES = [
+  { id: 'full_day', label: 'Полный день' },
+  { id: 'shift', label: 'Сменный график' },
+  { id: 'flexible', label: 'Гибкий график' },
+  { id: 'remote', label: 'Удаленная работа' },
+];
+
 // Простой прогресс-бар
 const ProgressBar: React.FC<{ current: number; total: number }> = ({ current, total }) => {
   const progress = (current / total) * 100;
@@ -111,6 +127,10 @@ export const JobSeekerInfoStepByStepScreen: React.FC = () => {
   // Шаг 4: Дополнительная информация
   const [willingToRelocate, setWillingToRelocate] = useState(false);
   const [desiredSalary, setDesiredSalary] = useState('');
+  const [gender, setGender] = useState<'male' | 'female' | null>(null);
+  const [selectedEmploymentTypes, setSelectedEmploymentTypes] = useState<string[]>([]);
+  const [selectedWorkSchedules, setSelectedWorkSchedules] = useState<string[]>([]);
+  const [willingToTravel, setWillingToTravel] = useState(false);
 
   // Функция для форматирования числа с разделителями
   const formatSalary = (value: string): string => {
@@ -376,6 +396,11 @@ export const JobSeekerInfoStepByStepScreen: React.FC = () => {
         profileData.willingToRelocate = willingToRelocate;
         // Сохраняем зарплату как число (убираем пробелы)
         profileData.desiredSalary = desiredSalary ? parseInt(unformatSalary(desiredSalary)) : undefined;
+        // Дополнительные поля для резюме
+        profileData.gender = gender || undefined;
+        profileData.employmentTypes = selectedEmploymentTypes.length > 0 ? selectedEmploymentTypes : undefined;
+        profileData.workSchedules = selectedWorkSchedules.length > 0 ? selectedWorkSchedules : undefined;
+        profileData.willingToTravel = willingToTravel;
         
         // Преобразуем ID специализаций в объекты
         profileData.specializations = selectedSpecializations.map((specId, index) => {
@@ -864,8 +889,33 @@ export const JobSeekerInfoStepByStepScreen: React.FC = () => {
     <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
       <Text style={styles.stepTitle}>Дополнительная информация</Text>
       <Text style={styles.stepSubtitle}>
-        Укажите желаемую зарплату и готовность к переезду
+        Укажите информацию для вашего резюме
       </Text>
+
+      {/* Пол */}
+      <View style={styles.genderSection}>
+        <Text style={styles.inputLabel}>Пол</Text>
+        <View style={styles.genderOptions}>
+          <TouchableOpacity
+            style={[styles.genderOption, gender === 'male' && styles.genderOptionSelected]}
+            onPress={() => setGender('male')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.genderOptionText, gender === 'male' && styles.genderOptionTextSelected]}>
+              Мужской
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.genderOption, gender === 'female' && styles.genderOptionSelected]}
+            onPress={() => setGender('female')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.genderOptionText, gender === 'female' && styles.genderOptionTextSelected]}>
+              Женский
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
 
       {/* Желаемая зарплата */}
       <View style={styles.salarySection}>
@@ -888,6 +938,62 @@ export const JobSeekerInfoStepByStepScreen: React.FC = () => {
         <Text style={styles.hint}>Можете оставить пустым, если не хотите указывать</Text>
       </View>
 
+      {/* Тип занятости */}
+      <View style={styles.employmentSection}>
+        <Text style={styles.inputLabel}>Тип занятости</Text>
+        <View style={styles.optionsGrid}>
+          {EMPLOYMENT_TYPES.map((type) => {
+            const isSelected = selectedEmploymentTypes.includes(type.id);
+            return (
+              <TouchableOpacity
+                key={type.id}
+                style={[styles.optionChip, isSelected && styles.optionChipSelected]}
+                onPress={() => {
+                  if (isSelected) {
+                    setSelectedEmploymentTypes(selectedEmploymentTypes.filter(id => id !== type.id));
+                  } else {
+                    setSelectedEmploymentTypes([...selectedEmploymentTypes, type.id]);
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.optionChipText, isSelected && styles.optionChipTextSelected]}>
+                  {type.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+
+      {/* График работы */}
+      <View style={styles.scheduleSection}>
+        <Text style={styles.inputLabel}>График работы</Text>
+        <View style={styles.optionsGrid}>
+          {WORK_SCHEDULES.map((schedule) => {
+            const isSelected = selectedWorkSchedules.includes(schedule.id);
+            return (
+              <TouchableOpacity
+                key={schedule.id}
+                style={[styles.optionChip, isSelected && styles.optionChipSelected]}
+                onPress={() => {
+                  if (isSelected) {
+                    setSelectedWorkSchedules(selectedWorkSchedules.filter(id => id !== schedule.id));
+                  } else {
+                    setSelectedWorkSchedules([...selectedWorkSchedules, schedule.id]);
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.optionChipText, isSelected && styles.optionChipTextSelected]}>
+                  {schedule.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+
       {/* Готовность к переезду */}
       <View style={styles.relocateSection}>
         <TouchableOpacity
@@ -901,9 +1007,30 @@ export const JobSeekerInfoStepByStepScreen: React.FC = () => {
             )}
           </View>
           <View style={styles.checkboxTextContainer}>
-            <Text style={styles.checkboxLabel}>Готов к переездам</Text>
+            <Text style={styles.checkboxLabel}>Готов к переезду</Text>
             <Text style={styles.checkboxSubtitle}>
               Отметьте, если готовы рассматривать вакансии в других городах
+            </Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+
+      {/* Готовность к командировкам */}
+      <View style={styles.relocateSection}>
+        <TouchableOpacity
+          style={styles.checkboxContainer}
+          onPress={() => setWillingToTravel(!willingToTravel)}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.checkbox, willingToTravel && styles.checkboxChecked]}>
+            {willingToTravel && (
+              <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+            )}
+          </View>
+          <View style={styles.checkboxTextContainer}>
+            <Text style={styles.checkboxLabel}>Готов к командировкам</Text>
+            <Text style={styles.checkboxSubtitle}>
+              Отметьте, если готовы ездить в командировки
             </Text>
           </View>
         </TouchableOpacity>
@@ -1462,8 +1589,37 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   // Шаг 4: Дополнительная информация
-  salarySection: {
+  genderSection: {
     marginTop: 16,
+    marginBottom: 24,
+  },
+  genderOptions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  genderOption: {
+    flex: 1,
+    backgroundColor: '#F6F7F9',
+    borderWidth: 1,
+    borderColor: '#E5E5E7',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  genderOptionSelected: {
+    backgroundColor: `${theme.colors.primary}15`,
+    borderColor: theme.colors.primary,
+  },
+  genderOptionText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: theme.colors.text.primary,
+  },
+  genderOptionTextSelected: {
+    color: theme.colors.primary,
+    fontWeight: '600',
+  },
+  salarySection: {
     marginBottom: 24,
   },
   salaryInputContainer: {
@@ -1492,8 +1648,40 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     marginTop: 8,
   },
-  relocateSection: {
+  employmentSection: {
     marginBottom: 24,
+  },
+  scheduleSection: {
+    marginBottom: 24,
+  },
+  optionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  optionChip: {
+    backgroundColor: '#F6F7F9',
+    borderWidth: 1,
+    borderColor: '#E5E5E7',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  optionChipSelected: {
+    backgroundColor: `${theme.colors.primary}15`,
+    borderColor: theme.colors.primary,
+  },
+  optionChipText: {
+    fontSize: 14,
+    color: theme.colors.text.primary,
+  },
+  optionChipTextSelected: {
+    color: theme.colors.primary,
+    fontWeight: '600',
+  },
+  relocateSection: {
+    marginBottom: 16,
   },
   checkboxContainer: {
     flexDirection: 'row',

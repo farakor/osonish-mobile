@@ -15,7 +15,6 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { CustomerStackParamList } from '../../types';
 import { theme, getTranslatedSpecializationName, getTopLevelCategories, getSubcategoriesByParentId, SPECIALIZATIONS, PARENT_CATEGORIES, SpecializationOption } from '../../constants';
-import { lightElevationStyles } from '../../utils/noShadowStyles';
 import { CategoryIcon } from '../../components/common';
 import { useNavigationTranslation, useCustomerTranslation } from '../../hooks/useTranslation';
 import { useTranslation } from 'react-i18next';

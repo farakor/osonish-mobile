@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,11 @@ import {
   TextInput,
   Modal,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
@@ -75,6 +80,8 @@ export const VacancyDetailsScreen: React.FC = () => {
 
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const bottomSheetTranslateY = useRef(new Animated.Value(1000)).current;
 
   // Логирование для отладки
   useEffect(() => {
@@ -85,6 +92,48 @@ export const VacancyDetailsScreen: React.FC = () => {
     console.log('[VacancyDetails] vacancyId:', vacancyId);
     console.log('[VacancyDetails] ============ DEBUG END ============');
   }, [isAuthenticated, hasApplied, userHasApplied, vacancyId]);
+
+  // Анимация fade для overlay и slide для bottom sheet
+  useEffect(() => {
+    if (showApplyModal) {
+      // Сначала устанавливаем начальную позицию bottom sheet
+      bottomSheetTranslateY.setValue(1000);
+      overlayOpacity.setValue(0);
+      
+      // Затем запускаем параллельные анимации
+      Animated.parallel([
+        // Fade in для overlay
+        Animated.timing(overlayOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        // Slide up для bottom sheet
+        Animated.spring(bottomSheetTranslateY, {
+          toValue: 0,
+          damping: 25,
+          stiffness: 120,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Параллельное закрытие
+      Animated.parallel([
+        // Fade out для overlay
+        Animated.timing(overlayOpacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        // Slide down для bottom sheet
+        Animated.timing(bottomSheetTranslateY, {
+          toValue: 1000,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [showApplyModal, overlayOpacity, bottomSheetTranslateY]);
 
   // Увеличиваем счетчик просмотров при открытии вакансии
   useEffect(() => {
@@ -284,51 +333,77 @@ export const VacancyDetailsScreen: React.FC = () => {
       {/* Модальное окно для отклика */}
       <Modal
         visible={showApplyModal}
-        animationType="slide"
+        animationType="none"
         transparent={true}
-        onRequestClose={() => setShowApplyModal(false)}
+        onRequestClose={() => {
+          Keyboard.dismiss();
+          setShowApplyModal(false);
+        }}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Отклик на вакансию</Text>
-            <Text style={styles.modalSubtitle}>
-              Расскажите, почему вы подходите на эту вакансию (необязательно)
-            </Text>
-            
-            <TextInput
-              style={styles.coverLetterInput}
-              multiline
-              numberOfLines={6}
-              placeholder="Ваше сообщение работодателю..."
-              placeholderTextColor="#9CA3AF"
-              value={coverLetter}
-              onChangeText={setCoverLetter}
-              textAlignVertical="top"
-            />
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingView}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <Animated.View style={[styles.modalOverlay, { opacity: overlayOpacity }]}>
+              <TouchableWithoutFeedback>
+                <Animated.View style={[
+                  styles.modalContent,
+                  {
+                    transform: [{ translateY: bottomSheetTranslateY }]
+                  }
+                ]}>
+                  <Text style={styles.modalTitle}>Отклик на вакансию</Text>
+                  <Text style={styles.modalSubtitle}>
+                    Расскажите, почему вы подходите на эту вакансию (необязательно)
+                  </Text>
+                  
+                  <ScrollView 
+                    style={styles.scrollableContent}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                  >
+                    <TextInput
+                      style={styles.coverLetterInput}
+                      multiline
+                      numberOfLines={6}
+                      placeholder="Ваше сообщение работодателю..."
+                      placeholderTextColor="#9CA3AF"
+                      value={coverLetter}
+                      onChangeText={setCoverLetter}
+                      textAlignVertical="top"
+                    />
+                  </ScrollView>
 
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowApplyModal(false)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.cancelButtonText}>Отмена</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.sendButton]}
-                onPress={handleApply}
-                activeOpacity={0.7}
-                disabled={applyMutation.isPending}
-              >
-                {applyMutation.isPending ? (
-                  <ActivityIndicator color={theme.colors.white} />
-                ) : (
-                  <Text style={styles.sendButtonText}>Отправить</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+                  <View style={styles.modalActions}>
+                    <TouchableOpacity
+                      style={[styles.modalButton, styles.cancelButton]}
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        setShowApplyModal(false);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.cancelButtonText}>Отмена</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.modalButton, styles.sendButton]}
+                      onPress={handleApply}
+                      activeOpacity={0.7}
+                      disabled={applyMutation.isPending}
+                    >
+                      {applyMutation.isPending ? (
+                        <ActivityIndicator color={theme.colors.white} />
+                      ) : (
+                        <Text style={styles.sendButtonText}>Отправить</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </Animated.View>
+              </TouchableWithoutFeedback>
+            </Animated.View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
@@ -512,12 +587,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
   modalContent: {
     backgroundColor: theme.colors.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
-    minHeight: 400,
+    maxHeight: '80%',
+  },
+  scrollableContent: {
+    maxHeight: 200,
+    marginBottom: 20,
   },
   modalTitle: {
     fontSize: 22,
@@ -539,7 +621,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: theme.colors.text,
     minHeight: 150,
-    marginBottom: 20,
   },
   modalActions: {
     flexDirection: 'row',

@@ -9,7 +9,6 @@ import {
   Linking,
   Alert,
   StatusBar,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -471,6 +470,8 @@ const styles = StyleSheet.create({
     marginTop: 16,
     borderRadius: 16,
     padding: 20,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   profileCardContent: {
     flexDirection: 'row',
@@ -562,6 +563,8 @@ const styles = StyleSheet.create({
     marginTop: 12,
     borderRadius: 16,
     padding: 20,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   cardTitle: {
     fontSize: 18,
@@ -784,7 +787,7 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: '#DAE3EC',
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
@@ -815,10 +818,10 @@ const styles = StyleSheet.create({
     height: 50,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F0FDF4',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#86EFAC',
+    borderColor: '#DAE3EC',
   },
   errorContainer: {
     flex: 1,

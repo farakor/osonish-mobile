@@ -80,15 +80,42 @@ export const useCustomerHomeData = (userId: string) => {
 };
 
 /**
+ * Параметры для хука useWorkerHomeData
+ */
+interface WorkerHomeDataParams {
+  userId: string;
+  workerType?: 'daily_worker' | 'professional' | 'job_seeker';
+  userCity?: string;
+}
+
+/**
  * Параллельная загрузка данных для экрана мастера
  * Загружает доступные заказы и уведомления одновременно
+ * 
+ * Правила отображения по типу работника:
+ * - daily_worker: только заказы (не вакансии), только по своему городу
+ * - job_seeker: все заказы и вакансии по всем городам
+ * - professional: все заказы и вакансии по всем городам
  */
-export const useWorkerHomeData = (userId: string) => {
+export const useWorkerHomeData = (params: WorkerHomeDataParams | string) => {
+  // Поддержка старого формата вызова (только userId)
+  const { userId, workerType, userCity } = typeof params === 'string' 
+    ? { userId: params, workerType: undefined, userCity: undefined } 
+    : params;
+
   const results = useQueries({
     queries: [
       {
-        queryKey: queryKeys.orders.availableOrders(),
-        queryFn: () => orderService.getAvailableOrders(),
+        // Добавляем workerType и userCity в queryKey для корректного кеширования
+        queryKey: [...queryKeys.orders.availableOrders(), workerType || 'all', userCity || 'all'],
+        queryFn: () => {
+          // Если указан тип работника, используем новый метод с фильтрацией
+          if (workerType) {
+            return orderService.getOrdersForWorkerType(workerType, userCity);
+          }
+          // Иначе возвращаем все заказы (обратная совместимость)
+          return orderService.getAvailableOrders();
+        },
         staleTime: 1 * 60 * 1000,
       },
       {

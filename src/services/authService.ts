@@ -721,12 +721,28 @@ class AuthService {
       if (userData.desiredSalary !== undefined) {
         insertData.desired_salary = userData.desiredSalary;
       }
+      // Дополнительные поля для резюме
+      if (userData.gender) {
+        insertData.gender = userData.gender;
+      }
+      if (userData.employmentTypes && userData.employmentTypes.length > 0) {
+        insertData.employment_types = userData.employmentTypes;
+      }
+      if (userData.workSchedules && userData.workSchedules.length > 0) {
+        insertData.work_schedules = userData.workSchedules;
+      }
+      if (userData.willingToTravel !== undefined) {
+        insertData.willing_to_travel = userData.willingToTravel;
+      }
 
       console.log('[AuthService] Данные для вставки в БД (job_seeker):', {
         worker_type: insertData.worker_type,
         education: insertData.education,
         skills: insertData.skills,
         work_experience: insertData.work_experience,
+        gender: insertData.gender,
+        employment_types: insertData.employment_types,
+        work_schedules: insertData.work_schedules,
       });
 
       // Создаем пользователя в Supabase
@@ -1002,6 +1018,11 @@ class AuthService {
         profile_image: profileImageUrl,
         updated_at: new Date().toISOString()
       };
+
+      // Добавляем город, если он есть
+      if (updates.city !== undefined) {
+        updateData.city = updates.city;
+      }
 
       // Добавляем поля для профессиональных мастеров, если они есть
       if (updates.aboutMe !== undefined) {

@@ -28,7 +28,7 @@ import { authService } from '../../services/authService';
 import { notificationService } from '../../services/notificationService';
 import { ModernOrderCard } from '../../components/cards';
 import { VacancyCard } from '../../components/vacancy';
-import { FloatingCreateButton, SortModal, SortOption } from '../../components/common';
+import { FloatingCreateButton, SortModal, SortOption, JobTypeBottomSheet } from '../../components/common';
 import { AuthRequiredModal } from '../../components/auth/AuthRequiredModal';
 import { useCustomerTranslation, useCategoriesTranslation } from '../../hooks/useTranslation';
 import { useTranslation } from 'react-i18next';
@@ -665,62 +665,19 @@ export const CustomerHomeScreen: React.FC = () => {
         }}
       />
 
-      {/* Job Type Selection Modal */}
-      <Modal
+      {/* Job Type Selection Bottom Sheet */}
+      <JobTypeBottomSheet
         visible={isJobTypeModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setIsJobTypeModalVisible(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setIsJobTypeModalVisible(false)}
-        >
-          <View style={styles.jobTypeModalContent}>
-            <Text style={styles.jobTypeModalTitle}>Выберите тип работы</Text>
-            
-            <TouchableOpacity
-              style={styles.jobTypeOption}
-              onPress={() => {
-                setIsJobTypeModalVisible(false);
-                navigation.navigate('CreateOrder');
-              }}
-            >
-              <View style={styles.jobTypeOptionContent}>
-                <Text style={styles.jobTypeOptionTitle}>Дневная работа</Text>
-                <Text style={styles.jobTypeOptionDescription}>
-                  Разовые задачи, работа на один день
-                </Text>
-              </View>
-              <ArrowNarrowRight width={24} height={24} color={theme.colors.primary} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.jobTypeOption}
-              onPress={() => {
-                setIsJobTypeModalVisible(false);
-                navigation.navigate('CreateVacancy');
-              }}
-            >
-              <View style={styles.jobTypeOptionContent}>
-                <Text style={styles.jobTypeOptionTitle}>Вакансия</Text>
-                <Text style={styles.jobTypeOptionDescription}>
-                  Постоянная работа, долгосрочная вакансия
-                </Text>
-              </View>
-              <ArrowNarrowRight width={24} height={24} color={theme.colors.primary} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.jobTypeModalCancel}
-              onPress={() => setIsJobTypeModalVisible(false)}
-            >
-              <Text style={styles.jobTypeModalCancelText}>Отмена</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        onClose={() => setIsJobTypeModalVisible(false)}
+        onSelectDailyJob={() => {
+          setIsJobTypeModalVisible(false);
+          navigation.navigate('CreateOrder');
+        }}
+        onSelectVacancy={() => {
+          setIsJobTypeModalVisible(false);
+          navigation.navigate('CreateVacancy');
+        }}
+      />
 
       {/* Auth Required Modal */}
       <AuthRequiredModal
@@ -1155,58 +1112,5 @@ const styles = StyleSheet.create({
   modalCloseText: {
     fontSize: 20,
     color: theme.colors.text.secondary,
-  },
-  // Job Type Modal Styles
-  jobTypeModalContent: {
-    backgroundColor: '#fff',
-    borderRadius: theme.borderRadius.xl,
-    padding: theme.spacing.xl,
-    marginHorizontal: theme.spacing.md,
-    width: '90%',
-    maxWidth: 500,
-    alignSelf: 'center',
-    ...lightElevationStyles,
-  },
-  jobTypeModalTitle: {
-    fontSize: theme.fonts.sizes.xl,
-    fontWeight: theme.fonts.weights.bold as any,
-    color: theme.colors.text,
-    marginBottom: theme.spacing.xl,
-    textAlign: 'center',
-  },
-  jobTypeOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: theme.spacing.lg,
-    backgroundColor: '#F8F9FA',
-    borderRadius: theme.borderRadius.lg,
-    marginBottom: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  jobTypeOptionContent: {
-    flex: 1,
-    marginRight: theme.spacing.md,
-  },
-  jobTypeOptionTitle: {
-    fontSize: theme.fonts.sizes.lg,
-    fontWeight: theme.fonts.weights.semibold as any,
-    color: theme.colors.text,
-    marginBottom: theme.spacing.xs,
-  },
-  jobTypeOptionDescription: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.textSecondary,
-  },
-  jobTypeModalCancel: {
-    padding: theme.spacing.md,
-    alignItems: 'center',
-    marginTop: theme.spacing.md,
-  },
-  jobTypeModalCancelText: {
-    fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.medium as any,
-    color: theme.colors.textSecondary,
   },
 }); 

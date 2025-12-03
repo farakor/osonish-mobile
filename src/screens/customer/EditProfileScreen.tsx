@@ -24,6 +24,7 @@ import { HeaderWithBack, PlusIcon } from '../../components/common';
 import { authService } from '../../services/authService';
 import { User } from '../../types';
 import { useCustomerTranslation, useErrorsTranslation, useCommonTranslation } from '../../hooks/useTranslation';
+import { getAllCities, getCityName } from '../../utils/cityUtils';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -47,6 +48,8 @@ export const EditProfileScreen: React.FC = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [city, setCity] = useState<string>('');
+  const [showCityModal, setShowCityModal] = useState(false);
 
   // Состояния фокуса для полей ввода
   const [firstNameFocused, setFirstNameFocused] = useState(false);
@@ -70,6 +73,7 @@ export const EditProfileScreen: React.FC = () => {
         setLastName(userData.lastName || '');
         setBirthDate(userData.birthDate ? new Date(userData.birthDate) : null);
         setProfileImage(userData.profileImage || null);
+        setCity(userData.city || '');
       } else {
         Alert.alert(tError('error'), t('user_not_authorized'));
         navigation.goBack();
@@ -170,6 +174,7 @@ export const EditProfileScreen: React.FC = () => {
         lastName: lastName.trim(),
         birthDate: birthDate!.toISOString(),
         profileImage: profileImage || undefined,
+        city: city || undefined,
       };
 
       const result = await authService.updateProfile(updatedData);
@@ -224,7 +229,8 @@ export const EditProfileScreen: React.FC = () => {
       firstName.trim() !== (user.firstName || '') ||
       lastName.trim() !== (user.lastName || '') ||
       birthDate?.toISOString() !== user.birthDate ||
-      profileImage !== user.profileImage
+      profileImage !== user.profileImage ||
+      city !== (user.city || '')
     );
   };
 
@@ -351,6 +357,19 @@ export const EditProfileScreen: React.FC = () => {
               </Text>
             </TouchableOpacity>
           </View>
+
+          {/* City */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>{t('city')}</Text>
+            <TouchableOpacity
+              style={styles.dateInputContainer}
+              onPress={() => setShowCityModal(true)}
+            >
+              <Text style={[styles.dateInput, !city && styles.placeholderText]}>
+                {city ? getCityName(city) : t('select_city')}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
 
@@ -392,6 +411,48 @@ export const EditProfileScreen: React.FC = () => {
             minimumDate={new Date(1950, 0, 1)}
             {...(Platform.OS === 'ios' && { locale: i18n.language === 'uz' ? 'uz-UZ' : 'ru-RU' })}
           />
+        </View>
+      )}
+
+      {/* City Selection Modal */}
+      {showCityModal && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('select_city')}</Text>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setShowCityModal(false)}
+              >
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalScrollView}>
+              {getAllCities().map((cityItem) => (
+                <TouchableOpacity
+                  key={cityItem.id}
+                  style={[
+                    styles.modalCityItem,
+                    city === cityItem.id && styles.modalCityItemSelected,
+                  ]}
+                  onPress={() => {
+                    setCity(cityItem.id);
+                    setShowCityModal(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.modalCityName,
+                    city === cityItem.id && styles.modalCityNameSelected,
+                  ]}>
+                    {cityItem.name}
+                  </Text>
+                  {city === cityItem.id && (
+                    <Text style={styles.modalCityCheck}>✓</Text>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
         </View>
       )}
     </SafeAreaView>
@@ -536,6 +597,9 @@ const styles = StyleSheet.create({
     fontSize: isSmallScreen() ? 14 : 16,
     color: '#1A1A1A',
   },
+  placeholderText: {
+    color: '#C7C7CC',
+  },
 
   // Bottom Section
   bottomSection: {
@@ -599,5 +663,77 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
+  },
+
+  // Modal Styles
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    width: '100%',
+    maxHeight: '70%',
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
+  },
+  modalCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F8F9FA',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseText: {
+    fontSize: 20,
+    color: '#1A1A1A',
+  },
+  modalScrollView: {
+    maxHeight: 400,
+  },
+  modalCityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8F9FA',
+  },
+  modalCityItemSelected: {
+    backgroundColor: '#F0F8FF',
+  },
+  modalCityName: {
+    fontSize: 16,
+    color: '#1A1A1A',
+  },
+  modalCityNameSelected: {
+    color: '#679B00',
+    fontWeight: '600',
+  },
+  modalCityCheck: {
+    fontSize: 20,
+    color: '#679B00',
+    fontWeight: 'bold',
   },
 }); 

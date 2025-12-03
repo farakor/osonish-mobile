@@ -5,13 +5,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  Platform,
 } from 'react-native';
 import { theme, getSpecializationIcon, getTranslatedSpecializationNameSingular } from '../../constants';
 import ProBadge from '../../../assets/pro_badge.svg';
 import CVBadge from '../../../assets/cv_badge.svg';
 import EyeIcon from '../../../assets/eye.svg';
-import { lightElevationStyles } from '../../utils/noShadowStyles';
 import { ProfessionalMaster } from '../../services/professionalMasterService';
 import { useTranslation } from 'react-i18next';
 
@@ -99,7 +97,8 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     marginHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.md,
-    ...lightElevationStyles,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   imageContainer: {
     position: 'relative',

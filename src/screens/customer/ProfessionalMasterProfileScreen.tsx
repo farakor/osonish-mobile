@@ -10,7 +10,6 @@ import {
   Alert,
   ActivityIndicator,
   Dimensions,
-  Platform,
   Modal,
   StatusBar,
 } from 'react-native';
@@ -572,17 +571,7 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.xs,
   },
   profileImageWrapper: {
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.2,
-        shadowRadius: 6,
-      },
-      android: {
-        elevation: 6,
-      },
-    }),
+    // Без тени для единообразия стиля
   },
   profileImage: {
     width: 70,
@@ -654,17 +643,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 80,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   statValue: {
     fontSize: 28,
@@ -685,17 +665,8 @@ const styles = StyleSheet.create({
     marginHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
     padding: theme.spacing.lg,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   sectionTitle: {
     fontSize: theme.fonts.sizes.lg,
@@ -767,17 +738,8 @@ const styles = StyleSheet.create({
     marginHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
     padding: theme.spacing.lg,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   photosGrid: {
     flexDirection: 'row',
@@ -834,18 +796,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: '#E9ECEF',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 8,
-      },
-    }),
+    borderTopColor: '#DAE3EC',
   },
   buttonsRow: {
     flexDirection: 'row',
@@ -856,19 +807,10 @@ const styles = StyleSheet.create({
     height: 56,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E9ECEF',
+    backgroundColor: '#FFFFFF',
     borderRadius: theme.borderRadius.lg,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   callButton: {
     flex: 1,
@@ -879,17 +821,6 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
     paddingVertical: theme.spacing.md,
     minHeight: 56,
-    ...Platform.select({
-      ios: {
-        shadowColor: theme.colors.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 6,
-      },
-    }),
   },
   callButtonIcon: {
     marginRight: theme.spacing.xs,
@@ -914,18 +845,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 1,
-      },
-    }),
+    borderColor: '#DAE3EC',
   },
   reviewHeader: {
     flexDirection: 'row',

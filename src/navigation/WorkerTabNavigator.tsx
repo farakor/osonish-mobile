@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Text, Platform, TouchableOpacity, View, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { theme } from '../constants';
@@ -6,6 +6,7 @@ import { noElevationStyles } from '../utils/noShadowStyles';
 import { usePlatformSafeAreaInsets, getBottomTabBarStyle } from '../utils/safeAreaUtils';
 import { useNavigationTranslation, useWorkerTranslation } from '../hooks/useTranslation';
 import { useAcceptedApplicationsCount } from '../hooks';
+import { authService } from '../services/authService';
 import type { WorkerTabParamList } from '../types';
 import {
   WorkerJobsScreen,
@@ -46,6 +47,13 @@ export function WorkerTabNavigator() {
   const t = useNavigationTranslation();
   const tWorker = useWorkerTranslation();
   const { acceptedCount, showTooltip, dismissTooltip } = useAcceptedApplicationsCount();
+
+  // Определяем тип работника
+  const authState = authService.getAuthState();
+  const workerType = (authState.user as any)?.workerType as 'daily_worker' | 'professional' | 'job_seeker' | undefined;
+  
+  // Однодневные работники не видят вакансии
+  const shouldShowVacancies = workerType !== 'daily_worker';
 
   return (
     <Tab.Navigator
@@ -151,26 +159,29 @@ export function WorkerTabNavigator() {
           ),
         }}
       />
-      <Tab.Screen
-        name="Vacancies"
-        component={AnimatedVacanciesScreen}
-        options={{
-          tabBarLabel: ({ focused, color }) => (
-            <Text style={[styles.tabLabel, { color }]}>
-              {t('vacancies')}
-            </Text>
-          ),
-          tabBarIcon: ({ color, size, focused }) => (
-            <AnimatedTabIcon focused={focused} color={color}>
-              <VacancyIcon
-                width={25}
-                height={25}
-                color={color}
-              />
-            </AnimatedTabIcon>
-          ),
-        }}
-      />
+      {/* Показываем вкладку "Вакансии" только для professional и job_seeker */}
+      {shouldShowVacancies && (
+        <Tab.Screen
+          name="Vacancies"
+          component={AnimatedVacanciesScreen}
+          options={{
+            tabBarLabel: ({ focused, color }) => (
+              <Text style={[styles.tabLabel, { color }]}>
+                {t('vacancies')}
+              </Text>
+            ),
+            tabBarIcon: ({ color, size, focused }) => (
+              <AnimatedTabIcon focused={focused} color={color}>
+                <VacancyIcon
+                  width={25}
+                  height={25}
+                  color={color}
+                />
+              </AnimatedTabIcon>
+            ),
+          }}
+        />
+      )}
       <Tab.Screen
         name="Categories"
         component={AnimatedCategoriesScreen}

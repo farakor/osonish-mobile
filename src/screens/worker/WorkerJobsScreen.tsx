@@ -59,13 +59,19 @@ export const WorkerJobsScreen: React.FC = () => {
   // ✨ Parallel fetching - загружает заказы и счетчик уведомлений ОДНОВРЕМЕННО
   const authState = authService.getAuthState();
   const userId = authState.user?.id || '';
+  const workerType = (authState.user as any)?.workerType as 'daily_worker' | 'professional' | 'job_seeker' | undefined;
+  const userCity = authState.user?.city;
   
   const {
     orders: availableOrders,
     unreadCount,
     isLoading,
     refetchAll,
-  } = useWorkerHomeData(userId);
+  } = useWorkerHomeData({
+    userId,
+    workerType,
+    userCity,
+  });
 
   const [refreshing, setRefreshing] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);

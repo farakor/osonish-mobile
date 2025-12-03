@@ -895,6 +895,55 @@ export class OrderService {
   }
 
   /**
+   * Получение заказов с учётом типа работника
+   * 
+   * Правила отображения:
+   * - daily_worker (Однодневные работники): только заказы (не вакансии), только по своему городу
+   * - job_seeker (Соискатели): все заказы и вакансии по всем городам
+   * - professional (Мастера): все заказы и вакансии по всем городам
+   */
+  async getOrdersForWorkerType(workerType: 'daily_worker' | 'professional' | 'job_seeker', userCity?: string): Promise<Order[]> {
+    try {
+      console.log(`[OrderService] Загружаем заказы для типа работника: ${workerType}, город: ${userCity || 'все'}`);
+      
+      // Получаем все доступные заказы
+      const allOrders = await this.getNewOrdersForWorkers();
+      
+      let filteredOrders: Order[];
+      
+      if (workerType === 'daily_worker') {
+        // Однодневные работники видят только заказы (не вакансии) по своему городу
+        filteredOrders = allOrders.filter(order => {
+          // Исключаем вакансии
+          if (order.type === 'vacancy') {
+            return false;
+          }
+          
+          // Фильтруем по городу
+          if (!userCity) {
+            return true; // Если город не указан, показываем все
+          }
+          
+          // Проверяем город заказа (может быть в разных полях)
+          const orderCity = order.city || order.customerCity;
+          return orderCity === userCity;
+        });
+        
+        console.log(`[OrderService] daily_worker: отфильтровано ${filteredOrders.length} заказов из ${allOrders.length} (только заказы по городу ${userCity})`);
+      } else {
+        // job_seeker и professional видят все заказы и вакансии по всем городам
+        filteredOrders = allOrders;
+        console.log(`[OrderService] ${workerType}: показаны все ${filteredOrders.length} заказов и вакансий`);
+      }
+      
+      return filteredOrders;
+    } catch (error) {
+      console.error('[OrderService] Ошибка получения заказов для типа работника:', error);
+      return [];
+    }
+  }
+
+  /**
    * Получение активных заказов для текущего пользователя (заказчика)
    * Включает все заказы кроме завершенных и отмененных
    */

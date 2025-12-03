@@ -518,7 +518,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 0, borderColor: 'transparent', },
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
+  },
   reviewHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -634,6 +636,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   resumeHeader: {
     flexDirection: 'row',

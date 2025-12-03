@@ -70,11 +70,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
     borderRadius: 12,
     padding: theme.spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   profileImage: {
     width: 70,

@@ -25,9 +25,15 @@ import CVBadge from '../../../assets/cv_badge.svg';
 import ShareIcon from '../../../assets/share-01.svg';
 import PhoneIcon from '../../../assets/phone-call-01-white.svg';
 import ArrowBackIcon from '../../../assets/arrow-narrow-left.svg';
+import MobileNotchIcon from '../../../assets/mobile-notch.svg';
+import MoneyBillWaveIcon from '../../../assets/money-bill-wave.svg';
+import BriefcaseIcon from '../../../assets/briefcase.svg';
+import GraduationCapIcon from '../../../assets/graduation-cap.svg';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import { useTranslation, useCustomerTranslation, useAuthTranslation } from '../../hooks/useTranslation';
+import { getCityName } from '../../utils/cityUtils';
+import { generateResumePDF } from '../../services/pdfResumeService';
 
 type NavigationProp = NativeStackNavigationProp<CustomerStackParamList>;
 type ScreenRouteProp = RouteProp<CustomerStackParamList, 'ApplicantResume'>;
@@ -84,21 +90,26 @@ export const ApplicantResumeScreen: React.FC = () => {
 
   const handleShareAsPDF = async () => {
     try {
-      if (!viewShotRef.current?.capture) {
-        Alert.alert('Ошибка', 'Не удалось создать PDF');
+      if (!applicant) {
+        Alert.alert('Ошибка', 'Данные кандидата не загружены');
         return;
       }
 
       setIsSharing(true);
       
-      // Захватываем скриншот резюме
-      const uri = await viewShotRef.current.capture();
+      // Генерируем PDF резюме
+      const result = await generateResumePDF(applicant, t);
+      
+      if (!result) {
+        Alert.alert('Ошибка', 'Не удалось создать PDF резюме');
+        return;
+      }
       
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, {
+        await Sharing.shareAsync(result.uri, {
           dialogTitle: 'Поделиться резюме кандидата',
-          mimeType: 'image/png',
-          UTI: 'public.png',
+          mimeType: 'application/pdf',
+          UTI: 'com.adobe.pdf',
         });
       } else {
         Alert.alert('Ошибка', 'Функция отправки недоступна на этом устройстве');
@@ -176,18 +187,7 @@ export const ApplicantResumeScreen: React.FC = () => {
           
           <Text style={styles.headerTitle}>Резюме кандидата</Text>
           
-          <TouchableOpacity 
-            onPress={handleShareAsPDF} 
-            style={styles.headerButton}
-            activeOpacity={0.7}
-            disabled={isSharing}
-          >
-            {isSharing ? (
-              <ActivityIndicator size="small" color={theme.colors.primary} />
-            ) : (
-              <ShareIcon width={24} height={24} stroke="#1F2937" />
-            )}
-          </TouchableOpacity>
+          <View style={styles.headerPlaceholder} />
         </View>
       </SafeAreaView>
 
@@ -250,7 +250,7 @@ export const ApplicantResumeScreen: React.FC = () => {
                 {applicant.city && (
                   <View style={styles.locationRow}>
                     <Text style={styles.locationIcon}>📍</Text>
-                    <Text style={styles.locationText}>{applicant.city}</Text>
+                    <Text style={styles.locationText}>{getCityName(applicant.city)}</Text>
                   </View>
                 )}
               </View>
@@ -260,10 +260,10 @@ export const ApplicantResumeScreen: React.FC = () => {
           {/* Контактная информация */}
           {applicant.phone && (
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>📞 Контактная информация</Text>
+              <Text style={styles.cardTitle}>Контактная информация</Text>
               <View style={styles.contactItem}>
                 <View style={styles.contactIconBox}>
-                  <Text style={styles.contactEmoji}>📱</Text>
+                  <MobileNotchIcon width={24} height={24} fill="#6B7280" />
                 </View>
                 <View style={styles.contactContent}>
                   <Text style={styles.contactLabel}>Телефон</Text>
@@ -276,7 +276,7 @@ export const ApplicantResumeScreen: React.FC = () => {
           {/* О себе */}
           {applicant.aboutMe && (
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>👤 О себе</Text>
+              <Text style={styles.cardTitle}>О себе</Text>
               <Text style={styles.aboutText}>{applicant.aboutMe}</Text>
             </View>
           )}
@@ -284,12 +284,12 @@ export const ApplicantResumeScreen: React.FC = () => {
           {/* Дополнительная информация: зарплата и готовность к переезду */}
           {(applicant.desiredSalary || applicant.willingToRelocate) && (
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>💼 Пожелания к работе</Text>
+              <Text style={styles.cardTitle}>Пожелания к работе</Text>
               <View style={styles.preferencesGrid}>
                 {applicant.desiredSalary && (
                   <View style={styles.preferenceItem}>
                     <View style={styles.preferenceIconBox}>
-                      <Text style={styles.preferenceEmoji}>💰</Text>
+                      <MoneyBillWaveIcon width={24} height={24} fill="#6B7280" />
                     </View>
                     <View style={styles.preferenceContent}>
                       <Text style={styles.preferenceLabel}>Желаемая зарплата</Text>
@@ -303,7 +303,7 @@ export const ApplicantResumeScreen: React.FC = () => {
                 {applicant.willingToRelocate && (
                   <View style={styles.preferenceItem}>
                     <View style={styles.preferenceIconBox}>
-                      <Text style={styles.preferenceEmoji}>🚗</Text>
+                      <MoneyBillWaveIcon width={24} height={24} fill="#6B7280" />
                     </View>
                     <View style={styles.preferenceContent}>
                       <Text style={styles.preferenceLabel}>Переезд</Text>
@@ -318,7 +318,7 @@ export const ApplicantResumeScreen: React.FC = () => {
           {/* Все специализации */}
           {applicant.specializations && Array.isArray(applicant.specializations) && applicant.specializations.length > 0 && (
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>🎯 {tAuth('specialization_selection_title')}</Text>
+              <Text style={styles.cardTitle}>{tAuth('specialization_selection_title')}</Text>
               <View style={styles.specializationsGrid}>
                 {applicant.specializations.map((spec, index) => {
                   const specData = getSpecializationById(spec.id);
@@ -359,7 +359,7 @@ export const ApplicantResumeScreen: React.FC = () => {
           {/* Опыт работы */}
           {applicant.workExperience && Array.isArray(applicant.workExperience) && applicant.workExperience.length > 0 && (
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>💼 {tAuth('experience_section')}</Text>
+              <Text style={styles.cardTitle}>{tAuth('experience_section')}</Text>
               {applicant.workExperience.map((work, index) => (
                 <View 
                   key={index} 
@@ -370,7 +370,7 @@ export const ApplicantResumeScreen: React.FC = () => {
                 >
                   <View style={styles.experienceHeader}>
                     <View style={styles.experienceIconBox}>
-                      <Text style={styles.experienceIcon}>💼</Text>
+                      <BriefcaseIcon width={20} height={20} fill="#6366F1" />
                     </View>
                     <View style={styles.experienceContent}>
                       <Text style={styles.experiencePosition}>{work.position}</Text>
@@ -393,7 +393,7 @@ export const ApplicantResumeScreen: React.FC = () => {
           {/* Образование */}
           {applicant.education && Array.isArray(applicant.education) && applicant.education.length > 0 && (
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>🎓 {tAuth('education_section')}</Text>
+              <Text style={styles.cardTitle}>{tAuth('education_section')}</Text>
               {applicant.education.map((edu, index) => (
                 <View 
                   key={index} 
@@ -404,7 +404,7 @@ export const ApplicantResumeScreen: React.FC = () => {
                 >
                   <View style={styles.educationHeader}>
                     <View style={styles.educationIconBox}>
-                      <Text style={styles.educationIcon}>🎓</Text>
+                      <GraduationCapIcon width={20} height={20} fill="#F59E0B" />
                     </View>
                     <View style={styles.educationContent}>
                       <Text style={styles.educationInstitution}>{edu.institution}</Text>
@@ -426,7 +426,7 @@ export const ApplicantResumeScreen: React.FC = () => {
           {/* Навыки */}
           {applicant.skills && Array.isArray(applicant.skills) && applicant.skills.length > 0 && (
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>⚡️ {tAuth('my_skills')}</Text>
+              <Text style={styles.cardTitle}>{tAuth('my_skills')}</Text>
               <View style={styles.skillsGrid}>
                 {applicant.skills.map((skill, index) => (
                   <View key={index} style={styles.skillTag}>
@@ -460,9 +460,9 @@ export const ApplicantResumeScreen: React.FC = () => {
             disabled={isSharing}
           >
             {isSharing ? (
-              <ActivityIndicator size="small" color={theme.colors.primary} />
+              <ActivityIndicator size="small" color="#679B00" />
             ) : (
-              <ShareIcon width={20} height={20} stroke={theme.colors.primary} />
+              <ShareIcon width={20} height={20} color="#679B00" />
             )}
           </TouchableOpacity>
         </View>
@@ -498,10 +498,13 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 20,
+    borderRadius: 12,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#DAE3EC',
+  },
+  headerPlaceholder: {
+    width: 40,
   },
   headerTitle: {
     fontSize: 17,
@@ -547,6 +550,8 @@ const styles = StyleSheet.create({
     marginTop: 16,
     borderRadius: 16,
     padding: 20,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   profileCardContent: {
     flexDirection: 'row',
@@ -638,6 +643,8 @@ const styles = StyleSheet.create({
     marginTop: 12,
     borderRadius: 16,
     padding: 20,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   cardTitle: {
     fontSize: 18,
@@ -928,10 +935,10 @@ const styles = StyleSheet.create({
     height: 50,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F0FDF4',
+    backgroundColor: '#F4F9E8',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#86EFAC',
+    borderColor: '#B5D46A',
   },
   bottomSpacer: {
     height: 40,

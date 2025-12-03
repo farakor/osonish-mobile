@@ -250,6 +250,8 @@ const styles = StyleSheet.create({
     marginHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
     padding: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
   },
   sectionTitle: {
     width: 140,

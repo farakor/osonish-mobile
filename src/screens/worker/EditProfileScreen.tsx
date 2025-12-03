@@ -28,6 +28,7 @@ import { useWorkerTranslation } from '../../hooks/useTranslation';
 import { SPECIALIZATIONS, getSpecializationById, getTranslatedSpecializationName, getTranslatedSpecializationNameSingular } from '../../constants/specializations';
 import { mediaService } from '../../services/mediaService';
 import RemoveIcon from '../../../assets/remove.svg';
+import { getAllCities, getCityName } from '../../utils/cityUtils';
 
 const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
 
@@ -51,6 +52,8 @@ export const EditProfileScreen: React.FC = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [city, setCity] = useState<string>('');
+  const [showCityModal, setShowCityModal] = useState(false);
 
   // Состояния фокуса для полей ввода
   const [firstNameFocused, setFirstNameFocused] = useState(false);
@@ -88,6 +91,7 @@ export const EditProfileScreen: React.FC = () => {
         setLastName(userData.lastName || '');
         setBirthDate(userData.birthDate ? new Date(userData.birthDate) : null);
         setProfileImage(userData.profileImage || null);
+        setCity(userData.city || '');
 
         // Дополнительные поля для профессиональных мастеров
         if (userData.workerType === 'professional') {
@@ -313,6 +317,7 @@ export const EditProfileScreen: React.FC = () => {
         lastName: lastName.trim(),
         birthDate: birthDate!.toISOString(),
         profileImage: profileImage || undefined,
+        city: city || undefined,
       };
 
       // Если это профессиональный мастер, добавляем дополнительные поля
@@ -415,7 +420,8 @@ export const EditProfileScreen: React.FC = () => {
       firstName.trim() !== (user.firstName || '') ||
       lastName.trim() !== (user.lastName || '') ||
       birthDate?.toISOString() !== user.birthDate ||
-      profileImage !== user.profileImage;
+      profileImage !== user.profileImage ||
+      city !== (user.city || '');
 
     // Проверяем изменения для профессиональных мастеров
     if (user.workerType === 'professional') {
@@ -567,6 +573,19 @@ export const EditProfileScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
+          {/* City */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>{tWorker('city')}</Text>
+            <TouchableOpacity
+              style={styles.dateInputContainer}
+              onPress={() => setShowCityModal(true)}
+            >
+              <Text style={[styles.dateInput, !city && styles.placeholderText]}>
+                {city ? getCityName(city) : tWorker('select_city')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           {/* Дополнительные поля для профессиональных мастеров */}
           {isProfessional && (
             <>
@@ -618,7 +637,6 @@ export const EditProfileScreen: React.FC = () => {
                           style={styles.specChipIconWrapper}
                         />
                         <Text
-                          numberOfLines={0}
                           style={[
                             styles.specChipText,
                             spec.isPrimary && styles.specChipTextPrimary,
@@ -973,7 +991,6 @@ export const EditProfileScreen: React.FC = () => {
                             style={styles.specChipIconWrapper}
                           />
                           <Text
-                            numberOfLines={0}
                             style={[
                               styles.specChipText,
                               spec.isPrimary && styles.specChipTextPrimary,
@@ -1095,6 +1112,48 @@ export const EditProfileScreen: React.FC = () => {
             >
               <Text style={styles.modalDoneText}>{tWorker('done_button')}</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* City Selection Modal */}
+      {showCityModal && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{tWorker('select_city')}</Text>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setShowCityModal(false)}
+              >
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalScrollView}>
+              {getAllCities().map((cityItem) => (
+                <TouchableOpacity
+                  key={cityItem.id}
+                  style={[
+                    styles.modalCityItem,
+                    city === cityItem.id && styles.modalCityItemSelected,
+                  ]}
+                  onPress={() => {
+                    setCity(cityItem.id);
+                    setShowCityModal(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.modalCityName,
+                    city === cityItem.id && styles.modalCityNameSelected,
+                  ]}>
+                    {cityItem.name}
+                  </Text>
+                  {city === cityItem.id && (
+                    <Text style={styles.modalCityCheck}>✓</Text>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
         </View>
       )}
@@ -1403,7 +1462,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#1A1A1A',
     fontWeight: '500',
-    flex: 1,
+    flexShrink: 1,
   },
   specChipTextPrimary: {
     color: '#FFFFFF',
@@ -1714,5 +1773,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1A1A1A',
     fontWeight: '500',
+  },
+
+  // City Modal Styles
+  placeholderText: {
+    color: '#C7C7CC',
+  },
+  modalCityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8F9FA',
+  },
+  modalCityItemSelected: {
+    backgroundColor: '#F0F8FF',
+  },
+  modalCityName: {
+    fontSize: 16,
+    color: '#1A1A1A',
+  },
+  modalCityNameSelected: {
+    color: '#679B00',
+    fontWeight: '600',
+  },
+  modalCityCheck: {
+    fontSize: 20,
+    color: '#679B00',
+    fontWeight: 'bold',
   },
 }); 
