@@ -20,12 +20,13 @@ import { orderService } from '../../services/orderService';
 import { StarIcon } from '../../components/common';
 import { User } from '../../types';
 import UserEditIcon from '../../../assets/user-edit.svg';
+import ResumeIcon from '../../../assets/resume.svg';
+import BadgeCheckIcon from '../../../assets/badge-check.svg';
 import NotificationMessageIcon from '../../../assets/notification-message.svg';
 import LifeBuoyIcon from '../../../assets/life-buoy-02.svg';
 import LogOutIcon from '../../../assets/log-out-03.svg';
 import FileIcon from '../../../assets/file-05.svg';
 import FileShieldIcon from '../../../assets/file-shield-02.svg';
-import MyOrdersIcon from '../../../assets/file-02.svg';
 import { Ionicons } from '@expo/vector-icons';
 import { useWorkerTranslation, useErrorsTranslation, useAuthTranslation } from '../../hooks/useTranslation';
 import { WebViewModal, DeleteAccountModal } from '../../components/common';
@@ -359,11 +360,6 @@ export const WorkerProfileScreen: React.FC = () => {
     navigation.navigate('Support' as never);
   };
 
-  const handleMyOrders = () => {
-    navigation.navigate('MyOrders' as never);
-  };
-
-
   const handleLogout = async () => {
     Alert.alert(
       tWorker('logout_title'),
@@ -538,41 +534,43 @@ export const WorkerProfileScreen: React.FC = () => {
             </LinearGradient>
           </View>
 
-          {/* Modern Earnings Widget */}
-          <View style={styles.earningsContainer}>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => {
-                // TODO: Навигация к детальному экрану доходов
-                console.log('Открыть детали доходов');
-              }}
-            >
-              <LinearGradient
-                colors={['#FFE066', '#FFCC33']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.modernEarningsWidget}
+          {/* Modern Earnings Widget - Only for professional and one_day_executor */}
+          {user?.workerType !== 'job_seeker' && (
+            <View style={styles.earningsContainer}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => {
+                  // TODO: Навигация к детальному экрану доходов
+                  console.log('Открыть детали доходов');
+                }}
               >
-                <View style={styles.earningsMainContent}>
-                  <Text style={styles.earningsTitle}>{tWorker('earned')}</Text>
-                  <Text style={styles.modernEarningsValue}>{formatEarnings(stats.earnings)}</Text>
-                  {stats.earningsChange !== undefined && (
-                    <View style={styles.earningsChangeContainer}>
-                      <Text style={styles.earningsChangeIcon}>
-                        {stats.earningsChange >= 0 ? '📈' : '📉'}
-                      </Text>
-                      <Text style={styles.earningsChangeText}>
-                        {stats.earningsChange >= 0 ? '+' : ''}{stats.earningsChange.toFixed(1)}%
-                      </Text>
-                    </View>
-                  )}
-                </View>
-                <View style={styles.expandArrowContainer}>
-                  <Text style={styles.expandArrow}>↗</Text>
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
+                <LinearGradient
+                  colors={['#FFE066', '#FFCC33']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.modernEarningsWidget}
+                >
+                  <View style={styles.earningsMainContent}>
+                    <Text style={styles.earningsTitle}>{tWorker('earned')}</Text>
+                    <Text style={styles.modernEarningsValue}>{formatEarnings(stats.earnings)}</Text>
+                    {stats.earningsChange !== undefined && (
+                      <View style={styles.earningsChangeContainer}>
+                        <Text style={styles.earningsChangeIcon}>
+                          {stats.earningsChange >= 0 ? '📈' : '📉'}
+                        </Text>
+                        <Text style={styles.earningsChangeText}>
+                          {stats.earningsChange >= 0 ? '+' : ''}{stats.earningsChange.toFixed(1)}%
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                  <View style={styles.expandArrowContainer}>
+                    <Text style={styles.expandArrow}>↗</Text>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Main Stats - Three Cards in Row */}
           <View style={styles.mainStatsContainer}>
@@ -606,7 +604,6 @@ export const WorkerProfileScreen: React.FC = () => {
           {/* Resume Section for Job Seekers */}
           {user?.workerType === 'job_seeker' && (
             <View style={styles.resumeSection}>
-              <Text style={styles.sectionTitle}>{t('job_seeker_profile_title')}</Text>
               
               {/* Прогресс заполнения резюме */}
               {(() => {
@@ -617,9 +614,17 @@ export const WorkerProfileScreen: React.FC = () => {
                   <View style={styles.resumeProgressContainer}>
                     {/* Заголовок и процент */}
                     <View style={styles.progressHeader}>
-                      <Text style={styles.progressTitle}>
-                        {isComplete ? '✅ Резюме заполнено' : '📝 Заполните резюме'}
-                      </Text>
+                      {isComplete ? (
+                        <View style={styles.progressTitleContainer}>
+                          <BadgeCheckIcon width={18} height={18} style={{ color: '#679B00' }} />
+                          <Text style={styles.progressTitle}>Резюме заполнено</Text>
+                        </View>
+                      ) : (
+                        <View style={styles.progressTitleContainer}>
+                          <ResumeIcon width={18} height={18} style={{ color: '#1A1A1A' }} />
+                          <Text style={styles.progressTitle}>Заполните резюме</Text>
+                        </View>
+                      )}
                       <Text style={[styles.progressPercent, isComplete && styles.progressPercentComplete]}>
                         {progress}%
                       </Text>
@@ -688,16 +693,6 @@ export const WorkerProfileScreen: React.FC = () => {
                   <NotificationMessageIcon width={20} height={20} />
                 </View>
                 <Text style={styles.menuText}>{tWorker('settings_and_notifications')}</Text>
-              </View>
-              <Text style={styles.menuArrow}>›</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.menuItem} onPress={handleMyOrders}>
-              <View style={styles.menuLeft}>
-                <View style={styles.menuIconContainer}>
-                  <MyOrdersIcon width={20} height={20} />
-                </View>
-                <Text style={styles.menuText}>{tWorker('my_orders')}</Text>
               </View>
               <Text style={styles.menuArrow}>›</Text>
             </TouchableOpacity>
@@ -1199,13 +1194,8 @@ const styles = StyleSheet.create({
 
   // Resume Section Styles for Job Seekers
   resumeSection: {
-    marginHorizontal: 20,
+    paddingHorizontal: 20,
     marginBottom: 20,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#DAE3EC',
   },
   resumeItem: {
     marginBottom: 16,
@@ -1251,18 +1241,22 @@ const styles = StyleSheet.create({
 
   // Resume Progress Styles
   resumeProgressContainer: {
-    marginTop: 20,
     padding: 20,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#DAE3EC',
   },
   progressHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  progressTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   progressTitle: {
     fontSize: 16,
@@ -1275,7 +1269,7 @@ const styles = StyleSheet.create({
     color: '#679B00',
   },
   progressPercentComplete: {
-    color: '#10B981',
+    color: '#679B00',
   },
   progressBarContainer: {
     height: 8,
@@ -1291,7 +1285,7 @@ const styles = StyleSheet.create({
     transition: 'width 0.3s ease',
   },
   progressBarFillComplete: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#679B00',
   },
   progressMotivation: {
     fontSize: 14,
@@ -1320,7 +1314,7 @@ const styles = StyleSheet.create({
   },
   progressCompleteMessage: {
     fontSize: 14,
-    color: '#10B981',
+    color: '#679B00',
     textAlign: 'center',
     fontWeight: '500',
     marginTop: 8,

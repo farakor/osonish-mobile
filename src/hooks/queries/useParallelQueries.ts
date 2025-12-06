@@ -45,11 +45,13 @@ export const useCustomerHomeData = (userId: string) => {
     const myOrder = myOrdersMap.get(order.id);
     if (myOrder) {
       // Это мой заказ - используем данные с правильным количеством откликов
-      console.log(`[useCustomerHomeData] Мой заказ ${order.id}: applicantsCount=${myOrder.applicantsCount}, pendingApplicantsCount=${myOrder.pendingApplicantsCount}`);
+      console.log(`[useCustomerHomeData] Мой заказ ${order.id}: applicantsCount=${myOrder.applicantsCount}, pendingApplicantsCount=${myOrder.pendingApplicantsCount}, unreadApplicantsCount=${myOrder.unreadApplicantsCount}`);
       return {
         ...order,
         applicantsCount: myOrder.applicantsCount,
         pendingApplicantsCount: myOrder.pendingApplicantsCount,
+        unreadApplicantsCount: myOrder.unreadApplicantsCount,
+        applicantsLastViewedAt: myOrder.applicantsLastViewedAt,
       };
     }
     return order;

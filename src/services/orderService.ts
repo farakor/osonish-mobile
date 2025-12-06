@@ -381,6 +381,30 @@ export class OrderService {
   }
 
   /**
+   * Отметить отклики заказа как просмотренные
+   */
+  async markApplicantsAsViewed(orderId: string): Promise<void> {
+    try {
+      console.log('[OrderService] 👁️ Отметка откликов как просмотренных:', orderId);
+
+      const { error } = await supabase
+        .rpc('mark_applicants_as_viewed', {
+          p_order_id: orderId
+        });
+
+      if (error) {
+        console.error('[OrderService] Ошибка при отметке откликов как просмотренных:', error);
+        throw error;
+      }
+
+      console.log('[OrderService] ✅ Отклики отмечены как просмотренные');
+    } catch (error) {
+      console.error('[OrderService] Ошибка при отметке откликов как просмотренных:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Отмена заказа с удалением откликов (освобождение исполнителей)
    */
   async cancelOrder(orderId: string): Promise<CancelOrderResponse> {
@@ -575,7 +599,14 @@ export class OrderService {
             .eq('order_id', item.id)
             .eq('status', 'pending');
 
-          console.log(`[OrderService] Заказ ${item.id}: applicants_count=${item.applicants_count}, pendingCount=${pendingCount}`);
+          // Получаем количество непросмотренных откликов из view
+          const { data: unreadData } = await supabase
+            .from('order_unread_applicants_count')
+            .select('unread_count')
+            .eq('order_id', item.id)
+            .single();
+
+          console.log(`[OrderService] Заказ ${item.id}: applicants_count=${item.applicants_count}, pendingCount=${pendingCount}, unreadCount=${unreadData?.unread_count || 0}`);
 
           return {
             id: item.id,
@@ -598,6 +629,8 @@ export class OrderService {
             customerCompanyName: item.customer?.company_name || undefined,
             applicantsCount: item.applicants_count,
             pendingApplicantsCount: pendingCount || 0,
+            unreadApplicantsCount: unreadData?.unread_count || 0,
+            applicantsLastViewedAt: item.applicants_last_viewed_at || undefined,
             viewsCount: item.views_count || 0,
             // Дополнительные удобства
             transportPaid: item.transport_paid || false,
@@ -668,6 +701,15 @@ export class OrderService {
             .eq('order_id', item.id)
             .eq('status', 'pending');
 
+          // Получаем количество непросмотренных откликов из view
+          const { data: unreadData } = await supabase
+            .from('order_unread_applicants_count')
+            .select('unread_count')
+            .eq('order_id', item.id)
+            .single();
+
+          console.log(`[OrderService] getMyCreatedOrders - Заказ ${item.id}: applicants_count=${item.applicants_count}, pendingCount=${pendingCount}, unreadCount=${unreadData?.unread_count || 0}`);
+
           return {
             id: item.id,
             type: item.type || 'daily', // Добавляем тип заказа
@@ -686,6 +728,8 @@ export class OrderService {
             customerId: item.customer_id,
             applicantsCount: item.applicants_count,
             pendingApplicantsCount: pendingCount || 0,
+            unreadApplicantsCount: unreadData?.unread_count || 0,
+            applicantsLastViewedAt: item.applicants_last_viewed_at || undefined,
             viewsCount: item.views_count || 0,
             // Дополнительные удобства
             transportPaid: item.transport_paid || false,

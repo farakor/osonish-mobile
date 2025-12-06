@@ -322,7 +322,9 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.sizes.md,
     color: theme.colors.text.primary,
     minHeight: 120,
-    ...borderButtonStyles,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
+    ...noElevationStyles,
   },
   charCounter: {
     fontSize: theme.fonts.sizes.xs,
@@ -341,6 +343,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
     marginBottom: PHOTO_GAP,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
+    ...noElevationStyles,
   },
   photoContainerWithMargin: {
     marginRight: PHOTO_GAP,
@@ -374,7 +379,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: PHOTO_GAP,
-    ...borderButtonStyles,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
+    ...noElevationStyles,
   },
   addPhotoIcon: {
     fontSize: 32,

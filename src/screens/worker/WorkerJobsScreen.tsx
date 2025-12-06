@@ -16,7 +16,7 @@ import { theme } from '../../constants';
 import { lightElevationStyles } from '../../utils/noShadowStyles';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import type { WorkerTabParamList } from '../../types';
+import type { WorkerTabParamList, User } from '../../types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import NotificationIcon from '../../../assets/notification-message.svg';
 import ArrowNarrowRight from '../../../assets/arrow-narrow-right.svg';
@@ -28,6 +28,7 @@ import { notificationService } from '../../services/notificationService';
 import { ModernOrderCard } from '../../components/cards';
 import { VacancyCard } from '../../components/vacancy';
 import { FloatingCreateButton, SortModal, SortOption } from '../../components/common';
+import { StoriesSection } from '../../components/stories';
 import { useWorkerTranslation, useCategoriesTranslation } from '../../hooks/useTranslation';
 import { useTranslation } from 'react-i18next';
 import { Order } from '../../types';
@@ -35,6 +36,7 @@ import { getSpecializationIconComponent } from '../../constants/specializations'
 import { getCityName } from '../../utils/cityUtils';
 import { OrderCardSkeleton } from '../../components/skeletons';
 import { useWorkerHomeData } from '../../hooks/queries';
+import { useJobSeekerStories, useAcceptedApplicationsCount, useVacancyApplicationsStats } from '../../hooks';
 
 // Функция для получения высоты статусбара только на Android
 const getAndroidStatusBarHeight = () => {
@@ -59,8 +61,10 @@ export const WorkerJobsScreen: React.FC = () => {
   // ✨ Parallel fetching - загружает заказы и счетчик уведомлений ОДНОВРЕМЕННО
   const authState = authService.getAuthState();
   const userId = authState.user?.id || '';
-  const workerType = (authState.user as any)?.workerType as 'daily_worker' | 'professional' | 'job_seeker' | undefined;
+  const user = authState.user as User | null;
+  const workerType = user?.workerType as 'daily_worker' | 'professional' | 'job_seeker' | undefined;
   const userCity = authState.user?.city;
+  const isJobSeeker = workerType === 'job_seeker';
   
   const {
     orders: availableOrders,
@@ -71,6 +75,18 @@ export const WorkerJobsScreen: React.FC = () => {
     userId,
     workerType,
     userCity,
+  });
+
+  // Получаем данные для Stories (только для job_seeker)
+  const { acceptedCount: acceptedApplicationsCount } = useAcceptedApplicationsCount();
+  const { stats: vacancyStats } = useVacancyApplicationsStats();
+  
+  // Хук для генерации stories
+  const { stories } = useJobSeekerStories({
+    user,
+    applicationsCount: vacancyStats.total,
+    pendingCount: vacancyStats.pending,
+    acceptedCount: vacancyStats.accepted,
   });
 
   const [refreshing, setRefreshing] = useState(false);
@@ -285,6 +301,9 @@ export const WorkerJobsScreen: React.FC = () => {
               />
             }
           >
+            {/* Stories Section - только для job_seeker */}
+            {isJobSeeker && <StoriesSection stories={stories} />}
+
             {/* Available Orders Section */}
             {filteredOrders.length > 0 && (
               <View style={styles.availableOrdersSection}>

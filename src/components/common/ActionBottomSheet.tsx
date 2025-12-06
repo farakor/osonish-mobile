@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Modal,
   Animated,
+  PanResponder,
 } from 'react-native';
 import { theme } from '../../constants';
 
@@ -31,8 +32,8 @@ export const ActionBottomSheet: React.FC<ActionBottomSheetProps> = ({
   items,
   title,
 }) => {
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
-  const slideAnim = React.useRef(new Animated.Value(300)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(300)).current;
 
   React.useEffect(() => {
     if (visible) {
@@ -65,9 +66,58 @@ export const ActionBottomSheet: React.FC<ActionBottomSheetProps> = ({
     }
   }, [visible]);
 
+  // Функция закрытия с анимацией
+  const closeBottomSheet = () => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 300,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onClose();
+    });
+  };
+
+  // PanResponder для обработки свайпа вниз
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Активируем только при свайпе вниз
+        return gestureState.dy > 5;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        // Перемещаем bottom sheet только вниз (не вверх)
+        if (gestureState.dy > 0) {
+          slideAnim.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        // Если свайп больше 100px или скорость больше 0.5 - закрываем
+        if (gestureState.dy > 100 || gestureState.vy > 0.5) {
+          closeBottomSheet();
+        } else {
+          // Возвращаем на место
+          Animated.spring(slideAnim, {
+            toValue: 0,
+            tension: 65,
+            friction: 11,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
+
   const handleItemPress = (item: ActionBottomSheetItem) => {
     if (!item.disabled) {
-      onClose();
+      closeBottomSheet();
       // Задержка для плавности закрытия
       setTimeout(() => {
         item.onPress();
@@ -80,7 +130,7 @@ export const ActionBottomSheet: React.FC<ActionBottomSheetProps> = ({
       visible={visible}
       transparent={true}
       animationType="none"
-      onRequestClose={onClose}
+      onRequestClose={closeBottomSheet}
     >
       <Animated.View 
         style={[
@@ -93,7 +143,7 @@ export const ActionBottomSheet: React.FC<ActionBottomSheetProps> = ({
         <TouchableOpacity
           style={styles.backdrop}
           activeOpacity={1}
-          onPress={onClose}
+          onPress={closeBottomSheet}
         />
         
         <Animated.View
@@ -104,11 +154,14 @@ export const ActionBottomSheet: React.FC<ActionBottomSheetProps> = ({
             }
           ]}
         >
-          <View style={styles.handle} />
+          {/* Верхняя область для свайпа - ручка + заголовок */}
+          <View {...panResponder.panHandlers}>
+            <View style={styles.handle} />
+            
+            {title && <Text style={styles.title}>{title}</Text>}
+          </View>
           
           <View style={styles.content}>
-            {title && <Text style={styles.title}>{title}</Text>}
-            
             <View style={styles.optionsContainer}>
               {items.map((item, index) => (
                 <TouchableOpacity
@@ -183,11 +236,7 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     alignSelf: 'center',
     marginTop: 12,
-    marginBottom: 8,
-  },
-  content: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
+    marginBottom: 16,
   },
   title: {
     fontSize: theme.fonts.sizes.xl,
@@ -195,6 +244,11 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.lg,
     textAlign: 'center',
+    paddingHorizontal: theme.spacing.lg,
+  },
+  content: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
   },
   optionsContainer: {
     gap: theme.spacing.sm,

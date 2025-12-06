@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
-import { theme, SPECIALIZATIONS, SpecializationOption } from '../../constants';
+import { theme, SPECIALIZATIONS, SpecializationOption, getSubcategoriesByParentId } from '../../constants';
 import { noElevationStyles, borderButtonStyles } from '../../utils/noShadowStyles';
 import type { RootStackParamList, Specialization } from '../../types';
 import { HeaderWithBack, CategoryIcon } from '../../components/common';
@@ -40,14 +40,6 @@ export const SpecializationSelectionScreen: React.FC = () => {
       // Убираем специализацию
       setSelectedSpecializations(prev => prev.filter(s => s.id !== spec.id));
     } else {
-      if (selectedSpecializations.length >= 3) {
-        Alert.alert(
-          t('auth.max_specializations_title'),
-          t('auth.max_specializations_message')
-        );
-        return;
-      }
-
       // Добавляем специализацию
       // Новая специализация становится основной если:
       // 1. Это первая выбранная специализация
@@ -203,7 +195,7 @@ export const SpecializationSelectionScreen: React.FC = () => {
         )}
 
         <FlatList
-          data={SPECIALIZATIONS.filter(spec => spec.id !== 'one_day_job' && !spec.isParent)}
+          data={getSubcategoriesByParentId('repair_construction')}
           renderItem={renderSpecializationCard}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.specList}
@@ -256,10 +248,13 @@ const styles = StyleSheet.create({
   },
   counterContainer: {
     alignSelf: 'center',
-    backgroundColor: theme.colors.primary + '15',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.xs,
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
+    ...noElevationStyles,
   },
   counterText: {
     fontSize: theme.fonts.sizes.sm,
@@ -267,10 +262,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   selectedContainer: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: theme.spacing.md,
     marginBottom: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
+    ...noElevationStyles,
   },
   selectedTitle: {
     fontSize: theme.fonts.sizes.sm,
@@ -286,12 +284,13 @@ const styles = StyleSheet.create({
   selectedChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.white,
+    backgroundColor: `${theme.colors.primary}08`,
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: theme.colors.primary,
+    ...noElevationStyles,
   },
   selectedChipIcon: {
     marginRight: 4,
@@ -314,7 +313,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: theme.spacing.sm,
     minHeight: 64,
-    ...borderButtonStyles,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
+    ...noElevationStyles,
   },
   specListItemSelected: {
     backgroundColor: `${theme.colors.primary}08`,
@@ -326,6 +327,7 @@ const styles = StyleSheet.create({
     backgroundColor: `${theme.colors.primary}15`,
     borderWidth: 2,
     borderColor: theme.colors.primary,
+    ...noElevationStyles,
   },
   specIconContainer: {
     width: 48,

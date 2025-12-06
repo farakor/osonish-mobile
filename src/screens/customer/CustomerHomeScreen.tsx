@@ -9,8 +9,6 @@ import {
   Platform,
   ScrollView,
   TextInput,
-  Modal,
-  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';;
 import { theme, SPECIALIZATIONS } from '../../constants';
@@ -28,7 +26,7 @@ import { authService } from '../../services/authService';
 import { notificationService } from '../../services/notificationService';
 import { ModernOrderCard } from '../../components/cards';
 import { VacancyCard } from '../../components/vacancy';
-import { FloatingCreateButton, SortModal, SortOption, JobTypeBottomSheet } from '../../components/common';
+import { FloatingCreateButton, SortModal, SortOption, JobTypeBottomSheet, FilterBottomSheet } from '../../components/common';
 import { AuthRequiredModal } from '../../components/auth/AuthRequiredModal';
 import { useCustomerTranslation, useCategoriesTranslation } from '../../hooks/useTranslation';
 import { useTranslation } from 'react-i18next';
@@ -52,8 +50,6 @@ export const CustomerHomeScreen: React.FC = () => {
   const [selectedSpecialization, setSelectedSpecialization] = useState<string | null>('all');
   const [selectedCity, setSelectedCity] = useState<string | null>('all');
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
-  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
-  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
   const [showResponseNotification, setShowResponseNotification] = useState(false);
   const [hasOrdersWithResponses, setHasOrdersWithResponses] = useState(false);
   const [isAuthModalVisible, setIsAuthModalVisible] = useState(false);
@@ -470,185 +466,30 @@ export const CustomerHomeScreen: React.FC = () => {
         )}
       </SafeAreaView>
 
-      {/* Filter Modal */}
-      <Modal
+      {/* Filter Bottom Sheet */}
+      <FilterBottomSheet
         visible={isFilterModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setIsFilterModalVisible(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setIsFilterModalVisible(false)}
-        >
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('filters')}</Text>
-              <TouchableOpacity
-                onPress={() => setIsFilterModalVisible(false)}
-                style={styles.modalCloseButton}
-              >
-                <Text style={styles.modalCloseText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.dropdownContainer}>
-              {/* Дропдаун для категорий */}
-              <View style={styles.dropdownSection}>
-                <Text style={styles.dropdownLabel}>{t('filter_by_category')}</Text>
-                <TouchableOpacity
-                  style={styles.dropdownHeader}
-                  onPress={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.dropdownHeaderText}>
-                    {availableSpecializations.find(s => s.id === selectedSpecialization)?.name || t('all_categories')}
-                  </Text>
-                  <ChevronDownIcon 
-                    width={20} 
-                    height={20} 
-                    style={[
-                      styles.dropdownChevron,
-                      isCategoryDropdownOpen && styles.dropdownChevronOpen
-                    ]} 
-                  />
-                </TouchableOpacity>
-                {isCategoryDropdownOpen && (
-                  <ScrollView 
-                    style={styles.dropdownScrollView}
-                    nestedScrollEnabled={true}
-                    showsVerticalScrollIndicator={false}
-                  >
-                    {availableSpecializations.map((item) => {
-                      const IconComponent = item.IconComponent;
-                      return (
-                        <TouchableOpacity
-                          key={item.id}
-                          style={[
-                            styles.dropdownItem,
-                            selectedSpecialization === item.id && styles.dropdownItemActive
-                          ]}
-                          onPress={() => {
-                            setSelectedSpecialization(item.id);
-                            setIsCategoryDropdownOpen(false);
-                          }}
-                        >
-                          {IconComponent && (
-                            <IconComponent 
-                              width={20} 
-                              height={20} 
-                              style={[
-                                styles.dropdownItemIcon,
-                                selectedSpecialization === item.id && styles.dropdownItemIconActive
-                              ]} 
-                            />
-                          )}
-                          <Text style={[
-                            styles.dropdownItemText,
-                            selectedSpecialization === item.id && styles.dropdownItemTextActive
-                          ]}>
-                            {item.name}
-                          </Text>
-                          <Text style={[
-                            styles.dropdownItemCount,
-                            selectedSpecialization === item.id && styles.dropdownItemCountActive
-                          ]}>
-                            ({item.count})
-                          </Text>
-                          {selectedSpecialization === item.id && (
-                            <Text style={styles.dropdownItemCheck}>✓</Text>
-                          )}
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </ScrollView>
-                )}
-              </View>
-
-              {/* Дропдаун для городов */}
-              <View style={styles.dropdownSection}>
-                <Text style={styles.dropdownLabel}>{t('filter_by_city')}</Text>
-                <TouchableOpacity
-                  style={styles.dropdownHeader}
-                  onPress={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.dropdownHeaderText}>
-                    {availableCities.find(c => c.id === selectedCity)?.name || t('all_cities')}
-                  </Text>
-                  <ChevronDownIcon 
-                    width={20} 
-                    height={20} 
-                    style={[
-                      styles.dropdownChevron,
-                      isCityDropdownOpen && styles.dropdownChevronOpen
-                    ]} 
-                  />
-                </TouchableOpacity>
-                {isCityDropdownOpen && (
-                  <ScrollView 
-                    style={styles.dropdownScrollView}
-                    nestedScrollEnabled={true}
-                    showsVerticalScrollIndicator={false}
-                  >
-                    {availableCities.map((item) => (
-                      <TouchableOpacity
-                        key={item.id}
-                        style={[
-                          styles.dropdownItem,
-                          selectedCity === item.id && styles.dropdownItemActive
-                        ]}
-                        onPress={() => {
-                          setSelectedCity(item.id);
-                          setIsCityDropdownOpen(false);
-                        }}
-                      >
-                        <Text style={[
-                          styles.dropdownItemText,
-                          selectedCity === item.id && styles.dropdownItemTextActive
-                        ]}>
-                          {item.name}
-                        </Text>
-                        <Text style={[
-                          styles.dropdownItemCount,
-                          selectedCity === item.id && styles.dropdownItemCountActive
-                        ]}>
-                          ({item.count})
-                        </Text>
-                        {selectedCity === item.id && (
-                          <Text style={styles.dropdownItemCheck}>✓</Text>
-                        )}
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                )}
-              </View>
-            </View>
-
-            {/* Кнопки применить и сбросить */}
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={styles.resetButton}
-                onPress={() => {
-                  setSelectedSpecialization('all');
-                  setSelectedCity('all');
-                  setIsCategoryDropdownOpen(false);
-                  setIsCityDropdownOpen(false);
-                }}
-              >
-                <Text style={styles.resetButtonText}>{t('reset_filters')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.applyButton}
-                onPress={() => setIsFilterModalVisible(false)}
-              >
-                <Text style={styles.applyButtonText}>{t('apply')}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        onClose={() => setIsFilterModalVisible(false)}
+        title={t('filters')}
+        availableSpecializations={availableSpecializations}
+        availableCities={availableCities}
+        selectedSpecialization={selectedSpecialization}
+        selectedCity={selectedCity}
+        onSpecializationChange={setSelectedSpecialization}
+        onCityChange={setSelectedCity}
+        onReset={() => {
+          setSelectedSpecialization('all');
+          setSelectedCity('all');
+        }}
+        translations={{
+          filterByCategory: t('filter_by_category'),
+          allCategories: t('all_categories'),
+          filterByCity: t('filter_by_city'),
+          allCities: t('all_cities'),
+          resetFilters: t('reset_filters'),
+          apply: t('apply'),
+        }}
+      />
 
       {/* Floating Action Button */}
       <FloatingCreateButton 
@@ -952,165 +793,5 @@ const styles = StyleSheet.create({
   buttonIcon: {
     color: theme.colors.white,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: theme.spacing.lg,
-  },
-  modalContent: {
-    backgroundColor: theme.colors.white,
-    borderRadius: 16,
-    width: '100%',
-    maxHeight: '80%',
-    overflow: 'hidden',
-  },
-  dropdownContainer: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-  },
-  dropdownSection: {
-    marginBottom: theme.spacing.lg,
-  },
-  dropdownLabel: {
-    fontSize: theme.fonts.sizes.sm,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.sm,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  dropdownHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: theme.spacing.md,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.white,
-  },
-  dropdownHeaderText: {
-    fontSize: theme.fonts.sizes.md,
-    color: theme.colors.text.primary,
-    fontWeight: theme.fonts.weights.medium,
-    flex: 1,
-  },
-  dropdownChevron: {
-    tintColor: theme.colors.text.secondary,
-  },
-  dropdownChevronOpen: {
-    transform: [{ rotate: '180deg' }],
-  },
-  dropdownScrollView: {
-    maxHeight: 180,
-    marginTop: theme.spacing.sm,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.white,
-  },
-  dropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  dropdownItemActive: {
-    backgroundColor: '#F0F9FF',
-  },
-  dropdownItemIcon: {
-    marginRight: theme.spacing.sm,
-    tintColor: theme.colors.text.secondary,
-  },
-  dropdownItemIconActive: {
-    tintColor: theme.colors.primary,
-  },
-  dropdownItemText: {
-    flex: 1,
-    fontSize: theme.fonts.sizes.md,
-    color: theme.colors.text.primary,
-  },
-  dropdownItemTextActive: {
-    fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.primary,
-  },
-  dropdownItemCount: {
-    fontSize: theme.fonts.sizes.sm,
-    color: theme.colors.text.secondary,
-    marginRight: theme.spacing.sm,
-  },
-  dropdownItemCountActive: {
-    color: theme.colors.primary,
-    fontWeight: theme.fonts.weights.semiBold,
-  },
-  dropdownItemCheck: {
-    fontSize: 16,
-    color: theme.colors.primary,
-    fontWeight: theme.fonts.weights.bold,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: theme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  modalFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: theme.spacing.md,
-    padding: theme.spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-    backgroundColor: theme.colors.white,
-  },
-  resetButton: {
-    flex: 1,
-    paddingVertical: theme.spacing.md,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  resetButtonText: {
-    fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.text.primary,
-  },
-  applyButton: {
-    flex: 1,
-    paddingVertical: theme.spacing.md,
-    borderRadius: 12,
-    backgroundColor: theme.colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  applyButtonText: {
-    fontSize: theme.fonts.sizes.md,
-    fontWeight: theme.fonts.weights.semiBold,
-    color: theme.colors.white,
-  },
-  modalTitle: {
-    fontSize: theme.fonts.sizes.lg,
-    fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.text.primary,
-  },
-  modalCloseButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: theme.colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalCloseText: {
-    fontSize: 20,
-    color: theme.colors.text.secondary,
-  },
-}); 
+});
+ 

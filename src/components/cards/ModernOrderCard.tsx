@@ -124,10 +124,8 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
   // Проверяем, является ли заказ моим
   const isMyOrder = currentUserId && order.customerId === currentUserId;
 
-  // Логирование для отладки
-  if (isMyOrder) {
-    console.log(`[ModernOrderCard] Мой заказ ${order.id}: pendingApplicantsCount=${order.pendingApplicantsCount}, показываем бейдж=${!workerView && (order.pendingApplicantsCount || 0) > 0}`);
-  }
+  // Логирование для отладки - проверка данных о непросмотренных откликах
+  console.log(`[ModernOrderCard] Заказ ${order.id}: unreadApplicantsCount=${order.unreadApplicantsCount}, isMyOrder=${isMyOrder}, workerView=${workerView}, pendingApplicantsCount=${order.pendingApplicantsCount}`);
 
   return (
     <TouchableOpacity
@@ -202,12 +200,25 @@ export const ModernOrderCard: React.FC<ModernOrderCardProps> = ({
             </View>
             {/* Response Received Badge */}
             {!workerView && (order.pendingApplicantsCount || 0) > 0 && (
-              <View style={styles.responseBadge}>
-                <Text style={styles.responseBadgeText}>{t('response_received_badge')}</Text>
+              <View style={styles.responseBadgeContainer}>
+                <View style={styles.responseBadge}>
+                  <Text style={styles.responseBadgeText}>{t('response_received_badge')}</Text>
+                </View>
+                {/* Красная точка для непросмотренных откликов */}
+                {(order.unreadApplicantsCount || 0) > 0 && (
+                  <View style={styles.unreadIndicator} />
+                )}
               </View>
             )}
           </View>
         </View>
+
+        {/* Бейдж с количеством непросмотренных откликов - вынесен на уровень карточки */}
+        {!workerView && isMyOrder && (order.unreadApplicantsCount || 0) > 0 && (
+          <View style={styles.unreadBadge}>
+            <Text style={styles.unreadBadgeText}>{order.unreadApplicantsCount}</Text>
+          </View>
+        )}
 
         {/* Time Info */}
         {showCreateTime && (
@@ -291,12 +302,13 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg,
     borderWidth: 1,
     borderColor: '#DAE3EC',
+    position: 'relative', // Добавлено для абсолютного позиционирования бейджа
+    // Отключаем overflow hidden чтобы бейдж был виден
+    overflow: 'visible',
     // Отключаем системные эффекты нажатия на Android
     ...Platform.select({
       android: {
-        // Предотвращаем inner shadow при нажатии
-        overflow: 'hidden',
-        // Отключаем стандартные эффекты
+        // Предотвращаем inner shadow при нажатии, но не обрезаем контент
         needsOffscreenAlphaCompositing: false,
       },
     }),
@@ -403,6 +415,9 @@ const styles = StyleSheet.create({
     color: VIEWS_COLOR,
     fontWeight: '500',
   },
+  responseBadgeContainer: {
+    position: 'relative',
+  },
   responseBadge: {
     backgroundColor: '#E10000',
     paddingHorizontal: 8,
@@ -417,6 +432,34 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  unreadIndicator: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#FFD700',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+  },
+  unreadBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: '#E10000',
+    borderRadius: 50,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  unreadBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   title: {
     fontSize: theme.fonts.sizes.xl,

@@ -240,7 +240,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     position: 'relative',
-    ...borderButtonStyles,
+    borderWidth: 1,
+    borderColor: '#DAE3EC',
+    ...noElevationStyles,
   },
   cityCardSelected: {
     backgroundColor: `${theme.colors.primary}08`,

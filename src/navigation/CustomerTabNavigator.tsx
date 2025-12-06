@@ -7,6 +7,7 @@ import { theme } from '../constants';
 import { noElevationStyles } from '../utils/noShadowStyles';
 import { usePlatformSafeAreaInsets, getBottomTabBarStyle } from '../utils/safeAreaUtils';
 import { useNavigationTranslation } from '../hooks/useTranslation';
+import { useUnreadApplicantsCount } from '../hooks';
 import type { CustomerTabParamList, RootStackParamList } from '../types';
 import {
   CustomerHomeScreen,
@@ -43,6 +44,7 @@ export function CustomerTabNavigator() {
   const navigation = useNavigation<NavigationProp>();
   const [isAuthModalVisible, setIsAuthModalVisible] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { unreadCount } = useUnreadApplicantsCount();
 
   const checkAuth = (): boolean => {
     const authState = authService.getAuthState();
@@ -139,6 +141,14 @@ export function CustomerTabNavigator() {
                       color: isFocused ? theme.colors.primary : '#666',
                       size: 24,
                     })}
+                    {/* Badge для MyOrders tab */}
+                    {route.name === 'MyOrders' && unreadCount > 0 && (
+                      <View style={styles.badge}>
+                        <Text style={styles.badgeText}>
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </Text>
+                      </View>
+                    )}
                     {options.tabBarLabel && typeof options.tabBarLabel === 'function' && (
                       options.tabBarLabel({
                         focused: isFocused,
@@ -256,10 +266,28 @@ const styles = StyleSheet.create({
   tabContent: {
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
   },
   tabLabel: {
     fontSize: 11,
     fontWeight: theme.fonts.weights.medium as any,
     marginTop: 4,
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: 10,
+    backgroundColor: '#E10000',
+    borderRadius: 50,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
   },
 }); 

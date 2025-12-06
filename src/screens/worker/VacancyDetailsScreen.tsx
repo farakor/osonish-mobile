@@ -197,15 +197,13 @@ export const VacancyDetailsScreen: React.FC = () => {
 
         {/* Карта с адресом */}
         {vacancy.location && vacancy.latitude && vacancy.longitude && (
-          <View style={styles.section}>
-            <OrderLocationMap
-              latitude={vacancy.latitude}
-              longitude={vacancy.longitude}
-              address={vacancy.location}
-              title="Место работы"
-              containerStyle={{ marginHorizontal: 0, marginBottom: 0 }}
-            />
-          </View>
+          <OrderLocationMap
+            latitude={vacancy.latitude}
+            longitude={vacancy.longitude}
+            address={vacancy.location}
+            title="Место работы"
+            containerStyle={{ marginHorizontal: 0 }}
+          />
         )}
 
         {/* Адрес без карты (если нет координат) */}
@@ -572,7 +570,7 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
   },
   appliedBadge: {
-    backgroundColor: '#D1FAE5',
+    backgroundColor: '#E8F4D4',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -580,7 +578,7 @@ const styles = StyleSheet.create({
   appliedText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#10B981',
+    color: '#679B00',
   },
   modalOverlay: {
     flex: 1,

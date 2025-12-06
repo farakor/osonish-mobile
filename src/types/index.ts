@@ -144,6 +144,8 @@ export interface Order {
   customerCompanyName?: string; // Название компании заказчика
   applicantsCount: number;
   pendingApplicantsCount?: number; // Количество непринятых откликов (ожидающих рассмотрения)
+  unreadApplicantsCount?: number; // Количество непросмотренных откликов
+  applicantsLastViewedAt?: string; // ISO date string - время последнего просмотра откликов
   viewsCount?: number; // Количество просмотров заказа
   // Дополнительные удобства
   transportPaid?: boolean; // Проезд оплачивается отдельно

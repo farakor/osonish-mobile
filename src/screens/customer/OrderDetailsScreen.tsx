@@ -325,6 +325,7 @@ export const OrderDetailsScreen: React.FC = () => {
   const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
   const [acceptedApplicants, setAcceptedApplicants] = useState<Set<string>>(new Set());
   const [isProcessing, setIsProcessing] = useState(false);
+  const [hasMarkedAsViewed, setHasMarkedAsViewed] = useState(false);
 
   // Состояния для завершения заказа
   const [isCompletingOrder, setIsCompletingOrder] = useState(false);
@@ -424,6 +425,25 @@ export const OrderDetailsScreen: React.FC = () => {
 
     loadApplicants();
   }, [orderId]);
+
+  // Отмечаем отклики как просмотренные при просмотре секции с откликами
+  useEffect(() => {
+    const markAsViewed = async () => {
+      if (!isMyOrder || !order || applicants.length === 0 || hasMarkedAsViewed) {
+        return;
+      }
+
+      try {
+        console.log('[OrderDetailsScreen] Отмечаем отклики как просмотренные');
+        await orderService.markApplicantsAsViewed(order.id);
+        setHasMarkedAsViewed(true);
+      } catch (error) {
+        console.error('[OrderDetailsScreen] Ошибка при отметке откликов как просмотренных:', error);
+      }
+    };
+
+    markAsViewed();
+  }, [isMyOrder, order, applicants.length, hasMarkedAsViewed]);
 
   // Создаем функции для переиспользования
   const loadOrderData = useCallback(async () => {

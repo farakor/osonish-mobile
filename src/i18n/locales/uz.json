@@ -1430,5 +1430,26 @@
     "fergana": "Farg'ona",
     "urgench": "Urganch",
     "nukus": "Nukus"
+  },
+  "stories": {
+    "resume_progress_title": "Rezyumeni to'ldiring",
+    "resume_incomplete": "Ko'proq takliflar olish uchun",
+    "resume_complete": "Rezyume to'ldirildi!",
+    "fill_resume": "To'ldirish",
+    "apply_vacancies_title": "Vakansiyalarga ariza bering",
+    "find_vacancies": "Topish",
+    "pending_applications": "{{count}} ta ko'rib chiqilmoqda",
+    "accepted_applications": "{{count}} ta qabul qilindi!",
+    "no_applications": "Faol arizalar yo'q",
+    "wait_response": "Javobni kuting",
+    "view_applications": "Ko'rish",
+    "profile_views_title": "Rezyume ko'rishlar",
+    "improve_resume": "Yaxshilash",
+    "articles_title": "Foydali maslahatlar",
+    "articles_subtitle": "Rezyume qanday yoziladi",
+    "read": "O'qish",
+    "career_tips_title": "Ko'nikmalarni rivojlantiring",
+    "career_tips_subtitle": "Bepul kurslar",
+    "start": "Boshlash"
   }
 }

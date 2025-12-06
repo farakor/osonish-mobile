@@ -1779,5 +1779,26 @@
       "rejected": "Отклонен",
       "withdrawn": "Отозван"
     }
+  },
+  "stories": {
+    "resume_progress_title": "Заполните резюме",
+    "resume_incomplete": "Чтобы получать больше откликов",
+    "resume_complete": "Резюме заполнено!",
+    "fill_resume": "Заполнить",
+    "apply_vacancies_title": "Откликнитесь на вакансии",
+    "find_vacancies": "Найти",
+    "pending_applications": "{{count}} на рассмотрении",
+    "accepted_applications": "{{count}} принято!",
+    "no_applications": "Нет активных откликов",
+    "wait_response": "Ожидайте ответа",
+    "view_applications": "Посмотреть",
+    "profile_views_title": "Просмотров резюме",
+    "improve_resume": "Улучшить",
+    "articles_title": "Полезные советы",
+    "articles_subtitle": "Как составить резюме",
+    "read": "Читать",
+    "career_tips_title": "Развивайте навыки",
+    "career_tips_subtitle": "Бесплатные курсы",
+    "start": "Начать"
   }
 }

@@ -334,6 +334,16 @@ export class VacancyService {
         return null;
       }
 
+      // Получаем количество непросмотренных откликов из view
+      const { data: unreadData } = await supabase
+        .from('order_unread_applicants_count')
+        .select('unread_count')
+        .eq('order_id', vacancyId)
+        .single();
+
+      // Добавляем unread_count в data
+      data.unread_applicants_count = unreadData ? [{ unread_count: unreadData.unread_count }] : [];
+
       return this.mapOrderFromDatabase(data);
     } catch (error) {
       console.error('[VacancyService] Ошибка получения вакансии:', error);
@@ -586,6 +596,8 @@ export class VacancyService {
       customerCompanyName: data.customer?.company_name || undefined,
       applicantsCount: data.applicants_count || 0,
       pendingApplicantsCount: data.pending_applicants_count || 0,
+      unreadApplicantsCount: data.unread_applicants_count?.[0]?.unread_count || 0,
+      applicantsLastViewedAt: data.applicants_last_viewed_at,
       viewsCount: data.views_count || 0,
       transportPaid: data.transport_paid,
       mealIncluded: data.meal_included,
@@ -708,6 +720,30 @@ export class VacancyService {
         success: false,
         error: 'Произошла ошибка при завершении вакансии'
       };
+    }
+  }
+
+  /**
+   * Отметить отклики вакансии как просмотренные
+   */
+  async markVacancyApplicantsAsViewed(vacancyId: string): Promise<void> {
+    try {
+      console.log('[VacancyService] 👁️ Отметка откликов вакансии как просмотренных:', vacancyId);
+
+      const { error } = await supabase
+        .rpc('mark_applicants_as_viewed', {
+          p_order_id: vacancyId
+        });
+
+      if (error) {
+        console.error('[VacancyService] Ошибка при отметке откликов как просмотренных:', error);
+        throw error;
+      }
+
+      console.log('[VacancyService] ✅ Отклики вакансии отмечены как просмотренные');
+    } catch (error) {
+      console.error('[VacancyService] Ошибка при отметке откликов вакансии как просмотренных:', error);
+      throw error;
     }
   }
 }

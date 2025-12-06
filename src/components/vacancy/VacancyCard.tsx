@@ -46,8 +46,18 @@ export const VacancyCard: React.FC<VacancyCardProps> = ({ vacancy, onPress, curr
   // Проверяем, является ли вакансия моей
   const isMyVacancy = currentUserId && vacancy.customerId === currentUserId;
 
+  // Отладочный лог для проверки данных о непросмотренных откликах
+  console.log(`[VacancyCard] Вакансия ${vacancy.id}: unreadApplicantsCount=${vacancy.unreadApplicantsCount}, isMyVacancy=${isMyVacancy}, currentUserId=${currentUserId}, customerId=${vacancy.customerId}`);
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
+      {/* Бейдж с количеством непросмотренных откликов - на верхнем уровне карточки */}
+      {isMyVacancy && (vacancy.unreadApplicantsCount || 0) > 0 && (
+        <View style={styles.unreadBadge}>
+          <Text style={styles.unreadBadgeText}>{vacancy.unreadApplicantsCount}</Text>
+        </View>
+      )}
+
       <View style={styles.header}>
         <Text style={styles.title} numberOfLines={2}>
           {vacancy.jobTitle || vacancy.title}
@@ -147,10 +157,16 @@ export const VacancyCard: React.FC<VacancyCardProps> = ({ vacancy, onPress, curr
               <Text style={styles.views}>{vacancy.viewsCount}</Text>
             </View>
           )}
-          {/* Бейдж "Моя вакансия" */}
+          {/* Бейдж "Моя вакансия" с индикатором непросмотренных откликов */}
           {isMyVacancy && (
-            <View style={styles.myVacancyBadge}>
-              <Text style={styles.myVacancyBadgeText}>{tCustomer('my_vacancy_badge')}</Text>
+            <View style={styles.myVacancyBadgeContainer}>
+              <View style={styles.myVacancyBadge}>
+                <Text style={styles.myVacancyBadgeText}>{tCustomer('my_vacancy_badge')}</Text>
+              </View>
+              {/* Красная точка для непросмотренных откликов */}
+              {(vacancy.unreadApplicantsCount || 0) > 0 && (
+                <View style={styles.unreadIndicator} />
+              )}
             </View>
           )}
         </View>
@@ -168,6 +184,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1,
     borderColor: '#DAE3EC',
+    position: 'relative',
+    overflow: 'visible', // Чтобы бейдж был виден за пределами карточки
   },
   header: {
     marginBottom: 12,
@@ -259,6 +277,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9CA3AF',
   },
+  myVacancyBadgeContainer: {
+    position: 'relative',
+  },
   myVacancyBadge: {
     backgroundColor: theme.colors.primary,
     paddingHorizontal: 8,
@@ -273,6 +294,34 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  unreadIndicator: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#FFD700',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+  },
+  unreadBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: '#E10000',
+    borderRadius: 50,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  unreadBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
   },
 });
 

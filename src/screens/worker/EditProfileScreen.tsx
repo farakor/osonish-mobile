@@ -28,6 +28,12 @@ import { useWorkerTranslation } from '../../hooks/useTranslation';
 import { SPECIALIZATIONS, getSpecializationById, getTranslatedSpecializationName, getTranslatedSpecializationNameSingular } from '../../constants/specializations';
 import { mediaService } from '../../services/mediaService';
 import RemoveIcon from '../../../assets/remove.svg';
+import ResumeIcon from '../../../assets/resume.svg';
+import CorporateIcon from '../../../assets/corporate-alt.svg';
+import GraduationCapIcon from '../../../assets/graduation-cap.svg';
+import BriefcaseIcon from '../../../assets/briefcase.svg';
+import StarIcon from '../../../assets/star.svg';
+import CvIcon from '../../../assets/cv.svg';
 import { getAllCities, getCityName } from '../../utils/cityUtils';
 
 const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
@@ -702,13 +708,16 @@ export const EditProfileScreen: React.FC = () => {
             <>
               {/* Заголовок секции */}
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionHeaderTitle}>📝 Резюме</Text>
+                <Text style={styles.sectionHeaderTitle}>Резюме</Text>
                 <Text style={styles.sectionHeaderSubtitle}>Заполните информацию о себе</Text>
               </View>
 
               {/* О себе - карточка */}
               <View style={styles.card}>
-                <Text style={styles.cardTitle}>👤 О себе</Text>
+                <View style={styles.cardTitleContainer}>
+                  <ResumeIcon width={20} height={20} fill="#1A1A1A" />
+                  <Text style={styles.cardTitle}>О себе</Text>
+                </View>
                 <Text style={styles.cardHint}>
                   Расскажите о себе, своем опыте и профессиональных качествах
                 </Text>
@@ -730,7 +739,10 @@ export const EditProfileScreen: React.FC = () => {
 
               {/* Желаемая зарплата и готовность к переезду - карточка */}
               <View style={styles.card}>
-                <Text style={styles.cardTitle}>💼 Пожелания к работе</Text>
+                <View style={styles.cardTitleContainer}>
+                  <CorporateIcon width={20} height={20} fill="#1A1A1A" />
+                  <Text style={styles.cardTitle}>Пожелания к работе</Text>
+                </View>
                 
                 <Text style={styles.label}>Желаемая зарплата</Text>
                 <TextInput
@@ -761,7 +773,10 @@ export const EditProfileScreen: React.FC = () => {
 
               {/* Образование - карточка */}
               <View style={styles.card}>
-                <Text style={styles.cardTitle}>🎓 Образование ({education.length})</Text>
+                <View style={styles.cardTitleContainer}>
+                  <GraduationCapIcon width={20} height={20} fill="#1A1A1A" />
+                  <Text style={styles.cardTitle}>Образование ({education.length})</Text>
+                </View>
                 {education.map((edu, index) => (
                   <View key={index} style={styles.resumeEditItem}>
                     <TextInput
@@ -833,7 +848,10 @@ export const EditProfileScreen: React.FC = () => {
 
               {/* Опыт работы - карточка */}
               <View style={styles.card}>
-                <Text style={styles.cardTitle}>💼 Опыт работы ({workExperience.length})</Text>
+                <View style={styles.cardTitleContainer}>
+                  <BriefcaseIcon width={20} height={20} fill="#1A1A1A" />
+                  <Text style={styles.cardTitle}>Опыт работы ({workExperience.length})</Text>
+                </View>
                 {workExperience.map((exp, index) => (
                   <View key={index} style={styles.resumeEditItem}>
                     <TextInput
@@ -918,7 +936,10 @@ export const EditProfileScreen: React.FC = () => {
 
               {/* Навыки - карточка */}
               <View style={styles.card}>
-                <Text style={styles.cardTitle}>⚡ Навыки ({skills.length})</Text>
+                <View style={styles.cardTitleContainer}>
+                  <StarIcon width={20} height={20} fill="#1A1A1A" />
+                  <Text style={styles.cardTitle}>Навыки ({skills.length})</Text>
+                </View>
                 <View style={styles.skillsContainer}>
                   {skills.map((skill, index) => (
                     <View key={index} style={styles.skillChip}>
@@ -964,7 +985,10 @@ export const EditProfileScreen: React.FC = () => {
 
               {/* Специализации - карточка */}
               <View style={styles.card}>
-                <Text style={styles.cardTitle}>🎯 Специализации ({specializations.length})</Text>
+                <View style={styles.cardTitleContainer}>
+                  <CvIcon width={20} height={20} fill="#1A1A1A" />
+                  <Text style={styles.cardTitle}>Специализации ({specializations.length})</Text>
+                </View>
                 <Text style={styles.cardHint}>
                   Выберите интересующие вас специализации. Первая будет основной.
                 </Text>
@@ -1282,11 +1306,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#DAE3EC',
   },
+  cardTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 13,
+  },
   cardTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#1A1A1A',
-    marginBottom: 8,
   },
   cardHint: {
     fontSize: 14,

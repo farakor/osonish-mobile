@@ -61,6 +61,7 @@ export const VacancyDetailsCustomerScreen: React.FC = () => {
   const updateStatusMutation = useUpdateVacancyApplicationStatus();
 
   const [selectedTab, setSelectedTab] = useState<'info' | 'applications'>('info');
+  const [hasMarkedAsViewed, setHasMarkedAsViewed] = useState(false);
 
   // Проверяем, является ли текущий пользователь создателем вакансии
   const authState = authService.getAuthState();
@@ -74,6 +75,25 @@ export const VacancyDetailsCustomerScreen: React.FC = () => {
       vacancyService.incrementVacancyViews(vacancyId);
     }
   }, [vacancyId, vacancy]);
+
+  // Отмечаем отклики вакансии как просмотренные при переключении на таб "applications"
+  useEffect(() => {
+    const markAsViewed = async () => {
+      if (!isVacancyOwner || selectedTab !== 'applications' || applications.length === 0 || hasMarkedAsViewed) {
+        return;
+      }
+
+      try {
+        console.log('[VacancyDetailsCustomerScreen] Отмечаем отклики вакансии как просмотренные');
+        await vacancyService.markVacancyApplicantsAsViewed(vacancyId);
+        setHasMarkedAsViewed(true);
+      } catch (error) {
+        console.error('[VacancyDetailsCustomerScreen] Ошибка при отметке откликов как просмотренных:', error);
+      }
+    };
+
+    markAsViewed();
+  }, [isVacancyOwner, selectedTab, applications.length, hasMarkedAsViewed, vacancyId]);
 
   const handleViewResume = (application: VacancyApplication) => {
     // Переходим к экрану резюме кандидата
@@ -226,9 +246,18 @@ export const VacancyDetailsCustomerScreen: React.FC = () => {
             onPress={() => setSelectedTab('applications')}
             activeOpacity={0.7}
           >
-            <Text style={[styles.tabText, selectedTab === 'applications' && styles.tabTextActive]}>
-              Отклики {applications.length > 0 && `(${applications.length})`}
-            </Text>
+            <View style={styles.tabContentWithBadge}>
+              <Text style={[styles.tabText, selectedTab === 'applications' && styles.tabTextActive]}>
+                Отклики {applications.length > 0 && `(${applications.length})`}
+              </Text>
+              {(vacancy.unreadApplicantsCount || 0) > 0 && (
+                <View style={styles.tabBadge}>
+                  <Text style={styles.tabBadgeText}>
+                    {vacancy.unreadApplicantsCount}
+                  </Text>
+                </View>
+              )}
+            </View>
           </TouchableOpacity>
         </View>
       )}
@@ -249,15 +278,13 @@ export const VacancyDetailsCustomerScreen: React.FC = () => {
 
           {/* Карта с адресом */}
           {vacancy.location && vacancy.latitude && vacancy.longitude && (
-            <View style={styles.section}>
-              <OrderLocationMap
-                latitude={vacancy.latitude}
-                longitude={vacancy.longitude}
-                address={vacancy.location}
-                title="Место работы"
-                containerStyle={{ marginHorizontal: 0, marginBottom: 0 }}
-              />
-            </View>
+            <OrderLocationMap
+              latitude={vacancy.latitude}
+              longitude={vacancy.longitude}
+              address={vacancy.location}
+              title="Место работы"
+              containerStyle={{ marginHorizontal: 0 }}
+            />
           )}
 
           {/* Адрес без карты (если нет координат) */}
@@ -450,6 +477,26 @@ const styles = StyleSheet.create({
   tabTextActive: {
     color: theme.colors.primary,
     fontWeight: '700',
+  },
+  tabContentWithBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  tabBadge: {
+    backgroundColor: '#E10000',
+    borderRadius: 50,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 6,
+  },
+  tabBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   scrollView: {
     flex: 1,

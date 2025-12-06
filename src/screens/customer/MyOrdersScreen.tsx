@@ -315,6 +315,7 @@ export const MyOrdersScreen: React.FC = () => {
         }}
         showApplicantsCount={true}
         showCreateTime={true}
+        currentUserId={userId}
       />
     )
   );
